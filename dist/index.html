@@ -3,11 +3,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <base href="/ADHDplanner/" />
-    <link rel="icon" type="image/svg+xml" href="masked-icon.svg" />
-    <link rel="shortcut icon" href="favicon.ico" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-    <link rel="manifest" href="manifest.json" />
+    <base href="/ADHDPlannerWorking/" />
+    <link rel="icon" type="image/svg+xml" href="/ADHDPlannerWorking/assets/img/masked-icon-BECKTJ8R.svg" />
+    <link rel="shortcut icon" href="/ADHDPlannerWorking/assets/img/favicon-Ct-mtz5e.ico" />
+    <link rel="apple-touch-icon" href="/ADHDPlannerWorking/assets/img/apple-touch-icon-d_thHYIs.png" />
+    <link rel="manifest" href="/ADHDPlannerWorking/assets/json/manifest-CEto4_53.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#4F46E5" />
     <meta name="description" content="A task management and planning app designed for ADHD users" />
@@ -21,8 +21,8 @@
         const baseElement = document.querySelector('base');
         if (baseElement && baseElement.href) {
           basePath = new URL(baseElement.href).pathname;
-        } else if (window.location.pathname.includes('/ADHDplanner/')) {
-          basePath = '/ADHDplanner/';
+        } else if (window.location.pathname.includes('/ADHDPlannerWorking/')) {
+          basePath = '/ADHDPlannerWorking/';
         }
         
         // Handle manifest fallback
@@ -41,7 +41,7 @@
                   'manifest.json',
                   `${basePath}manifest.json`,
                   '/manifest.json',
-                  '/ADHDplanner/manifest.json',
+                  '/ADHDPlannerWorking/manifest.json',
                   './manifest.json'
                 ];
                 
@@ -73,10 +73,10 @@
         const fixDuplicatePathsInElements = (selector, attribute) => {
           document.querySelectorAll(selector).forEach(element => {
             const path = element.getAttribute(attribute);
-            if (path && path.includes('/ADHDplanner/ADHDplanner/')) {
+            if (path && path.includes('/ADHDPlannerWorking/ADHDPlannerWorking/')) {
               element.setAttribute(
                 attribute,
-                path.replace('/ADHDplanner/ADHDplanner/', '/ADHDplanner/')
+                path.replace('/ADHDPlannerWorking/ADHDPlannerWorking/', '/ADHDPlannerWorking/')
               );
             }
           });
@@ -95,6 +95,6 @@
     <link rel="stylesheet" crossorigin href="/ADHDplanner/assets/css/main-yrla3_70.css">
   <link rel="manifest" href="/ADHDplanner/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/ADHDplanner/registerSW.js"></script></head>
   <body>
-    <div id="root"></div> ✅
+    <div id="root"></div>
   </body>
 </html>
