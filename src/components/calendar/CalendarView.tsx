@@ -22,6 +22,37 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   
+  // Helper function to safely create YYYY-MM-DD date string
+  const safeFormatDate = (date: Date): string => {
+    try {
+      if (!(date instanceof Date) || isNaN(date.getTime())) {
+        console.warn('Invalid date in safeFormatDate:', date);
+        return '';
+      }
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error('Error in safeFormatDate:', error);
+      return '';
+    }
+  };
+  
+  // Helper function to safely create a key for React lists
+  const safeCreateKey = (date: Date, prefix: string = 'date'): string => {
+    try {
+      if (!(date instanceof Date) || isNaN(date.getTime())) {
+        console.warn('Invalid date in safeCreateKey:', date);
+        return `${prefix}-${Math.random()}`;
+      }
+      return `${prefix}-${safeFormatDate(date)}`;
+    } catch (error) {
+      console.error('Error in safeCreateKey:', error);
+      return `${prefix}-${Math.random()}`;
+    }
+  };
+  
   // Format the date for the header
   const formatHeaderDate = (): string => {
     if (viewMode === 'day') {
@@ -101,7 +132,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
   // Get tasks for the current view
   const getTasksForView = (): { date: Date; tasks: Task[] }[] => {
     if (viewMode === 'day') {
-      const dateStr = currentDate.toISOString().split('T')[0];
+      const dateStr = safeFormatDate(currentDate);
       const tasksForDay = tasks.filter(task => task.dueDate === dateStr);
       
       return [{ date: currentDate, tasks: tasksForDay }];
@@ -115,7 +146,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
         const date = new Date(startOfWeek);
         date.setDate(startOfWeek.getDate() + i);
         
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = safeFormatDate(date);
         const tasksForDay = tasks.filter(task => task.dueDate === dateStr);
         
         return { date, tasks: tasksForDay };
@@ -141,7 +172,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
       const prevMonthLastDay = new Date(year, month, 0).getDate();
       for (let i = firstDayOfWeek - 1; i >= 0; i--) {
         const date = new Date(year, month - 1, prevMonthLastDay - i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = safeFormatDate(date);
         const tasksForDay = tasks.filter(task => task.dueDate === dateStr);
         
         daysArray.push({ date, tasks: tasksForDay, isPreviousMonth: true });
@@ -150,7 +181,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
       // Current month days
       for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
         const date = new Date(year, month, i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = safeFormatDate(date);
         const tasksForDay = tasks.filter(task => task.dueDate === dateStr);
         
         daysArray.push({ date, tasks: tasksForDay });
@@ -160,7 +191,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
       const remainingDays = totalDays - daysArray.length;
       for (let i = 1; i <= remainingDays; i++) {
         const date = new Date(year, month + 1, i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = safeFormatDate(date);
         const tasksForDay = tasks.filter(task => task.dueDate === dateStr);
         
         daysArray.push({ date, tasks: tasksForDay, isNextMonth: true });
@@ -184,16 +215,34 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
   
   // Check if a date has a work shift
   const getDateShift = (date: Date): { timeRange: string, shiftType: string } | null => {
-    const appContext = useAppContext();
-    const dateStr = date.toISOString().split('T')[0];
-    const shift = appContext.getShiftForDate(dateStr);
+    try {
+      if (!(date instanceof Date) || isNaN(date.getTime())) {
+        console.warn('Invalid date in getDateShift:', date);
+        return null;
+      }
+      
+      const appContext = useAppContext();
+      const dateStr = safeFormatDate(date);
+      if (!dateStr) return null;
+      
+      const shift = appContext.getShiftForDate(dateStr);
     
-    if (!shift) return null;
-    
-    const timeRange = `${shift.startTime.substring(0, 5)} - ${shift.endTime.substring(0, 5)}`;
-    const shiftType = shift.shiftType || 'full';
-    
-    return { timeRange, shiftType };
+      if (!shift) return null;
+      
+      // Make sure shift has the required properties
+      if (!shift.startTime || !shift.endTime) {
+        console.warn('Shift missing required properties:', shift);
+        return null;
+      }
+      
+      const timeRange = `${shift.startTime.substring(0, 5)} - ${shift.endTime.substring(0, 5)}`;
+      const shiftType = shift.shiftType || 'full';
+      
+      return { timeRange, shiftType };
+    } catch (error) {
+      console.error('Error in getDateShift:', error);
+      return null;
+    }
   };
   
   // Render day view
@@ -340,7 +389,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
             
             return (
               <div 
-                key={date.toISOString()} 
+                key={safeCreateKey(date)} 
                 className={`h-[150px] p-2 border-r last:border-r-0 border-b ${
                   isToday(date) ? 'bg-indigo-50' : ''
                 }`}
@@ -468,7 +517,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
             
             return (
               <div 
-                key={date.toISOString()} 
+                key={safeCreateKey(date)} 
                 className={`h-[5.5rem] p-1 border-r last:border-r-0 border-b overflow-hidden ${
                   isToday(date) ? 'bg-indigo-50' : ''
                 } ${

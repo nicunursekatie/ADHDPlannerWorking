@@ -8,10 +8,47 @@ export const generateId = (): string => {
 
 // Format date to YYYY-MM-DD
 export const formatDate = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  try {
+    // Validate the date
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      console.error('Invalid date passed to formatDate:', date);
+      return '';
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    console.error('Error in formatDate:', error, date);
+    return '';
+  }
+};
+
+/**
+ * Safely converts a date to YYYY-MM-DD format
+ * Returns null if the date is invalid
+ */
+export const toISODateString = (date: Date | null | undefined): string | null => {
+  try {
+    if (!date) return null;
+    
+    // Validate date
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      console.warn('Invalid date passed to toISODateString:', date);
+      return null;
+    }
+    
+    // Format as YYYY-MM-DD
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    console.error('Error creating ISO date string:', error, date);
+    return null;
+  }
 };
 
 // Format date for display (e.g., "Mon, Jan 15")
