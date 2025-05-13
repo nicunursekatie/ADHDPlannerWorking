@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { Task, Project, Category, DailyPlan, WhatNowCriteria } from '../types';
+import { Task, Project, Category, DailyPlan, WhatNowCriteria, JournalEntry } from '../types';
 import { WorkSchedule, WorkShift, ShiftType, DEFAULT_SHIFTS, DEFAULT_SHIFT } from '../types/WorkSchedule';
 import * as localStorage from '../utils/localStorage';
 import { generateId, createSampleData } from '../utils/helpers';
@@ -49,6 +49,14 @@ interface AppContextType {
   getShiftsForMonth: (year: number, month: number) => WorkShift[];
   getShiftForDate: (date: string) => WorkShift | undefined;
   
+  // Journal Entries
+  journalEntries: JournalEntry[];
+  addJournalEntry: (entry: Partial<JournalEntry>) => JournalEntry;
+  updateJournalEntry: (entry: JournalEntry) => void;
+  deleteJournalEntry: (entryId: string) => void;
+  getJournalEntryById: (entryId: string) => JournalEntry | null;
+  getJournalEntriesForWeek: (weekNumber: number, weekYear: number) => JournalEntry[];
+  
   // What Now Wizard
   recommendTasks: (criteria: WhatNowCriteria) => Task[];
   
@@ -73,6 +81,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [categories, setCategories] = useState<Category[]>([]);
   const [dailyPlans, setDailyPlans] = useState<DailyPlan[]>([]);
   const [workSchedule, setWorkSchedule] = useState<WorkSchedule | null>(null);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
   const [deletedTasks, setDeletedTasks] = useState<DeletedTask[]>([]);
@@ -99,6 +108,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         let loadedCategories = [];
         let loadedDailyPlans = [];
         let loadedWorkSchedule = null;
+        let loadedJournalEntries = [];
         
         try {
           loadedTasks = localStorage.getTasks();
@@ -130,6 +140,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           console.error('Failed to load work schedule:', error);
         }
         
+        try {
+          loadedJournalEntries = localStorage.getJournalEntries();
+        } catch (error) {
+          console.error('Failed to load journal entries:', error);
+        }
+        
         // Debug logging
         console.log('Loading data from localStorage:');
         console.log('Tasks:', loadedTasks.length);
@@ -137,12 +153,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.log('Categories:', loadedCategories.length);
         console.log('DailyPlans:', loadedDailyPlans.length);
         console.log('WorkSchedule:', loadedWorkSchedule ? 'found' : 'not found');
+        console.log('JournalEntries:', loadedJournalEntries.length);
         
         setTasks(loadedTasks);
         setProjects(loadedProjects);
         setCategories(loadedCategories);
         setDailyPlans(loadedDailyPlans);
         setWorkSchedule(loadedWorkSchedule);
+        setJournalEntries(loadedJournalEntries);
         
         // Check if data exists
         const hasData = 
@@ -160,6 +178,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setCategories([]);
         setDailyPlans([]);
         setWorkSchedule(null);
+        setJournalEntries([]);
         setIsDataInitialized(false);
       } finally {
         // Always set loading to false, even if there was an error
@@ -772,6 +791,78 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
   }, [addTask]);
 
+  // Journal Entries
+  const addJournalEntry = useCallback((entryData: Partial<JournalEntry>): JournalEntry => {
+    try {
+      const timestamp = new Date().toISOString();
+      const date = new Date();
+      
+      // Calculate week number
+      const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+      const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+      const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+      
+      const newEntry: JournalEntry = {
+        id: generateId(),
+        date: timestamp.split('T')[0],
+        title: '',
+        content: '',
+        weekNumber,
+        weekYear: date.getFullYear(),
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        ...entryData
+      };
+      
+      const updatedEntries = [...journalEntries, newEntry];
+      setJournalEntries(updatedEntries);
+      localStorage.saveJournalEntries(updatedEntries);
+      
+      return newEntry;
+    } catch (error) {
+      console.error("Error adding journal entry:", error);
+      throw error;
+    }
+  }, [journalEntries]);
+  
+  const updateJournalEntry = useCallback((updatedEntry: JournalEntry) => {
+    try {
+      const updatedEntryWithTimestamp = {
+        ...updatedEntry,
+        updatedAt: new Date().toISOString()
+      };
+      
+      const updatedEntries = journalEntries.map(entry => 
+        entry.id === updatedEntry.id ? updatedEntryWithTimestamp : entry
+      );
+      
+      setJournalEntries(updatedEntries);
+      localStorage.saveJournalEntries(updatedEntries);
+    } catch (error) {
+      console.error("Error updating journal entry:", error);
+    }
+  }, [journalEntries]);
+  
+  const deleteJournalEntry = useCallback((entryId: string) => {
+    try {
+      const updatedEntries = journalEntries.filter(entry => entry.id !== entryId);
+      setJournalEntries(updatedEntries);
+      localStorage.saveJournalEntries(updatedEntries);
+    } catch (error) {
+      console.error("Error deleting journal entry:", error);
+    }
+  }, [journalEntries]);
+  
+  const getJournalEntryById = useCallback((entryId: string): JournalEntry | null => {
+    return journalEntries.find(entry => entry.id === entryId) || null;
+  }, [journalEntries]);
+  
+  const getJournalEntriesForWeek = useCallback((weekNumber: number, weekYear: number): JournalEntry[] => {
+    return journalEntries.filter(entry => 
+      entry.weekNumber === weekNumber && entry.weekYear === weekYear
+    );
+  }, [journalEntries]);
+
   const contextValue: AppContextType = {
     tasks,
     addTask,
@@ -806,6 +897,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     deleteWorkShift,
     getShiftsForMonth,
     getShiftForDate,
+    
+    journalEntries,
+    addJournalEntry,
+    updateJournalEntry,
+    deleteJournalEntry,
+    getJournalEntryById,
+    getJournalEntriesForWeek,
     
     recommendTasks,
     

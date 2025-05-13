@@ -1,4 +1,4 @@
-import { Task, Project, Category, DailyPlan } from '../types';
+import { Task, Project, Category, DailyPlan, JournalEntry } from '../types';
 import { WorkSchedule, WorkShift } from '../types/WorkSchedule';
 import { transformImportedData } from './importTransform';
 
@@ -9,6 +9,7 @@ const PROJECTS_KEY = `${KEY_PREFIX}projects`;
 const CATEGORIES_KEY = `${KEY_PREFIX}categories`;
 const DAILY_PLANS_KEY = `${KEY_PREFIX}dailyPlans`;
 const WORK_SCHEDULE_KEY = `${KEY_PREFIX}workSchedule`;
+const JOURNAL_ENTRIES_KEY = `${KEY_PREFIX}journalEntries`;
 
 // Tasks
 export const getTasks = (): Task[] => {
@@ -484,4 +485,99 @@ export const resetData = (): void => {
   localStorage.removeItem(CATEGORIES_KEY);
   localStorage.removeItem(DAILY_PLANS_KEY);
   localStorage.removeItem(WORK_SCHEDULE_KEY);
+  localStorage.removeItem(JOURNAL_ENTRIES_KEY);
+};
+
+// Journal Entries
+export const getJournalEntries = (): JournalEntry[] => {
+  try {
+    const entriesJSON = localStorage.getItem(JOURNAL_ENTRIES_KEY);
+    
+    // Check for data under the legacy key without prefix
+    if (!entriesJSON) {
+      const legacyEntriesJSON = localStorage.getItem('journalEntries');
+      if (legacyEntriesJSON) {
+        // Found data under legacy key, migrate it
+        const legacyEntries = JSON.parse(legacyEntriesJSON);
+        saveJournalEntries(legacyEntries);
+        // Remove legacy data after successful migration
+        localStorage.removeItem('journalEntries');
+        console.log('Migrated journal entries from legacy storage');
+        return legacyEntries;
+      }
+    }
+    
+    return entriesJSON ? JSON.parse(entriesJSON) : [];
+  } catch (error) {
+    console.error('Error reading journal entries from localStorage:', error);
+    return [];
+  }
+};
+
+export const saveJournalEntries = (entries: JournalEntry[]): void => {
+  try {
+    localStorage.setItem(JOURNAL_ENTRIES_KEY, JSON.stringify(entries));
+  } catch (error) {
+    console.error('Error saving journal entries to localStorage:', error);
+  }
+};
+
+export const addJournalEntry = (entry: JournalEntry): void => {
+  try {
+    const entries = getJournalEntries();
+    entries.push(entry);
+    saveJournalEntries(entries);
+  } catch (error) {
+    console.error('Error adding journal entry:', error);
+  }
+};
+
+export const updateJournalEntry = (updatedEntry: JournalEntry): void => {
+  try {
+    const entries = getJournalEntries();
+    const index = entries.findIndex(entry => entry.id === updatedEntry.id);
+    
+    if (index !== -1) {
+      entries[index] = updatedEntry;
+      saveJournalEntries(entries);
+    } else {
+      console.warn(`Journal entry with ID ${updatedEntry.id} not found for update`);
+    }
+  } catch (error) {
+    console.error('Error updating journal entry:', error);
+  }
+};
+
+export const deleteJournalEntry = (entryId: string): void => {
+  try {
+    const entries = getJournalEntries();
+    const updatedEntries = entries.filter(entry => entry.id !== entryId);
+    saveJournalEntries(updatedEntries);
+  } catch (error) {
+    console.error('Error deleting journal entry:', error);
+  }
+};
+
+// Get a specific journal entry by ID
+export const getJournalEntryById = (entryId: string): JournalEntry | null => {
+  try {
+    const entries = getJournalEntries();
+    return entries.find(entry => entry.id === entryId) || null;
+  } catch (error) {
+    console.error('Error getting journal entry by ID:', error);
+    return null;
+  }
+};
+
+// Get journal entries for a specific week (by weekNumber and weekYear)
+export const getJournalEntriesForWeek = (weekNumber: number, weekYear: number): JournalEntry[] => {
+  try {
+    const entries = getJournalEntries();
+    return entries.filter(entry => 
+      entry.weekNumber === weekNumber && entry.weekYear === weekYear
+    );
+  } catch (error) {
+    console.error('Error getting journal entries for week:', error);
+    return [];
+  }
 };

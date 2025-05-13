@@ -75,5 +75,19 @@ export interface PhaseTask {
   description?: string;
 }
 
+// Journal entries for the weekly review system
+export interface JournalEntry {
+  id: string;
+  date: string;
+  title: string;
+  content: string;
+  mood?: 'great' | 'good' | 'neutral' | 'challenging' | 'difficult';
+  weekNumber: number;
+  weekYear: number;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Re-export WorkSchedule types
 export * from './WorkSchedule';
