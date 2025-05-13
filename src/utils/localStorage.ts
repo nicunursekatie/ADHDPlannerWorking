@@ -10,6 +10,7 @@ const CATEGORIES_KEY = `${KEY_PREFIX}categories`;
 const DAILY_PLANS_KEY = `${KEY_PREFIX}dailyPlans`;
 const WORK_SCHEDULE_KEY = `${KEY_PREFIX}workSchedule`;
 const JOURNAL_ENTRIES_KEY = `${KEY_PREFIX}journalEntries`;
+const LAST_WEEKLY_REVIEW_KEY = `${KEY_PREFIX}lastWeeklyReview`;
 
 // Tasks
 export const getTasks = (): Task[] => {
@@ -486,6 +487,62 @@ export const resetData = (): void => {
   localStorage.removeItem(DAILY_PLANS_KEY);
   localStorage.removeItem(WORK_SCHEDULE_KEY);
   localStorage.removeItem(JOURNAL_ENTRIES_KEY);
+  localStorage.removeItem(LAST_WEEKLY_REVIEW_KEY);
+};
+
+// Weekly Review Date Functions
+export const getLastWeeklyReviewDate = (): string | null => {
+  try {
+    const dateString = localStorage.getItem(LAST_WEEKLY_REVIEW_KEY);
+    
+    // Check for legacy key
+    if (!dateString) {
+      const legacyDateString = localStorage.getItem('lastWeeklyReview');
+      if (legacyDateString) {
+        // Migrate legacy data
+        setLastWeeklyReviewDate(legacyDateString);
+        localStorage.removeItem('lastWeeklyReview');
+        return legacyDateString;
+      }
+    }
+    
+    return dateString;
+  } catch (error) {
+    console.error('Error getting last weekly review date:', error);
+    return null;
+  }
+};
+
+export const setLastWeeklyReviewDate = (dateString: string): void => {
+  try {
+    localStorage.setItem(LAST_WEEKLY_REVIEW_KEY, dateString);
+  } catch (error) {
+    console.error('Error saving last weekly review date:', error);
+  }
+};
+
+export const needsWeeklyReview = (): boolean => {
+  try {
+    const lastReviewDate = getLastWeeklyReviewDate();
+    if (!lastReviewDate) return true;
+    
+    const lastReview = new Date(lastReviewDate);
+    const now = new Date();
+    
+    // Check if date is valid
+    if (isNaN(lastReview.getTime())) return true;
+    
+    // Calculate days since last review
+    const daysSinceReview = Math.floor(
+      (now.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    
+    // Return true if it's been 7 or more days
+    return daysSinceReview >= 7;
+  } catch (error) {
+    console.error('Error checking if weekly review is needed:', error);
+    return false; // Default to not showing reminder on error
+  }
 };
 
 // Journal Entries

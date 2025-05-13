@@ -57,6 +57,11 @@ interface AppContextType {
   getJournalEntryById: (entryId: string) => JournalEntry | null;
   getJournalEntriesForWeek: (weekNumber: number, weekYear: number) => JournalEntry[];
   
+  // Weekly Review
+  getLastWeeklyReviewDate: () => string | null;
+  updateLastWeeklyReviewDate: () => void;
+  needsWeeklyReview: () => boolean;
+  
   // What Now Wizard
   recommendTasks: (criteria: WhatNowCriteria) => Task[];
   
@@ -863,6 +868,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   }, [journalEntries]);
 
+  // Weekly Review Date functions
+  const getLastWeeklyReviewDate = useCallback((): string | null => {
+    return localStorage.getLastWeeklyReviewDate();
+  }, []);
+  
+  const updateLastWeeklyReviewDate = useCallback(() => {
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.setLastWeeklyReviewDate(today);
+  }, []);
+  
+  const needsWeeklyReview = useCallback((): boolean => {
+    return localStorage.needsWeeklyReview();
+  }, []);
+
   const contextValue: AppContextType = {
     tasks,
     addTask,
@@ -904,6 +923,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     deleteJournalEntry,
     getJournalEntryById,
     getJournalEntriesForWeek,
+    
+    getLastWeeklyReviewDate,
+    updateLastWeeklyReviewDate,
+    needsWeeklyReview,
     
     recommendTasks,
     

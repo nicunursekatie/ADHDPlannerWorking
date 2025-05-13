@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Clock, 
@@ -11,7 +11,8 @@ import {
   HelpCircle,
   BrainCircuit,
   RefreshCw,
-  ListChecks
+  ListChecks,
+  AlertTriangle
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import Card from '../components/common/Card';
@@ -35,11 +36,20 @@ const Dashboard: React.FC = () => {
     isLoading,
     isDataInitialized,
     initializeSampleData,
-    deleteTask
+    deleteTask,
+    needsWeeklyReview,
+    getLastWeeklyReviewDate
   } = useAppContext();
+  
+  const [showWeeklyReviewReminder, setShowWeeklyReviewReminder] = useState(false);
   
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  
+  // Check if weekly review is needed
+  useEffect(() => {
+    setShowWeeklyReviewReminder(needsWeeklyReview());
+  }, [needsWeeklyReview]);
   
   if (isLoading) {
     return (
@@ -133,6 +143,36 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
+      {/* Weekly Review Reminder */}
+      {showWeeklyReviewReminder && (
+        <Card className="mb-4 bg-yellow-50 border-l-4 border-yellow-500">
+          <div className="p-4">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <AlertTriangle className="h-5 w-5 text-yellow-600" aria-hidden="true" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-yellow-800">Time for your weekly review!</h3>
+                <div className="mt-2 text-sm text-yellow-700">
+                  <p>It's been a week since your last review. Taking time to reflect helps with ADHD management.</p>
+                </div>
+                <div className="mt-4">
+                  <Link to="/weekly-review">
+                    <Button
+                      variant="primary"
+                      className="bg-yellow-600 hover:bg-yellow-700"
+                      icon={<RefreshCw size={16} />}
+                    >
+                      Start Weekly Review
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+      
       {/* Memory Tools Section */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-3">
@@ -164,12 +204,15 @@ const Dashboard: React.FC = () => {
                 </Link>
 
                 <Link to="/weekly-review">
-                  <div className="p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer flex items-center justify-between">
+                  <div className={`p-3 ${showWeeklyReviewReminder ? 'bg-yellow-100 border border-yellow-200' : 'bg-blue-50'} rounded-lg hover:bg-blue-100 transition-colors cursor-pointer flex items-center justify-between`}>
                     <div className="flex items-center">
-                      <RefreshCw className="w-5 h-5 text-blue-600 mr-2" />
+                      <RefreshCw className={`w-5 h-5 ${showWeeklyReviewReminder ? 'text-yellow-600' : 'text-blue-600'} mr-2`} />
                       <span className="font-medium">Weekly Review</span>
+                      {showWeeklyReviewReminder && (
+                        <span className="ml-2 px-2 py-0.5 bg-yellow-200 text-yellow-800 text-xs rounded-full">Due</span>
+                      )}
                     </div>
-                    <ArrowRight size={16} className="text-blue-500" />
+                    <ArrowRight size={16} className={`${showWeeklyReviewReminder ? 'text-yellow-500' : 'text-blue-500'}`} />
                   </div>
                 </Link>
 

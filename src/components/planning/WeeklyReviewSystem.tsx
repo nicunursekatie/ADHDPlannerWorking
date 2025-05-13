@@ -40,7 +40,8 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
     journalEntries,
     addJournalEntry,
     updateJournalEntry,
-    getJournalEntriesForWeek
+    getJournalEntriesForWeek,
+    updateLastWeeklyReviewDate
   } = useAppContext();
   
   const [taskInput, setTaskInput] = useState('');
@@ -209,6 +210,8 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
       // Check if all sections are complete
       if (updatedSections.every(s => s.complete)) {
         setReviewComplete(true);
+        // Update the last weekly review date
+        updateLastWeeklyReviewDate();
       }
     }
   };
@@ -217,27 +220,51 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
     if (activeSectionId) {
       const section = reviewSections.find(s => s.id === activeSectionId);
       if (section) {
+        // Always increment the prompt index if not at the end
         if (currentPromptIndex < section.prompts.length - 1) {
           setCurrentPromptIndex(currentPromptIndex + 1);
-        } else {
-          // For reflection section, save journal entry if content exists
-          if (section.id === 'reflect' && section.hasJournal && journalInput.trim()) {
+          return;
+        }
+        
+        // We're at the last prompt
+        
+        // For the reflect section, only complete if journal content exists
+        // Otherwise just mark it complete like other sections
+        if (section.id === 'reflect' && section.hasJournal) {
+          if (journalInput.trim()) {
             handleSaveJournal();
-            return;
+          } else {
+            // If no journal content, just complete the section
+            const updatedSections = reviewSections.map(s => 
+              s.id === activeSectionId ? { ...s, complete: true } : s
+            );
+            setReviewSections(updatedSections);
+            setActiveSectionId(null);
+            setCurrentPromptIndex(0);
+            
+            // Check if all sections are complete
+            if (updatedSections.every(s => s.complete)) {
+              setReviewComplete(true);
+              // Update the last weekly review date
+              updateLastWeeklyReviewDate();
+            }
           }
-          
-          // For other sections, mark as complete 
-          const updatedSections = reviewSections.map(s => 
-            s.id === activeSectionId ? { ...s, complete: true } : s
-          );
-          setReviewSections(updatedSections);
-          setActiveSectionId(null);
-          setCurrentPromptIndex(0);
-          
-          // Check if all sections are complete
-          if (updatedSections.every(s => s.complete)) {
-            setReviewComplete(true);
-          }
+          return;
+        }
+        
+        // For all other sections, just mark complete
+        const updatedSections = reviewSections.map(s => 
+          s.id === activeSectionId ? { ...s, complete: true } : s
+        );
+        setReviewSections(updatedSections);
+        setActiveSectionId(null);
+        setCurrentPromptIndex(0);
+        
+        // Check if all sections are complete
+        if (updatedSections.every(s => s.complete)) {
+          setReviewComplete(true);
+          // Update the last weekly review date
+          updateLastWeeklyReviewDate();
         }
       }
     }
@@ -532,13 +559,40 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                       Back to Review
                     </Button>
                     
+                    {/* Special case for last prompt in reflect section with journal */}
                     {section.id === 'reflect' && section.hasJournal && currentPromptIndex === section.prompts.length - 1 ? (
-                      <Button 
-                        onClick={handleSaveJournal}
-                        disabled={!journalInput.trim()}
-                      >
-                        Save Journal & Complete
-                      </Button>
+                      <div className="flex space-x-2">
+                        {/* Allow skipping journal entry */}
+                        <Button 
+                          variant="outline"
+                          onClick={() => {
+                            // Just complete the section without saving journal
+                            const updatedSections = reviewSections.map(s => 
+                              s.id === activeSectionId ? { ...s, complete: true } : s
+                            );
+                            setReviewSections(updatedSections);
+                            setActiveSectionId(null);
+                            setCurrentPromptIndex(0);
+                            
+                            // Check if all sections are complete
+                            if (updatedSections.every(s => s.complete)) {
+                              setReviewComplete(true);
+                              // Update the last weekly review date
+                              updateLastWeeklyReviewDate();
+                            }
+                          }}
+                        >
+                          Skip Journal
+                        </Button>
+                        
+                        {/* Save journal and complete */}
+                        <Button 
+                          onClick={handleSaveJournal}
+                          disabled={!journalInput.trim()}
+                        >
+                          Save Journal & Complete
+                        </Button>
+                      </div>
                     ) : (
                       <Button onClick={handleNextPrompt}>
                         {currentPromptIndex < section.prompts.length - 1 ? 'Next Prompt' : 'Complete Section'}
