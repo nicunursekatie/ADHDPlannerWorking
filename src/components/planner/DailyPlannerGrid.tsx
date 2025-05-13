@@ -32,24 +32,80 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
   }, [dailyPlan, timeBlocks]);
   
   // Sort time blocks by start time for better organization
-  const sortedTimeBlocks = [...timeBlocks].sort((a, b) => {
-    return a.startTime.localeCompare(b.startTime);
-  });
+  const sortedTimeBlocks = (() => {
+    try {
+      if (!Array.isArray(timeBlocks)) {
+        console.error('timeBlocks is not an array:', timeBlocks);
+        return [];
+      }
+      
+      // Filter out invalid blocks and sort the rest
+      return [...timeBlocks]
+        .filter(block => block && typeof block.startTime === 'string')
+        .sort((a, b) => {
+          try {
+            return a.startTime.localeCompare(b.startTime);
+          } catch (sortError) {
+            console.error('Error sorting time blocks:', sortError, { a, b });
+            return 0;
+          }
+        });
+    } catch (error) {
+      console.error('Error processing time blocks:', error);
+      return [];
+    }
+  })();
   
   // Get unscheduled tasks (tasks without time blocks)
-  const unscheduledTasks = tasks.filter(task => {
-    // Check if the task is in any block's taskIds array or the legacy taskId field
-    const hasTimeBlock = timeBlocks.some(block => 
-      block.taskId === task.id || (block.taskIds && block.taskIds.includes(task.id))
-    );
-    const isIncomplete = !task.completed;
-    const taskDate = task.dueDate ? new Date(task.dueDate + 'T00:00:00').toISOString().split('T')[0] : null;
-    const isDueOnOrBefore = !taskDate || taskDate <= date;
-    // Only show top-level tasks, not subtasks (tasks without a parent)
-    const isTopLevelTask = !task.parentTaskId;
-    
-    return isIncomplete && !hasTimeBlock && isDueOnOrBefore && isTopLevelTask;
-  });
+  const unscheduledTasks = (() => {
+    try {
+      if (!Array.isArray(tasks)) {
+        console.error('tasks is not an array:', tasks);
+        return [];
+      }
+      
+      return tasks.filter(task => {
+        try {
+          if (!task || typeof task !== 'object') {
+            return false;
+          }
+          
+          // Check if the task is in any block's taskIds array or the legacy taskId field
+          const hasTimeBlock = Array.isArray(timeBlocks) && timeBlocks.some(block => {
+            if (!block) return false;
+            
+            const matchesLegacyId = block.taskId === task.id;
+            const matchesNewId = block.taskIds && Array.isArray(block.taskIds) && block.taskIds.includes(task.id);
+            
+            return matchesLegacyId || matchesNewId;
+          });
+          
+          const isIncomplete = !task.completed;
+          
+          let isDueOnOrBefore = true;
+          try {
+            if (task.dueDate) {
+              const taskDate = new Date(task.dueDate + 'T00:00:00').toISOString().split('T')[0];
+              isDueOnOrBefore = !taskDate || taskDate <= date;
+            }
+          } catch (dateError) {
+            console.error('Error processing task date:', dateError, task);
+          }
+          
+          // Only show top-level tasks, not subtasks (tasks without a parent)
+          const isTopLevelTask = !task.parentTaskId;
+          
+          return isIncomplete && !hasTimeBlock && isDueOnOrBefore && isTopLevelTask;
+        } catch (taskError) {
+          console.error('Error filtering task:', taskError, task);
+          return false;
+        }
+      });
+    } catch (error) {
+      console.error('Error processing unscheduled tasks:', error);
+      return [];
+    }
+  })();
   
   // Configure DnD sensors
   const sensors = useSensors(

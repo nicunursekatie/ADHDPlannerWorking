@@ -92,34 +92,79 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Load data from localStorage on initial render
   useEffect(() => {
     const loadData = () => {
-      const loadedTasks = localStorage.getTasks();
-      const loadedProjects = localStorage.getProjects();
-      const loadedCategories = localStorage.getCategories();
-      const loadedDailyPlans = localStorage.getDailyPlans();
-      const loadedWorkSchedule = localStorage.getWorkSchedule();
-      
-      // Debug logging
-      console.log('Loading data from localStorage:');
-      console.log('Tasks:', loadedTasks.length);
-      console.log('Projects:', loadedProjects.length);
-      console.log('Categories:', loadedCategories.length);
-      console.log('DailyPlans:', loadedDailyPlans.length);
-      console.log('WorkSchedule:', loadedWorkSchedule ? 'found' : 'not found');
-      
-      setTasks(loadedTasks);
-      setProjects(loadedProjects);
-      setCategories(loadedCategories);
-      setDailyPlans(loadedDailyPlans);
-      setWorkSchedule(loadedWorkSchedule);
-      
-      // Check if data exists
-      const hasData = 
-        loadedTasks.length > 0 || 
-        loadedProjects.length > 0 || 
-        loadedCategories.length > 0;
-      
-      setIsDataInitialized(hasData);
-      setIsLoading(false);
+      try {
+        // Wrap all localStorage calls in try-catch to prevent React rendering crashes
+        let loadedTasks = [];
+        let loadedProjects = [];
+        let loadedCategories = [];
+        let loadedDailyPlans = [];
+        let loadedWorkSchedule = null;
+        
+        try {
+          loadedTasks = localStorage.getTasks();
+        } catch (error) {
+          console.error('Failed to load tasks:', error);
+        }
+        
+        try {
+          loadedProjects = localStorage.getProjects();
+        } catch (error) {
+          console.error('Failed to load projects:', error);
+        }
+        
+        try {
+          loadedCategories = localStorage.getCategories();
+        } catch (error) {
+          console.error('Failed to load categories:', error);
+        }
+        
+        try {
+          loadedDailyPlans = localStorage.getDailyPlans();
+        } catch (error) {
+          console.error('Failed to load daily plans:', error);
+        }
+        
+        try {
+          loadedWorkSchedule = localStorage.getWorkSchedule();
+        } catch (error) {
+          console.error('Failed to load work schedule:', error);
+        }
+        
+        // Debug logging
+        console.log('Loading data from localStorage:');
+        console.log('Tasks:', loadedTasks.length);
+        console.log('Projects:', loadedProjects.length);
+        console.log('Categories:', loadedCategories.length);
+        console.log('DailyPlans:', loadedDailyPlans.length);
+        console.log('WorkSchedule:', loadedWorkSchedule ? 'found' : 'not found');
+        
+        setTasks(loadedTasks);
+        setProjects(loadedProjects);
+        setCategories(loadedCategories);
+        setDailyPlans(loadedDailyPlans);
+        setWorkSchedule(loadedWorkSchedule);
+        
+        // Check if data exists
+        const hasData = 
+          loadedTasks.length > 0 || 
+          loadedProjects.length > 0 || 
+          loadedCategories.length > 0;
+        
+        setIsDataInitialized(hasData);
+      } catch (error) {
+        // Catch-all for any unhandled errors in data loading
+        console.error('Critical error loading data:', error);
+        // Set default empty data structures to prevent rendering errors
+        setTasks([]);
+        setProjects([]);
+        setCategories([]);
+        setDailyPlans([]);
+        setWorkSchedule(null);
+        setIsDataInitialized(false);
+      } finally {
+        // Always set loading to false, even if there was an error
+        setIsLoading(false);
+      }
     };
     
     loadData();
@@ -398,61 +443,113 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   // Daily Plans
   const getDailyPlan = useCallback((date: string): DailyPlan | null => {
-    const plan = dailyPlans.find(plan => plan.date === date);
-    
-    // Debug logging
-    if (!plan) {
-      console.log(`No daily plan found for date: ${date}`);
-      console.log('Available plans:', dailyPlans.map(p => p.date));
-    } else {
-      console.log(`Found daily plan for date: ${date}`, plan);
+    try {
+      if (!dailyPlans || !Array.isArray(dailyPlans)) {
+        console.error('DailyPlans is not an array:', dailyPlans);
+        return null;
+      }
+      
+      const plan = dailyPlans.find(plan => plan && plan.date === date);
+      
+      // Debug logging
+      if (!plan) {
+        console.log(`No daily plan found for date: ${date}`);
+        console.log('Available plans:', dailyPlans.map(p => p?.date || 'unknown').filter(Boolean));
+      } else {
+        console.log(`Found daily plan for date: ${date}`, plan);
+      }
+      
+      return plan || null;
+    } catch (error) {
+      console.error(`Error getting daily plan for date ${date}:`, error);
+      return null;
     }
-    
-    return plan || null;
   }, [dailyPlans]);
   
   const saveDailyPlan = useCallback((plan: DailyPlan) => {
-    const existingIndex = dailyPlans.findIndex(p => p.date === plan.date);
-    let updatedPlans: DailyPlan[];
-    
-    if (existingIndex !== -1) {
-      updatedPlans = [
-        ...dailyPlans.slice(0, existingIndex),
-        plan,
-        ...dailyPlans.slice(existingIndex + 1),
-      ];
-    } else {
-      updatedPlans = [...dailyPlans, plan];
+    try {
+      if (!dailyPlans || !Array.isArray(dailyPlans)) {
+        console.error('DailyPlans is not an array in saveDailyPlan:', dailyPlans);
+        const newPlans = [plan];
+        setDailyPlans(newPlans);
+        localStorage.saveDailyPlans(newPlans);
+        return;
+      }
+      
+      const existingIndex = dailyPlans.findIndex(p => p && p.date === plan.date);
+      let updatedPlans: DailyPlan[];
+      
+      if (existingIndex !== -1) {
+        updatedPlans = [
+          ...dailyPlans.slice(0, existingIndex),
+          plan,
+          ...dailyPlans.slice(existingIndex + 1),
+        ];
+      } else {
+        updatedPlans = [...dailyPlans, plan];
+      }
+      
+      setDailyPlans(updatedPlans);
+      
+      try {
+        localStorage.saveDailyPlans(updatedPlans);
+      } catch (storageError) {
+        console.error('Failed to save daily plans to localStorage:', storageError);
+      }
+    } catch (error) {
+      console.error('Error in saveDailyPlan:', error);
+      // Try a more direct approach if the complex logic fails
+      try {
+        const simplePlans = [plan];
+        setDailyPlans(prev => {
+          const existing = prev.find(p => p.date === plan.date);
+          return existing 
+            ? prev.map(p => p.date === plan.date ? plan : p)
+            : [...prev, plan];
+        });
+        localStorage.saveDailyPlans(simplePlans);
+      } catch (fallbackError) {
+        console.error('Fallback save failed:', fallbackError);
+      }
     }
-    
-    setDailyPlans(updatedPlans);
-    localStorage.saveDailyPlans(updatedPlans);
   }, [dailyPlans]);
   
   // Function to make time blocks show up in calendar view
   const exportTimeBlocksToTasks = useCallback((date: string): number => {
-    // Get the daily plan for the specified date
-    const plan = getDailyPlan(date);
-    if (!plan || !plan.timeBlocks || plan.timeBlocks.length === 0) {
-      return 0; // No time blocks to export
-    }
-
-    let exportedCount = 0;
-
-    // Count time blocks for reporting purposes
-    plan.timeBlocks.forEach(block => {
-      // Skip empty blocks with no title
-      if (!block.title || block.title === 'New Time Block') {
-        return;
+    try {
+      // Get the daily plan for the specified date
+      const plan = getDailyPlan(date);
+      if (!plan || !plan.timeBlocks || !Array.isArray(plan.timeBlocks) || plan.timeBlocks.length === 0) {
+        console.log(`No time blocks found for date: ${date}`);
+        return 0; // No time blocks to export
       }
 
-      exportedCount++;
-    });
+      let exportedCount = 0;
 
-    // Instead of creating tasks, we simply update the UI to show that blocks were exported
-    // The calendar view already reads from the dailyPlans data structure directly
+      // Count time blocks for reporting purposes
+      plan.timeBlocks.forEach(block => {
+        try {
+          // Skip empty blocks with no title
+          if (!block || !block.title || block.title === 'New Time Block') {
+            return;
+          }
 
-    return exportedCount;
+          exportedCount++;
+        } catch (blockError) {
+          console.error('Error processing block in exportTimeBlocksToTasks:', blockError);
+          // Continue with other blocks
+        }
+      });
+
+      console.log(`Exported ${exportedCount} time blocks for date: ${date}`);
+      
+      // Instead of creating tasks, we simply update the UI to show that blocks were exported
+      // The calendar view already reads from the dailyPlans data structure directly
+      return exportedCount;
+    } catch (error) {
+      console.error(`Error in exportTimeBlocksToTasks for date ${date}:`, error);
+      return 0;
+    }
   }, [getDailyPlan]);
   
   // Work Schedule
