@@ -12,12 +12,36 @@ const WORK_SCHEDULE_KEY = `${KEY_PREFIX}workSchedule`;
 
 // Tasks
 export const getTasks = (): Task[] => {
-  const tasksJSON = localStorage.getItem(TASKS_KEY);
-  return tasksJSON ? JSON.parse(tasksJSON) : [];
+  try {
+    const tasksJSON = localStorage.getItem(TASKS_KEY);
+    
+    // Check for data under the legacy key without prefix
+    if (!tasksJSON) {
+      const legacyTasksJSON = localStorage.getItem('tasks');
+      if (legacyTasksJSON) {
+        // Found data under legacy key, migrate it
+        const legacyTasks = JSON.parse(legacyTasksJSON);
+        saveTasks(legacyTasks);
+        // Remove legacy data after successful migration
+        localStorage.removeItem('tasks');
+        console.log('Migrated tasks data from legacy storage');
+        return legacyTasks;
+      }
+    }
+    
+    return tasksJSON ? JSON.parse(tasksJSON) : [];
+  } catch (error) {
+    console.error('Error reading tasks from localStorage:', error);
+    return [];
+  }
 };
 
 export const saveTasks = (tasks: Task[]): void => {
-  localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+  try {
+    localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+  } catch (error) {
+    console.error('Error saving tasks to localStorage:', error);
+  }
 };
 
 export const addTask = (task: Task): void => {
@@ -43,12 +67,36 @@ export const deleteTask = (taskId: string): void => {
 
 // Projects
 export const getProjects = (): Project[] => {
-  const projectsJSON = localStorage.getItem(PROJECTS_KEY);
-  return projectsJSON ? JSON.parse(projectsJSON) : [];
+  try {
+    const projectsJSON = localStorage.getItem(PROJECTS_KEY);
+    
+    // Check for data under the legacy key without prefix
+    if (!projectsJSON) {
+      const legacyProjectsJSON = localStorage.getItem('projects');
+      if (legacyProjectsJSON) {
+        // Found data under legacy key, migrate it
+        const legacyProjects = JSON.parse(legacyProjectsJSON);
+        saveProjects(legacyProjects);
+        // Remove legacy data after successful migration
+        localStorage.removeItem('projects');
+        console.log('Migrated projects data from legacy storage');
+        return legacyProjects;
+      }
+    }
+    
+    return projectsJSON ? JSON.parse(projectsJSON) : [];
+  } catch (error) {
+    console.error('Error reading projects from localStorage:', error);
+    return [];
+  }
 };
 
 export const saveProjects = (projects: Project[]): void => {
-  localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  try {
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  } catch (error) {
+    console.error('Error saving projects to localStorage:', error);
+  }
 };
 
 export const addProject = (project: Project): void => {
@@ -74,12 +122,36 @@ export const deleteProject = (projectId: string): void => {
 
 // Categories
 export const getCategories = (): Category[] => {
-  const categoriesJSON = localStorage.getItem(CATEGORIES_KEY);
-  return categoriesJSON ? JSON.parse(categoriesJSON) : [];
+  try {
+    const categoriesJSON = localStorage.getItem(CATEGORIES_KEY);
+    
+    // Check for data under the legacy key without prefix
+    if (!categoriesJSON) {
+      const legacyCategoriesJSON = localStorage.getItem('categories');
+      if (legacyCategoriesJSON) {
+        // Found data under legacy key, migrate it
+        const legacyCategories = JSON.parse(legacyCategoriesJSON);
+        saveCategories(legacyCategories);
+        // Remove legacy data after successful migration
+        localStorage.removeItem('categories');
+        console.log('Migrated categories data from legacy storage');
+        return legacyCategories;
+      }
+    }
+    
+    return categoriesJSON ? JSON.parse(categoriesJSON) : [];
+  } catch (error) {
+    console.error('Error reading categories from localStorage:', error);
+    return [];
+  }
 };
 
 export const saveCategories = (categories: Category[]): void => {
-  localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+  try {
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+  } catch (error) {
+    console.error('Error saving categories to localStorage:', error);
+  }
 };
 
 export const addCategory = (category: Category): void => {

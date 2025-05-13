@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent, useDroppable, useDraggable } from '@dnd-kit/core';
 import { Task, TimeBlock } from '../../types';
 import { useAppContext } from '../../context/AppContext';
@@ -22,7 +22,14 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   
   // Get time blocks for the current date
-  const timeBlocks = getDailyPlan(date)?.timeBlocks || [];
+  const dailyPlan = getDailyPlan(date);
+  const timeBlocks = dailyPlan?.timeBlocks || [];
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('Daily plan loaded:', dailyPlan);
+    console.log('Time blocks:', timeBlocks);
+  }, [dailyPlan, timeBlocks]);
   
   // Sort time blocks by start time for better organization
   const sortedTimeBlocks = [...timeBlocks].sort((a, b) => {
@@ -221,13 +228,14 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
     }
   };
 
+  // Create a droppable area for time blocks
   const DroppableTimeBlock = ({ block, children }: { block: TimeBlock; children: React.ReactNode }) => {
     const { setNodeRef } = useDroppable({
       id: block.id,
     });
     
     return (
-      <div ref={setNodeRef} className="h-full">
+      <div ref={setNodeRef} className="h-full w-full">
         {children}
       </div>
     );

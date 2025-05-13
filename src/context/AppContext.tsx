@@ -92,17 +92,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Load data from localStorage on initial render
   useEffect(() => {
     const loadData = () => {
-      setTasks(localStorage.getTasks());
-      setProjects(localStorage.getProjects());
-      setCategories(localStorage.getCategories());
-      setDailyPlans(localStorage.getDailyPlans());
-      setWorkSchedule(localStorage.getWorkSchedule());
+      const loadedTasks = localStorage.getTasks();
+      const loadedProjects = localStorage.getProjects();
+      const loadedCategories = localStorage.getCategories();
+      const loadedDailyPlans = localStorage.getDailyPlans();
+      const loadedWorkSchedule = localStorage.getWorkSchedule();
+      
+      // Debug logging
+      console.log('Loading data from localStorage:');
+      console.log('Tasks:', loadedTasks.length);
+      console.log('Projects:', loadedProjects.length);
+      console.log('Categories:', loadedCategories.length);
+      console.log('DailyPlans:', loadedDailyPlans.length);
+      console.log('WorkSchedule:', loadedWorkSchedule ? 'found' : 'not found');
+      
+      setTasks(loadedTasks);
+      setProjects(loadedProjects);
+      setCategories(loadedCategories);
+      setDailyPlans(loadedDailyPlans);
+      setWorkSchedule(loadedWorkSchedule);
       
       // Check if data exists
       const hasData = 
-        localStorage.getTasks().length > 0 || 
-        localStorage.getProjects().length > 0 || 
-        localStorage.getCategories().length > 0;
+        loadedTasks.length > 0 || 
+        loadedProjects.length > 0 || 
+        loadedCategories.length > 0;
       
       setIsDataInitialized(hasData);
       setIsLoading(false);
@@ -384,7 +398,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   // Daily Plans
   const getDailyPlan = useCallback((date: string): DailyPlan | null => {
-    return dailyPlans.find(plan => plan.date === date) || null;
+    const plan = dailyPlans.find(plan => plan.date === date);
+    
+    // Debug logging
+    if (!plan) {
+      console.log(`No daily plan found for date: ${date}`);
+      console.log('Available plans:', dailyPlans.map(p => p.date));
+    } else {
+      console.log(`Found daily plan for date: ${date}`, plan);
+    }
+    
+    return plan || null;
   }, [dailyPlans]);
   
   const saveDailyPlan = useCallback((plan: DailyPlan) => {
