@@ -55,16 +55,25 @@ console.log('Creating .nojekyll file...');
 fs.writeFileSync(path.join(__dirname, '../dist/.nojekyll'), '');
 
 // Make sure the index.html in the dist directory has the correct MIME type header
-// by adding a small comment at the top
-console.log('Adding MIME type hint to index.html...');
+// and fix any path issues
+console.log('Adding MIME type hint to index.html and fixing paths...');
 const indexPath = path.join(__dirname, '../dist/index.html');
 if (fs.existsSync(indexPath)) {
   let indexContent = fs.readFileSync(indexPath, 'utf8');
+  
   // Add a comment at the top of the file to ensure it's served with the correct MIME type
   if (!indexContent.includes('<!-- text/html -->')) {
     indexContent = '<!-- text/html -->\n' + indexContent;
-    fs.writeFileSync(indexPath, indexContent);
   }
+  
+  // Fix any absolute paths to be relative
+  indexContent = indexContent
+    .replace(/src="\/assets\//g, 'src="assets/')
+    .replace(/href="\/assets\//g, 'href="assets/')
+    .replace(/src="\/registerSW\.js/g, 'src="registerSW.js')
+    .replace(/href="\/manifest\.webmanifest/g, 'href="manifest.webmanifest');
+  
+  fs.writeFileSync(indexPath, indexContent);
 }
 
 console.log('Post-build processing complete!');

@@ -42,7 +42,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-  base: '/ADHDplanner/',
+  base: '/',
 
   build: {
     outDir: 'dist',
