@@ -5,8 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const baseElement = document.querySelector('base');
   if (baseElement && baseElement.href) {
     basePath = new URL(baseElement.href).pathname;
-  } else if (window.location.pathname.includes('/ADHDplanner/')) {
-    basePath = '/ADHDplanner/';
+  } else if (window.location.pathname.includes('/ADHDPlannerWorking/')) {
+    basePath = '/ADHDPlannerWorking/';
   }
   
   // Handle manifest fallback
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'manifest.json',
             `${basePath}manifest.json`,
             '/manifest.json',
-            '/ADHDplanner/manifest.json',
+            '/ADHDPlannerWorking/manifest.json',
             './manifest.json'
           ];
           
@@ -75,8 +75,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Try to fix path duplication issues
         let fixedPath = originalSrc;
-        if (originalSrc.includes('/ADHDplanner/ADHDplanner/')) {
-          fixedPath = originalSrc.replace('/ADHDplanner/ADHDplanner/', '/ADHDplanner/');
+        if (originalSrc.includes('/ADHDPlannerWorking/ADHDPlannerWorking/')) {
+          fixedPath = originalSrc.replace('/ADHDPlannerWorking/ADHDPlannerWorking/', '/ADHDPlannerWorking/');
         }
         
         fallbackScript.src = fixedPath;
@@ -92,10 +92,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const fixDuplicatePathsInElements = (selector, attribute) => {
     document.querySelectorAll(selector).forEach(element => {
       const path = element.getAttribute(attribute);
-      if (path && path.includes('/ADHDplanner/ADHDplanner/')) {
+      if (path && path.includes('/ADHDPlannerWorking/ADHDPlannerWorking/')) {
         element.setAttribute(
           attribute,
-          path.replace('/ADHDplanner/ADHDplanner/', '/ADHDplanner/')
+          path.replace('/ADHDPlannerWorking/ADHDPlannerWorking/', '/ADHDPlannerWorking/')
         );
       }
     });
