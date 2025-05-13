@@ -28,7 +28,7 @@ type ReviewSection = {
   description: string;
   prompts: string[];
   complete: boolean;
-  hasJournal?: boolean;
+  hasJournal: boolean; // All sections can have journals now
 }
 
 const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }) => {
@@ -51,6 +51,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [reviewComplete, setReviewComplete] = useState(false);
   const [currentMood, setCurrentMood] = useState<'great' | 'good' | 'neutral' | 'challenging' | 'difficult'>('neutral');
+  const [hasEnteredJournal, setHasEnteredJournal] = useState(false);
   
   // Calculate current week number and year
   const getCurrentWeekDetails = () => {
@@ -68,6 +69,28 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
   
   // Get existing journal entries for this week
   const weeklyJournalEntries = getJournalEntriesForWeek(weekNumber, weekYear);
+  
+  // Get journal entries for the current section and prompt
+  const getCurrentSectionJournalEntries = () => {
+    if (!activeSectionId) return [];
+    return weeklyJournalEntries.filter(entry => 
+      entry.section === activeSectionId
+    );
+  };
+  
+  const getCurrentPromptJournalEntries = () => {
+    if (!activeSectionId) return [];
+    const section = reviewSections.find(s => s.id === activeSectionId);
+    if (!section) return [];
+    
+    return weeklyJournalEntries.filter(entry => 
+      entry.section === activeSectionId && 
+      entry.promptIndex === currentPromptIndex
+    );
+  };
+  
+  // Current entries for this specific prompt
+  const currentPromptEntries = getCurrentPromptJournalEntries();
   
   // Get dates for this week and next week
   const today = new Date();
@@ -107,7 +130,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
         'What would make next week better?',
         "Any patterns you're noticing in your productivity?"
       ],
-      complete: weeklyJournalEntries.length > 0,
+      complete: weeklyJournalEntries.filter(entry => entry.section === 'reflect').length > 0,
       hasJournal: true
     },
     {
@@ -122,7 +145,8 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
         'Should any of these be delegated or dropped?',
         'Which ones are actually urgent vs. just feeling urgent?'
       ],
-      complete: false
+      complete: weeklyJournalEntries.filter(entry => entry.section === 'overdue').length > 0,
+      hasJournal: true
     },
     {
       id: 'upcoming',
@@ -136,7 +160,8 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
         'Any potential obstacles you should plan for?',
         'Is your calendar aligned with your priorities?'
       ],
-      complete: false
+      complete: weeklyJournalEntries.filter(entry => entry.section === 'upcoming').length > 0,
+      hasJournal: true
     },
     {
       id: 'projects',
@@ -150,7 +175,8 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
         'Should any projects be put on hold?',
         'Are there any dependencies blocking progress?'
       ],
-      complete: false
+      complete: weeklyJournalEntries.filter(entry => entry.section === 'projects').length > 0,
+      hasJournal: true
     },
     {
       id: 'life-areas',
@@ -164,7 +190,8 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
         'Personal growth: Progress on learning or hobbies?',
         'Finances: Bills to pay, budgets to review, financial decisions?'
       ],
-      complete: false
+      complete: weeklyJournalEntries.filter(entry => entry.section === 'life-areas').length > 0,
+      hasJournal: true
     }
   ]);
   
@@ -179,33 +206,51 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
   };
   
   const handleSaveJournal = () => {
+    if (!activeSectionId) return;
     if (journalInput.trim()) {
+      const section = reviewSections.find(s => s.id === activeSectionId);
+      if (!section) return;
+      
+      // Get the current prompt text
+      const promptText = section.prompts[currentPromptIndex];
+      
       // Create title if not provided
-      const title = journalTitle.trim() || `Week ${weekNumber} Reflection (${today.toLocaleDateString()})`;
+      const title = journalTitle.trim() || 
+        `${section.title}: ${promptText.length > 30 ? promptText.substring(0, 30) + '...' : promptText}`;
       
       // Create new journal entry
       addJournalEntry({
         title,
         content: journalInput,
+        section: activeSectionId as 'reflect' | 'overdue' | 'upcoming' | 'projects' | 'life-areas',
+        prompt: promptText,
+        promptIndex: currentPromptIndex,
         mood: currentMood,
         weekNumber,
         weekYear,
-        tags: ['weekly-review', `week-${weekNumber}`]
+        tags: ['weekly-review', `week-${weekNumber}`, `section-${activeSectionId}`]
       });
       
-      // Clear inputs
+      // Clear inputs and mark that we've entered a journal
       setJournalInput('');
       setJournalTitle('');
+      setHasEnteredJournal(true);
       
-      // Mark reflect section as complete
+      // Mark current section as complete
       const updatedSections = reviewSections.map(s => 
-        s.id === 'reflect' ? { ...s, complete: true } : s
+        s.id === activeSectionId ? { ...s, complete: true } : s
       );
       setReviewSections(updatedSections);
       
-      // Navigate back to section list
-      setActiveSectionId(null);
-      setCurrentPromptIndex(0);
+      // Go to next prompt if not at the end
+      if (currentPromptIndex < section.prompts.length - 1) {
+        setCurrentPromptIndex(currentPromptIndex + 1);
+      } else {
+        // Navigate back to section list if at the end
+        setActiveSectionId(null);
+        setCurrentPromptIndex(0);
+        setHasEnteredJournal(false);
+      }
       
       // Check if all sections are complete
       if (updatedSections.every(s => s.complete)) {
@@ -220,6 +265,12 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
     if (activeSectionId) {
       const section = reviewSections.find(s => s.id === activeSectionId);
       if (section) {
+        // If there's content in the journal input, save it first
+        if (journalInput.trim()) {
+          handleSaveJournal();
+          return; // handleSaveJournal will handle navigation
+        }
+
         // Always increment the prompt index if not at the end
         if (currentPromptIndex < section.prompts.length - 1) {
           setCurrentPromptIndex(currentPromptIndex + 1);
@@ -227,38 +278,41 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
         }
         
         // We're at the last prompt
+        // Just mark the section as complete if there's no journal content
+        // or we already saved entries for this section
         
-        // For the reflect section, only complete if journal content exists
-        // Otherwise just mark it complete like other sections
-        if (section.id === 'reflect' && section.hasJournal) {
-          if (journalInput.trim()) {
-            handleSaveJournal();
-          } else {
-            // If no journal content, just complete the section
-            const updatedSections = reviewSections.map(s => 
-              s.id === activeSectionId ? { ...s, complete: true } : s
-            );
-            setReviewSections(updatedSections);
-            setActiveSectionId(null);
-            setCurrentPromptIndex(0);
-            
-            // Check if all sections are complete
-            if (updatedSections.every(s => s.complete)) {
-              setReviewComplete(true);
-              // Update the last weekly review date
-              updateLastWeeklyReviewDate();
-            }
+        // Get journal entries for this section to check if we've already added some
+        const sectionEntries = weeklyJournalEntries.filter(entry => 
+          entry.section === activeSectionId
+        );
+        
+        // If there are journal entries or we've already recorded something, mark as complete
+        if (sectionEntries.length > 0 || hasEnteredJournal) {
+          const updatedSections = reviewSections.map(s => 
+            s.id === activeSectionId ? { ...s, complete: true } : s
+          );
+          setReviewSections(updatedSections);
+          setActiveSectionId(null);
+          setCurrentPromptIndex(0);
+          setHasEnteredJournal(false);
+          
+          // Check if all sections are complete
+          if (updatedSections.every(s => s.complete)) {
+            setReviewComplete(true);
+            // Update the last weekly review date
+            updateLastWeeklyReviewDate();
           }
           return;
         }
         
-        // For all other sections, just mark complete
+        // If we get here, mark the section as complete
         const updatedSections = reviewSections.map(s => 
           s.id === activeSectionId ? { ...s, complete: true } : s
         );
         setReviewSections(updatedSections);
         setActiveSectionId(null);
         setCurrentPromptIndex(0);
+        setHasEnteredJournal(false);
         
         // Check if all sections are complete
         if (updatedSections.every(s => s.complete)) {
@@ -347,88 +401,113 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                     <p className="text-gray-800">{section.prompts[currentPromptIndex]}</p>
                   </div>
                   
-                  {/* Journal entry form for journal section */}
-                  {section.hasJournal ? (
-                    <div className="space-y-4 mb-4">
-                      <div>
-                        <label htmlFor="journalTitle" className="block text-sm font-medium text-gray-700 mb-1">
-                          Entry Title
-                        </label>
-                        <input
-                          type="text"
-                          id="journalTitle"
-                          value={journalTitle}
-                          onChange={(e) => setJournalTitle(e.target.value)}
-                          className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          placeholder={`Week ${weekNumber} Reflection`}
-                        />
+                  {/* Journal entry form for all sections */}
+                  <div className="space-y-4 mb-4">
+                    <div>
+                      <label htmlFor="journalTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                        Entry Title
+                      </label>
+                      <input
+                        type="text"
+                        id="journalTitle"
+                        value={journalTitle}
+                        onChange={(e) => setJournalTitle(e.target.value)}
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder={`${section.title}: ${section.prompts[currentPromptIndex].substring(0, 30)}...`}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="journalMood" className="block text-sm font-medium text-gray-700 mb-1">
+                        Your mood for this response?
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {(['great', 'good', 'neutral', 'challenging', 'difficult'] as const).map(mood => (
+                          <button
+                            key={mood}
+                            type="button"
+                            onClick={() => setCurrentMood(mood)}
+                            className={`px-3 py-1 rounded-full text-sm ${
+                              currentMood === mood 
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {mood.charAt(0).toUpperCase() + mood.slice(1)}
+                          </button>
+                        ))}
                       </div>
-                      
-                      <div>
-                        <label htmlFor="journalMood" className="block text-sm font-medium text-gray-700 mb-1">
-                          How was your week overall?
-                        </label>
-                        <div className="flex space-x-2">
-                          {(['great', 'good', 'neutral', 'challenging', 'difficult'] as const).map(mood => (
-                            <button
-                              key={mood}
-                              type="button"
-                              onClick={() => setCurrentMood(mood)}
-                              className={`px-3 py-1 rounded-full text-sm ${
-                                currentMood === mood 
-                                  ? 'bg-blue-500 text-white'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                            >
-                              {mood.charAt(0).toUpperCase() + mood.slice(1)}
-                            </button>
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="journalContent" className="block text-sm font-medium text-gray-700 mb-1">
+                        Your Response
+                      </label>
+                      <textarea
+                        id="journalContent"
+                        value={journalInput}
+                        onChange={(e) => setJournalInput(e.target.value)}
+                        className="w-full h-40 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Write your thoughts here..."
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={handleSaveJournal}
+                        icon={<NotebookPen size={16} />}
+                        disabled={!journalInput.trim()}
+                      >
+                        Save & Continue
+                      </Button>
+                    </div>
+                    
+                    {/* Show previous entries for this specific prompt */}
+                    {currentPromptEntries.length > 0 && (
+                      <div className="mt-4 border-t pt-4">
+                        <h4 className="font-medium text-gray-900 mb-2">Previous responses to this prompt:</h4>
+                        <div className="space-y-2">
+                          {currentPromptEntries.map(entry => (
+                            <div key={entry.id} className="p-3 bg-gray-50 rounded-lg">
+                              <div className="flex justify-between items-center mb-1">
+                                <h5 className="font-medium">{entry.title}</h5>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(entry.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-700">{entry.content.substring(0, 150)}
+                                {entry.content.length > 150 ? '...' : ''}
+                              </p>
+                            </div>
                           ))}
                         </div>
                       </div>
-                      
-                      <div>
-                        <label htmlFor="journalContent" className="block text-sm font-medium text-gray-700 mb-1">
-                          Journal Entry
-                        </label>
-                        <textarea
-                          id="journalContent"
-                          value={journalInput}
-                          onChange={(e) => setJournalInput(e.target.value)}
-                          className="w-full h-40 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          placeholder="Write your thoughts here..."
-                        />
-                      </div>
-                      
-                      <div className="flex justify-end">
-                        <Button
-                          onClick={handleSaveJournal}
-                          icon={<NotebookPen size={16} />}
-                          disabled={!journalInput.trim()}
-                        >
-                          Save Journal Entry
-                        </Button>
-                      </div>
-                      
-                      {weeklyJournalEntries.length > 0 && (
-                        <div className="mt-4 border-t pt-4">
-                          <h4 className="font-medium text-gray-900 mb-2">Previous entries this week:</h4>
-                          <div className="space-y-2">
-                            {weeklyJournalEntries.map(entry => (
-                              <div key={entry.id} className="p-3 bg-gray-50 rounded-lg">
-                                <div className="flex justify-between items-center mb-1">
-                                  <h5 className="font-medium">{entry.title}</h5>
-                                  <span className="text-xs text-gray-500">
-                                    {new Date(entry.createdAt).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                <p className="text-sm text-gray-700">{entry.content.substring(0, 150)}
-                                  {entry.content.length > 150 ? '...' : ''}
-                                </p>
+                    )}
+                    
+                    {/* Show entries for this section */}
+                    {getCurrentSectionJournalEntries().length > 0 && currentPromptEntries.length === 0 && (
+                      <div className="mt-4 border-t pt-4">
+                        <h4 className="font-medium text-gray-900 mb-2">Previous entries for this section:</h4>
+                        <div className="space-y-2">
+                          {getCurrentSectionJournalEntries().map(entry => (
+                            <div key={entry.id} className="p-3 bg-gray-50 rounded-lg">
+                              <div className="flex justify-between items-center mb-1">
+                                <h5 className="font-medium">{entry.title}</h5>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(entry.createdAt).toLocaleDateString()}
+                                </span>
                               </div>
-                            ))}
-                          </div>
+                              <div className="text-xs text-gray-500 mb-1">
+                                Prompt: {entry.prompt}
+                              </div>
+                              <p className="text-sm text-gray-700">{entry.content.substring(0, 150)}
+                                {entry.content.length > 150 ? '...' : ''}
+                              </p>
+                            </div>
+                          ))}
                         </div>
-                      )}
+                      </div>
+                    )}
                     </div>
                   ) : (
                     /* Task entry for other prompts */
@@ -559,45 +638,23 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                       Back to Review
                     </Button>
                     
-                    {/* Special case for last prompt in reflect section with journal */}
-                    {section.id === 'reflect' && section.hasJournal && currentPromptIndex === section.prompts.length - 1 ? (
-                      <div className="flex space-x-2">
-                        {/* Allow skipping journal entry */}
-                        <Button 
-                          variant="outline"
-                          onClick={() => {
-                            // Just complete the section without saving journal
-                            const updatedSections = reviewSections.map(s => 
-                              s.id === activeSectionId ? { ...s, complete: true } : s
-                            );
-                            setReviewSections(updatedSections);
-                            setActiveSectionId(null);
-                            setCurrentPromptIndex(0);
-                            
-                            // Check if all sections are complete
-                            if (updatedSections.every(s => s.complete)) {
-                              setReviewComplete(true);
-                              // Update the last weekly review date
-                              updateLastWeeklyReviewDate();
-                            }
-                          }}
-                        >
-                          Skip Journal
-                        </Button>
-                        
-                        {/* Save journal and complete */}
-                        <Button 
-                          onClick={handleSaveJournal}
-                          disabled={!journalInput.trim()}
-                        >
-                          Save Journal & Complete
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button onClick={handleNextPrompt}>
-                        {currentPromptIndex < section.prompts.length - 1 ? 'Next Prompt' : 'Complete Section'}
+                    <div className="flex space-x-2">
+                      {/* Skip button is always available */}
+                      <Button 
+                        variant="outline"
+                        onClick={handleNextPrompt}
+                      >
+                        {currentPromptIndex < section.prompts.length - 1 ? 'Skip to Next Prompt' : 'Skip & Complete Section'}
                       </Button>
-                    )}
+                      
+                      {/* Save journal and continue */}
+                      <Button 
+                        onClick={handleSaveJournal}
+                        disabled={!journalInput.trim()}
+                      >
+                        {currentPromptIndex < section.prompts.length - 1 ? 'Save & Next' : 'Save & Complete'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}

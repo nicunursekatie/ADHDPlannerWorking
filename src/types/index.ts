@@ -81,6 +81,9 @@ export interface JournalEntry {
   date: string;
   title: string;
   content: string;
+  section?: 'reflect' | 'overdue' | 'upcoming' | 'projects' | 'life-areas'; // Section of the weekly review
+  prompt?: string; // The specific prompt this entry is responding to
+  promptIndex?: number; // Index of the prompt in the section
   mood?: 'great' | 'good' | 'neutral' | 'challenging' | 'difficult';
   weekNumber: number;
   weekYear: number;
