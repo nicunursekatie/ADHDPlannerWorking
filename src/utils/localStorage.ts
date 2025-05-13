@@ -105,109 +105,188 @@ export const deleteCategory = (categoryId: string): void => {
 
 // Daily Plans
 export const getDailyPlans = (): DailyPlan[] => {
-  const plansJSON = localStorage.getItem(DAILY_PLANS_KEY);
-  return plansJSON ? JSON.parse(plansJSON) : [];
+  try {
+    const plansJSON = localStorage.getItem(DAILY_PLANS_KEY);
+    
+    // Check for data under the legacy key without prefix
+    if (!plansJSON) {
+      const legacyPlansJSON = localStorage.getItem('dailyPlans');
+      if (legacyPlansJSON) {
+        // Found data under legacy key, migrate it
+        const legacyPlans = JSON.parse(legacyPlansJSON);
+        saveDailyPlans(legacyPlans);
+        // Remove legacy data after successful migration
+        localStorage.removeItem('dailyPlans');
+        console.log('Migrated daily plans data from legacy storage');
+        return legacyPlans;
+      }
+    }
+    
+    return plansJSON ? JSON.parse(plansJSON) : [];
+  } catch (error) {
+    console.error('Error reading daily plans from localStorage:', error);
+    return [];
+  }
 };
 
 export const saveDailyPlans = (plans: DailyPlan[]): void => {
-  localStorage.setItem(DAILY_PLANS_KEY, JSON.stringify(plans));
+  try {
+    localStorage.setItem(DAILY_PLANS_KEY, JSON.stringify(plans));
+  } catch (error) {
+    console.error('Error saving daily plans to localStorage:', error);
+  }
 };
 
 export const getDailyPlan = (date: string): DailyPlan | null => {
-  const plans = getDailyPlans();
-  return plans.find((plan) => plan.date === date) || null;
+  try {
+    const plans = getDailyPlans();
+    return plans.find((plan) => plan.date === date) || null;
+  } catch (error) {
+    console.error('Error getting daily plan for date:', date, error);
+    return null;
+  }
 };
 
 export const saveDailyPlan = (plan: DailyPlan): void => {
-  const plans = getDailyPlans();
-  const index = plans.findIndex((p) => p.date === plan.date);
-  
-  if (index !== -1) {
-    plans[index] = plan;
-  } else {
-    plans.push(plan);
+  try {
+    const plans = getDailyPlans();
+    const index = plans.findIndex((p) => p.date === plan.date);
+    
+    if (index !== -1) {
+      plans[index] = plan;
+    } else {
+      plans.push(plan);
+    }
+    
+    saveDailyPlans(plans);
+  } catch (error) {
+    console.error('Error saving daily plan:', error);
   }
-  
-  saveDailyPlans(plans);
 };
 
 // Work Schedule
 export const getWorkSchedule = (): WorkSchedule | null => {
-  const scheduleJSON = localStorage.getItem(WORK_SCHEDULE_KEY);
-  return scheduleJSON ? JSON.parse(scheduleJSON) : null;
+  try {
+    const scheduleJSON = localStorage.getItem(WORK_SCHEDULE_KEY);
+    
+    // Check for data under the legacy key without prefix
+    if (!scheduleJSON) {
+      const legacyScheduleJSON = localStorage.getItem('workSchedule');
+      if (legacyScheduleJSON) {
+        // Found data under legacy key, migrate it
+        const legacySchedule = JSON.parse(legacyScheduleJSON);
+        saveWorkSchedule(legacySchedule);
+        // Remove legacy data after successful migration
+        localStorage.removeItem('workSchedule');
+        console.log('Migrated work schedule data from legacy storage');
+        return legacySchedule;
+      }
+    }
+    
+    return scheduleJSON ? JSON.parse(scheduleJSON) : null;
+  } catch (error) {
+    console.error('Error reading work schedule from localStorage:', error);
+    return null;
+  }
 };
 
 export const saveWorkSchedule = (schedule: WorkSchedule): void => {
-  localStorage.setItem(WORK_SCHEDULE_KEY, JSON.stringify(schedule));
+  try {
+    localStorage.setItem(WORK_SCHEDULE_KEY, JSON.stringify(schedule));
+  } catch (error) {
+    console.error('Error saving work schedule to localStorage:', error);
+  }
 };
 
 export const getWorkShifts = (): WorkShift[] => {
-  const schedule = getWorkSchedule();
-  return schedule ? schedule.shifts : [];
+  try {
+    const schedule = getWorkSchedule();
+    return schedule ? schedule.shifts : [];
+  } catch (error) {
+    console.error('Error getting work shifts:', error);
+    return [];
+  }
 };
 
 export const addWorkShift = (shift: WorkShift): void => {
-  const schedule = getWorkSchedule();
-  
-  if (schedule) {
-    const updatedSchedule = {
-      ...schedule,
-      shifts: [...schedule.shifts, shift],
-      updatedAt: new Date().toISOString()
-    };
-    saveWorkSchedule(updatedSchedule);
-  } else {
-    // If no schedule exists, create a new one
-    const newSchedule: WorkSchedule = {
-      id: generateId(),
-      name: 'My Work Schedule',
-      shifts: [shift],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    saveWorkSchedule(newSchedule);
+  try {
+    const schedule = getWorkSchedule();
+    
+    if (schedule) {
+      const updatedSchedule = {
+        ...schedule,
+        shifts: [...schedule.shifts, shift],
+        updatedAt: new Date().toISOString()
+      };
+      saveWorkSchedule(updatedSchedule);
+    } else {
+      // If no schedule exists, create a new one
+      const newSchedule: WorkSchedule = {
+        id: generateId(),
+        name: 'My Work Schedule',
+        shifts: [shift],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      saveWorkSchedule(newSchedule);
+    }
+  } catch (error) {
+    console.error('Error adding work shift:', error);
   }
 };
 
 export const updateWorkShift = (updatedShift: WorkShift): void => {
-  const schedule = getWorkSchedule();
-  
-  if (schedule) {
-    const updatedSchedule = {
-      ...schedule,
-      shifts: schedule.shifts.map(shift => 
-        shift.id === updatedShift.id ? updatedShift : shift
-      ),
-      updatedAt: new Date().toISOString()
-    };
-    saveWorkSchedule(updatedSchedule);
+  try {
+    const schedule = getWorkSchedule();
+    
+    if (schedule) {
+      const updatedSchedule = {
+        ...schedule,
+        shifts: schedule.shifts.map(shift => 
+          shift.id === updatedShift.id ? updatedShift : shift
+        ),
+        updatedAt: new Date().toISOString()
+      };
+      saveWorkSchedule(updatedSchedule);
+    }
+  } catch (error) {
+    console.error('Error updating work shift:', error);
   }
 };
 
 export const deleteWorkShift = (shiftId: string): void => {
-  const schedule = getWorkSchedule();
-  
-  if (schedule) {
-    const updatedSchedule = {
-      ...schedule,
-      shifts: schedule.shifts.filter(shift => shift.id !== shiftId),
-      updatedAt: new Date().toISOString()
-    };
-    saveWorkSchedule(updatedSchedule);
+  try {
+    const schedule = getWorkSchedule();
+    
+    if (schedule) {
+      const updatedSchedule = {
+        ...schedule,
+        shifts: schedule.shifts.filter(shift => shift.id !== shiftId),
+        updatedAt: new Date().toISOString()
+      };
+      saveWorkSchedule(updatedSchedule);
+    }
+  } catch (error) {
+    console.error('Error deleting work shift:', error);
   }
 };
 
 export const getShiftsForMonth = (year: number, month: number): WorkShift[] => {
-  const schedule = getWorkSchedule();
-  if (!schedule) return [];
-  
-  // Create date range for the given month
-  const startDate = new Date(year, month, 1).toISOString().split('T')[0];
-  const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
-  
-  return schedule.shifts.filter(shift => 
-    shift.date >= startDate && shift.date <= endDate
-  );
+  try {
+    const schedule = getWorkSchedule();
+    if (!schedule) return [];
+    
+    // Create date range for the given month
+    const startDate = new Date(year, month, 1).toISOString().split('T')[0];
+    const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+    
+    return schedule.shifts.filter(shift => 
+      shift.date >= startDate && shift.date <= endDate
+    );
+  } catch (error) {
+    console.error('Error getting shifts for month:', error);
+    return [];
+  }
 };
 
 // Helper function to generate IDs
