@@ -5,8 +5,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure the ADHDplanner directory exists in dist
-const adhpDir = path.join(__dirname, '../dist/ADHDplanner');
+// Ensure the ADHDPlannerWorking directory exists in dist
+const adhpDir = path.join(__dirname, '../dist/ADHDPlannerWorking');
 if (!fs.existsSync(adhpDir)) {
   fs.mkdirSync(adhpDir, { recursive: true });
 }
@@ -37,7 +37,7 @@ const assetsToCopy = [
   '404.html'
 ];
 
-console.log('Copying assets to /ADHDplanner directory...');
+console.log('Copying assets to /ADHDPlannerWorking directory...');
 assetsToCopy.forEach(asset => {
   const src = path.join(__dirname, '../public', asset);
   const dest = path.join(adhpDir, asset);

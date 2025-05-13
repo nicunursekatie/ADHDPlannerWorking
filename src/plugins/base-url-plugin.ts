@@ -5,7 +5,7 @@ export function baseUrlPlugin(): Plugin {
   return {
     name: 'base-url-plugin',
     transformIndexHtml(html, { server }) {
-      const base = process.env.GITHUB_PAGES === 'true' ? '/ADHDplanner/' : '/';
+      const base = process.env.GITHUB_PAGES === 'true' ? '/ADHDPlannerWorking/' : '/';
       return html.replace(/<%= BASE_URL %>/g, base);
     }
   };
