@@ -2,12 +2,13 @@ import { Task, Project, Category, DailyPlan } from '../types';
 import { WorkSchedule, WorkShift } from '../types/WorkSchedule';
 import { transformImportedData } from './importTransform';
 
-// Local storage keys
-const TASKS_KEY = 'taskManager_tasks';
-const PROJECTS_KEY = 'taskManager_projects';
-const CATEGORIES_KEY = 'taskManager_categories';
-const DAILY_PLANS_KEY = 'taskManager_dailyPlans';
-const WORK_SCHEDULE_KEY = 'taskManager_workSchedule';
+// Local storage keys - add prefix to handle different paths in PWA
+const KEY_PREFIX = 'ADHDplanner_';
+const TASKS_KEY = `${KEY_PREFIX}tasks`;
+const PROJECTS_KEY = `${KEY_PREFIX}projects`;
+const CATEGORIES_KEY = `${KEY_PREFIX}categories`;
+const DAILY_PLANS_KEY = `${KEY_PREFIX}dailyPlans`;
+const WORK_SCHEDULE_KEY = `${KEY_PREFIX}workSchedule`;
 
 // Tasks
 export const getTasks = (): Task[] => {
@@ -216,20 +217,64 @@ const generateId = (): string => {
 
 // Data Import/Export
 export const exportData = (): string => {
-  const data = {
-    tasks: getTasks(),
-    projects: getProjects(),
-    categories: getCategories(),
-    dailyPlans: getDailyPlans(),
-    workSchedule: getWorkSchedule(),
-  };
-  
-  return JSON.stringify(data);
+  try {
+    // Wrap in try-catch to handle potential localStorage access issues
+    const data = {
+      tasks: getTasks() || [],
+      projects: getProjects() || [],
+      categories: getCategories() || [],
+      dailyPlans: getDailyPlans() || [],
+      workSchedule: getWorkSchedule(),
+      exportDate: new Date().toISOString(),
+      version: "1.0.0"
+    };
+    
+    return JSON.stringify(data);
+  } catch (error) {
+    console.error('Error exporting data:', error);
+    // Return a minimal valid JSON to avoid breaking the export
+    return JSON.stringify({
+      tasks: [],
+      projects: [],
+      categories: [],
+      dailyPlans: [],
+      exportDate: new Date().toISOString(),
+      version: "1.0.0",
+      error: "Failed to access stored data"
+    });
+  }
 };
 
 export const importData = (jsonData: string): boolean => {
   try {
-    // Try to transform the imported data first
+    // Check if the input is valid JSON
+    if (!jsonData || jsonData.trim() === '') {
+      console.error('Import failed: Empty JSON data provided');
+      return false;
+    }
+
+    // First try to parse the JSON
+    let data;
+    try {
+      data = JSON.parse(jsonData);
+    } catch (parseError) {
+      console.error('Import failed: Invalid JSON format', parseError);
+      return false;
+    }
+
+    // Verify that the data contains at least some of the expected properties
+    if (!data || (
+      !data.tasks && 
+      !data.projects && 
+      !data.categories && 
+      !data.dailyPlans && 
+      !data.workSchedule
+    )) {
+      console.error('Import failed: Data does not contain any valid sections');
+      return false;
+    }
+
+    // Try to transform the imported data first (for backward compatibility)
     const transformedData = transformImportedData(jsonData);
     
     if (transformedData) {
@@ -237,18 +282,45 @@ export const importData = (jsonData: string): boolean => {
       saveTasks(transformedData.tasks);
       saveProjects(transformedData.projects);
       saveCategories(transformedData.categories);
+      console.log('Successfully imported transformed data');
       return true;
     }
     
-    // If transformation fails, try direct import
-    const data = JSON.parse(jsonData);
-    if (data.tasks) saveTasks(data.tasks);
-    if (data.projects) saveProjects(data.projects);
-    if (data.categories) saveCategories(data.categories);
-    if (data.dailyPlans) saveDailyPlans(data.dailyPlans);
-    if (data.workSchedule) saveWorkSchedule(data.workSchedule);
+    // If transformation isn't applicable, try direct import
+    let importSuccessful = false;
     
-    return true;
+    if (Array.isArray(data.tasks)) {
+      saveTasks(data.tasks);
+      importSuccessful = true;
+    }
+    
+    if (Array.isArray(data.projects)) {
+      saveProjects(data.projects);
+      importSuccessful = true;
+    }
+    
+    if (Array.isArray(data.categories)) {
+      saveCategories(data.categories);
+      importSuccessful = true;
+    }
+    
+    if (Array.isArray(data.dailyPlans)) {
+      saveDailyPlans(data.dailyPlans);
+      importSuccessful = true;
+    }
+    
+    if (data.workSchedule) {
+      saveWorkSchedule(data.workSchedule);
+      importSuccessful = true;
+    }
+    
+    if (importSuccessful) {
+      console.log('Successfully imported data');
+      return true;
+    } else {
+      console.error('Import failed: No valid data sections found');
+      return false;
+    }
   } catch (error) {
     console.error('Failed to import data:', error);
     return false;
