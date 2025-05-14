@@ -45,11 +45,24 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
   } = useAppContext();
 
   const [taskInput, setTaskInput] = useState('');
-  const [journalInput, setJournalInput] = useState('');
-  const [journalTitle, setJournalTitle] = useState('');
+  const [journalResponses, setJournalResponses] = useState<{[key: string]: string}>({});
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [reviewComplete, setReviewComplete] = useState(false);
+  const [currentMood, setCurrentMood] = useState<'great' | 'good' | 'neutral' | 'challenging' | 'difficult'>('neutral');
+
+  const getCurrentWeekDetails = () => {
+    const date = new Date();
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+    const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+    return {
+      weekNumber,
+      weekYear: date.getFullYear(),
+    };
+  };
+
+  const { weekNumber, weekYear } = getCurrentWeekDetails();
+  const weeklyJournalEntries = getJournalEntriesForWeek(weekNumber, weekYear);
   
   // Get dates for this week and next week
   const today = new Date();
@@ -75,29 +88,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
     new Date(task.updatedAt) >= lastWeek
   );
 
-  // Get journal entries for this week
-  const weeklyJournalEntries = getJournalEntriesForWeek ? getJournalEntriesForWeek(today) : [];
 
-  // Handle journal entry operations
-  const handleAddJournalEntry = () => {
-    if (journalInput.trim() && activeSectionId) {
-      const newEntry = {
-        id: Date.now().toString(),
-        title: journalTitle || `${reviewSections.find(s => s.id === activeSectionId)?.title} - ${new Date().toLocaleDateString()}`,
-        content: journalInput,
-        section: activeSectionId,
-        date: new Date().toISOString(),
-        tags: [activeSectionId, 'weekly-review'],
-      };
-      
-      if (addJournalEntry) {
-        addJournalEntry(newEntry);
-      }
-      
-      setJournalInput('');
-      setJournalTitle('');
-    }
-  };
 
   // Review sections with guided prompts
   const [reviewSections, setReviewSections] = useState<ReviewSection[]>([
@@ -192,35 +183,66 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
     updateTask(taskId, { completed: true });
   };
 
-  const activeSection = reviewSections.find(s => s.id === activeSectionId);
+  const handleSaveJournalEntries = () => {
+    if (activeSectionId) {
+      const section = reviewSections.find(s => s.id === activeSectionId);
+      if (!section) return;
 
-  const handleNextPrompt = () => {
-    if (activeSection) {
-      if (currentPromptIndex < activeSection.prompts.length - 1) {
-        setCurrentPromptIndex(currentPromptIndex + 1);
-        setHasEnteredJournal(false);
-      } else {
-        setReviewSections(sections =>
-          sections.map(s =>
-            s.id === activeSectionId ? { ...s, complete: true } : s
-          )
-        );
+      // Save each prompt response
+      section.prompts.forEach((prompt, index) => {
+        const responseKey = `${activeSectionId}-${index}`;
+        const content = journalResponses[responseKey];
         
-        if (activeSectionId === 'life-areas') {
-          handleCompleteReview();
-        } else {
-          const currentIndex = reviewSections.findIndex(s => s.id === activeSectionId);
-          const nextSection = reviewSections[currentIndex + 1];
-          if (nextSection) {
-            setActiveSectionId(nextSection.id);
-            setCurrentPromptIndex(0);
+        if (content && content.trim()) {
+          const existingEntry = weeklyJournalEntries.find(
+            entry => entry.section === activeSectionId && entry.promptIndex === index
+          );
+          
+          if (existingEntry) {
+            updateJournalEntry(existingEntry.id, {
+              content: content,
+              title: prompt,
+            });
           } else {
-            setActiveSectionId(null);
+            addJournalEntry({
+              content: content,
+              section: activeSectionId,
+              promptIndex: index,
+              weekNumber,
+              weekYear,
+              mood: currentMood,
+              title: prompt,
+            });
           }
         }
+      });
+
+      // Mark section as complete
+      setReviewSections(sections =>
+        sections.map(s =>
+          s.id === activeSectionId ? { ...s, complete: true } : s
+        )
+      );
+      
+      // Move to next section or complete review
+      const currentIndex = reviewSections.findIndex(s => s.id === activeSectionId);
+      const nextSection = reviewSections[currentIndex + 1];
+      
+      if (nextSection) {
+        setActiveSectionId(nextSection.id);
+      } else {
+        handleCompleteReview();
       }
     }
   };
+
+  const handleCompleteReview = () => {
+    updateLastWeeklyReviewDate();
+    setReviewComplete(true);
+  };
+
+  const activeSection = reviewSections.find(s => s.id === activeSectionId);
+
   
   return (
     <div className="space-y-6">
@@ -252,7 +274,6 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                   }`}
                   onClick={() => {
                     setActiveSectionId(section.id);
-                    setCurrentPromptIndex(0);
                   }}
                 >
                   <div className="flex items-center">
@@ -282,61 +303,64 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                     <h3 className="text-lg font-medium">{section.title}</h3>
                   </div>
                   
-                  <div className="bg-blue-50 rounded-lg p-4 mb-4">
-                    <p className="text-blue-800 font-medium mb-1">Prompt {currentPromptIndex + 1} of {section.prompts.length}:</p>
-                    <p className="text-gray-800">{section.prompts[currentPromptIndex]}</p>
-                  </div>
-                  
-                  {/* Task entry for this prompt */}
-                  <div className="flex mb-4">
-                    <input
-                      type="text"
-                      value={taskInput}
-                      onChange={(e) => setTaskInput(e.target.value)}
-                      className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="Add a task that came to mind..."
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleAddTask();
-                        }
-                      }}
-                    />
-                    <Button
-                      className="rounded-l-none"
-                      onClick={handleAddTask}
-                      icon={<Plus size={16} />}
-                    >
-                      Add Task
-                    </Button>
-                  </div>
-
-                  {/* Journal entry for sections with hasJournal */}
+                  {/* Show all prompts with individual text boxes */}
                   {section.hasJournal && (
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Reflection Notes (Optional)</label>
-                      <input
-                        type="text"
-                        value={journalTitle}
-                        onChange={(e) => setJournalTitle(e.target.value)}
-                        className="w-full mb-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="Title for your reflection..."
-                      />
-                      <textarea
-                        value={journalInput}
-                        onChange={(e) => setJournalInput(e.target.value)}
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 h-24"
-                        placeholder="Write your thoughts about this prompt..."
-                      />
-                      <Button
-                        className="mt-2"
-                        variant="outline"
-                        onClick={handleAddJournalEntry}
-                        disabled={!journalInput.trim()}
-                      >
-                        Save Reflection
-                      </Button>
+                    <div className="space-y-4 mb-6">
+                      {section.prompts.map((prompt, index) => {
+                        const responseKey = `${activeSectionId}-${index}`;
+                        const existingEntry = weeklyJournalEntries.find(
+                          entry => entry.section === activeSectionId && entry.promptIndex === index
+                        );
+                        
+                        return (
+                          <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              {prompt}
+                            </label>
+                            <textarea
+                              value={journalResponses[responseKey] || existingEntry?.content || ''}
+                              onChange={(e) => {
+                                setJournalResponses({
+                                  ...journalResponses,
+                                  [responseKey]: e.target.value
+                                });
+                              }}
+                              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 h-24"
+                              placeholder="Write your thoughts about this prompt..."
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
+                  
+                  {/* Task entry section */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Add tasks that come to mind while reviewing
+                    </label>
+                    <div className="flex">
+                      <input
+                        type="text"
+                        value={taskInput}
+                        onChange={(e) => setTaskInput(e.target.value)}
+                        className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Add a task..."
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleAddTask();
+                          }
+                        }}
+                      />
+                      <Button
+                        className="rounded-l-none"
+                        onClick={handleAddTask}
+                        icon={<Plus size={16} />}
+                      >
+                        Add Task
+                      </Button>
+                    </div>
+                  </div>
                   
                   {/* Relevant task lists based on the section */}
                   {activeSectionId === 'overdue' && overdueTasks.length > 0 && (
@@ -458,13 +482,15 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                       variant="outline"
                       onClick={() => {
                         setActiveSectionId(null);
-                        setCurrentPromptIndex(0);
                       }}
                     >
                       Back to Review
                     </Button>
-                    <Button onClick={handleNextPrompt}>
-                      {currentPromptIndex < section.prompts.length - 1 ? 'Next Prompt' : 'Complete Section'}
+                    <Button 
+                      onClick={handleSaveJournalEntries}
+                      variant="primary"
+                    >
+                      Save All Responses & Continue
                     </Button>
                   </div>
                 </div>
