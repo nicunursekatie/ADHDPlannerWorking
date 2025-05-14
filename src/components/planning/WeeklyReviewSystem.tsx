@@ -50,53 +50,56 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [reviewComplete, setReviewComplete] = useState(false);
-  const [currentMood, setCurrentMood] = useState<'great' | 'good' | 'neutral' | 'challenging' | 'difficult'>('neutral');
-  const [hasEnteredJournal, setHasEnteredJournal] = useState(false);
-
-  const getCurrentWeekDetails = () => {
-    const date = new Date();
-    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
-    const weekNumber = Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-    return {
-      weekNumber,
-      weekYear: date.getFullYear(),
-    };
-  };
-
-  const { weekNumber, weekYear } = getCurrentWeekDetails();
-  const weeklyJournalEntries = getJournalEntriesForWeek(weekNumber, weekYear);
-
-  const getCurrentSectionJournalEntries = () => {
-    if (!activeSectionId) return [];
-    return weeklyJournalEntries.filter((entry) => entry.section === activeSectionId);
-  };
-
-  const getCurrentPromptJournalEntries = () => {
-    if (!activeSectionId) return [];
-    return weeklyJournalEntries.filter(
-      (entry) => entry.section === activeSectionId && entry.promptIndex === currentPromptIndex
-    );
-  };
-
-  const currentPromptEntries = getCurrentPromptJournalEntries();
+  
+  // Get dates for this week and next week
   const today = new Date();
   const nextWeek = new Date();
   nextWeek.setDate(today.getDate() + 7);
-
-  const incompleteTasks = tasks.filter((task) => !task.completed);
-  const tasksDueThisWeek = incompleteTasks.filter(
-    (task) => task.dueDate && task.dueDate >= formatDate(today) && task.dueDate <= formatDate(nextWeek)
+  
+  const incompleteTasks = tasks.filter(task => !task.completed);
+  const tasksDueThisWeek = incompleteTasks.filter(task => 
+    task.dueDate && 
+    task.dueDate >= formatDate(today) && 
+    task.dueDate <= formatDate(nextWeek)
   );
-
-  const overdueTasks = incompleteTasks.filter((task) => task.dueDate && task.dueDate < formatDate(today));
-
+  
+  const overdueTasks = incompleteTasks.filter(task => 
+    task.dueDate && task.dueDate < formatDate(today)
+  );
+  
+  // Get recently completed tasks (within last 7 days)
   const lastWeek = new Date();
   lastWeek.setDate(today.getDate() - 7);
-  const recentlyCompleted = tasks.filter(
-    (task) => task.completed && new Date(task.updatedAt) >= lastWeek
+  const recentlyCompleted = tasks.filter(task => 
+    task.completed && 
+    new Date(task.updatedAt) >= lastWeek
   );
 
+  // Get journal entries for this week
+  const weeklyJournalEntries = getJournalEntriesForWeek ? getJournalEntriesForWeek(today) : [];
+
+  // Handle journal entry operations
+  const handleAddJournalEntry = () => {
+    if (journalInput.trim() && activeSectionId) {
+      const newEntry = {
+        id: Date.now().toString(),
+        title: journalTitle || `${reviewSections.find(s => s.id === activeSectionId)?.title} - ${new Date().toLocaleDateString()}`,
+        content: journalInput,
+        section: activeSectionId,
+        date: new Date().toISOString(),
+        tags: [activeSectionId, 'weekly-review'],
+      };
+      
+      if (addJournalEntry) {
+        addJournalEntry(newEntry);
+      }
+      
+      setJournalInput('');
+      setJournalTitle('');
+    }
+  };
+
+  // Review sections with guided prompts
   const [reviewSections, setReviewSections] = useState<ReviewSection[]>([
     {
       id: 'reflect',
@@ -177,234 +180,299 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
 
   const handleAddTask = () => {
     if (taskInput.trim()) {
-      quickAddTask(taskInput, { immediate: true });
+      quickAddTask(taskInput);
       setTaskInput('');
-      onTaskCreated?.();
-    }
-  };
-
-  const handleAddJournalEntry = () => {
-    if (journalInput.trim() && activeSectionId) {
-      const existingEntry = currentPromptEntries[0];
-      if (existingEntry) {
-        updateJournalEntry(existingEntry.id, {
-          content: journalInput,
-          title: journalTitle || existingEntry.title,
-        });
-      } else {
-        addJournalEntry({
-          content: journalInput,
-          section: activeSectionId,
-          promptIndex: currentPromptIndex,
-          weekNumber,
-          weekYear,
-          mood: currentMood,
-          title: journalTitle || `${reviewSections.find(s => s.id === activeSectionId)?.title} - Week ${weekNumber}`,
-        });
+      if (onTaskCreated) {
+        onTaskCreated();
       }
-      setJournalInput('');
-      setJournalTitle('');
-      setHasEnteredJournal(true);
     }
   };
 
-  const handleCompleteReview = () => {
-    updateLastWeeklyReviewDate();
-    setReviewComplete(true);
+  const handleCompleteTask = (taskId: string) => {
+    updateTask(taskId, { completed: true });
   };
 
-  return (
-    <div className="space-y-4">
-      <Card>
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-            Weekly Review
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Week {weekNumber} of {weekYear}
-          </p>
-        </div>
-      </Card>
+  const activeSection = reviewSections.find(s => s.id === activeSectionId);
 
-      {reviewComplete ? (
-        <Card>
-          <div className="text-center py-8">
-            <CheckCircle size={48} className="mx-auto text-green-500 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-              Weekly Review Complete!
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Great work on completing your weekly review.
-            </p>
-            <Button onClick={() => setReviewComplete(false)}>
-              Review Again
-            </Button>
+  const handleNextPrompt = () => {
+    if (activeSection) {
+      if (currentPromptIndex < activeSection.prompts.length - 1) {
+        setCurrentPromptIndex(currentPromptIndex + 1);
+        setHasEnteredJournal(false);
+      } else {
+        setReviewSections(sections =>
+          sections.map(s =>
+            s.id === activeSectionId ? { ...s, complete: true } : s
+          )
+        );
+        
+        if (activeSectionId === 'life-areas') {
+          handleCompleteReview();
+        } else {
+          const currentIndex = reviewSections.findIndex(s => s.id === activeSectionId);
+          const nextSection = reviewSections[currentIndex + 1];
+          if (nextSection) {
+            setActiveSectionId(nextSection.id);
+            setCurrentPromptIndex(0);
+          } else {
+            setActiveSectionId(null);
+          }
+        }
+      }
+    }
+  };
+  
+  return (
+    <div className="space-y-6">
+      <Card className="overflow-hidden">
+        <div className="p-4 bg-blue-50 border-b border-blue-100 flex justify-between items-center">
+          <div className="flex items-center">
+            <RefreshCw className="w-5 h-5 text-blue-600 mr-2" />
+            <h3 className="text-lg font-medium text-gray-900">Weekly Review</h3>
           </div>
-        </Card>
-      ) : (
-        <>
-          {/* Review sections */}
-          <div className="grid gap-4">
-            {reviewSections.map((section) => (
-              <Card
-                key={section.id}
-                onClick={() => {
-                  setActiveSectionId(section.id);
-                  setCurrentPromptIndex(0);
-                  setHasEnteredJournal(false);
-                }}
-                className={`cursor-pointer transition-all ${
-                  activeSectionId === section.id
-                    ? 'ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-800'
-                } ${section.complete ? 'opacity-75' : ''}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      activeSectionId === section.id
-                        ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                    }`}>
-                      {section.icon}
+          {reviewComplete && (
+            <div className="flex items-center text-green-600 text-sm font-medium">
+              <CheckCircle size={16} className="mr-1" />
+              Review Complete!
+            </div>
+          )}
+        </div>
+        
+        <div className="p-4">
+          {/* Section List */}
+          {!activeSectionId && (
+            <div className="space-y-3">
+              {reviewSections.map(section => (
+                <div 
+                  key={section.id}
+                  className={`p-3 rounded-lg flex items-center justify-between cursor-pointer transition-colors ${
+                    section.complete 
+                      ? 'bg-green-50 border border-green-100' 
+                      : 'bg-gray-50 hover:bg-gray-100 border border-gray-100'
+                  }`}
+                  onClick={() => {
+                    setActiveSectionId(section.id);
+                    setCurrentPromptIndex(0);
+                  }}
+                >
+                  <div className="flex items-center">
+                    <div className={`p-2 rounded-full mr-3 ${section.complete ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                      {section.complete ? <CheckCircle size={18} /> : section.icon}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-800 dark:text-white">
-                        {section.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {section.description}
-                      </p>
+                      <h4 className="font-medium text-gray-900">{section.title}</h4>
+                      <p className="text-sm text-gray-600">{section.description}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {section.complete && (
-                      <CheckCircle size={20} className="text-green-500" />
-                    )}
-                    <ChevronRight
-                      size={20}
-                      className={`text-gray-400 transition-transform ${
-                        activeSectionId === section.id ? 'rotate-90' : ''
-                      }`}
-                    />
-                  </div>
+                  <ChevronRight size={20} className="text-gray-400" />
                 </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Active section detail */}
+              ))}
+            </div>
+          )}
+          
+          {/* Active Section */}
           {activeSectionId && (
-            <Card>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                    {reviewSections.find((s) => s.id === activeSectionId)?.prompts[currentPromptIndex]}
-                  </h3>
-                  <div className="text-sm text-gray-600 dark:text-gray-300">
-                    Question {currentPromptIndex + 1} of{' '}
-                    {reviewSections.find((s) => s.id === activeSectionId)?.prompts.length}
-                  </div>
-                </div>
-
-                {/* Journal entry */}
-                {reviewSections.find((s) => s.id === activeSectionId)?.hasJournal && (
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={journalTitle}
-                      onChange={(e) => setJournalTitle(e.target.value)}
-                      placeholder="Entry title (optional)"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                    <textarea
-                      value={journalInput}
-                      onChange={(e) => setJournalInput(e.target.value)}
-                      placeholder="Share your thoughts..."
-                      className="w-full h-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm text-gray-600 dark:text-gray-300">
-                        Current mood:
-                      </label>
-                      <select
-                        value={currentMood}
-                        onChange={(e) => setCurrentMood(e.target.value as any)}
-                        className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm dark:bg-gray-700 dark:text-white"
-                      >
-                        <option value="great">Great 😄</option>
-                        <option value="good">Good 🙂</option>
-                        <option value="neutral">Neutral 😐</option>
-                        <option value="challenging">Challenging 😕</option>
-                        <option value="difficult">Difficult 😔</option>
-                      </select>
+            <div>
+              {reviewSections.filter(s => s.id === activeSectionId).map(section => (
+                <div key={section.id} className="space-y-4">
+                  <div className="flex items-center mb-2">
+                    <div className="p-2 rounded-full mr-3 bg-blue-100 text-blue-600">
+                      {section.icon}
                     </div>
-                    <Button onClick={handleAddJournalEntry} disabled={!journalInput.trim()}>
-                      Save Journal Entry
-                    </Button>
+                    <h3 className="text-lg font-medium">{section.title}</h3>
                   </div>
-                )}
-
-                {/* Quick task capture */}
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Add any tasks that come to mind:
-                  </p>
-                  <div className="flex gap-2">
+                  
+                  <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                    <p className="text-blue-800 font-medium mb-1">Prompt {currentPromptIndex + 1} of {section.prompts.length}:</p>
+                    <p className="text-gray-800">{section.prompts[currentPromptIndex]}</p>
+                  </div>
+                  
+                  {/* Task entry for this prompt */}
+                  <div className="flex mb-4">
                     <input
                       type="text"
                       value={taskInput}
                       onChange={(e) => setTaskInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
-                      placeholder="New task..."
-                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Add a task that came to mind..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddTask();
+                        }
+                      }}
                     />
-                    <Button onClick={handleAddTask} size="sm">
-                      <Plus size={16} />
+                    <Button
+                      className="rounded-l-none"
+                      onClick={handleAddTask}
+                      icon={<Plus size={16} />}
+                    >
+                      Add Task
+                    </Button>
+                  </div>
+
+                  {/* Journal entry for sections with hasJournal */}
+                  {section.hasJournal && (
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Reflection Notes (Optional)</label>
+                      <input
+                        type="text"
+                        value={journalTitle}
+                        onChange={(e) => setJournalTitle(e.target.value)}
+                        className="w-full mb-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Title for your reflection..."
+                      />
+                      <textarea
+                        value={journalInput}
+                        onChange={(e) => setJournalInput(e.target.value)}
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 h-24"
+                        placeholder="Write your thoughts about this prompt..."
+                      />
+                      <Button
+                        className="mt-2"
+                        variant="outline"
+                        onClick={handleAddJournalEntry}
+                        disabled={!journalInput.trim()}
+                      >
+                        Save Reflection
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Relevant task lists based on the section */}
+                  {activeSectionId === 'overdue' && overdueTasks.length > 0 && (
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <h4 className="font-medium text-gray-700 mb-2">Overdue Tasks:</h4>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {overdueTasks.slice(0, 5).map(task => (
+                          <ImprovedTaskCard
+                            key={task.id}
+                            task={task}
+                            projects={projects}
+                            categories={[]}
+                            onComplete={() => handleCompleteTask(task.id)}
+                          />
+                        ))}
+                        {overdueTasks.length > 5 && (
+                          <p className="text-center text-sm text-gray-500 pt-2">
+                            + {overdueTasks.length - 5} more overdue tasks
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {activeSectionId === 'upcoming' && tasksDueThisWeek.length > 0 && (
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <h4 className="font-medium text-gray-700 mb-2">Tasks Due This Week:</h4>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {tasksDueThisWeek.slice(0, 5).map(task => (
+                          <ImprovedTaskCard
+                            key={task.id}
+                            task={task}
+                            projects={projects}
+                            categories={[]}
+                          />
+                        ))}
+                        {tasksDueThisWeek.length > 5 && (
+                          <p className="text-center text-sm text-gray-500 pt-2">
+                            + {tasksDueThisWeek.length - 5} more tasks this week
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {activeSectionId === 'projects' && projects.length > 0 && (
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <h4 className="font-medium text-gray-700 mb-2">Your Projects:</h4>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {projects.map(project => {
+                          const projectTasks = incompleteTasks.filter(t => t.projectId === project.id);
+                          return (
+                            <div key={project.id} className="p-3 rounded-lg bg-white border">
+                              <div className="flex items-center mb-2">
+                                <div 
+                                  className="w-3 h-3 rounded-full mr-2" 
+                                  style={{ backgroundColor: project.color }}
+                                ></div>
+                                <h5 className="font-medium">{project.name}</h5>
+                                <span className="ml-auto text-sm text-gray-500">
+                                  {projectTasks.length} tasks
+                                </span>
+                              </div>
+                              {projectTasks.length === 0 && (
+                                <p className="text-sm text-gray-500 italic">No active tasks in this project</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {activeSectionId === 'reflect' && recentlyCompleted.length > 0 && (
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <h4 className="font-medium text-gray-700 mb-2">Recently Completed:</h4>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {recentlyCompleted.slice(0, 5).map(task => (
+                          <ImprovedTaskCard
+                            key={task.id}
+                            task={task}
+                            projects={projects}
+                            categories={[]}
+                          />
+                        ))}
+                        {recentlyCompleted.length > 5 && (
+                          <p className="text-center text-sm text-gray-500 pt-2">
+                            + {recentlyCompleted.length - 5} more completed tasks
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Journal entries for this section */}
+                  {section.hasJournal && weeklyJournalEntries.filter(entry => entry.section === activeSectionId).length > 0 && (
+                    <div className="border rounded-lg p-3 bg-gray-50 mt-4">
+                      <h4 className="font-medium text-gray-700 mb-2">Previous Reflections:</h4>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {weeklyJournalEntries
+                          .filter(entry => entry.section === activeSectionId)
+                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .slice(0, 3)
+                          .map(entry => (
+                            <div key={entry.id} className="p-2 bg-white rounded border text-sm">
+                              <div className="font-medium text-gray-800">{entry.title}</div>
+                              <div className="text-gray-600 text-xs">
+                                {new Date(entry.date).toLocaleDateString()}
+                              </div>
+                              <div className="text-gray-700 mt-1">{entry.content}</div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between pt-3 border-t border-gray-100">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        setActiveSectionId(null);
+                        setCurrentPromptIndex(0);
+                      }}
+                    >
+                      Back to Review
+                    </Button>
+                    <Button onClick={handleNextPrompt}>
+                      {currentPromptIndex < section.prompts.length - 1 ? 'Next Prompt' : 'Complete Section'}
                     </Button>
                   </div>
                 </div>
-
-                {/* Navigation */}
-                <div className="flex justify-between pt-4">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setCurrentPromptIndex(Math.max(0, currentPromptIndex - 1))}
-                    disabled={currentPromptIndex === 0}
-                  >
-                    Previous
-                  </Button>
-                  {currentPromptIndex === (reviewSections.find((s) => s.id === activeSectionId)?.prompts.length || 0) - 1 ? (
-                    <Button onClick={() => setActiveSectionId(null)}>
-                      Complete Section
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => setCurrentPromptIndex(Math.min(
-                        (reviewSections.find((s) => s.id === activeSectionId)?.prompts.length || 0) - 1,
-                        currentPromptIndex + 1
-                      ))}
-                    >
-                      Next
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
+              ))}
+            </div>
           )}
-
-          {/* Complete review button */}
-          {reviewSections.every((section) => section.complete) && (
-            <Card>
-              <div className="text-center">
-                <Button onClick={handleCompleteReview} size="lg">
-                  Complete Weekly Review
-                </Button>
-              </div>
-            </Card>
-          )}
-        </>
-      )}
+        </div>
+      </Card>
     </div>
   );
 };
