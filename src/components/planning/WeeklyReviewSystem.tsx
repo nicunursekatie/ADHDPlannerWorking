@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { Task, Project } from '../../types';
 import Card from '../common/Card';
@@ -32,6 +33,7 @@ type ReviewSection = {
 };
 
 const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }) => {
+  const navigate = useNavigate();
   const {
     tasks,
     projects,
@@ -217,20 +219,21 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
         }
       });
 
-      // Mark section as complete
-      setReviewSections(sections =>
-        sections.map(s =>
-          s.id === activeSectionId ? { ...s, complete: true } : s
-        )
+      // Update sections to mark current one as complete
+      const updatedSections = reviewSections.map(s =>
+        s.id === activeSectionId ? { ...s, complete: true } : s
       );
+      setReviewSections(updatedSections);
       
-      // Move to next section or complete review
+      // Check if this was the last section
       const currentIndex = reviewSections.findIndex(s => s.id === activeSectionId);
       const nextSection = reviewSections[currentIndex + 1];
       
       if (nextSection) {
+        // Move to next section
         setActiveSectionId(nextSection.id);
       } else {
+        // All sections complete - complete the review
         handleCompleteReview();
       }
     }
@@ -244,6 +247,40 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
   const activeSection = reviewSections.find(s => s.id === activeSectionId);
 
   
+  // Show completion screen if review is complete
+  if (reviewComplete) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <div className="text-center py-8">
+            <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Weekly Review Complete!</h2>
+            <p className="text-gray-600 mb-6">Great job staying on top of your system.</p>
+            <div className="space-y-3">
+              <Button
+                onClick={() => navigate('/')}
+                variant="primary"
+                className="mx-auto"
+              >
+                Return to Dashboard
+              </Button>
+              <Button
+                onClick={() => {
+                  setReviewComplete(false);
+                  setActiveSectionId(null);
+                }}
+                variant="outline"
+                className="mx-auto"
+              >
+                Review Again
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card className="overflow-hidden">
@@ -252,12 +289,6 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
             <RefreshCw className="w-5 h-5 text-blue-600 mr-2" />
             <h3 className="text-lg font-medium text-gray-900">Weekly Review</h3>
           </div>
-          {reviewComplete && (
-            <div className="flex items-center text-green-600 text-sm font-medium">
-              <CheckCircle size={16} className="mr-1" />
-              Review Complete!
-            </div>
-          )}
         </div>
         
         <div className="p-4">
