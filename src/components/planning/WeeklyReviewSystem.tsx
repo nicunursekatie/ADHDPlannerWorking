@@ -1,6 +1,6 @@
 import React from 'react';
-import WeeklyReviewSystem from '../components/planning/WeeklyReviewSystem';
-import WeeklyReviewStatus from '../components/planning/WeeklyReviewStatus';
+import WeeklyReviewStatus from './WeeklyReviewStatus';
+import WeeklyReviewSystem from './WeeklyReviewSystem';
 
 const WeeklyReviewPage: React.FC = () => {
   return (
