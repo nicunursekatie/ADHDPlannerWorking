@@ -7,6 +7,7 @@ import { formatDate } from '../../utils/helpers';
 import { 
   AlertCircle, 
   BarChart2, 
+  CalendarDays,
   CheckCircle, 
   ChevronDown, 
   Clock, 
@@ -33,6 +34,7 @@ type TaskWithReason = {
   selectedReason: string | null;
   customReason: string;
   action: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | null;
+  rescheduleDate?: string;
 };
 
 const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpdated }) => {
@@ -42,6 +44,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   const [showProgress, setShowProgress] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
   const [completionRate, setCompletionRate] = useState(0);
+  const [lastUpdatedTask, setLastUpdatedTask] = useState<string | null>(null);
   
   // Common reasons for not completing tasks
   const [commonReasons, setCommonReasons] = useState<Reason[]>([
@@ -102,7 +105,8 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
       task,
       selectedReason: null,
       customReason: '',
-      action: null
+      action: null,
+      rescheduleDate: undefined
     })));
   }, [tasks]);
   
@@ -145,28 +149,76 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     );
   };
   
+  const handleRescheduleDateChange = (taskId: string, date: string) => {
+    setTasksWithReasons(prev => 
+      prev.map(item => 
+        item.task.id === taskId 
+          ? { ...item, rescheduleDate: date } 
+          : item
+      )
+    );
+  };
+  
+  const saveAccountabilityResponse = (taskId: string, reason: string, action: string, rescheduleDate?: string) => {
+    // Create accountability response object with unique ID
+    const response = {
+      id: `accountability-${Date.now()}-${taskId}`,
+      taskId,
+      reason,
+      action,
+      rescheduleDate,
+      timestamp: new Date().toISOString(),
+    };
+    
+    // Get existing responses from localStorage
+    const existingResponses = JSON.parse(localStorage.getItem('accountabilityResponses') || '[]');
+    
+    // Add new response
+    existingResponses.push(response);
+    
+    // Save back to localStorage
+    localStorage.setItem('accountabilityResponses', JSON.stringify(existingResponses));
+  };
+  
   const handleTaskUpdate = (taskWithReason: TaskWithReason) => {
-    const { task, action } = taskWithReason;
+    const { task, action, rescheduleDate } = taskWithReason;
     
     let updatedTask: Task = { ...task };
     
     // Apply action to the task
     if (action === 'reschedule') {
-      // Set due date to tomorrow
-      const tomorrow = new Date();
-      tomorrow.setDate(today.getDate() + 1);
-      updatedTask.dueDate = formatDate(tomorrow);
+      // Use the selected reschedule date
+      if (rescheduleDate) {
+        updatedTask.dueDate = rescheduleDate;
+      } else {
+        // Fallback to tomorrow if no date selected
+        const tomorrow = new Date();
+        tomorrow.setDate(today.getDate() + 1);
+        updatedTask.dueDate = formatDate(tomorrow);
+      }
     } else if (action === 'abandon') {
       // Mark as completed but add note about abandonment
       updatedTask.completed = true;
       updatedTask.description = `${updatedTask.description}\n[Abandoned: Not relevant or necessary anymore]`;
+    } else if (action === 'break_down') {
+      // Add note that task needs breaking down
+      updatedTask.description = `${updatedTask.description}\n[Needs to be broken down into smaller tasks]`;
+    } else if (action === 'delegate') {
+      // Add note that task will be delegated
+      updatedTask.description = `${updatedTask.description}\n[To be delegated]`;
     }
     
-    // Add the reason to task description for future reference
+    // Get the reason text
     const reasonText = taskWithReason.selectedReason === 'custom' 
       ? taskWithReason.customReason 
       : commonReasons.find(r => r.id === taskWithReason.selectedReason)?.text || '';
     
+    // Save accountability response
+    if (reasonText && action) {
+      saveAccountabilityResponse(task.id, reasonText, action, rescheduleDate);
+    }
+    
+    // Add the reason to task description for future reference
     if (reasonText && action !== 'abandon') {
       updatedTask.description = `${updatedTask.description}\n[Incomplete: ${reasonText}]`;
     }
@@ -178,6 +230,10 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     
     // Remove from list
     setTasksWithReasons(prev => prev.filter(item => item.task.id !== task.id));
+    
+    // Show success feedback
+    setLastUpdatedTask(task.id);
+    setTimeout(() => setLastUpdatedTask(null), 3000);
     
     if (onTaskUpdated) {
       onTaskUpdated();
@@ -191,6 +247,13 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   
   return (
     <div className="space-y-6">
+      {lastUpdatedTask && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center text-green-800">
+          <CheckCircle size={20} className="mr-2 text-green-600" />
+          <span className="font-medium">Task successfully updated!</span>
+        </div>
+      )}
+      
       <Card className="overflow-hidden">
         <div className="p-4 bg-orange-50 border-b border-orange-100 flex justify-between items-center">
           <div className="flex items-center">
@@ -198,7 +261,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
             <h3 className="text-lg font-medium text-gray-900">Accountability Check-In</h3>
           </div>
           <Button 
-            variant="ghost" 
+            variant="outline" 
             size="sm"
             onClick={() => setShowProgress(!showProgress)}
           >
@@ -398,6 +461,33 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                         </div>
                       </div>
                       
+                      {taskWithReason.action === 'reschedule' && (
+                        <div className="mb-4 border border-blue-200 rounded-lg p-3 bg-blue-50">
+                          <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                            <CalendarDays size={16} className="mr-2 text-blue-600" />
+                            When would you like to reschedule this task?
+                          </h5>
+                          <div className="relative">
+                            <input
+                              type="date"
+                              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-8"
+                              value={taskWithReason.rescheduleDate || ''}
+                              onChange={(e) => handleRescheduleDateChange(taskWithReason.task.id, e.target.value)}
+                              min={formatDate(new Date())}
+                            />
+                            <CalendarDays 
+                              size={16} 
+                              className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"
+                            />
+                          </div>
+                          {taskWithReason.task.dueDate && (
+                            <div className="mt-2 text-xs text-gray-600">
+                              Original due date: {taskWithReason.task.dueDate}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
                       <div className="mb-4">
                         <h5 className="text-sm font-medium text-gray-700 mb-2">
                           What would you like to do with this task?
@@ -453,7 +543,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                         </Button>
                         <Button
                           size="sm"
-                          disabled={!taskWithReason.selectedReason || !taskWithReason.action}
+                          disabled={!taskWithReason.selectedReason || !taskWithReason.action || (taskWithReason.action === 'reschedule' && !taskWithReason.rescheduleDate)}
                           onClick={() => handleTaskUpdate(taskWithReason)}
                           icon={<CheckCircle size={14} />}
                         >

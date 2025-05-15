@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { Task, Project } from '../../types';
@@ -48,7 +48,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
 
   const [taskInput, setTaskInput] = useState('');
   const [journalResponses, setJournalResponses] = useState<{[key: string]: string}>({});
-  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  const [activeSectionId, setActiveSectionId] = useState<'reflect' | 'overdue' | 'upcoming' | 'projects' | 'life-areas' | null>(null);
   const [reviewComplete, setReviewComplete] = useState(false);
   const [currentMood, setCurrentMood] = useState<'great' | 'good' | 'neutral' | 'challenging' | 'difficult'>('neutral');
 
@@ -181,9 +181,6 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
     }
   };
 
-  const handleCompleteTask = (taskId: string) => {
-    updateTask(taskId, { completed: true });
-  };
 
   const handleSaveJournalEntries = () => {
     if (activeSectionId) {
@@ -201,9 +198,11 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
           );
           
           if (existingEntry) {
-            updateJournalEntry(existingEntry.id, {
+            updateJournalEntry({
+              ...existingEntry,
               content: content,
               title: prompt,
+              updatedAt: new Date().toISOString(),
             });
           } else {
             addJournalEntry({
@@ -231,7 +230,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
       
       if (nextSection) {
         // Move to next section
-        setActiveSectionId(nextSection.id);
+        setActiveSectionId(nextSection.id as typeof activeSectionId);
       } else {
         // All sections complete - complete the review
         handleCompleteReview();
@@ -304,7 +303,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                       : 'bg-gray-50 hover:bg-gray-100 border border-gray-100'
                   }`}
                   onClick={() => {
-                    setActiveSectionId(section.id);
+                    setActiveSectionId(section.id as typeof activeSectionId);
                   }}
                 >
                   <div className="flex items-center">
@@ -404,7 +403,6 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                             task={task}
                             projects={projects}
                             categories={[]}
-                            onComplete={() => handleCompleteTask(task.id)}
                           />
                         ))}
                         {overdueTasks.length > 5 && (
