@@ -83,8 +83,17 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
       return task.dueDate < formatDate(today) && task.dueDate >= lastWeekStr;
     }
     
-    // Include tasks without due dates created more than threshold days ago
+    // For tasks without due dates, check both created and updated dates
+    // This handles imported tasks that might have recent creation dates
     const createdDate = task.createdAt ? formatDate(new Date(task.createdAt)) : null;
+    const updatedDate = task.updatedAt ? formatDate(new Date(task.updatedAt)) : null;
+    
+    // If the task hasn't been updated recently, it's probably been sitting around
+    if (updatedDate && updatedDate <= overdueThresholdStr) {
+      return true;
+    }
+    
+    // Otherwise, fall back to creation date
     return createdDate && createdDate <= overdueThresholdStr;
   });
   
@@ -103,15 +112,20 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
       }
       // Tasks without due dates - count all that are older than threshold or completed
       const createdDate = task.createdAt ? formatDate(new Date(task.createdAt)) : null;
-      if (createdDate) {
+      const updatedDate = task.updatedAt ? formatDate(new Date(task.updatedAt)) : null;
+      
+      if (task.completed) {
         // If completed, only count if completed within the past week
-        if (task.completed) {
-          return new Date(task.updatedAt) >= lastWeek;
-        }
-        // If not completed, count if older than threshold
-        return createdDate <= overdueThresholdStr;
+        return new Date(task.updatedAt) >= lastWeek;
       }
-      return false;
+      
+      // For incomplete tasks without due dates, check if they've been sitting around
+      if (updatedDate && updatedDate <= overdueThresholdStr) {
+        return true;
+      }
+      
+      // Fall back to creation date
+      return createdDate && createdDate <= overdueThresholdStr;
     });
     
     const completedTasks = relevantTasks.filter(task => task.completed);
@@ -362,7 +376,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
             <h4 className="font-medium text-gray-900 mb-1">Tasks to Review</h4>
             <p className="text-sm text-gray-600">
               Understanding why tasks don't get completed helps you plan more effectively. 
-              This includes overdue tasks and undated tasks created more than {OVERDUE_THRESHOLD_DAYS} days ago.
+              This includes overdue tasks and undated tasks that have been sitting for more than {OVERDUE_THRESHOLD_DAYS} days.
             </p>
           </div>
           
