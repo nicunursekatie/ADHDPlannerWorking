@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   Settings,
+  Repeat,
 } from 'lucide-react';
 
 const Header: React.FC = () => {
@@ -26,6 +27,7 @@ const Header: React.FC = () => {
     { path: '/tasks', label: 'All Tasks', icon: <ClipboardList size={18} /> },
     { path: '/projects', label: 'Projects', icon: <Folder size={18} /> },
     { path: '/categories', label: 'Categories', icon: <Tag size={18} /> },
+    { path: '/recurring-tasks', label: 'Recurring', icon: <Repeat size={18} /> },
     { path: '/calendar', label: 'Calendar', icon: <Calendar size={18} /> },
     { path: '/planner', label: 'Daily Planner', icon: <Clock size={18} /> },
     { path: '/settings', label: 'Settings', icon: <Settings size={18} /> },

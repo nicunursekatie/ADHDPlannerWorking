@@ -17,6 +17,7 @@ export interface Task {
   estimatedMinutes?: number;
   phase?: string; // Project phase this task belongs to
   tags?: string[]; // Tags associated with the task, including phase name
+  recurringTaskId?: string; // ID of the recurring task that generated this task
   createdAt: string;
   updatedAt: string;
 }
@@ -93,6 +94,42 @@ export interface JournalEntry {
   createdAt: string;
   updatedAt: string;
 }
+
+// Recurring task types
+export interface RecurringTask {
+  id: string;
+  title: string;
+  description: string;
+  pattern: RecurrencePattern;
+  nextDue: string; // ISO date string for next occurrence
+  lastGenerated: string | null; // ISO date string for last generated task
+  active: boolean; // Whether this recurring task is currently active
+  source: RecurringTaskSource;
+  // Task properties that will be copied to generated tasks
+  priority?: 'low' | 'medium' | 'high';
+  energyLevel?: 'low' | 'medium' | 'high';
+  estimatedMinutes?: number;
+  categoryIds: string[];
+  projectId: string | null;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RecurrencePattern {
+  type: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
+  interval: number; // e.g., every 2 days, every 3 weeks
+  daysOfWeek?: number[]; // 0-6 for Sunday-Saturday
+  dayOfMonth?: number; // 1-31
+  monthOfYear?: number; // 0-11
+  endDate?: string; // Optional end date for the recurrence
+  time?: string; // Optional time of day (HH:MM format)
+}
+
+export type RecurringTaskSource = {
+  type: 'manual' | 'medication' | 'bill' | 'chore' | 'appointment' | 'routine';
+  metadata?: Record<string, any>; // Extra data specific to the source type
+};
 
 // Re-export WorkSchedule types
 export * from './WorkSchedule';

@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { Task, Project, Category, DailyPlan, WhatNowCriteria, JournalEntry } from '../types';
+import { Task, Project, Category, DailyPlan, WhatNowCriteria, JournalEntry, RecurringTask } from '../types';
 import { WorkSchedule, WorkShift, ShiftType, DEFAULT_SHIFTS, DEFAULT_SHIFT } from '../types/WorkSchedule';
 import * as localStorage from '../utils/localStorage';
 import { generateId, createSampleData } from '../utils/helpers';
@@ -75,6 +75,13 @@ interface AppContextType {
   updateLastWeeklyReviewDate: () => void;
   needsWeeklyReview: () => boolean;
   
+  // Recurring Tasks
+  recurringTasks: RecurringTask[];
+  addRecurringTask: (recurringTask: RecurringTask) => void;
+  updateRecurringTask: (recurringTask: RecurringTask) => void;
+  deleteRecurringTask: (recurringTaskId: string) => void;
+  generateTaskFromRecurring: (recurringTaskId: string) => Task | null;
+  
   // What Now Wizard
   recommendTasks: (criteria: WhatNowCriteria) => Task[];
   
@@ -100,6 +107,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [dailyPlans, setDailyPlans] = useState<DailyPlan[]>([]);
   const [workSchedule, setWorkSchedule] = useState<WorkSchedule | null>(null);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
   const [deletedTasks, setDeletedTasks] = useState<DeletedTask[]>([]);
@@ -116,6 +124,56 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return () => clearInterval(cleanup);
   }, []);
   
+  // Generate tasks from recurring tasks if needed
+  const checkAndGenerateRecurringTasks = useCallback(() => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    recurringTasks.forEach(recurringTask => {
+      if (!recurringTask.active) return;
+      
+      // Check if a task needs to be generated
+      if (recurringTask.nextDue <= today) {
+        // Check if task was already generated today
+        const alreadyGenerated = recurringTask.lastGenerated && 
+          recurringTask.lastGenerated.split('T')[0] === today;
+        
+        if (!alreadyGenerated) {
+          const newTask = generateTaskFromRecurring(recurringTask.id);
+          if (newTask) {
+            addTask(newTask);
+            
+            // Calculate next due date
+            const pattern = recurringTask.pattern;
+            const currentDue = new Date(recurringTask.nextDue);
+            let nextDue = new Date(currentDue);
+            
+            switch (pattern.type) {
+              case 'daily':
+                nextDue.setDate(nextDue.getDate() + pattern.interval);
+                break;
+              case 'weekly':
+                nextDue.setDate(nextDue.getDate() + (pattern.interval * 7));
+                break;
+              case 'monthly':
+                nextDue.setMonth(nextDue.getMonth() + pattern.interval);
+                break;
+              case 'yearly':
+                nextDue.setFullYear(nextDue.getFullYear() + pattern.interval);
+                break;
+            }
+            
+            // Update the recurring task
+            updateRecurringTask({
+              ...recurringTask,
+              nextDue: nextDue.toISOString().split('T')[0],
+              lastGenerated: new Date().toISOString(),
+            });
+          }
+        }
+      }
+    });
+  }, [recurringTasks, generateTaskFromRecurring, addTask, updateRecurringTask]);
+
   // Load data from localStorage on initial render
   useEffect(() => {
     const loadData = () => {
@@ -127,6 +185,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         let loadedDailyPlans = [];
         let loadedWorkSchedule = null;
         let loadedJournalEntries = [];
+        let loadedRecurringTasks = [];
         
         try {
           loadedTasks = localStorage.getTasks();
@@ -164,6 +223,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           console.error('Failed to load journal entries:', error);
         }
         
+        try {
+          loadedRecurringTasks = localStorage.getRecurringTasks();
+        } catch (error) {
+          console.error('Failed to load recurring tasks:', error);
+        }
+        
         // Debug logging
         console.log('Loading data from localStorage:');
         console.log('Tasks:', loadedTasks.length);
@@ -172,6 +237,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.log('DailyPlans:', loadedDailyPlans.length);
         console.log('WorkSchedule:', loadedWorkSchedule ? 'found' : 'not found');
         console.log('JournalEntries:', loadedJournalEntries.length);
+        console.log('RecurringTasks:', loadedRecurringTasks.length);
         
         setTasks(loadedTasks);
         setProjects(loadedProjects);
@@ -179,6 +245,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setDailyPlans(loadedDailyPlans);
         setWorkSchedule(loadedWorkSchedule);
         setJournalEntries(loadedJournalEntries);
+        setRecurringTasks(loadedRecurringTasks);
         
         // Check if data exists
         const hasData = 
@@ -206,6 +273,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     loadData();
   }, []);
+  
+  // Check for recurring tasks that need to be generated
+  useEffect(() => {
+    if (!isLoading && recurringTasks.length > 0) {
+      checkAndGenerateRecurringTasks();
+    }
+  }, [isLoading, recurringTasks.length, checkAndGenerateRecurringTasks]);
   
   // Tasks
   const addTask = useCallback((taskData: Partial<Task>): Task => {
@@ -1052,6 +1126,51 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return localStorage.needsWeeklyReview();
   }, []);
 
+  // Recurring Tasks
+  const addRecurringTask = useCallback((recurringTask: RecurringTask) => {
+    localStorage.addRecurringTask(recurringTask);
+    setRecurringTasks(prev => [...prev, recurringTask]);
+  }, []);
+
+  const updateRecurringTask = useCallback((recurringTask: RecurringTask) => {
+    localStorage.updateRecurringTask(recurringTask);
+    setRecurringTasks(prev => prev.map(rt => rt.id === recurringTask.id ? recurringTask : rt));
+  }, []);
+
+  const deleteRecurringTask = useCallback((recurringTaskId: string) => {
+    localStorage.deleteRecurringTask(recurringTaskId);
+    setRecurringTasks(prev => prev.filter(rt => rt.id !== recurringTaskId));
+  }, []);
+
+  const generateTaskFromRecurring = useCallback((recurringTaskId: string): Task | null => {
+    const recurringTask = recurringTasks.find(rt => rt.id === recurringTaskId);
+    if (!recurringTask) return null;
+
+    const newTask: Task = {
+      id: generateId(),
+      title: recurringTask.title,
+      description: recurringTask.description,
+      completed: false,
+      archived: false,
+      dueDate: recurringTask.nextDue,
+      projectId: recurringTask.projectId,
+      categoryIds: recurringTask.categoryIds,
+      parentTaskId: null,
+      subtasks: [],
+      dependsOn: [],
+      dependedOnBy: [],
+      priority: recurringTask.priority,
+      energyLevel: recurringTask.energyLevel,
+      estimatedMinutes: recurringTask.estimatedMinutes,
+      tags: recurringTask.tags,
+      recurringTaskId: recurringTaskId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    return newTask;
+  }, [recurringTasks]);
+
   const contextValue: AppContextType = {
     tasks,
     addTask,
@@ -1110,6 +1229,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     getLastWeeklyReviewDate,
     updateLastWeeklyReviewDate,
     needsWeeklyReview,
+    
+    recurringTasks,
+    addRecurringTask,
+    updateRecurringTask,
+    deleteRecurringTask,
+    generateTaskFromRecurring,
     
     recommendTasks,
     

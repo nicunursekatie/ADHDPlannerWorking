@@ -19,6 +19,7 @@ import SettingsPage from './pages/SettingsPage';
 import BrainDumpPage from './pages/BrainDumpPage';
 import WeeklyReviewPage from './pages/WeeklyReviewPage';
 import AccountabilityPage from './pages/AccountabilityPage';
+import RecurringTasksPage from './pages/RecurringTasksPage';
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
             <Route path="/brain-dump" element={<BrainDumpPage />} />
             <Route path="/weekly-review" element={<WeeklyReviewPage />} />
             <Route path="/accountability" element={<AccountabilityPage />} />
+            <Route path="/recurring-tasks" element={<RecurringTasksPage />} />
           </Routes>
         </Layout>
       </Router>
