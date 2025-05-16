@@ -12,7 +12,8 @@ import {
   BrainCircuit,
   RefreshCw,
   ListChecks,
-  AlertTriangle
+  AlertTriangle,
+  Repeat
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import Card from '../components/common/Card';
@@ -33,6 +34,7 @@ const Dashboard: React.FC = () => {
     tasks,
     projects,
     categories,
+    recurringTasks,
     isLoading,
     isDataInitialized,
     initializeSampleData,
@@ -472,6 +474,90 @@ const Dashboard: React.FC = () => {
                 No projects yet
               </div>
             )}
+          </div>
+        </Card>
+      </div>
+
+      {/* Recurring Tasks Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card
+          title="Recurring Tasks"
+          headerAction={
+            <Link 
+              to="/recurring-tasks"
+              className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
+            >
+              Manage
+              <ArrowRight size={14} className="ml-1" />
+            </Link>
+          }
+          className="lg:col-span-1"
+        >
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center">
+                <Repeat size={20} className="text-blue-600 mr-3" />
+                <div>
+                  <p className="font-medium text-gray-900">{recurringTasks.length}</p>
+                  <p className="text-sm text-gray-600">Active Recurring Tasks</p>
+                </div>
+              </div>
+            </div>
+            
+            {recurringTasks.filter(rt => rt.active).slice(0, 3).map(task => {
+              const daysUntilDue = Math.ceil((new Date(task.nextDue).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+              return (
+                <div key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center">
+                    <Repeat size={16} className="text-gray-400 mr-2" />
+                    <span className="text-sm font-medium text-gray-900">{task.title}</span>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    daysUntilDue <= 0 ? 'bg-red-100 text-red-700' :
+                    daysUntilDue <= 1 ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-green-100 text-green-700'
+                  }`}>
+                    {daysUntilDue <= 0 ? 'Due today' : 
+                     daysUntilDue === 1 ? 'Tomorrow' : 
+                     `In ${daysUntilDue} days`}
+                  </span>
+                </div>
+              );
+            })}
+            
+            {recurringTasks.length === 0 && (
+              <div className="text-center py-3 text-gray-500">
+                <p>No recurring tasks yet</p>
+                <Link to="/recurring-tasks" className="text-indigo-600 hover:text-indigo-800 text-sm">
+                  Create your first recurring task
+                </Link>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Quick Stats */}
+        <Card className="lg:col-span-2">
+          <div className="p-4">
+            <h3 className="font-medium text-gray-900 mb-4">Quick Stats</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-indigo-600">{incompleteTasks.length}</p>
+                <p className="text-sm text-gray-600">Active Tasks</p>
+              </div>
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-green-600">{completedTasks.length}</p>
+                <p className="text-sm text-gray-600">Completed</p>
+              </div>
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-blue-600">{projects.length}</p>
+                <p className="text-sm text-gray-600">Projects</p>
+              </div>
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-purple-600">{recurringTasks.length}</p>
+                <p className="text-sm text-gray-600">Recurring</p>
+              </div>
+            </div>
           </div>
         </Card>
       </div>

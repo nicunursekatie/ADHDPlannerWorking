@@ -124,55 +124,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return () => clearInterval(cleanup);
   }, []);
   
-  // Generate tasks from recurring tasks if needed
-  const checkAndGenerateRecurringTasks = useCallback(() => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    recurringTasks.forEach(recurringTask => {
-      if (!recurringTask.active) return;
-      
-      // Check if a task needs to be generated
-      if (recurringTask.nextDue <= today) {
-        // Check if task was already generated today
-        const alreadyGenerated = recurringTask.lastGenerated && 
-          recurringTask.lastGenerated.split('T')[0] === today;
-        
-        if (!alreadyGenerated) {
-          const newTask = generateTaskFromRecurring(recurringTask.id);
-          if (newTask) {
-            addTask(newTask);
-            
-            // Calculate next due date
-            const pattern = recurringTask.pattern;
-            const currentDue = new Date(recurringTask.nextDue);
-            let nextDue = new Date(currentDue);
-            
-            switch (pattern.type) {
-              case 'daily':
-                nextDue.setDate(nextDue.getDate() + pattern.interval);
-                break;
-              case 'weekly':
-                nextDue.setDate(nextDue.getDate() + (pattern.interval * 7));
-                break;
-              case 'monthly':
-                nextDue.setMonth(nextDue.getMonth() + pattern.interval);
-                break;
-              case 'yearly':
-                nextDue.setFullYear(nextDue.getFullYear() + pattern.interval);
-                break;
-            }
-            
-            // Update the recurring task
-            updateRecurringTask({
-              ...recurringTask,
-              nextDue: nextDue.toISOString().split('T')[0],
-              lastGenerated: new Date().toISOString(),
-            });
-          }
-        }
-      }
-    });
-  }, [recurringTasks, generateTaskFromRecurring, addTask, updateRecurringTask]);
 
   // Load data from localStorage on initial render
   useEffect(() => {
@@ -1170,6 +1121,56 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     return newTask;
   }, [recurringTasks]);
+
+  // Generate tasks from recurring tasks if needed
+  const checkAndGenerateRecurringTasks = useCallback(() => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    recurringTasks.forEach(recurringTask => {
+      if (!recurringTask.active) return;
+      
+      // Check if a task needs to be generated
+      if (recurringTask.nextDue <= today) {
+        // Check if task was already generated today
+        const alreadyGenerated = recurringTask.lastGenerated && 
+          recurringTask.lastGenerated.split('T')[0] === today;
+        
+        if (!alreadyGenerated) {
+          const newTask = generateTaskFromRecurring(recurringTask.id);
+          if (newTask) {
+            addTask(newTask);
+            
+            // Calculate next due date
+            const pattern = recurringTask.pattern;
+            const currentDue = new Date(recurringTask.nextDue);
+            let nextDue = new Date(currentDue);
+            
+            switch (pattern.type) {
+              case 'daily':
+                nextDue.setDate(nextDue.getDate() + pattern.interval);
+                break;
+              case 'weekly':
+                nextDue.setDate(nextDue.getDate() + (pattern.interval * 7));
+                break;
+              case 'monthly':
+                nextDue.setMonth(nextDue.getMonth() + pattern.interval);
+                break;
+              case 'yearly':
+                nextDue.setFullYear(nextDue.getFullYear() + pattern.interval);
+                break;
+            }
+            
+            // Update the recurring task
+            updateRecurringTask({
+              ...recurringTask,
+              nextDue: nextDue.toISOString().split('T')[0],
+              lastGenerated: new Date().toISOString(),
+            });
+          }
+        }
+      }
+    });
+  }, [recurringTasks, generateTaskFromRecurring, addTask, updateRecurringTask]);
 
   const contextValue: AppContextType = {
     tasks,
