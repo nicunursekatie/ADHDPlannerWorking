@@ -67,13 +67,19 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   lastWeek.setDate(today.getDate() - 7);
   const lastWeekStr = formatDate(lastWeek);
   
-  // Find tasks that were due in the last 7 days and weren't completed
-  const overdueTasks = tasks.filter(task => 
-    !task.completed && 
-    task.dueDate && 
-    task.dueDate < formatDate(today) &&
-    task.dueDate >= lastWeekStr
-  );
+  // Find tasks that were due in the last 7 days or were created without due dates
+  const overdueTasks = tasks.filter(task => {
+    if (task.completed) return false;
+    
+    // Include tasks with due dates in the past week
+    if (task.dueDate) {
+      return task.dueDate < formatDate(today) && task.dueDate >= lastWeekStr;
+    }
+    
+    // Include tasks without due dates created in the past week
+    const createdDate = task.createdAt ? formatDate(new Date(task.createdAt)) : null;
+    return createdDate && createdDate >= lastWeekStr && createdDate < formatDate(today);
+  });
   
   // Find tasks that were completed in the last 7 days
   const completedTasks = tasks.filter(task => 
@@ -83,19 +89,20 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   
   useEffect(() => {
     // Calculate completion rate
-    const tasksWithDueDates = tasks.filter(task => 
-      task.dueDate && 
-      task.dueDate >= lastWeekStr && 
-      task.dueDate < formatDate(today)
-    );
+    const relevantTasks = tasks.filter(task => {
+      if (task.dueDate) {
+        // Tasks with due dates in the past week
+        return task.dueDate >= lastWeekStr && task.dueDate < formatDate(today);
+      }
+      // Tasks without due dates created in the past week
+      const createdDate = task.createdAt ? formatDate(new Date(task.createdAt)) : null;
+      return createdDate && createdDate >= lastWeekStr && createdDate < formatDate(today);
+    });
     
-    const completedOnTime = tasksWithDueDates.filter(task => 
-      task.completed && 
-      new Date(task.updatedAt).toISOString().split('T')[0] <= task.dueDate!
-    );
+    const completedTasks = relevantTasks.filter(task => task.completed);
     
-    const rate = tasksWithDueDates.length > 0 
-      ? Math.round((completedOnTime.length / tasksWithDueDates.length) * 100) 
+    const rate = relevantTasks.length > 0 
+      ? Math.round((completedTasks.length / relevantTasks.length) * 100) 
       : 0;
     
     setCompletionRate(rate);
@@ -303,7 +310,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                 <div className="flex items-end justify-between">
                   <div className="text-2xl font-bold text-gray-900">{overdueTasks.length}</div>
                   <div className="text-sm text-gray-600">
-                    {overdueTasks.length > 0 ? 'Review below' : 'All caught up!'}
+                    {overdueTasks.length > 0 ? 'Overdue & undated' : 'All caught up!'}
                   </div>
                 </div>
               </div>
@@ -339,7 +346,8 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
           <div className="mb-4">
             <h4 className="font-medium text-gray-900 mb-1">Tasks to Review</h4>
             <p className="text-sm text-gray-600">
-              Understanding why tasks don't get completed helps you plan more effectively.
+              Understanding why tasks don't get completed helps you plan more effectively. 
+              This includes overdue tasks and undated tasks created within the past week.
             </p>
           </div>
           
