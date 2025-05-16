@@ -37,6 +37,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
   const {
     tasks,
     projects,
+    categories,
     quickAddTask,
     updateTask,
     journalEntries,
@@ -402,7 +403,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                             key={task.id}
                             task={task}
                             projects={projects}
-                            categories={[]}
+                            categories={categories}
                           />
                         ))}
                         {overdueTasks.length > 5 && (
@@ -423,7 +424,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                             key={task.id}
                             task={task}
                             projects={projects}
-                            categories={[]}
+                            categories={categories}
                           />
                         ))}
                         {tasksDueThisWeek.length > 5 && (
@@ -472,7 +473,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                             key={task.id}
                             task={task}
                             projects={projects}
-                            categories={[]}
+                            categories={categories}
                           />
                         ))}
                         {recentlyCompleted.length > 5 && (

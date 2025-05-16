@@ -5,7 +5,7 @@ import { Task, Project } from '../../types';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import { ImprovedTaskCard } from '../tasks/ImprovedTaskCard';
-import { formatDate } from '../../utils/helpers';
+import { formatDate, formatDateForDisplay } from '../../utils/helpers';
 import Modal from '../common/Modal';
 import { 
   Calendar, 
@@ -18,7 +18,6 @@ import {
   Plus, 
   RefreshCw,
   AlertTriangle,
-  Calendar as CalendarIcon,
   X,
   Check
 } from 'lucide-react';
@@ -50,6 +49,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
   const {
     tasks,
     projects,
+    categories,
     quickAddTask,
     updateTask,
     deleteTask,
@@ -500,7 +500,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                       key={task.id}
                       task={task}
                       projects={projects}
-                      categories={[]}
+                      categories={categories}
                     />
                   ))}
                   {tasksDueThisWeek.length > 5 && (
@@ -549,7 +549,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                       key={task.id}
                       task={task}
                       projects={projects}
-                      categories={[]}
+                      categories={categories}
                     />
                   ))}
                   {recentlyCompleted.length > 5 && (
@@ -647,7 +647,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                 </label>
                 <div className="space-y-2">
                   {[
-                    { value: 'reschedule', label: 'Reschedule it', icon: <CalendarIcon size={18} /> },
+                    { value: 'reschedule', label: 'Reschedule it', icon: <Calendar size={18} /> },
                     { value: 'keep', label: 'Keep it overdue', icon: <Clock size={18} /> },
                     { value: 'drop', label: 'Drop it', icon: <X size={18} /> },
                     { value: 'delegate', label: 'Delegate it', icon: <Check size={18} /> },
@@ -722,32 +722,5 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
     </div>
   );
 };
-
-function formatDateForDisplay(dateString: string): string {
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const dateOnly = date.toDateString();
-    const todayOnly = today.toDateString();
-    const yesterdayOnly = yesterday.toDateString();
-    const tomorrowOnly = tomorrow.toDateString();
-    
-    if (dateOnly === todayOnly) return 'Today';
-    if (dateOnly === yesterdayOnly) return 'Yesterday';
-    if (dateOnly === tomorrowOnly) return 'Tomorrow';
-    
-    // Return formatted date
-    return date.toLocaleDateString();
-  } catch {
-    return dateString;
-  }
-}
 
 export default WeeklyReviewSystemFixed;
