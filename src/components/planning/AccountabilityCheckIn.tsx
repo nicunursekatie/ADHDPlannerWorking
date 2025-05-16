@@ -46,6 +46,9 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   const [completionRate, setCompletionRate] = useState(0);
   const [lastUpdatedTask, setLastUpdatedTask] = useState<string | null>(null);
   
+  // Define how many days old a task without due date should be to be considered overdue
+  const OVERDUE_THRESHOLD_DAYS = 3;
+  
   // Common reasons for not completing tasks
   const [commonReasons, setCommonReasons] = useState<Reason[]>([
     { id: 'forgot', text: 'I forgot about it', frequency: 0, isCommon: true },
@@ -67,6 +70,10 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   lastWeek.setDate(today.getDate() - 7);
   const lastWeekStr = formatDate(lastWeek);
   
+  const overdueThreshold = new Date();
+  overdueThreshold.setDate(today.getDate() - OVERDUE_THRESHOLD_DAYS);
+  const overdueThresholdStr = formatDate(overdueThreshold);
+
   // Find tasks that were due in the last 7 days or were created without due dates
   const overdueTasks = tasks.filter(task => {
     if (task.completed) return false;
@@ -76,9 +83,9 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
       return task.dueDate < formatDate(today) && task.dueDate >= lastWeekStr;
     }
     
-    // Include tasks without due dates created in the past week
+    // Include tasks without due dates created more than threshold days ago
     const createdDate = task.createdAt ? formatDate(new Date(task.createdAt)) : null;
-    return createdDate && createdDate >= lastWeekStr && createdDate < formatDate(today);
+    return createdDate && createdDate <= overdueThresholdStr;
   });
   
   // Find tasks that were completed in the last 7 days
@@ -94,9 +101,17 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
         // Tasks with due dates in the past week
         return task.dueDate >= lastWeekStr && task.dueDate < formatDate(today);
       }
-      // Tasks without due dates created in the past week
+      // Tasks without due dates - count all that are older than threshold or completed
       const createdDate = task.createdAt ? formatDate(new Date(task.createdAt)) : null;
-      return createdDate && createdDate >= lastWeekStr && createdDate < formatDate(today);
+      if (createdDate) {
+        // If completed, only count if completed within the past week
+        if (task.completed) {
+          return new Date(task.updatedAt) >= lastWeek;
+        }
+        // If not completed, count if older than threshold
+        return createdDate <= overdueThresholdStr;
+      }
+      return false;
     });
     
     const completedTasks = relevantTasks.filter(task => task.completed);
@@ -115,7 +130,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
       action: null,
       rescheduleDate: undefined
     })));
-  }, [tasks]);
+  }, [tasks, lastWeek, lastWeekStr, today, overdueThresholdStr, overdueTasks]);
   
   const handleReasonSelect = (taskId: string, reasonId: string) => {
     setTasksWithReasons(prev => 
@@ -347,7 +362,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
             <h4 className="font-medium text-gray-900 mb-1">Tasks to Review</h4>
             <p className="text-sm text-gray-600">
               Understanding why tasks don't get completed helps you plan more effectively. 
-              This includes overdue tasks and undated tasks created within the past week.
+              This includes overdue tasks and undated tasks created more than {OVERDUE_THRESHOLD_DAYS} days ago.
             </p>
           </div>
           
