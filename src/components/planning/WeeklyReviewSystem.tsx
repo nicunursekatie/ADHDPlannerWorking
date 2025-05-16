@@ -48,7 +48,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
 
   const [taskInput, setTaskInput] = useState('');
   const [journalResponses, setJournalResponses] = useState<{[key: string]: string}>({});
-  const [activeSectionId, setActiveSectionId] = useState<'reflect' | 'overdue' | 'upcoming' | 'projects' | 'life-areas' | null>(null);
+  const [activeSectionId, setActiveSectionId] = useState<ReviewSection['id'] | null>(null);
   const [reviewComplete, setReviewComplete] = useState(false);
   const [currentMood, setCurrentMood] = useState<'great' | 'good' | 'neutral' | 'challenging' | 'difficult'>('neutral');
 
@@ -207,7 +207,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
           } else {
             addJournalEntry({
               content: content,
-              section: activeSectionId,
+              section: activeSectionId as 'reflect' | 'overdue' | 'upcoming' | 'projects' | 'life-areas',
               promptIndex: index,
               weekNumber,
               weekYear,
@@ -303,7 +303,7 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                       : 'bg-gray-50 hover:bg-gray-100 border border-gray-100'
                   }`}
                   onClick={() => {
-                    setActiveSectionId(section.id as typeof activeSectionId);
+                    setActiveSectionId(section.id);
                   }}
                 >
                   <div className="flex items-center">

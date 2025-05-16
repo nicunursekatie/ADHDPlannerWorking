@@ -22,6 +22,19 @@ interface AppContextType {
   undoDelete: () => void;
   hasRecentlyDeleted: boolean;
   
+  // Bulk operations
+  bulkDeleteTasks: (taskIds: string[]) => void;
+  bulkCompleteTasks: (taskIds: string[]) => void;
+  bulkMoveTasks: (taskIds: string[], projectId: string | null) => void;
+  bulkArchiveTasks: (taskIds: string[]) => void;
+  
+  // Dependencies
+  addTaskDependency: (taskId: string, dependsOnId: string) => void;
+  removeTaskDependency: (taskId: string, dependsOnId: string) => void;
+  getTaskDependencies: (taskId: string) => Task[];
+  getDependentTasks: (taskId: string) => Task[];
+  canCompleteTask: (taskId: string) => boolean;
+  
   // Projects
   projects: Project[];
   addProject: (project: Partial<Project>) => Project;
@@ -208,6 +221,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       categoryIds: [],
       parentTaskId: null,
       subtasks: [],
+      dependsOn: [],
+      dependedOnBy: [],
       createdAt: timestamp,
       updatedAt: timestamp,
       ...taskData,
@@ -868,6 +883,161 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   }, [journalEntries]);
 
+  // Bulk Operations
+  const bulkDeleteTasks = useCallback((taskIds: string[]) => {
+    const timestamp = new Date().toISOString();
+    
+    // Store tasks for potential undo
+    const tasksToDelete = tasks.filter(t => taskIds.includes(t.id));
+    tasksToDelete.forEach(task => {
+      setDeletedTasks(prev => [...prev, {
+        task,
+        timestamp: Date.now()
+      }]);
+    });
+    
+    // Remove tasks and their subtasks
+    const remainingTasks = tasks.filter(task => {
+      // If task is in the deletion list, remove it
+      if (taskIds.includes(task.id)) return false;
+      
+      // If task's parent is in the deletion list, remove it too
+      if (task.parentTaskId && taskIds.includes(task.parentTaskId)) return false;
+      
+      return true;
+    });
+    
+    setTasks(remainingTasks);
+    localStorage.saveTasks(remainingTasks);
+  }, [tasks]);
+  
+  const bulkCompleteTasks = useCallback((taskIds: string[]) => {
+    const timestamp = new Date().toISOString();
+    
+    const updatedTasks = tasks.map(task => {
+      if (taskIds.includes(task.id)) {
+        return {
+          ...task,
+          completed: true,
+          updatedAt: timestamp
+        };
+      }
+      return task;
+    });
+    
+    setTasks(updatedTasks);
+    localStorage.saveTasks(updatedTasks);
+  }, [tasks]);
+  
+  const bulkMoveTasks = useCallback((taskIds: string[], projectId: string | null) => {
+    const timestamp = new Date().toISOString();
+    
+    const updatedTasks = tasks.map(task => {
+      if (taskIds.includes(task.id)) {
+        return {
+          ...task,
+          projectId,
+          updatedAt: timestamp
+        };
+      }
+      return task;
+    });
+    
+    setTasks(updatedTasks);
+    localStorage.saveTasks(updatedTasks);
+  }, [tasks]);
+  
+  const bulkArchiveTasks = useCallback((taskIds: string[]) => {
+    const timestamp = new Date().toISOString();
+    
+    const updatedTasks = tasks.map(task => {
+      if (taskIds.includes(task.id)) {
+        return {
+          ...task,
+          archived: true,
+          updatedAt: timestamp
+        };
+      }
+      return task;
+    });
+    
+    setTasks(updatedTasks);
+    localStorage.saveTasks(updatedTasks);
+  }, [tasks]);
+
+  // Dependency management functions
+  const addTaskDependency = useCallback((taskId: string, dependsOnId: string) => {
+    const timestamp = new Date().toISOString();
+    
+    const updatedTasks = tasks.map(task => {
+      if (task.id === taskId) {
+        // Add dependency to the task
+        return {
+          ...task,
+          dependsOn: task.dependsOn ? [...task.dependsOn, dependsOnId] : [dependsOnId],
+          updatedAt: timestamp
+        };
+      } else if (task.id === dependsOnId) {
+        // Add reverse dependency
+        return {
+          ...task,
+          dependedOnBy: task.dependedOnBy ? [...task.dependedOnBy, taskId] : [taskId],
+          updatedAt: timestamp
+        };
+      }
+      return task;
+    });
+    
+    setTasks(updatedTasks);
+    localStorage.saveTasks(updatedTasks);
+  }, [tasks]);
+  
+  const removeTaskDependency = useCallback((taskId: string, dependsOnId: string) => {
+    const timestamp = new Date().toISOString();
+    
+    const updatedTasks = tasks.map(task => {
+      if (task.id === taskId) {
+        // Remove dependency from the task
+        return {
+          ...task,
+          dependsOn: task.dependsOn?.filter(id => id !== dependsOnId) || [],
+          updatedAt: timestamp
+        };
+      } else if (task.id === dependsOnId) {
+        // Remove reverse dependency
+        return {
+          ...task,
+          dependedOnBy: task.dependedOnBy?.filter(id => id !== taskId) || [],
+          updatedAt: timestamp
+        };
+      }
+      return task;
+    });
+    
+    setTasks(updatedTasks);
+    localStorage.saveTasks(updatedTasks);
+  }, [tasks]);
+  
+  const getTaskDependencies = useCallback((taskId: string): Task[] => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || !task.dependsOn) return [];
+    
+    return tasks.filter(t => task.dependsOn.includes(t.id));
+  }, [tasks]);
+  
+  const getDependentTasks = useCallback((taskId: string): Task[] => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || !task.dependedOnBy) return [];
+    
+    return tasks.filter(t => task.dependedOnBy.includes(t.id));
+  }, [tasks]);
+  
+  const canCompleteTask = useCallback((taskId: string): boolean => {
+    const dependencies = getTaskDependencies(taskId);
+    // Can complete if all dependencies are completed
+    return dependencies.every(dep => dep.completed);
+  }, [getTaskDependencies]);
+
   // Weekly Review Date functions
   const getLastWeeklyReviewDate = useCallback((): string | null => {
     return localStorage.getLastWeeklyReviewDate();
@@ -893,6 +1063,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     archiveCompletedTasks,
     undoDelete,
     hasRecentlyDeleted,
+    
+    // Bulk operations
+    bulkDeleteTasks,
+    bulkCompleteTasks,
+    bulkMoveTasks,
+    bulkArchiveTasks,
+    
+    // Dependencies
+    addTaskDependency,
+    removeTaskDependency,
+    getTaskDependencies,
+    getDependentTasks,
+    canCompleteTask,
     
     projects,
     addProject,

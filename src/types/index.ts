@@ -9,6 +9,8 @@ export interface Task {
   categoryIds: string[];
   parentTaskId: string | null;
   subtasks: string[]; // IDs of subtasks
+  dependsOn: string[]; // IDs of tasks this task depends on
+  dependedOnBy: string[]; // IDs of tasks that depend on this task
   priority?: 'low' | 'medium' | 'high';
   energyLevel?: 'low' | 'medium' | 'high';
   size?: 'small' | 'medium' | 'large';

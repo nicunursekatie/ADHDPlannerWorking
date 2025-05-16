@@ -5,7 +5,7 @@ import Layout from './components/layout/Layout';
 
 // Pages
 import Dashboard from './pages/Dashboard';
-import EnhancedTasksPage from './pages/EnhancedTasksPage';
+import TasksPageWithBulkOps from './pages/TasksPageWithBulkOps';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import CategoriesPage from './pages/CategoriesPage';
@@ -27,7 +27,7 @@ function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/tasks" element={<EnhancedTasksPage />} />
+            <Route path="/tasks" element={<TasksPageWithBulkOps />} />
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
             <Route path="/categories" element={<CategoriesPage />} />

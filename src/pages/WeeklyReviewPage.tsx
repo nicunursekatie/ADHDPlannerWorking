@@ -1,5 +1,5 @@
 import React from 'react';
-import WeeklyReviewSystem from '../components/planning/WeeklyReviewSystem';
+import WeeklyReviewSystemFixed from '../components/planning/WeeklyReviewSystemFixed';
 
 const WeeklyReviewPage: React.FC = () => {
   return (
@@ -12,7 +12,7 @@ const WeeklyReviewPage: React.FC = () => {
         </div>
       </div>
       
-      <WeeklyReviewSystem />
+      <WeeklyReviewSystemFixed />
       
       <div className="bg-white rounded-lg shadow-sm p-4">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Weekly Review Benefits</h2>

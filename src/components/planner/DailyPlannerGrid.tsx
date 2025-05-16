@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent } from '@dnd-kit/core';
 import { Task, TimeBlock } from '../../types';
 import { useAppContext } from '../../context/AppContext';
-import { Plus, Clock, GripVertical, Edit, Info } from 'lucide-react';
+import { Plus, Clock, Edit, Info } from 'lucide-react';
 import Button from '../common/Button';
 import TaskCard from '../tasks/TaskCard';
-import Empty from '../common/Empty';
 import { generateId, calculateDuration } from '../../utils/helpers';
 import TimeBlockModal from './TimeBlockModal';
 import Card from '../common/Card';
@@ -17,7 +16,6 @@ interface DailyPlannerGridProps {
 
 const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
   const { tasks, projects, categories, getDailyPlan, saveDailyPlan } = useAppContext();
-  const [selectedBlock, setSelectedBlock] = useState<TimeBlock | null>(null);
   const [modalBlock, setModalBlock] = useState<TimeBlock | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -49,7 +47,9 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
           isDueOnOrBefore = taskDate <= date;
         }
       }
-    } catch {}
+    } catch {
+      // Date parsing failed, ignore
+    }
 
     const isTopLevelTask = !task.parentTaskId;
     return isIncomplete && !hasTimeBlock && isDueOnOrBefore && isTopLevelTask;
@@ -139,21 +139,109 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
         block={modalBlock}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={() => {}}
-        onDelete={() => {}}
+        onSave={(updatedBlock) => {
+          const updatedBlocks = [...timeBlocks];
+          const existingIndex = updatedBlocks.findIndex(b => b.id === updatedBlock.id);
+          
+          if (existingIndex >= 0) {
+            updatedBlocks[existingIndex] = updatedBlock;
+          } else {
+            updatedBlocks.push(updatedBlock);
+          }
+          
+          saveDailyPlan({ id: date, date, timeBlocks: updatedBlocks });
+          setModalBlock(null);
+          setIsModalOpen(false);
+        }}
+        onDelete={(blockId) => {
+          const updatedBlocks = timeBlocks.filter(b => b.id !== blockId);
+          saveDailyPlan({ id: date, date, timeBlocks: updatedBlocks });
+          setModalBlock(null);
+          setIsModalOpen(false);
+        }}
       />
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-4 gap-6">
           <div className="col-span-3">
             <Button onClick={handleAddBlock} icon={<Plus size={16} />}>Add Block</Button>
-            {sortedTimeBlocks.map(block => (
-              <DroppableTimeBlock key={block.id} block={block}>
-                <div className="border rounded p-2 my-2">
-                  <h4>{block.title} ({block.startTime}-{block.endTime})</h4>
-                </div>
-              </DroppableTimeBlock>
-            ))}
+            {sortedTimeBlocks.map(block => {
+              const blockTaskIds = block.taskIds || [];
+              const blockTasks = tasks.filter(t => blockTaskIds.includes(t.id));
+              const duration = calculateDuration(block.startTime, block.endTime);
+              
+              return (
+                <DroppableTimeBlock key={block.id} block={block}>
+                  <Card className="my-3 cursor-pointer hover:shadow-md transition-shadow">
+                    <div 
+                      className="mb-3"
+                      onClick={() => {
+                        setModalBlock(block);
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-medium text-lg">{block.title || 'Time Block'}</h3>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Clock size={14} />
+                            <span>{block.startTime} - {block.endTime}</span>
+                            <span className="text-gray-400">•</span>
+                            <span>
+                              {typeof duration === 'object' && duration !== null
+                                ? `${duration.hours}h ${duration.minutes}m`
+                                : `${duration}m`}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          icon={<Edit size={14} />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setModalBlock(block);
+                            setIsModalOpen(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                      {block.description && (
+                        <p className="text-sm text-gray-600 mb-2">{block.description}</p>
+                      )}
+                    </div>
+                    
+                    {blockTasks.length > 0 ? (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-700">Tasks ({blockTasks.length})</h4>
+                        {blockTasks.map(task => (
+                          <div key={task.id} className="pl-2">
+                            <TaskCard 
+                              task={task} 
+                              projects={projects} 
+                              categories={categories}
+                              onDelete={() => {
+                                const newTaskIds = blockTaskIds.filter(id => id !== task.id);
+                                const updatedBlock = { ...block, taskIds: newTaskIds };
+                                const updatedBlocks = timeBlocks.map(b => 
+                                  b.id === block.id ? updatedBlock : b
+                                );
+                                saveDailyPlan({ id: date, date, timeBlocks: updatedBlocks });
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg">
+                        <p className="text-sm text-gray-500">Drop tasks here</p>
+                      </div>
+                    )}
+                  </Card>
+                </DroppableTimeBlock>
+              );
+            })}
           </div>
 
           <div>
