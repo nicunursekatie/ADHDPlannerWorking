@@ -572,7 +572,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
             )}
 
             {/* Journal entries for this section */}
-            {section.hasJournal && weeklyJournalEntries.filter(entry => entry.section === activeSectionId).length > 0 && (
+            {activeSection && activeSection.hasJournal && weeklyJournalEntries.filter(entry => entry.section === activeSectionId).length > 0 && (
               <div className="border rounded-lg p-3 bg-gray-50 mt-4">
                 <h4 className="font-medium text-gray-700 mb-2">Previous Reflections:</h4>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
