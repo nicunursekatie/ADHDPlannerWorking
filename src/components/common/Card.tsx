@@ -5,6 +5,7 @@ interface CardProps {
   title?: string;
   className?: string;
   headerAction?: ReactNode;
+  onClick?: () => void;
 }
 
 const Card: React.FC<CardProps> = ({
@@ -12,9 +13,13 @@ const Card: React.FC<CardProps> = ({
   title,
   className = '',
   headerAction,
+  onClick,
 }) => {
   return (
-    <div className={`bg-white shadow overflow-hidden rounded-lg ${className}`}>
+    <div 
+      className={`bg-white shadow overflow-hidden rounded-lg ${className}`}
+      onClick={onClick}
+    >
       {title && (
         <div className="border-b border-gray-200 px-4 py-4 sm:px-6 flex justify-between items-center">
           <h3 className="text-lg font-medium text-gray-900">{title}</h3>

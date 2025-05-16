@@ -201,6 +201,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
   };
 
   const handleAddTask = () => {
+    console.log('handleAddTask called with input:', taskInput);
     if (taskInput.trim()) {
       const newTask = quickAddTask(taskInput);
       setTaskInput('');
@@ -345,6 +346,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
   const currentOverdueTask = overdueTasks[currentOverdueTaskIndex];
 
   const openReviewModal = (sectionId: string) => {
+    console.log('openReviewModal called with sectionId:', sectionId);
     if (sectionId === 'overdue' && overdueTasks.length > 0) {
       startOverdueReview();
     } else {
@@ -367,7 +369,10 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                 <input
                   type="text"
                   value={taskInput}
-                  onChange={(e) => setTaskInput(e.target.value)}
+                  onChange={(e) => {
+                    console.log('Input changed:', e.target.value);
+                    setTaskInput(e.target.value);
+                  }}
                   className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="Add a task..."
                   onKeyDown={(e) => {
@@ -395,7 +400,12 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                 className={`cursor-pointer transition-all hover:shadow-md ${
                   section.complete ? 'bg-green-50 border-green-300' : ''
                 }`}
-                onClick={() => !section.complete && openReviewModal(section.id)}
+                onClick={() => {
+                  console.log('Card clicked for section:', section.id, 'complete:', section.complete);
+                  if (!section.complete) {
+                    openReviewModal(section.id);
+                  }
+                }}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
