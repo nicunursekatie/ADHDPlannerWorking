@@ -79,8 +79,9 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
     task.dueDate <= formatDate(nextWeek)
   );
   
-  const overdueTasks = incompleteTasks.filter(task => 
-    task.dueDate && task.dueDate < formatDate(today)
+  // Include overdue tasks and tasks without due dates for review
+  const overdueAndUndatedTasks = incompleteTasks.filter(task => 
+    (task.dueDate && task.dueDate < formatDate(today)) || !task.dueDate
   );
   
   // Get recently completed tasks (within last 7 days)
@@ -112,12 +113,13 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
     },
     {
       id: 'overdue',
-      title: 'Review Overdue Tasks',
+      title: 'Review Overdue & Undated Tasks',
       icon: <Clock size={18} />,
-      description: `You have ${overdueTasks.length} overdue tasks to review`,
+      description: `You have ${overdueAndUndatedTasks.length} tasks to review (overdue and undated)`,
       prompts: [
         'Do these tasks still need to be done?',
-        'What prevented you from completing these?',
+        'Which tasks without due dates need deadlines?',
+        'What prevented you from completing overdue tasks?',
         'Can any of these be broken down into smaller steps?',
         'Should any of these be delegated or dropped?',
         'Which ones are actually urgent vs. just feeling urgent?',
@@ -394,11 +396,11 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                   </div>
                   
                   {/* Relevant task lists based on the section */}
-                  {activeSectionId === 'overdue' && overdueTasks.length > 0 && (
+                  {activeSectionId === 'overdue' && overdueAndUndatedTasks.length > 0 && (
                     <div className="border rounded-lg p-3 bg-gray-50">
-                      <h4 className="font-medium text-gray-700 mb-2">Overdue Tasks:</h4>
+                      <h4 className="font-medium text-gray-700 mb-2">Tasks to Review:</h4>
                       <div className="space-y-2 max-h-60 overflow-y-auto">
-                        {overdueTasks.slice(0, 5).map(task => (
+                        {overdueAndUndatedTasks.slice(0, 5).map(task => (
                           <ImprovedTaskCard
                             key={task.id}
                             task={task}
@@ -406,9 +408,9 @@ const WeeklyReviewSystem: React.FC<WeeklyReviewSystemProps> = ({ onTaskCreated }
                             categories={categories}
                           />
                         ))}
-                        {overdueTasks.length > 5 && (
+                        {overdueAndUndatedTasks.length > 5 && (
                           <p className="text-center text-sm text-gray-500 pt-2">
-                            + {overdueTasks.length - 5} more overdue tasks
+                            + {overdueAndUndatedTasks.length - 5} more tasks to review
                           </p>
                         )}
                       </div>
