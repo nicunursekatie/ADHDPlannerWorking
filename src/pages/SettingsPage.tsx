@@ -3,7 +3,8 @@ import { useAppContext } from '../context/AppContext';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
-import { Download, Upload, Trash2, AlertCircle } from 'lucide-react';
+import AISettings from '../components/settings/AISettings';
+import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   const { exportData, importData, resetData, initializeSampleData } = useAppContext();
@@ -13,6 +14,7 @@ const SettingsPage: React.FC = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState(false);
+  const [showAISettings, setShowAISettings] = useState(false);
   
   const handleExportData = () => {
     const data = exportData();
@@ -173,6 +175,35 @@ const SettingsPage: React.FC = () => {
             </Button>
           </div>
         </div>
+      </Card>
+      
+      {/* AI Settings */}
+      <Card>
+        <div 
+          className="cursor-pointer"
+          onClick={() => setShowAISettings(!showAISettings)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Brain className="w-5 h-5 text-purple-600 mr-2" />
+              <h2 className="text-lg font-medium text-gray-900">AI Task Breakdown</h2>
+            </div>
+            {showAISettings ? (
+              <ChevronUp className="w-5 h-5 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-400" />
+            )}
+          </div>
+          <p className="text-sm text-gray-600 mt-1">
+            Configure AI-powered task breakdown for ADHD
+          </p>
+        </div>
+        
+        {showAISettings && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <AISettings />
+          </div>
+        )}
       </Card>
       
       {/* About */}

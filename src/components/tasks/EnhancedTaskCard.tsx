@@ -15,7 +15,8 @@ import {
   AlertTriangle,
   Plus,
   ListPlus,
-  Timer
+  Timer,
+  Brain
 } from 'lucide-react';
 import Badge from '../common/Badge';
 import { formatDateForDisplay } from '../../utils/helpers';
@@ -28,6 +29,7 @@ interface EnhancedTaskCardProps {
   isSubtask?: boolean;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
+  onBreakdown?: (task: Task) => void;
 }
 
 const EnhancedTaskCard: React.FC<EnhancedTaskCardProps> = ({
@@ -37,6 +39,7 @@ const EnhancedTaskCard: React.FC<EnhancedTaskCardProps> = ({
   isSubtask = false,
   onEdit,
   onDelete,
+  onBreakdown,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
@@ -321,6 +324,16 @@ const EnhancedTaskCard: React.FC<EnhancedTaskCardProps> = ({
               >
                 <ListPlus size={16} />
               </button>
+              
+              {!isSubtask && onBreakdown && (
+                <button
+                  onClick={() => onBreakdown(task)}
+                  className="p-1 text-gray-400 hover:text-purple-500 rounded"
+                  title="AI Breakdown"
+                >
+                  <Brain size={16} />
+                </button>
+              )}
               
               {onDelete && (
                 <button

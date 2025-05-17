@@ -5,6 +5,7 @@ import EnhancedTaskCard from '../components/tasks/EnhancedTaskCard';
 import TaskForm from '../components/tasks/TaskForm';
 import HierarchicalTaskView from '../components/tasks/HierarchicalTaskView';
 import QuickTaskInput from '../components/tasks/QuickTaskInput';
+import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -14,12 +15,13 @@ import { Plus, Filter, List, Calendar, CheckSquare, Clock, X, Undo2, Archive,
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek } from '../utils/helpers';
 
 const EnhancedTasksPage: React.FC = () => {
-  const { tasks, projects, categories, deleteTask, undoDelete, hasRecentlyDeleted, archiveCompletedTasks } = useAppContext();
+  const { tasks, projects, categories, deleteTask, undoDelete, hasRecentlyDeleted, archiveCompletedTasks, addTask } = useAppContext();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showUndoNotification, setShowUndoNotification] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [breakdownTask, setBreakdownTask] = useState<Task | null>(null);
   
   // Filter state
   const [showCompleted, setShowCompleted] = useState(false);
@@ -92,6 +94,34 @@ const EnhancedTasksPage: React.FC = () => {
   const handleArchiveCompleted = () => {
     archiveCompletedTasks();
     setShowArchiveConfirm(false);
+  };
+  
+  const handleBreakdown = (task: Task) => {
+    setBreakdownTask(task);
+  };
+  
+  const handleBreakdownAccept = (subtasks: Partial<Task>[]) => {
+    if (breakdownTask) {
+      // Add subtasks one by one
+      subtasks.forEach(subtask => {
+        addTask({
+          ...subtask,
+          id: Date.now().toString() + Math.random(),
+          title: subtask.title || '',
+          completed: false,
+          parentTaskId: breakdownTask.id,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        } as Task);
+      });
+      
+      // Clear the breakdown modal
+      setBreakdownTask(null);
+    }
+  };
+  
+  const handleBreakdownClose = () => {
+    setBreakdownTask(null);
   };
   
   // Get tomorrow's date in YYYY-MM-DD format
@@ -497,6 +527,7 @@ const EnhancedTasksPage: React.FC = () => {
                                   categories={categories}
                                   onEdit={handleOpenModal}
                                   onDelete={handleDeleteTask}
+                                  onBreakdown={handleBreakdown}
                                 />
                               ))
                             }
@@ -522,6 +553,7 @@ const EnhancedTasksPage: React.FC = () => {
                                   categories={categories}
                                   onEdit={handleOpenModal}
                                   onDelete={handleDeleteTask}
+                                  onBreakdown={handleBreakdown}
                                 />
                               ))
                             }
@@ -547,6 +579,7 @@ const EnhancedTasksPage: React.FC = () => {
                                   categories={categories}
                                   onEdit={handleOpenModal}
                                   onDelete={handleDeleteTask}
+                                  onBreakdown={handleBreakdown}
                                 />
                               ))
                             }
@@ -572,6 +605,7 @@ const EnhancedTasksPage: React.FC = () => {
                                   categories={categories}
                                   onEdit={handleOpenModal}
                                   onDelete={handleDeleteTask}
+                                  onBreakdown={handleBreakdown}
                                 />
                               ))
                             }
@@ -597,6 +631,7 @@ const EnhancedTasksPage: React.FC = () => {
                                   categories={categories}
                                   onEdit={handleOpenModal}
                                   onDelete={handleDeleteTask}
+                                  onBreakdown={handleBreakdown}
                                 />
                               ))
                             }
@@ -711,6 +746,15 @@ const EnhancedTasksPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+      
+      {/* AI Breakdown Modal */}
+      {breakdownTask && (
+        <AITaskBreakdown
+          task={breakdownTask}
+          onAccept={handleBreakdownAccept}
+          onClose={handleBreakdownClose}
+        />
+      )}
     </div>
   );
 };
