@@ -3,6 +3,7 @@ import { Task } from '../../types';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
+import { getProvider } from '../../utils/aiProviders';
 import { 
   Brain,
   CheckCircle,
@@ -48,17 +49,20 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
     detailLevel: 'moderate'
   });
 
-  // Mock AI function - replace with actual API call
   const generateBreakdown = async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Get settings from localStorage
+      const apiKey = localStorage.getItem('ai_api_key');
+      const providerName = localStorage.getItem('ai_provider') || 'openai';
+      const provider = getProvider(providerName);
       
-      // Mock AI breakdown based on task
-      const mockBreakdown: BreakdownOption[] = [
+      if (!apiKey) {
+        // Use fallback if no API key
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const mockBreakdown: BreakdownOption[] = [
         {
           id: '1',
           title: `Prepare workspace for ${task.title}`,
@@ -117,6 +121,94 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       ];
       
       setBreakdownOptions(mockBreakdown);
+      return;
+    }
+    
+    // Real AI API call
+    const messages = [
+          {
+            role: 'system',
+            content: `You are an AI assistant specialized in breaking down tasks for people with ADHD. 
+Your breakdowns should be:
+- Clear and specific
+- Small, manageable chunks (5-30 minutes max)
+- Include regular breaks
+- Start with easier subtasks to build momentum
+- Account for ADHD challenges like time blindness and executive dysfunction
+- Use action verbs
+- Include energy level indicators
+
+Format your response as a JSON array with this structure:
+{
+  "title": "Step title",
+  "duration": "X-Y mins",
+  "description": "Clear description",
+  "type": "work|break|review|reward",
+  "energyRequired": "low|medium|high",
+  "tips": "ADHD-specific tip"
+}`
+          },
+          {
+            role: 'user',
+            content: `Break down this task into ADHD-friendly steps:
+Task: ${task.title}
+${task.description ? `Description: ${task.description}` : ''}
+${task.estimatedMinutes ? `Time estimate: ${task.estimatedMinutes} minutes` : ''}
+
+Requirements:
+- Maximum ${preferences.maxSteps} steps
+- ${preferences.includeBreaks ? 'Include breaks' : 'No breaks needed'}
+- Complexity: ${preferences.complexity}
+- Each step should be ${preferences.maxDuration} minutes or less
+
+Provide a JSON array of steps.`
+          }
+        ];
+    
+    const response = await fetch(provider.baseUrl, {
+      method: 'POST',
+      headers: provider.headers(apiKey),
+      body: JSON.stringify(provider.formatRequest(messages, provider.defaultModel))
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('API Error:', errorData);
+      throw new Error(errorData.error?.message || 'API request failed');
+    }
+    
+    const data = await response.json();
+    const content = provider.parseResponse(data);
+    
+    // Parse the JSON response
+    let steps;
+    try {
+      // Extract JSON from the response (in case it includes extra text)
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        steps = JSON.parse(jsonMatch[0]);
+      } else {
+        steps = JSON.parse(content);
+      }
+    } catch (e) {
+      console.error('Failed to parse AI response:', e);
+      throw new Error('Invalid response format');
+    }
+    
+    // Convert to BreakdownOption format
+    const breakdown: BreakdownOption[] = steps.map((step: any, index: number) => ({
+      id: `${index + 1}`,
+      title: step.title,
+      duration: step.duration,
+      description: step.description,
+      selected: true,
+      editable: false,
+      type: step.type || 'work',
+      energyRequired: step.energyRequired || 'medium',
+      tips: step.tips
+    }));
+    
+    setBreakdownOptions(breakdown);
     } catch (err) {
       setError('Failed to generate breakdown. Please try again.');
     } finally {

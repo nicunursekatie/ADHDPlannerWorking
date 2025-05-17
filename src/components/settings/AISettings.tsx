@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Brain, Save, Eye, EyeOff, Info, AlertCircle } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
+import { AI_PROVIDERS } from '../../utils/aiProviders';
 
 interface AISettingsProps {
   onSave?: () => void;
 }
 
 const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
+  const [provider, setProvider] = useState('openai');
   const [apiKey, setApiKey] = useState('');
   const [apiEndpoint, setApiEndpoint] = useState('/api/ai/breakdown');
   const [showApiKey, setShowApiKey] = useState(false);
@@ -16,9 +18,11 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
 
   useEffect(() => {
     // Load existing settings
+    const savedProvider = localStorage.getItem('ai_provider') || 'openai';
     const savedApiKey = localStorage.getItem('ai_api_key') || '';
     const savedEndpoint = localStorage.getItem('ai_api_endpoint') || '/api/ai/breakdown';
     
+    setProvider(savedProvider);
     setApiKey(savedApiKey);
     setApiEndpoint(savedEndpoint);
   }, []);
@@ -29,6 +33,7 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
     
     try {
       // Save to localStorage (in production, you'd want more secure storage)
+      localStorage.setItem('ai_provider', provider);
       localStorage.setItem('ai_api_key', apiKey);
       localStorage.setItem('ai_api_endpoint', apiEndpoint);
       
@@ -62,8 +67,32 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
           
           <div className="space-y-4">
             <div>
+              <label htmlFor="provider" className="block text-sm font-medium text-gray-700 mb-1">
+                AI Provider
+              </label>
+              <select
+                id="provider"
+                value={provider}
+                onChange={(e) => setProvider(e.target.value)}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+              >
+                {Object.entries(AI_PROVIDERS).map(([key, providerInfo]) => (
+                  <option key={key} value={key}>
+                    {providerInfo.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-sm text-gray-600">
+                {AI_PROVIDERS[provider]?.name === 'Groq (Free)' 
+                  ? 'Free tier available with Groq API. Get your key at console.groq.com'
+                  : 'Choose your preferred AI provider'
+                }
+              </p>
+            </div>
+            
+            <div>
               <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1">
-                OpenAI API Key
+                {AI_PROVIDERS[provider]?.name || 'API'} Key
               </label>
               <div className="relative">
                 <input
@@ -175,22 +204,45 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
           </div>
           
           <div className="space-y-3 text-sm text-gray-600">
-            <p>To use the AI Task Breakdown feature, you'll need an OpenAI API key:</p>
+            <p>To use the AI Task Breakdown feature, you'll need an API key:</p>
             
-            <ol className="list-decimal list-inside space-y-2">
-              <li>Go to <a href="https://platform.openai.com/signup" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700">platform.openai.com</a></li>
-              <li>Create an account or sign in</li>
-              <li>Navigate to API keys in your account settings</li>
-              <li>Create a new API key</li>
-              <li>Copy the key and paste it above</li>
-            </ol>
-            
-            <div className="bg-yellow-50 p-3 rounded-lg">
-              <p className="text-yellow-800">
-                <strong>Note:</strong> OpenAI charges for API usage. The cost is typically very low
-                (about $0.01-0.02 per task breakdown), but you should monitor your usage.
-              </p>
-            </div>
+            {provider === 'openai' ? (
+              <>
+                <ol className="list-decimal list-inside space-y-2">
+                  <li>Go to <a href="https://platform.openai.com/signup" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700">platform.openai.com</a></li>
+                  <li>Create an account or sign in</li>
+                  <li>Navigate to API keys in your account settings</li>
+                  <li>Create a new API key</li>
+                  <li>Copy the key and paste it above</li>
+                </ol>
+                
+                <div className="bg-yellow-50 p-3 rounded-lg">
+                  <p className="text-yellow-800">
+                    <strong>Note:</strong> OpenAI charges for API usage. The cost is typically very low
+                    (about $0.01-0.02 per task breakdown), but you should monitor your usage.
+                  </p>
+                </div>
+              </>
+            ) : provider === 'groq' ? (
+              <>
+                <ol className="list-decimal list-inside space-y-2">
+                  <li>Go to <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700">console.groq.com</a></li>
+                  <li>Create a free account</li>
+                  <li>Navigate to API Keys section</li>
+                  <li>Create a new API key</li>
+                  <li>Copy the key and paste it above</li>
+                </ol>
+                
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <p className="text-green-800">
+                    <strong>Free Tier:</strong> Groq offers a generous free tier with high-speed inference.
+                    Perfect for personal use!
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p>Select a provider above to see setup instructions.</p>
+            )}
           </div>
         </div>
       </Card>
