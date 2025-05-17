@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { Task } from '../types';
 import TaskCardWithDependencies from '../components/tasks/TaskCardWithDependencies';
 import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
+import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -11,7 +12,7 @@ import { EnhancedQuickCapture } from '../components/tasks/EnhancedQuickCapture';
 import { 
   Plus, Filter, X, Undo2, Archive, 
   AlertTriangle, CalendarDays, Calendar, Layers, 
-  Trash2, CheckCircle2, Folder, FileArchive
+  Trash2, CheckCircle2, Folder, FileArchive, Brain
 } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek } from '../utils/helpers';
 
@@ -21,6 +22,7 @@ interface BulkTaskCardProps {
   onSelectChange: (selected: boolean) => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onBreakdown?: (task: Task) => void;
 }
 
 const BulkTaskCard: React.FC<BulkTaskCardProps> = ({ 
@@ -28,7 +30,8 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
   isSelected, 
   onSelectChange,
   onEdit,
-  onDelete 
+  onDelete,
+  onBreakdown
 }) => {
   return (
     <TaskCardWithDependencies
@@ -38,6 +41,7 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
       showSelection={true}
       onEdit={onEdit}
       onDelete={onDelete}
+      onBreakdown={onBreakdown}
     />
   );
 };
@@ -54,7 +58,8 @@ const TasksPageWithBulkOps: React.FC = () => {
     bulkDeleteTasks,
     bulkCompleteTasks,
     bulkMoveTasks,
-    bulkArchiveTasks
+    bulkArchiveTasks,
+    addTask
   } = useAppContext();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,6 +70,7 @@ const TasksPageWithBulkOps: React.FC = () => {
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [showBulkMoveModal, setShowBulkMoveModal] = useState(false);
   const [selectedProjectForMove, setSelectedProjectForMove] = useState<string | null>(null);
+  const [breakdownTask, setBreakdownTask] = useState<Task | null>(null);
   
   // Filter state
   const [showCompleted, setShowCompleted] = useState(false);
@@ -135,6 +141,34 @@ const TasksPageWithBulkOps: React.FC = () => {
   const handleArchiveCompleted = () => {
     archiveCompletedTasks();
     setShowArchiveConfirm(false);
+  };
+  
+  const handleBreakdown = (task: Task) => {
+    setBreakdownTask(task);
+  };
+  
+  const handleBreakdownAccept = (subtasks: Partial<Task>[]) => {
+    if (breakdownTask) {
+      // Add subtasks one by one
+      subtasks.forEach(subtask => {
+        addTask({
+          ...subtask,
+          id: Date.now().toString() + Math.random(),
+          title: subtask.title || '',
+          completed: false,
+          parentTaskId: breakdownTask.id,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        } as Task);
+      });
+      
+      // Clear the breakdown modal
+      setBreakdownTask(null);
+    }
+  };
+  
+  const handleBreakdownClose = () => {
+    setBreakdownTask(null);
   };
   
   // Bulk operations
@@ -630,6 +664,7 @@ const TasksPageWithBulkOps: React.FC = () => {
                               }}
                               onEdit={handleOpenModal}
                               onDelete={handleDeleteTask}
+                              onBreakdown={handleBreakdown}
                             />
                           ))
                         }
@@ -662,6 +697,7 @@ const TasksPageWithBulkOps: React.FC = () => {
                               }}
                               onEdit={handleOpenModal}
                               onDelete={handleDeleteTask}
+                              onBreakdown={handleBreakdown}
                             />
                           ))
                         }
@@ -694,6 +730,7 @@ const TasksPageWithBulkOps: React.FC = () => {
                               }}
                               onEdit={handleOpenModal}
                               onDelete={handleDeleteTask}
+                              onBreakdown={handleBreakdown}
                             />
                           ))
                         }
@@ -726,6 +763,7 @@ const TasksPageWithBulkOps: React.FC = () => {
                               }}
                               onEdit={handleOpenModal}
                               onDelete={handleDeleteTask}
+                              onBreakdown={handleBreakdown}
                             />
                           ))
                         }
@@ -758,6 +796,7 @@ const TasksPageWithBulkOps: React.FC = () => {
                               }}
                               onEdit={handleOpenModal}
                               onDelete={handleDeleteTask}
+                              onBreakdown={handleBreakdown}
                             />
                           ))
                         }
@@ -783,6 +822,7 @@ const TasksPageWithBulkOps: React.FC = () => {
                       }}
                       onEdit={handleOpenModal}
                       onDelete={handleDeleteTask}
+                      onBreakdown={handleBreakdown}
                     />
                   ))}
                 </div>
@@ -902,6 +942,15 @@ const TasksPageWithBulkOps: React.FC = () => {
           </div>
         </div>
       </Modal>
+      
+      {/* AI Breakdown Modal */}
+      {breakdownTask && (
+        <AITaskBreakdown
+          task={breakdownTask}
+          onAccept={handleBreakdownAccept}
+          onClose={handleBreakdownClose}
+        />
+      )}
     </div>
   );
 };

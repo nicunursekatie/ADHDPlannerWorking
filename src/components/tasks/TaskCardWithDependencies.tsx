@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Circle, ChevronRight, ChevronDown, Calendar, Folder, Tags, Link, LockKeyhole, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Circle, ChevronRight, ChevronDown, Calendar, Folder, Tags, Link, LockKeyhole, AlertCircle, Brain, Edit3, Trash2 } from 'lucide-react';
 import { Task, Project, Category } from '../../types';
 import Badge from '../common/Badge';
 import { formatDateForDisplay } from '../../utils/helpers';
@@ -11,6 +11,7 @@ interface TaskCardWithDependenciesProps {
   onSelectChange?: (selected: boolean) => void;
   onEdit?: (task: Task) => void;
   onDelete?: (taskId: string) => void;
+  onBreakdown?: (task: Task) => void;
   showSelection?: boolean;
 }
 
@@ -20,6 +21,7 @@ const TaskCardWithDependencies: React.FC<TaskCardWithDependenciesProps> = ({
   onSelectChange,
   onEdit,
   onDelete,
+  onBreakdown,
   showSelection = false,
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -196,22 +198,66 @@ const TaskCardWithDependencies: React.FC<TaskCardWithDependenciesProps> = ({
                   )}
                 </div>
                 
-                <div className="mt-2 flex gap-3 text-xs">
-                  {task.energyLevel && (
-                    <span className="text-yellow-600" title={`Energy: ${task.energyLevel}`}>
-                      {getEnergyIcon(task.energyLevel)}
-                    </span>
-                  )}
-                  {task.size && (
-                    <span className="text-blue-600" title={`Size: ${task.size}`}>
-                      {getSizeIcon(task.size)}
-                    </span>
-                  )}
-                  {task.estimatedMinutes && (
-                    <span className="text-gray-500">
-                      {task.estimatedMinutes}m
-                    </span>
-                  )}
+                <div className="mt-2 flex justify-between items-center">
+                  <div className="flex gap-3 text-xs">
+                    {task.energyLevel && (
+                      <span className="text-yellow-600" title={`Energy: ${task.energyLevel}`}>
+                        {getEnergyIcon(task.energyLevel)}
+                      </span>
+                    )}
+                    {task.size && (
+                      <span className="text-blue-600" title={`Size: ${task.size}`}>
+                        {getSizeIcon(task.size)}
+                      </span>
+                    )}
+                    {task.estimatedMinutes && (
+                      <span className="text-gray-500">
+                        {task.estimatedMinutes}m
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Action buttons */}
+                  <div className="flex gap-1">
+                    {!task.completed && !task.parentTaskId && onBreakdown && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onBreakdown(task);
+                        }}
+                        className="p-1 text-gray-400 hover:text-purple-500 rounded transition-colors"
+                        title="AI Breakdown"
+                      >
+                        <Brain size={16} />
+                      </button>
+                    )}
+                    
+                    {onEdit && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(task);
+                        }}
+                        className="p-1 text-gray-400 hover:text-blue-500 rounded transition-colors"
+                        title="Edit task"
+                      >
+                        <Edit3 size={16} />
+                      </button>
+                    )}
+                    
+                    {onDelete && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(task.id);
+                        }}
+                        className="p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
+                        title="Delete task"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
