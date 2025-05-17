@@ -59,7 +59,8 @@ const TasksPageWithBulkOps: React.FC = () => {
     bulkCompleteTasks,
     bulkMoveTasks,
     bulkArchiveTasks,
-    addTask
+    addTask,
+    updateTask
   } = useAppContext();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -147,20 +148,50 @@ const TasksPageWithBulkOps: React.FC = () => {
     setBreakdownTask(task);
   };
   
-  const handleBreakdownAccept = (subtasks: Partial<Task>[]) => {
+  const handleBreakdownAccept = async (subtasks: Partial<Task>[]) => {
     if (breakdownTask) {
-      // Add subtasks one by one
-      subtasks.forEach(subtask => {
-        addTask({
-          ...subtask,
-          id: Date.now().toString() + Math.random(),
+      console.log('Breakdown task:', breakdownTask);
+      console.log('Subtasks received:', subtasks);
+      
+      // Create subtask IDs
+      const subtaskIds: string[] = [];
+      
+      // Add subtasks one by one with unique IDs
+      for (let index = 0; index < subtasks.length; index++) {
+        const subtask = subtasks[index];
+        const subtaskId = `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`;
+        subtaskIds.push(subtaskId);
+        
+        const taskToAdd: Task = {
+          id: subtaskId,
           title: subtask.title || '',
+          description: subtask.description || '',
           completed: false,
           parentTaskId: breakdownTask.id,
+          projectId: breakdownTask.projectId,
+          categoryIds: breakdownTask.categoryIds || [],
+          dueDate: subtask.dueDate || breakdownTask.dueDate || undefined,
+          priority: subtask.priority || breakdownTask.priority || 'medium',
+          estimatedMinutes: subtask.estimatedMinutes,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
-        } as Task);
-      });
+        };
+        
+        console.log(`Adding subtask ${index + 1}:`, taskToAdd);
+        addTask(taskToAdd);
+        
+        // Small delay to avoid potential race conditions
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Update parent task with subtask IDs
+      const updatedParentTask: Task = {
+        ...breakdownTask,
+        subtasks: [...(breakdownTask.subtasks || []), ...subtaskIds],
+        updatedAt: new Date().toISOString()
+      };
+      
+      updateTask(updatedParentTask);
       
       // Clear the breakdown modal
       setBreakdownTask(null);

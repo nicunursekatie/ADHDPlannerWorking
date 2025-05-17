@@ -272,45 +272,54 @@ Provide a JSON array of steps.`
 
   const acceptBreakdown = () => {
     const selectedOptions = breakdownOptions.filter(opt => opt.selected);
+    console.log('Selected options:', selectedOptions);
+    
     const subtasks: Partial<Task>[] = selectedOptions.map((opt, index) => ({
-      id: `${task.id}-sub-${index + 1}`,
+      id: `${task.id}-sub-${index + 1}-${Date.now()}`,
       title: opt.title,
       description: opt.description,
-      parentId: task.id,
+      parentTaskId: task.id,
       projectId: task.projectId,
-      categoryId: task.categoryId,
+      categoryIds: task.categoryIds,
       priority: task.priority,
       completed: false,
-      estimatedDuration: opt.duration,
-      order: index + 1,
+      estimatedMinutes: parseInt(opt.duration) || 15,
       dueDate: task.dueDate
     }));
     
+    console.log('Subtasks to create:', subtasks);
     onAccept(subtasks);
   };
 
   const handleDragStart = (e: React.DragEvent, itemId: string) => {
-    setDraggedItem(itemId);
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', itemId);
+    setDraggedItem(itemId);
   };
 
   const handleDragOver = (e: React.DragEvent, itemId: string) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
     if (itemId !== draggedItem) {
       setDragOverItem(itemId);
     }
   };
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
     setDragOverItem(null);
   };
 
   const handleDrop = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
-    if (!draggedItem || draggedItem === targetId) return;
+    e.stopPropagation();
+    
+    const draggedId = e.dataTransfer.getData('text/plain') || draggedItem;
+    if (!draggedId || draggedId === targetId) return;
 
     const items = [...breakdownOptions];
-    const draggedIndex = items.findIndex(item => item.id === draggedItem);
+    const draggedIndex = items.findIndex(item => item.id === draggedId);
     const targetIndex = items.findIndex(item => item.id === targetId);
 
     if (draggedIndex === -1 || targetIndex === -1) return;
@@ -326,7 +335,8 @@ Provide a JSON array of steps.`
     setDragOverItem(null);
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.preventDefault();
     setDraggedItem(null);
     setDragOverItem(null);
   };
@@ -362,10 +372,10 @@ Provide a JSON array of steps.`
               {breakdownOptions.map(option => (
                 <Card 
                   key={option.id} 
-                  className={`p-3 transition-all ${
+                  className={`p-3 transition-all cursor-move ${
                     dragOverItem === option.id ? 'ring-2 ring-blue-400' : ''
                   } ${draggedItem === option.id ? 'opacity-50' : ''}`}
-                  draggable
+                  draggable={true}
                   onDragStart={(e) => handleDragStart(e, option.id)}
                   onDragOver={(e) => handleDragOver(e, option.id)}
                   onDragLeave={handleDragLeave}
