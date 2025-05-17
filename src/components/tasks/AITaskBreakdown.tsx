@@ -15,7 +15,8 @@ import {
   Plus,
   Sparkles,
   Trash2,
-  X
+  X,
+  GripVertical
 } from 'lucide-react';
 
 interface AITaskBreakdownProps {
@@ -48,6 +49,8 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
     includeBreaks: true,
     detailLevel: 'moderate'
   });
+  const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [dragOverItem, setDragOverItem] = useState<string | null>(null);
 
   const generateBreakdown = async () => {
     setIsLoading(true);
@@ -286,6 +289,48 @@ Provide a JSON array of steps.`
     onAccept(subtasks);
   };
 
+  const handleDragStart = (e: React.DragEvent, itemId: string) => {
+    setDraggedItem(itemId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, itemId: string) => {
+    e.preventDefault();
+    if (itemId !== draggedItem) {
+      setDragOverItem(itemId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverItem(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    if (!draggedItem || draggedItem === targetId) return;
+
+    const items = [...breakdownOptions];
+    const draggedIndex = items.findIndex(item => item.id === draggedItem);
+    const targetIndex = items.findIndex(item => item.id === targetId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    // Remove dragged item
+    const [draggedOption] = items.splice(draggedIndex, 1);
+    
+    // Insert at new position
+    items.splice(targetIndex, 0, draggedOption);
+    
+    setBreakdownOptions(items);
+    setDraggedItem(null);
+    setDragOverItem(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setDragOverItem(null);
+  };
+
   React.useEffect(() => {
     generateBreakdown();
   }, []);
@@ -315,8 +360,22 @@ Provide a JSON array of steps.`
           <>
             <div className="space-y-2">
               {breakdownOptions.map(option => (
-                <Card key={option.id} className="p-3">
+                <Card 
+                  key={option.id} 
+                  className={`p-3 transition-all ${
+                    dragOverItem === option.id ? 'ring-2 ring-blue-400' : ''
+                  } ${draggedItem === option.id ? 'opacity-50' : ''}`}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, option.id)}
+                  onDragOver={(e) => handleDragOver(e, option.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, option.id)}
+                  onDragEnd={handleDragEnd}
+                >
                   <div className="flex items-start">
+                    <div className="mr-2 cursor-move">
+                      <GripVertical size={20} className="text-gray-400" />
+                    </div>
                     <input
                       type="checkbox"
                       checked={option.selected}
