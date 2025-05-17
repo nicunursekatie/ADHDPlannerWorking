@@ -115,14 +115,18 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     setCompletionRate(rate);
     
     // Initialize tasks with reasons
-    setTasksWithReasons(overdueTasks.map(task => ({
+  if (tasksWithReasons.length === 0 && overdueTasks.length > 0) {
+    const initializedTasks = overdueTasks.map(task => ({
       task,
       selectedReason: null,
       customReason: '',
       action: null,
       rescheduleDate: undefined
-    })));
-  }, [tasks, lastWeek, lastWeekStr, today, overdueTasks]);
+    }));
+    setTasksWithReasons(initializedTasks);
+  }
+}, [overdueTasks, tasksWithReasons.length]);
+
   
   const handleReasonSelect = (taskId: string, reasonId: string) => {
     console.log('handleReasonSelect called with:', { taskId, reasonId });
