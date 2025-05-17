@@ -432,24 +432,27 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                           Why wasn't this task completed?
                         </h5>
                         <div className="space-y-2">
-                          {commonReasons.slice(0, 6).map(reason => (
-                            <div key={reason.id} className="flex items-center">
-                              <input 
-                                type="radio" 
-                                id={`${taskWithReason.task.id}-${reason.id}`}
-                                name={`reason-${taskWithReason.task.id}`}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                                checked={taskWithReason.selectedReason === reason.id}
-                                onChange={() => handleReasonSelect(taskWithReason.task.id, reason.id)}
-                              />
-                              <label 
-                                htmlFor={`${taskWithReason.task.id}-${reason.id}`}
-                                className="ml-2 text-sm text-gray-700"
-                              >
-                                {reason.text}
-                              </label>
-                            </div>
-                          ))}
+                          {commonReasons.slice(0, 6).map(reason => {
+                            const isChecked = tasksWithReasons.find(item => item.task.id === taskWithReason.task.id)?.selectedReason === reason.id;
+                            return (
+                              <div key={reason.id} className="flex items-center">
+                                <input 
+                                  type="radio" 
+                                  id={`${taskWithReason.task.id}-${reason.id}`}
+                                  name={`reason-${taskWithReason.task.id}`}
+                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                  checked={isChecked}
+                                  onChange={() => handleReasonSelect(taskWithReason.task.id, reason.id)}
+                                />
+                                <label 
+                                  htmlFor={`${taskWithReason.task.id}-${reason.id}`}
+                                  className="ml-2 text-sm text-gray-700"
+                                >
+                                  {reason.text}
+                                </label>
+                              </div>
+                            );
+                          })}
                           
                           <div className="pt-1">
                             <div className="flex items-center">
@@ -458,7 +461,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                                 id={`${taskWithReason.task.id}-custom`}
                                 name={`reason-${taskWithReason.task.id}`}
                                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                                checked={taskWithReason.selectedReason === 'custom'}
+                                checked={tasksWithReasons.find(item => item.task.id === taskWithReason.task.id)?.selectedReason === 'custom'}
                                 onChange={() => handleReasonSelect(taskWithReason.task.id, 'custom')}
                               />
                               <label 
