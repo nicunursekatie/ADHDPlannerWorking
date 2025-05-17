@@ -125,29 +125,34 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   }, [tasks, lastWeek, lastWeekStr, today, overdueTasks]);
   
   const handleReasonSelect = (taskId: string, reasonId: string) => {
-    setTasksWithReasons(prev => 
-      prev.map(item => 
+    console.log('handleReasonSelect called with:', { taskId, reasonId });
+    setTasksWithReasons(prev => {
+      const updated = prev.map(item => 
         item.task.id === taskId 
           ? { ...item, selectedReason: reasonId } 
           : item
-      )
-    );
+      );
+      console.log('Updated tasksWithReasons:', updated);
+      return updated;
+    });
     
     // Increment frequency for this reason
-    setCommonReasons(prev => 
-      prev.map(reason => 
-        reason.id === reasonId 
-          ? { ...reason, frequency: reason.frequency + 1 } 
-          : reason
-      )
-    );
+    if (reasonId !== 'custom') {
+      setCommonReasons(prev => 
+        prev.map(reason => 
+          reason.id === reasonId 
+            ? { ...reason, frequency: reason.frequency + 1 } 
+            : reason
+        )
+      );
+    }
   };
   
   const handleCustomReasonChange = (taskId: string, value: string) => {
     setTasksWithReasons(prev => 
       prev.map(item => 
         item.task.id === taskId 
-          ? { ...item, customReason: value, selectedReason: value ? 'custom' : null } 
+          ? { ...item, customReason: value } 
           : item
       )
     );
@@ -558,7 +563,12 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                         </Button>
                         <Button
                           size="sm"
-                          disabled={!taskWithReason.selectedReason || !taskWithReason.action || (taskWithReason.action === 'reschedule' && !taskWithReason.rescheduleDate)}
+                          disabled={
+                            !taskWithReason.selectedReason || 
+                            !taskWithReason.action || 
+                            (taskWithReason.selectedReason === 'custom' && !taskWithReason.customReason) ||
+                            (taskWithReason.action === 'reschedule' && !taskWithReason.rescheduleDate)
+                          }
                           onClick={() => handleTaskUpdate(taskWithReason)}
                           icon={<CheckCircle size={14} />}
                         >
