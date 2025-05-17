@@ -225,12 +225,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     loadData();
   }, []);
   
-  // Check for recurring tasks that need to be generated
-  useEffect(() => {
-    if (!isLoading && recurringTasks.length > 0) {
-      checkAndGenerateRecurringTasks();
-    }
-  }, [isLoading, recurringTasks.length, checkAndGenerateRecurringTasks]);
   
   // Tasks
   const addTask = useCallback((taskData: Partial<Task>): Task => {
@@ -1170,7 +1164,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
       }
     });
-  }, [recurringTasks, generateTaskFromRecurring, addTask, updateRecurringTask]);
+  }, [recurringTasks]);
 
   const contextValue: AppContextType = {
     tasks,
@@ -1247,6 +1241,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     isLoading,
     isDataInitialized,
   };
+  
+  // Check for recurring tasks that need to be generated after everything is initialized
+  useEffect(() => {
+    if (!isLoading && recurringTasks.length > 0 && checkAndGenerateRecurringTasks) {
+      checkAndGenerateRecurringTasks();
+    }
+  }, [isLoading, recurringTasks.length]);
   
   return (
     <AppContext.Provider value={contextValue}>
