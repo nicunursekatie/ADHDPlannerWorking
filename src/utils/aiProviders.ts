@@ -33,8 +33,8 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
     name: 'Groq (Free)',
     apiKeyRequired: true,
     baseUrl: 'https://api.groq.com/openai/v1/chat/completions',
-    models: ['mixtral-8x7b-32768', 'llama2-70b-4096'],
-    defaultModel: 'mixtral-8x7b-32768',
+    models: ['mixtral-8x7b-instruct', 'llama3-8b-8192', 'llama3-70b-8192'],
+    defaultModel: 'mixtral-8x7b-instruct',
     headers: (apiKey?: string) => ({
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
