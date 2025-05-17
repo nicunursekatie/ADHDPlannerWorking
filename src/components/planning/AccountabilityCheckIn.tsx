@@ -470,7 +470,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                               placeholder="Enter your reason..."
                               value={taskWithReason.customReason}
                               onChange={(e) => handleCustomReasonChange(taskWithReason.task.id, e.target.value)}
-                              onClick={() => handleReasonSelect(taskWithReason.task.id, 'custom')}
+                              onFocus={() => handleReasonSelect(taskWithReason.task.id, 'custom')}
                             />
                           </div>
                         </div>
