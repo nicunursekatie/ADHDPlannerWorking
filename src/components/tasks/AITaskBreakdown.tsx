@@ -53,9 +53,12 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
   const [usingFallback, setUsingFallback] = useState(false);
+  const alwaysAskContext = localStorage.getItem('ai_always_ask_context');
   const [showContextForm, setShowContextForm] = useState(
-    localStorage.getItem('ai_always_ask_context') === 'true' || !localStorage.getItem('ai_api_key')
+    // Default to true unless explicitly set to false
+    alwaysAskContext !== 'false'
   );
+  console.log('Initial showContextForm state:', alwaysAskContext !== 'false', 'alwaysAskContext:', alwaysAskContext);
   const [contextData, setContextData] = useState({
     currentState: '',
     blockers: '',
@@ -573,7 +576,9 @@ Return ONLY a JSON array with NO additional text.`
 
   React.useEffect(() => {
     // Don't generate breakdown automatically if we're showing context form
+    console.log('useEffect running, showContextForm:', showContextForm);
     if (!showContextForm) {
+      console.log('Generating breakdown because showContextForm is false');
       generateBreakdown();
     }
   }, [showContextForm]);
@@ -613,7 +618,9 @@ Return ONLY a JSON array with NO additional text.`
           </div>
         )}
 
-        {showContextForm && !isLoading && (
+        {showContextForm && !isLoading && (() => {
+          console.log('Rendering context form, showContextForm:', showContextForm, 'isLoading:', isLoading);
+          return (
           <div className="space-y-4">
             <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
               <h3 className="font-medium text-purple-900 mb-3">Help me understand your situation better</h3>
@@ -709,7 +716,7 @@ Return ONLY a JSON array with NO additional text.`
                 <input
                   type="checkbox"
                   id="alwaysAskContext"
-                  checked={localStorage.getItem('ai_always_ask_context') === 'true'}
+                  checked={localStorage.getItem('ai_always_ask_context') !== 'false'}
                   onChange={(e) => {
                     localStorage.setItem('ai_always_ask_context', e.target.checked.toString());
                   }}
@@ -743,7 +750,8 @@ Return ONLY a JSON array with NO additional text.`
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
         
         {usingFallback && !showContextForm && (
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
