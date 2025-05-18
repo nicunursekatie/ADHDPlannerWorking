@@ -62,15 +62,20 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       const providerName = localStorage.getItem('ai_provider') || 'openai';
       const provider = getProvider(providerName);
       
+      console.log('Generating breakdown for task:', task.title);
+      console.log('API key present:', !!apiKey);
+      
       if (!apiKey) {
         // Use fallback if no API key
+        console.log('Using fallback breakdown - no API key');
         await new Promise(resolve => setTimeout(resolve, 1000));
         // Create adaptive, task-specific breakdown
         const taskTitle = task.title.toLowerCase();
         let mockBreakdown: BreakdownOption[] = [];
         
         // Task-specific breakdowns
-        if (taskTitle.includes('clean') || taskTitle.includes('put away') || taskTitle.includes('laundry')) {
+        if (taskTitle.includes('clean') || taskTitle.includes('put away')) {
+          console.log('Using clean/put away specific breakdown');
           mockBreakdown = [
             {
               id: '1',
@@ -127,6 +132,45 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
               energyRequired: 'low',
               tips: 'Take before/after photo for dopamine boost'
             }
+          ];
+        } else if (taskTitle.includes('laundry') || taskTitle.includes('hamper') || taskTitle.includes('clothes')) {
+          // Simple laundry-specific breakdown
+          const isLoading = taskTitle.includes('load') || taskTitle.includes('hamper');
+          console.log('Using laundry specific breakdown, isLoading:', isLoading);
+          mockBreakdown = [
+            {
+              id: '1',
+              title: isLoading ? 'Check hamper & gather laundry' : 'Check machine status',
+              duration: '2-3 mins',
+              description: isLoading ? 'Quick scan of hamper and nearby areas' : 'See if washer/dryer is ready',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'low',
+              tips: 'No need to overthink - just grab what\'s visible'
+            },
+            {
+              id: '2',
+              title: isLoading ? 'Load machine & start' : 'Move laundry to next stage',
+              duration: '5-10 mins',
+              description: isLoading ? 'Add detergent, load clothes, press start' : 'Transfer to dryer or folding area',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'medium',
+              tips: 'Set timer for when the load will finish'
+            },
+            ...(preferences.includeBreaks ? [{
+              id: '3',
+              title: 'Quick reward break',
+              duration: '5 mins',
+              description: 'Watch a short video or have a snack',
+              selected: true,
+              editable: false,
+              type: 'break',
+              energyRequired: 'low',
+              tips: 'You did it! Enjoy a small dopamine boost'
+            }] : [])
           ];
         } else if (taskTitle.includes('write') || taskTitle.includes('email') || taskTitle.includes('report')) {
           mockBreakdown = [
@@ -188,6 +232,7 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
           ];
         } else {
           // Generic breakdown for other tasks
+          console.log('Using generic breakdown for task:', taskTitle);
           mockBreakdown = [
             {
               id: '1',
@@ -247,6 +292,7 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
           ];
         }
       
+      console.log('Setting breakdown options:', mockBreakdown.length, 'steps');
       setBreakdownOptions(mockBreakdown);
       return;
     }
@@ -264,6 +310,9 @@ Your breakdowns should be:
 - Account for ADHD challenges like time blindness and executive dysfunction
 - Use action verbs
 - Include energy level indicators
+
+IMPORTANT: For simple tasks (like doing laundry, taking out trash, making a phone call), provide ONLY the essential steps. 
+Don't over-complicate simple tasks. If a task can be done in 1-3 basic steps, don't artificially expand it.
 
 Format your response as a JSON array with this structure:
 {
@@ -287,6 +336,7 @@ Requirements:
 - ${preferences.includeBreaks ? 'Include breaks' : 'No breaks needed'}
 - Complexity: ${preferences.complexity}
 - Each step should be ${preferences.maxDuration} minutes or less
+- For simple tasks, provide ONLY essential steps (don't over-complicate)
 
 Provide a JSON array of steps.`
           }

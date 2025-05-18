@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Laundry Breakdown</title>
+</head>
+<body>
+    <h1>Laundry Task Breakdown Test</h1>
+    <p>Check the console to see how the task breakdown is working for laundry tasks.</p>
+    
+    <script>
+        // Simulate the breakdown logic for testing
+        function simulateBreakdown(taskTitle) {
+            console.log('Testing task:', taskTitle);
+            
+            const taskTitleLower = taskTitle.toLowerCase();
+            
+            if (taskTitleLower.includes('clean') || taskTitleLower.includes('put away')) {
+                console.log('Using clean/put away specific breakdown');
+            } else if (taskTitleLower.includes('laundry') || taskTitleLower.includes('hamper') || taskTitleLower.includes('clothes')) {
+                const isLoading = taskTitleLower.includes('load') || taskTitleLower.includes('hamper');
+                console.log('Using laundry specific breakdown, isLoading:', isLoading);
+                
+                const steps = [
+                    {
+                        title: isLoading ? 'Check hamper & gather laundry' : 'Check machine status',
+                        duration: '2-3 mins',
+                        description: isLoading ? 'Quick scan of hamper and nearby areas' : 'See if washer/dryer is ready',
+                    },
+                    {
+                        title: isLoading ? 'Load machine & start' : 'Move laundry to next stage',
+                        duration: '5-10 mins',
+                        description: isLoading ? 'Add detergent, load clothes, press start' : 'Transfer to dryer or folding area',
+                    }
+                ];
+                
+                console.log('Generated steps:', steps);
+            } else {
+                console.log('Using generic breakdown for task:', taskTitleLower);
+            }
+        }
+        
+        // Test cases
+        console.log('===== Test 1: Do another load from the sorted hamper =====');
+        simulateBreakdown("Do another load from the sorted hamper");
+        
+        console.log('\n===== Test 2: Do laundry =====');
+        simulateBreakdown("Do laundry");
+        
+        console.log('\n===== Test 3: Clean the kitchen =====');
+        simulateBreakdown("Clean the kitchen");
+        
+        console.log('\n===== Test 4: Write an email =====');
+        simulateBreakdown("Write an email");
+    </script>
+</body>
+</html>

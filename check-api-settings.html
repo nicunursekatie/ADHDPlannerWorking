@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check API Settings</title>
+</head>
+<body>
+    <h1>API Settings Check</h1>
+    
+    <div id="status"></div>
+    
+    <button onclick="checkSettings()">Check Settings</button>
+    <button onclick="setTestApiKey()">Set Test API Key</button>
+    <button onclick="clearApiKey()">Clear API Key</button>
+    
+    <script>
+        function checkSettings() {
+            const apiKey = localStorage.getItem('ai_api_key');
+            const provider = localStorage.getItem('ai_provider');
+            
+            const status = document.getElementById('status');
+            status.innerHTML = `
+                <h2>Current Settings:</h2>
+                <p>API Key: ${apiKey ? 'SET (' + apiKey.substring(0, 10) + '...)' : 'NOT SET'}</p>
+                <p>Provider: ${provider || 'NOT SET (default: openai)'}</p>
+                <p>Key exists: ${!!apiKey}</p>
+            `;
+            
+            console.log('API Key present:', !!apiKey);
+            console.log('Provider:', provider);
+        }
+        
+        function setTestApiKey() {
+            // This is just for testing - don't use real API keys
+            localStorage.setItem('ai_api_key', 'test-key-123');
+            localStorage.setItem('ai_provider', 'openai');
+            checkSettings();
+        }
+        
+        function clearApiKey() {
+            localStorage.removeItem('ai_api_key');
+            localStorage.removeItem('ai_provider');
+            checkSettings();
+        }
+        
+        // Check on load
+        checkSettings();
+    </script>
+</body>
+</html>
