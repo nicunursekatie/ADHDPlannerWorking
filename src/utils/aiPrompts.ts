@@ -1,30 +1,21 @@
-export const ADHD_TASK_BREAKDOWN_SYSTEM_PROMPT = `You are an AI assistant specialized in helping people with ADHD break down tasks into manageable steps. You understand that ADHD presents unique challenges in task management:
+export const ADHD_TASK_BREAKDOWN_SYSTEM_PROMPT = `You are an ADHD-aware assistant who breaks tasks into 3–5 motivating, concrete steps. Avoid filler like "take a break," "use a basket," or "set a timer." 
+Each subtask should either reduce overwhelm, clarify decision-making, or externalize mental load.
+Label steps with optional tags like: low energy, focus boost, accountability.
+Speak directly to someone who needs just the right nudge to get started.
 
-1. Executive dysfunction makes starting tasks difficult
-2. Time blindness affects estimation
-3. Attention regulation impacts focus duration
-4. Motivation requires immediate rewards
-5. Working memory limitations affect complex sequences
-
-Your task breakdowns should:
-
-- Start with the easiest, most engaging step to build momentum
-- Keep steps concrete and specific (no vague instructions)
-- Limit each step to 5-30 minutes maximum
-- Include regular breaks to prevent burnout
-- Use action verbs that clearly define what to do
-- Account for setup/transition time between steps
-- Build in flexibility for bad brain days
-- Include dopamine rewards/checkpoints
-- Avoid overwhelming detail
-- Consider energy levels throughout the day
+Key principles:
+- Make each step a specific action, not preparation
+- Focus on what matters most for task completion
+- Skip obvious breaks and reward steps unless specifically requested
+- Each step should move the task forward meaningfully
+- Use motivating language that acknowledges ADHD challenges
 
 For each step, provide:
-1. Clear action title
-2. Realistic time estimate (always add buffer time)
-3. Specific instructions
+1. Action-oriented title (verb + specific task)
+2. Realistic time estimate (be generous with time)
+3. Clear, concrete instructions
 4. Energy level required (low/medium/high)
-5. Any prerequisites or materials needed`;
+5. ADHD-specific tip for that step`;
 
 export const TASK_BREAKDOWN_USER_PROMPT_TEMPLATE = (task: {
   title: string;
@@ -38,80 +29,65 @@ export const TASK_BREAKDOWN_USER_PROMPT_TEMPLATE = (task: {
     breakFrequency?: string;
     attentionSpan?: number;
   };
-}) => `Break down this task for someone with ADHD:
+}) => `Break down this task into 3-5 concrete, actionable steps for someone with ADHD:
 
 Task: ${task.title}
 ${task.description ? `Description: ${task.description}` : ''}
-${task.estimatedMinutes ? `Original estimate: ${task.estimatedMinutes} minutes` : ''}
-${task.energyLevel ? `Energy level: ${task.energyLevel}` : ''}
+${task.estimatedMinutes ? `Time available: ${task.estimatedMinutes} minutes` : ''}
 ${task.context ? `Context: ${task.context}` : ''}
 
-User preferences:
-${task.userPreferences?.workStyle ? `- Work style: ${task.userPreferences.workStyle}` : ''}
-${task.userPreferences?.bestTimeOfDay ? `- Best time of day: ${task.userPreferences.bestTimeOfDay}` : ''}
-${task.userPreferences?.breakFrequency ? `- Break frequency: ${task.userPreferences.breakFrequency}` : ''}
-${task.userPreferences?.attentionSpan ? `- Typical attention span: ${task.userPreferences.attentionSpan} minutes` : ''}
+Create steps that:
+- Are specific actions (not prep work)
+- Reduce overwhelm or clarify decisions
+- Keep momentum going forward
+- Skip filler steps unless the user specifically wants breaks
 
-Please provide a step-by-step breakdown that:
-1. Starts with an easy win to build momentum
-2. Includes specific, actionable steps
-3. Accounts for ADHD challenges
-4. Builds in breaks and rewards
-5. Provides realistic time estimates
+${task.userPreferences?.breakFrequency === 'regular' ? 'Include 1-2 strategic breaks' : 'Skip breaks unless essential'}
 
-Format each step as:
+Return JSON format:
 {
-  "title": "Step title (action verb + specific task)",
-  "duration": "X-Y mins (always provide range)",
-  "description": "Clear, specific instructions",
-  "type": "work|break|review|reward",
+  "title": "Verb + specific action",
+  "duration": "X-Y mins",
+  "description": "What exactly to do",
+  "type": "work",
   "energyRequired": "low|medium|high",
-  "prerequisites": ["any materials or prior steps needed"],
-  "tips": "ADHD-specific tips for this step"
+  "tips": "ADHD nudge for this step"
 }`;
 
 export const BREAKDOWN_PATTERNS = {
   writing: {
     steps: [
       {
-        title: "Set up writing space",
+        title: "Brain dump all ideas",
         duration: "5-10 mins",
-        description: "Clear desk, open document, put phone away",
+        description: "Open doc, write everything that comes to mind - messy is perfect",
         type: "work",
         energyRequired: "low",
-        tips: "Start with just opening the document - that's a win!"
+        tips: "No editing! Just dump thoughts like texts to a friend"
       },
       {
-        title: "Brain dump key points",
-        duration: "10-15 mins",
-        description: "Write down all thoughts without editing",
-        type: "work",
-        energyRequired: "medium",
-        tips: "No editing! Just get ideas out"
-      },
-      {
-        title: "Take a movement break",
+        title: "Pick 3 main points",
         duration: "5 mins",
-        description: "Stand up, stretch, walk around",
-        type: "break",
+        description: "Circle or highlight your best ideas from the dump",
+        type: "work",
         energyRequired: "low",
-        tips: "Set a timer to ensure you come back"
+        tips: "Don't overthink - go with gut feeling"
       },
       {
-        title: "Organize into sections",
+        title: "Write ugly first paragraph",
         duration: "10-15 mins",
-        description: "Group related points together",
+        description: "Turn one point into sentences - grammar doesn't matter yet",
         type: "work",
         energyRequired: "medium",
-        tips: "Use colors or emojis to mark different sections"
+        tips: "Bad writing can be fixed; blank pages can't"
       },
       {
-        title: "Write first section",
+        title: "Expand easiest section",
         duration: "15-20 mins",
-        description: "Focus on one section only",
+        description: "Pick the most interesting point and flesh it out",
         type: "work",
         energyRequired: "high",
-        tips: "Start with the easiest or most interesting section"
+        tips: "Follow your interest - excitement is fuel"
       }
     ]
   },
@@ -119,36 +95,36 @@ export const BREAKDOWN_PATTERNS = {
   cleaning: {
     steps: [
       {
-        title: "Play energizing music",
-        duration: "2-3 mins",
-        description: "Queue up a cleaning playlist",
+        title: "Trash run",
+        duration: "5-10 mins",
+        description: "Grab a bag, collect all obvious trash - don't sort, just grab",
         type: "work",
         energyRequired: "low",
-        tips: "Music helps maintain focus and energy"
+        tips: "Movement + visible progress = dopamine hit"
       },
       {
-        title: "Gather trash only",
+        title: "Clothes to hamper",
+        duration: "5-10 mins",
+        description: "Scoop all clothes into hamper - dirty or clean, doesn't matter",
+        type: "work",
+        energyRequired: "low",
+        tips: "Perfect sorting is tomorrow's problem"
+      },
+      {
+        title: "Clear one surface",
         duration: "10-15 mins",
-        description: "Walk around with trash bag, collect only obvious trash",
-        type: "work",
-        energyRequired: "low",
-        tips: "One category at a time prevents overwhelm"
-      },
-      {
-        title: "Victory dance break",
-        duration: "3-5 mins",
-        description: "Celebrate progress with movement",
-        type: "break",
-        energyRequired: "low",
-        tips: "Celebrating small wins builds motivation"
-      },
-      {
-        title: "Return items to homes",
-        duration: "15-20 mins",
-        description: "Put things where they belong",
+        description: "Pick desk, bed, or floor - make it completely clear",
         type: "work",
         energyRequired: "medium",
-        tips: "Set timer - when it rings, stop even if not done"
+        tips: "One clear surface changes the whole room vibe"
+      },
+      {
+        title: "5-minute speed sort",
+        duration: "5 mins",
+        description: "Put things in general right area - kitchen stuff toward kitchen",
+        type: "work",
+        energyRequired: "medium",
+        tips: "Timer racing makes boring tasks fun"
       }
     ]
   },
