@@ -63,8 +63,6 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
     currentState: '',
     blockers: '',
     specificGoal: '',
-    timeAvailable: '',
-    energyLevel: 'medium',
     environment: ''
   });
 
@@ -362,8 +360,6 @@ Format as JSON array:
 ${contextData.currentState ? `Current situation: ${contextData.currentState}` : ''}
 ${contextData.blockers ? `Specific blockers: ${contextData.blockers}` : ''}
 ${contextData.specificGoal ? `Specific goal: ${contextData.specificGoal}` : ''}
-${contextData.timeAvailable ? `Time available: ${contextData.timeAvailable}` : ''}
-${contextData.energyLevel ? `Energy level: ${contextData.energyLevel}` : ''}
 ${contextData.environment ? `Environment/constraints: ${contextData.environment}` : ''}
 
 REQUIREMENTS:
@@ -593,7 +589,7 @@ Return ONLY a JSON array with NO additional text.`
               <h4 className="font-medium text-gray-900">Breaking down: {task.title}</h4>
               <p className="text-sm text-gray-600">
                 {showContextForm 
-                  ? 'Tell me about your situation for better recommendations' 
+                  ? 'Let\'s understand this task better for a personalized breakdown' 
                   : usingFallback 
                     ? 'Using fallback suggestions (no API key)' 
                     : 'AI is creating manageable steps for you'}
@@ -623,90 +619,61 @@ Return ONLY a JSON array with NO additional text.`
           return (
           <div className="space-y-4">
             <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <h3 className="font-medium text-purple-900 mb-3">Help me understand your situation better</h3>
+              <h3 className="font-medium text-purple-900 mb-3">Tell me more about this task</h3>
               <p className="text-sm text-purple-700 mb-4">
-                Providing more context helps create steps that work for YOUR specific situation with this task.
+                The more context you provide, the better I can tailor the breakdown to your specific needs and challenges.
               </p>
               
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    What's your current state with this task?
+                    Where are you with this task?
                   </label>
                   <input
                     type="text"
                     value={contextData.currentState}
                     onChange={(e) => setContextData({...contextData, currentState: e.target.value})}
-                    placeholder="e.g., 'Haven't started', 'Stuck on decision X', 'Overwhelmed by scope'"
+                    placeholder="e.g., 'Need to start', 'Have some info but not organized', 'Tried before but got stuck'"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    What's specifically blocking you?
+                    What makes this task challenging?
                   </label>
                   <input
                     type="text"
                     value={contextData.blockers}
                     onChange={(e) => setContextData({...contextData, blockers: e.target.value})}
-                    placeholder="e.g., 'Don't know where to start', 'Too many options', 'Perfectionism'"
+                    placeholder="e.g., 'Too many steps', 'Don't know the process', 'Requires decisions I haven't made'"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    What's your specific goal?
+                    What outcome do you need?
                   </label>
                   <input
                     type="text"
                     value={contextData.specificGoal}
                     onChange={(e) => setContextData({...contextData, specificGoal: e.target.value})}
-                    placeholder="e.g., 'Just get it done', 'Make it good enough', 'Impress my boss'"
+                    placeholder="e.g., 'Complete application', 'Get documents in order', 'Have everything ready to submit'"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      How much time do you have?
-                    </label>
-                    <input
-                      type="text"
-                      value={contextData.timeAvailable}
-                      onChange={(e) => setContextData({...contextData, timeAvailable: e.target.value})}
-                      placeholder="e.g., '30 mins', '2 hours', 'all day'"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Current energy level?
-                    </label>
-                    <select
-                      value={contextData.energyLevel}
-                      onChange={(e) => setContextData({...contextData, energyLevel: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                    >
-                      <option value="low">Low (tired/struggling)</option>
-                      <option value="medium">Medium (okay)</option>
-                      <option value="high">High (focused/energized)</option>
-                    </select>
-                  </div>
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Environment/constraints?
+                    Any constraints or special requirements?
                   </label>
                   <input
                     type="text"
                     value={contextData.environment}
                     onChange={(e) => setContextData({...contextData, environment: e.target.value})}
-                    placeholder="e.g., 'Kids around', 'Noisy office', 'Limited tools'"
+                    placeholder="e.g., 'Need specific documents', 'Must be done online', 'Requires appointment'"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                   />
                 </div>
@@ -745,7 +712,7 @@ Return ONLY a JSON array with NO additional text.`
                   className="flex items-center"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Smart Breakdown
+                  Create Personalized Breakdown
                 </Button>
               </div>
             </div>
