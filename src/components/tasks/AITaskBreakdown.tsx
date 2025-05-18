@@ -82,58 +82,58 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
           mockBreakdown = [
             {
               id: '1',
-              title: 'Set timer & gather supplies',
+              title: 'Dump everything visible onto one surface',
               duration: '2-3 mins',
-              description: 'Set 10-15 min timer, get bag/basket for items',
+              description: 'Clear bed/table/floor by moving all items to one spot',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'low',
-              tips: 'Timer helps prevent overwhelm and creates urgency'
+              tips: 'Creating one messy pile makes sorting easier than deciding item-by-item'
             },
             {
               id: '2',
-              title: 'Sort by destination',
+              title: 'Create 3 piles: trash, belongs here, goes elsewhere',
               duration: '5-7 mins',
-              description: 'Group items by where they go (bedroom, kitchen, etc)',
+              description: 'Quick sort without thinking too hard - trust first instinct',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'medium',
-              tips: 'Sorting first makes the actual put-away much faster'
+              tips: '3 categories max prevents decision paralysis'
             },
             {
               id: '3',
-              title: 'Quick movement break',
+              title: 'Toss trash pile immediately',
               duration: '2-3 mins',
-              description: 'Stretch, hydrate, do jumping jacks',
-              selected: preferences.includeBreaks,
+              description: 'Grab trash bag and dump the trash pile - no second-guessing',
+              selected: true,
               editable: false,
-              type: 'break',
+              type: 'work',
               energyRequired: 'low',
-              tips: 'Movement helps reset focus and energy'
+              tips: 'Starting with trash gives instant visible progress'
             },
             {
               id: '4',
-              title: 'Put away one category at a time',
-              duration: '10-15 mins',
-              description: 'Start with closest room or easiest category',
+              title: 'Put "belongs here" items in exact spots',
+              duration: '5-10 mins',
+              description: 'Only items that go in this room - leave other pile for now',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'medium',
-              tips: 'Take basket to each room instead of many trips'
+              tips: 'Finishing one room completely feels better than partial progress everywhere'
             },
             {
               id: '5',
-              title: 'Final check & celebrate',
-              duration: '2-3 mins',
-              description: 'Quick scan for missed items, then reward yourself',
+              title: 'Deliver "elsewhere" pile to destinations',
+              duration: '5-10 mins',
+              description: 'Grab pile and walk to each room, dropping items as you go',
               selected: true,
               editable: false,
-              type: 'review',
-              energyRequired: 'low',
-              tips: 'Take before/after photo for dopamine boost'
+              type: 'work',
+              energyRequired: 'medium',
+              tips: 'Walking with purpose helps maintain momentum'
             }
           ];
         } else if (taskTitle.includes('laundry') || taskTitle.includes('hamper') || taskTitle.includes('clothes')) {
@@ -143,25 +143,25 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
           mockBreakdown = [
             {
               id: '1',
-              title: isLoading ? 'Check hamper & gather laundry' : 'Check machine status',
+              title: isLoading ? 'Dump hamper directly into machine' : 'Pull everything out at once',
               duration: '2-3 mins',
-              description: isLoading ? 'Quick scan of hamper and nearby areas' : 'See if washer/dryer is ready',
+              description: isLoading ? 'Empty entire hamper into washer - sort later if needed' : 'Transfer entire load to dryer/basket in one go',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'low',
-              tips: 'No need to overthink - just grab what\'s visible'
+              tips: 'One big action is easier than many small decisions'
             },
             {
               id: '2',
-              title: isLoading ? 'Load machine & start' : 'Move laundry to next stage',
-              duration: '5-10 mins',
-              description: isLoading ? 'Add detergent, load clothes, press start' : 'Transfer to dryer or folding area',
+              title: isLoading ? 'Add soap & hit start immediately' : 'Start dryer or dump on bed',
+              duration: '1-2 mins',
+              description: isLoading ? 'Pour detergent (amount doesn\'t need to be perfect) and start' : 'Either start dryer or create one big pile on bed',
               selected: true,
               editable: false,
               type: 'work',
-              energyRequired: 'medium',
-              tips: 'Set timer for when the load will finish'
+              energyRequired: 'low',
+              tips: 'Starting the machine creates commitment to finish later'
             },
             ...(preferences.includeBreaks ? [{
               id: '3',
@@ -179,58 +179,58 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
           mockBreakdown = [
             {
               id: '1',
-              title: 'Gather all relevant info',
-              duration: '5-10 mins',
-              description: 'Collect documents, notes, requirements in one place',
+              title: 'Write 3 main points you want to make',
+              duration: '3-5 mins',
+              description: 'Just 3 bullet points - what\'s the core message?',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'low',
-              tips: 'Having everything ready prevents context switching'
+              tips: 'Starting with structure prevents rambling'
             },
             {
               id: '2',
-              title: 'Create rough bullet points',
-              duration: '5-10 mins',
-              description: 'List key points to cover, no sentences yet',
+              title: 'Turn easiest point into 2-3 sentences',
+              duration: '5-7 mins',
+              description: 'Pick the point you\'re most confident about and expand it',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'medium',
-              tips: 'Bullet points are less intimidating than paragraphs'
+              tips: 'Starting with easy wins builds momentum'
             },
             {
               id: '3',
-              title: 'Body doubling break',
+              title: 'Write opening sentence using your strongest point',
               duration: '5 mins',
-              description: 'Tell someone what you\'re working on or post update',
-              selected: preferences.includeBreaks,
+              description: 'Lead with your best idea - hook them immediately',
+              selected: true,
               editable: false,
-              type: 'break',
-              energyRequired: 'low',
-              tips: 'Accountability can boost motivation'
+              type: 'work',
+              energyRequired: 'medium',
+              tips: 'Strong start makes the rest flow easier'
             },
             {
               id: '4',
-              title: 'Write first draft (bad is okay!)',
-              duration: '15-20 mins',
-              description: 'Turn bullets into sentences, focus on completion not perfection',
+              title: 'Fill in remaining points - stream of consciousness',
+              duration: '10-15 mins',
+              description: 'Write continuously without stopping to edit - just get ideas down',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'high',
-              tips: 'Perfect is the enemy of done - you can edit later'
+              tips: 'Editing while writing is the enemy - separate creation from correction'
             },
             {
               id: '5',
-              title: 'Quick edit and send',
-              duration: '5-10 mins',
-              description: 'Basic spell check, then send before overthinking',
+              title: 'Read once out loud and hit send',
+              duration: '3-5 mins',
+              description: 'One read through for obvious errors, then send immediately',
               selected: true,
               editable: false,
-              type: 'review',
-              energyRequired: 'medium',
-              tips: 'Set 5 min limit to prevent perfectionism spiral'
+              type: 'work',
+              energyRequired: 'low',
+              tips: 'Reading aloud catches errors your eyes miss'
             }
           ];
         } else {
@@ -282,15 +282,15 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
               tips: 'Use pomodoro timer to maintain focus'
             },
             {
-              id: '5',
-              title: 'Review and transition',
-              duration: '5 mins',
-              description: 'Check completion, note next steps, celebrate',
+              id: '4',
+              title: 'Make it "good enough" and declare done',
+              duration: '5-10 mins',
+              description: 'Polish just enough to meet your definition of done',
               selected: true,
               editable: false,
-              type: 'review',
-              energyRequired: 'low',
-              tips: 'Acknowledging progress helps build momentum'
+              type: 'work',
+              energyRequired: 'medium',
+              tips: '80% perfect shipped beats 100% perfect procrastinated'
             }
           ];
         }
@@ -301,47 +301,61 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
     }
     
     // Real AI API call
+    console.log('Making real API call to:', providerName, 'with model:', provider.defaultModel);
     const messages = [
           {
             role: 'system',
-            content: `You are an AI assistant specialized in breaking down tasks for people with ADHD. 
-Your breakdowns should be:
-- Clear and specific
-- Small, manageable chunks (5-30 minutes max)
-- Include regular breaks
-- Start with easier subtasks to build momentum
-- Account for ADHD challenges like time blindness and executive dysfunction
-- Use action verbs
-- Include energy level indicators
+            content: `You are an ADHD-aware assistant breaking tasks into 3-5 strategic steps. 
 
-IMPORTANT: For simple tasks (like doing laundry, taking out trash, making a phone call), provide ONLY the essential steps. 
-Don't over-complicate simple tasks. If a task can be done in 1-3 basic steps, don't artificially expand it.
+CRITICAL RULES:
+1. NEVER include filler steps like "take a break", "gather materials", "set timer", "reward yourself"
+2. Each step must be a CONCRETE ACTION that advances the task
+3. Focus on reducing overwhelm and clarifying decisions
+4. Use action verbs and specific instructions
+5. Steps should address ADHD challenges naturally (without mentioning breaks)
 
-Format your response as a JSON array with this structure:
+AVOID THESE COMMON FILLER STEPS:
+❌ "Prepare workspace" or "Gather supplies"
+❌ "Take a break" or "Rest for X minutes"
+❌ "Set a timer" or "Check time"
+❌ "Reward yourself" or "Celebrate completion"
+❌ "Remember to..." or "Don't forget..."
+
+INSTEAD CREATE STEPS THAT:
+✓ Break complex decisions into simple ones
+✓ Turn vague tasks into specific actions
+✓ Address the hardest part first
+✓ Create external accountability
+✓ Focus on starting, not preparing
+
+Format as JSON array:
 {
-  "title": "Step title",
+  "title": "Action verb + specific task",
   "duration": "X-Y mins",
-  "description": "Clear description",
-  "type": "work|break|review|reward",
+  "description": "Exact steps to take",
+  "type": "work",
   "energyRequired": "low|medium|high",
-  "tips": "ADHD-specific tip"
+  "tips": "ADHD-specific strategy"
 }`
           },
           {
             role: 'user',
-            content: `Break down this task into ADHD-friendly steps:
-Task: ${task.title}
-${task.description ? `Description: ${task.description}` : ''}
-${task.estimatedMinutes ? `Time estimate: ${task.estimatedMinutes} minutes` : ''}
+            content: `Break this task into ${preferences.maxSteps} strategic steps for someone with ADHD:
 
-Requirements:
-- Maximum ${preferences.maxSteps} steps
-- ${preferences.includeBreaks ? 'Include breaks' : 'No breaks needed'}
-- Complexity: ${preferences.complexity}
-- Each step should be ${preferences.maxDuration} minutes or less
-- For simple tasks, provide ONLY essential steps (don't over-complicate)
+"${task.title}"${task.description ? `\nDetails: ${task.description}` : ''}
 
-Provide a JSON array of steps.`
+REQUIREMENTS:
+- Create exactly ${preferences.maxSteps} action steps (no prep, no breaks, no rewards)
+- Each step: ${preferences.maxDuration} minutes max
+- Focus on what makes this task hard for ADHD (decision fatigue, getting started, overwhelm)
+- Make each step a specific, concrete action
+
+For example:
+- Instead of "prepare to clean", say "dump all clothes on bed to sort"
+- Instead of "organize papers", say "create 3 piles: keep, toss, unsure"
+- Instead of "start writing", say "write 3 bullet points about main idea"
+
+Return ONLY a JSON array with NO additional text.`
           }
         ];
     
@@ -358,7 +372,9 @@ Provide a JSON array of steps.`
     }
     
     const data = await response.json();
+    console.log('Full API response:', JSON.stringify(data, null, 2));
     const content = provider.parseResponse(data);
+    console.log('Parsed content:', content);
     
     // Parse the JSON response
     let steps;
@@ -372,6 +388,7 @@ Provide a JSON array of steps.`
       }
     } catch (e) {
       console.error('Failed to parse AI response:', e);
+      console.error('Content that failed to parse:', content);
       throw new Error('Invalid response format');
     }
     
@@ -388,9 +405,15 @@ Provide a JSON array of steps.`
       tips: step.tips
     }));
     
+    console.log('Generated breakdown:', breakdown);
     setBreakdownOptions(breakdown);
     } catch (err) {
-      setError('Failed to generate breakdown. Please try again.');
+      console.error('Error generating breakdown:', err);
+      setError(`Failed to generate breakdown: ${err.message}`);
+      // Log more details about the error
+      if (err instanceof Error) {
+        console.error('Error stack:', err.stack);
+      }
     } finally {
       setIsLoading(false);
     }
