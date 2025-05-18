@@ -23,6 +23,7 @@ interface AppContextType {
   hasRecentlyDeleted: boolean;
   
   // Bulk operations
+  bulkAddTasks: (tasks: Task[]) => void;
   bulkDeleteTasks: (taskIds: string[]) => void;
   bulkCompleteTasks: (taskIds: string[]) => void;
   bulkMoveTasks: (taskIds: string[], projectId: string | null) => void;
@@ -984,6 +985,41 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.saveTasks(updatedTasks);
   }, [tasks]);
 
+  const bulkAddTasks = useCallback((newTasks: Task[]) => {
+    const timestamp = new Date().toISOString();
+    
+    // Add timestamp to all new tasks
+    const tasksWithTimestamp = newTasks.map(task => ({
+      ...task,
+      createdAt: task.createdAt || timestamp,
+      updatedAt: task.updatedAt || timestamp,
+    }));
+    
+    // Merge with existing tasks
+    const allTasks = [...tasks, ...tasksWithTimestamp];
+    
+    // Update parent tasks to include new subtask IDs
+    const updatedTasks = allTasks.map(task => {
+      // Check if this task is a parent of any new subtasks
+      const subtaskIds = newTasks
+        .filter(newTask => newTask.parentTaskId === task.id)
+        .map(subtask => subtask.id);
+      
+      if (subtaskIds.length > 0) {
+        return {
+          ...task,
+          subtasks: [...task.subtasks, ...subtaskIds],
+          updatedAt: timestamp,
+        };
+      }
+      
+      return task;
+    });
+    
+    setTasks(updatedTasks);
+    localStorage.saveTasks(updatedTasks);
+  }, [tasks]);
+
   // Dependency management functions
   const addTaskDependency = useCallback((taskId: string, dependsOnId: string) => {
     const timestamp = new Date().toISOString();
@@ -1179,6 +1215,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     hasRecentlyDeleted,
     
     // Bulk operations
+    bulkAddTasks,
     bulkDeleteTasks,
     bulkCompleteTasks,
     bulkMoveTasks,

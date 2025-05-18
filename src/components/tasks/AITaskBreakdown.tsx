@@ -65,63 +65,187 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       if (!apiKey) {
         // Use fallback if no API key
         await new Promise(resolve => setTimeout(resolve, 1000));
-        const mockBreakdown: BreakdownOption[] = [
-        {
-          id: '1',
-          title: `Prepare workspace for ${task.title}`,
-          duration: '5-10 mins',
-          description: 'Clear distractions, gather materials, get water',
-          selected: true,
-          editable: false,
-          type: 'work',
-          energyRequired: 'low',
-          tips: 'This easy step helps transition into work mode'
-        },
-        {
-          id: '2', 
-          title: `Brain dump for ${task.title}`,
-          duration: '5-10 mins',
-          description: 'Write down all thoughts without filtering',
-          selected: true,
-          editable: false,
-          type: 'work',
-          energyRequired: 'low',
-          tips: 'No judgment - just get ideas out of your head'
-        },
-        {
-          id: '3',
-          title: 'Movement break',
-          duration: '5 mins',
-          description: 'Stand up, stretch, walk, or dance',
-          selected: preferences.includeBreaks,
-          editable: false,
-          type: 'break',
-          energyRequired: 'low',
-          tips: 'Set a timer to ensure you return'
-        },
-        {
-          id: '4',
-          title: `Main work on ${task.title}`,
-          duration: '15-20 mins',
-          description: 'Focus on the core task now that you\'re warmed up',
-          selected: true,
-          editable: false,
-          type: 'work',
-          energyRequired: 'high',
-          tips: 'Use a timer - knowing there\'s an endpoint helps'
-        },
-        {
-          id: '5',
-          title: `Review and celebrate`,
-          duration: '5 mins',
-          description: 'Check work and acknowledge progress',
-          selected: true,
-          editable: false,
-          type: 'review',
-          energyRequired: 'low',
-          tips: 'Celebrating builds motivation for next time'
+        // Create adaptive, task-specific breakdown
+        const taskTitle = task.title.toLowerCase();
+        let mockBreakdown: BreakdownOption[] = [];
+        
+        // Task-specific breakdowns
+        if (taskTitle.includes('clean') || taskTitle.includes('put away') || taskTitle.includes('laundry')) {
+          mockBreakdown = [
+            {
+              id: '1',
+              title: 'Set timer & gather supplies',
+              duration: '2-3 mins',
+              description: 'Set 10-15 min timer, get bag/basket for items',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'low',
+              tips: 'Timer helps prevent overwhelm and creates urgency'
+            },
+            {
+              id: '2',
+              title: 'Sort by destination',
+              duration: '5-7 mins',
+              description: 'Group items by where they go (bedroom, kitchen, etc)',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'medium',
+              tips: 'Sorting first makes the actual put-away much faster'
+            },
+            {
+              id: '3',
+              title: 'Quick movement break',
+              duration: '2-3 mins',
+              description: 'Stretch, hydrate, do jumping jacks',
+              selected: preferences.includeBreaks,
+              editable: false,
+              type: 'break',
+              energyRequired: 'low',
+              tips: 'Movement helps reset focus and energy'
+            },
+            {
+              id: '4',
+              title: 'Put away one category at a time',
+              duration: '10-15 mins',
+              description: 'Start with closest room or easiest category',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'medium',
+              tips: 'Take basket to each room instead of many trips'
+            },
+            {
+              id: '5',
+              title: 'Final check & celebrate',
+              duration: '2-3 mins',
+              description: 'Quick scan for missed items, then reward yourself',
+              selected: true,
+              editable: false,
+              type: 'review',
+              energyRequired: 'low',
+              tips: 'Take before/after photo for dopamine boost'
+            }
+          ];
+        } else if (taskTitle.includes('write') || taskTitle.includes('email') || taskTitle.includes('report')) {
+          mockBreakdown = [
+            {
+              id: '1',
+              title: 'Gather all relevant info',
+              duration: '5-10 mins',
+              description: 'Collect documents, notes, requirements in one place',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'low',
+              tips: 'Having everything ready prevents context switching'
+            },
+            {
+              id: '2',
+              title: 'Create rough bullet points',
+              duration: '5-10 mins',
+              description: 'List key points to cover, no sentences yet',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'medium',
+              tips: 'Bullet points are less intimidating than paragraphs'
+            },
+            {
+              id: '3',
+              title: 'Body doubling break',
+              duration: '5 mins',
+              description: 'Tell someone what you\'re working on or post update',
+              selected: preferences.includeBreaks,
+              editable: false,
+              type: 'break',
+              energyRequired: 'low',
+              tips: 'Accountability can boost motivation'
+            },
+            {
+              id: '4',
+              title: 'Write first draft (bad is okay!)',
+              duration: '15-20 mins',
+              description: 'Turn bullets into sentences, focus on completion not perfection',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'high',
+              tips: 'Perfect is the enemy of done - you can edit later'
+            },
+            {
+              id: '5',
+              title: 'Quick edit and send',
+              duration: '5-10 mins',
+              description: 'Basic spell check, then send before overthinking',
+              selected: true,
+              editable: false,
+              type: 'review',
+              energyRequired: 'medium',
+              tips: 'Set 5 min limit to prevent perfectionism spiral'
+            }
+          ];
+        } else {
+          // Generic breakdown for other tasks
+          mockBreakdown = [
+            {
+              id: '1',
+              title: `Prepare for ${task.title}`,
+              duration: '5 mins',
+              description: 'Clear workspace, gather materials, take deep breath',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'low',
+              tips: 'Starting is often the hardest part'
+            },
+            {
+              id: '2',
+              title: `Break down ${task.title} into smallest steps`,
+              duration: '5-10 mins',
+              description: 'List the tiniest possible actions needed',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'low',
+              tips: 'Smaller steps = less overwhelm'
+            },
+            {
+              id: '3',
+              title: 'Movement/sensory break',
+              duration: '5 mins',
+              description: 'Walk, stretch, fidget toy, or music',
+              selected: preferences.includeBreaks,
+              editable: false,
+              type: 'break',
+              energyRequired: 'low',
+              tips: 'Physical movement helps mental reset'
+            },
+            {
+              id: '4',
+              title: `Do main work on ${task.title}`,
+              duration: '15-20 mins',
+              description: 'Focus on completing the core task',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'high',
+              tips: 'Use pomodoro timer to maintain focus'
+            },
+            {
+              id: '5',
+              title: 'Review and transition',
+              duration: '5 mins',
+              description: 'Check completion, note next steps, celebrate',
+              selected: true,
+              editable: false,
+              type: 'review',
+              energyRequired: 'low',
+              tips: 'Acknowledging progress helps build momentum'
+            }
+          ];
         }
-      ];
       
       setBreakdownOptions(mockBreakdown);
       return;
@@ -274,18 +398,29 @@ Provide a JSON array of steps.`
     const selectedOptions = breakdownOptions.filter(opt => opt.selected);
     console.log('Selected options:', selectedOptions);
     
-    const subtasks: Partial<Task>[] = selectedOptions.map((opt, index) => ({
-      id: `${task.id}-sub-${index + 1}-${Date.now()}`,
-      title: opt.title,
-      description: opt.description,
-      parentTaskId: task.id,
-      projectId: task.projectId,
-      categoryIds: task.categoryIds,
-      priority: task.priority,
-      completed: false,
-      estimatedMinutes: parseInt(opt.duration) || 15,
-      dueDate: task.dueDate
-    }));
+    const subtasks: Partial<Task>[] = selectedOptions.map((opt, index) => {
+      // Parse duration from formats like "5-10 mins" or "15 mins"
+      let estimatedMinutes = 15; // default
+      const durationMatch = opt.duration.match(/(\d+)(?:-(\d+))?\s*mins?/i);
+      if (durationMatch) {
+        const min = parseInt(durationMatch[1]);
+        const max = durationMatch[2] ? parseInt(durationMatch[2]) : min;
+        estimatedMinutes = Math.ceil((min + max) / 2); // Use average
+      }
+      
+      return {
+        id: `${task.id}-sub-${index + 1}-${Date.now()}`,
+        title: opt.title,
+        description: opt.description,
+        parentTaskId: task.id,
+        projectId: task.projectId,
+        categoryIds: task.categoryIds,
+        priority: task.priority,
+        completed: false,
+        estimatedMinutes,
+        dueDate: task.dueDate
+      };
+    });
     
     console.log('Subtasks to create:', subtasks);
     onAccept(subtasks);

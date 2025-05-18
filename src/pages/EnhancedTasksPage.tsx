@@ -10,12 +10,12 @@ import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Empty from '../components/common/Empty';
-import { Plus, Filter, List, Calendar, CheckSquare, Clock, X, Undo2, Archive, 
+import { Plus, Filter, List, Calendar, X, Undo2, Archive, 
          AlertTriangle, CalendarDays, Layers, Network } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek } from '../utils/helpers';
 
 const EnhancedTasksPage: React.FC = () => {
-  const { tasks, projects, categories, deleteTask, undoDelete, hasRecentlyDeleted, archiveCompletedTasks, addTask } = useAppContext();
+  const { tasks, projects, categories, deleteTask, undoDelete, hasRecentlyDeleted, archiveCompletedTasks, addSubtask } = useAppContext();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -102,18 +102,25 @@ const EnhancedTasksPage: React.FC = () => {
   
   const handleBreakdownAccept = (subtasks: Partial<Task>[]) => {
     if (breakdownTask) {
-      // Add subtasks one by one
-      subtasks.forEach(subtask => {
-        addTask({
-          ...subtask,
-          id: Date.now().toString() + Math.random(),
-          title: subtask.title || '',
-          completed: false,
-          parentTaskId: breakdownTask.id,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        } as Task);
-      });
+      // Create all subtasks using the proper addSubtask function
+      for (const subtask of subtasks) {
+        try {
+          // Use addSubtask which properly manages parent-child relationships
+          addSubtask(breakdownTask.id, {
+            title: subtask.title || '',
+            description: subtask.description || '',
+            dueDate: subtask.dueDate || breakdownTask.dueDate || null,
+            priority: subtask.priority || breakdownTask.priority || 'medium',
+            energyLevel: subtask.energyLevel || breakdownTask.energyLevel,
+            estimatedMinutes: subtask.estimatedMinutes,
+            tags: subtask.tags || [],
+            projectId: breakdownTask.projectId,
+            categoryIds: breakdownTask.categoryIds || []
+          });
+        } catch (error) {
+          console.error('Error adding subtask:', error);
+        }
+      }
       
       // Clear the breakdown modal
       setBreakdownTask(null);
@@ -664,7 +671,7 @@ const EnhancedTasksPage: React.FC = () => {
                   projects={projects}
                   categories={categories}
                   onEditTask={handleOpenModal}
-                  onAddSubtask={(parentTask) => {
+                  onAddSubtask={() => {
                     setEditingTask(null);
                     setIsModalOpen(true);
                     // Note: we'd need to update TaskForm to accept a parentTask prop
