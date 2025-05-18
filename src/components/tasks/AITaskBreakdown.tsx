@@ -53,6 +53,17 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
   const [usingFallback, setUsingFallback] = useState(false);
+  const [showContextForm, setShowContextForm] = useState(
+    localStorage.getItem('ai_always_ask_context') === 'true' || !localStorage.getItem('ai_api_key')
+  );
+  const [contextData, setContextData] = useState({
+    currentState: '',
+    blockers: '',
+    specificGoal: '',
+    timeAvailable: '',
+    energyLevel: 'medium',
+    environment: ''
+  });
 
   const generateBreakdown = async () => {
     setIsLoading(true);
@@ -302,6 +313,7 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
     
     // Real AI API call
     console.log('Making real API call to:', providerName, 'with model:', provider.defaultModel);
+    console.log('Context data being sent:', contextData);
     const messages = [
           {
             role: 'system',
@@ -343,6 +355,13 @@ Format as JSON array:
             content: `Break this task into ${preferences.maxSteps} strategic steps for someone with ADHD:
 
 "${task.title}"${task.description ? `\nDetails: ${task.description}` : ''}
+
+${contextData.currentState ? `Current situation: ${contextData.currentState}` : ''}
+${contextData.blockers ? `Specific blockers: ${contextData.blockers}` : ''}
+${contextData.specificGoal ? `Specific goal: ${contextData.specificGoal}` : ''}
+${contextData.timeAvailable ? `Time available: ${contextData.timeAvailable}` : ''}
+${contextData.energyLevel ? `Energy level: ${contextData.energyLevel}` : ''}
+${contextData.environment ? `Environment/constraints: ${contextData.environment}` : ''}
 
 REQUIREMENTS:
 - Create exactly ${preferences.maxSteps} action steps (no prep, no breaks, no rewards)
@@ -553,8 +572,11 @@ Return ONLY a JSON array with NO additional text.`
   };
 
   React.useEffect(() => {
-    generateBreakdown();
-  }, []);
+    // Don't generate breakdown automatically if we're showing context form
+    if (!showContextForm) {
+      generateBreakdown();
+    }
+  }, [showContextForm]);
 
   return (
     <Modal isOpen={true} onClose={onClose} title="AI Task Breakdown" size="lg">
@@ -565,7 +587,11 @@ Return ONLY a JSON array with NO additional text.`
             <div>
               <h4 className="font-medium text-gray-900">Breaking down: {task.title}</h4>
               <p className="text-sm text-gray-600">
-                {usingFallback ? 'Using fallback suggestions (no API key)' : 'AI is creating manageable steps for you'}
+                {showContextForm 
+                  ? 'Tell me about your situation for better recommendations' 
+                  : usingFallback 
+                    ? 'Using fallback suggestions (no API key)' 
+                    : 'AI is creating manageable steps for you'}
               </p>
             </div>
           </div>
@@ -586,8 +612,140 @@ Return ONLY a JSON array with NO additional text.`
             <span className="text-sm">{error}</span>
           </div>
         )}
+
+        {showContextForm && !isLoading && (
+          <div className="space-y-4">
+            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <h3 className="font-medium text-purple-900 mb-3">Help me understand your situation better</h3>
+              <p className="text-sm text-purple-700 mb-4">
+                Providing more context helps create steps that work for YOUR specific situation with this task.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    What's your current state with this task?
+                  </label>
+                  <input
+                    type="text"
+                    value={contextData.currentState}
+                    onChange={(e) => setContextData({...contextData, currentState: e.target.value})}
+                    placeholder="e.g., 'Haven't started', 'Stuck on decision X', 'Overwhelmed by scope'"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    What's specifically blocking you?
+                  </label>
+                  <input
+                    type="text"
+                    value={contextData.blockers}
+                    onChange={(e) => setContextData({...contextData, blockers: e.target.value})}
+                    placeholder="e.g., 'Don't know where to start', 'Too many options', 'Perfectionism'"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    What's your specific goal?
+                  </label>
+                  <input
+                    type="text"
+                    value={contextData.specificGoal}
+                    onChange={(e) => setContextData({...contextData, specificGoal: e.target.value})}
+                    placeholder="e.g., 'Just get it done', 'Make it good enough', 'Impress my boss'"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      How much time do you have?
+                    </label>
+                    <input
+                      type="text"
+                      value={contextData.timeAvailable}
+                      onChange={(e) => setContextData({...contextData, timeAvailable: e.target.value})}
+                      placeholder="e.g., '30 mins', '2 hours', 'all day'"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Current energy level?
+                    </label>
+                    <select
+                      value={contextData.energyLevel}
+                      onChange={(e) => setContextData({...contextData, energyLevel: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    >
+                      <option value="low">Low (tired/struggling)</option>
+                      <option value="medium">Medium (okay)</option>
+                      <option value="high">High (focused/energized)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Environment/constraints?
+                  </label>
+                  <input
+                    type="text"
+                    value={contextData.environment}
+                    onChange={(e) => setContextData({...contextData, environment: e.target.value})}
+                    placeholder="e.g., 'Kids around', 'Noisy office', 'Limited tools'"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center mt-4">
+                <input
+                  type="checkbox"
+                  id="alwaysAskContext"
+                  checked={localStorage.getItem('ai_always_ask_context') === 'true'}
+                  onChange={(e) => {
+                    localStorage.setItem('ai_always_ask_context', e.target.checked.toString());
+                  }}
+                  className="mr-2"
+                />
+                <label htmlFor="alwaysAskContext" className="text-sm text-gray-700">
+                  Always ask for context (you can change this in Settings)
+                </label>
+              </div>
+
+              <div className="flex justify-between mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowContextForm(false);
+                  }}
+                  className="flex items-center"
+                >
+                  Skip Context
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setShowContextForm(false);
+                  }}
+                  className="flex items-center"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Smart Breakdown
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         
-        {usingFallback && (
+        {usingFallback && !showContextForm && (
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
             <div className="flex items-start">
               <AlertCircle className="w-5 h-5 text-amber-600 mr-2 flex-shrink-0 mt-0.5" />
@@ -602,7 +760,7 @@ Return ONLY a JSON array with NO additional text.`
           </div>
         )}
 
-        {breakdownOptions.length > 0 && (
+        {breakdownOptions.length > 0 && !showContextForm && (
           <>
             <div className="space-y-2">
               {breakdownOptions.map(option => (
@@ -787,13 +945,24 @@ Return ONLY a JSON array with NO additional text.`
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            onClick={acceptBreakdown}
-            disabled={breakdownOptions.filter(opt => opt.selected).length === 0}
-            icon={<Sparkles size={16} />}
-          >
-            Accept & Create Subtasks
-          </Button>
+          {!showContextForm && breakdownOptions.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setShowContextForm(true)}
+              icon={<Edit3 size={16} />}
+            >
+              Add Context
+            </Button>
+          )}
+          {!showContextForm && (
+            <Button
+              onClick={acceptBreakdown}
+              disabled={breakdownOptions.filter(opt => opt.selected).length === 0}
+              icon={<Sparkles size={16} />}
+            >
+              Accept & Create Subtasks
+            </Button>
+          )}
         </div>
       </div>
     </Modal>

@@ -2,6 +2,20 @@
 
 ## Changes Made to Improve AI Task Breakdowns
 
+### NEW: Context-Aware Breakdowns
+Added a context gathering form that appears before generating breakdowns to collect:
+- Current state with the task
+- Specific blockers
+- Specific goal
+- Time available
+- Energy level
+- Environment/constraints
+
+Users can:
+- Skip the context form if they want quick suggestions
+- Set a preference to always/never show the context form
+- Go back to add context after seeing initial results
+
 ### 1. Enhanced Console Logging
 - Added logging of full API response: `console.log('Full API response:', JSON.stringify(data, null, 2))`
 - Added logging of parsed content: `console.log('Parsed content:', content)`
