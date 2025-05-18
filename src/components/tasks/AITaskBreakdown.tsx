@@ -94,58 +94,58 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
           mockBreakdown = [
             {
               id: '1',
-              title: 'Dump everything visible onto one surface',
-              duration: '2-3 mins',
-              description: 'Clear bed/table/floor by moving all items to one spot',
+              title: 'Put away items that already have homes',
+              duration: '5-10 mins',
+              description: 'Only grab things you KNOW where they go - skip everything else',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'low',
-              tips: 'Creating one messy pile makes sorting easier than deciding item-by-item'
+              tips: 'This clears space without any decisions needed'
             },
             {
               id: '2',
-              title: 'Create 3 piles: trash, belongs here, goes elsewhere',
-              duration: '5-7 mins',
-              description: 'Quick sort without thinking too hard - trust first instinct',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'medium',
-              tips: '3 categories max prevents decision paralysis'
-            },
-            {
-              id: '3',
-              title: 'Toss trash pile immediately',
-              duration: '2-3 mins',
-              description: 'Grab trash bag and dump the trash pile - no second-guessing',
+              title: 'Gather homeless items into one container',
+              duration: '3-5 mins',
+              description: 'Put all items without obvious homes into a box/bag - deal with them later',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'low',
-              tips: 'Starting with trash gives instant visible progress'
+              tips: 'Containing the chaos makes the space functional now'
+            },
+            {
+              id: '3',
+              title: 'Clear obvious trash only',
+              duration: '2-3 mins',
+              description: 'Only grab things that are definitely trash - when in doubt, leave it out',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'low',
+              tips: 'No decisions = faster progress'
             },
             {
               id: '4',
-              title: 'Put "belongs here" items in exact spots',
-              duration: '5-10 mins',
-              description: 'Only items that go in this room - leave other pile for now',
+              title: 'Try temporary homes for 2-3 items',
+              duration: '5 mins',
+              description: 'Pick any spot that makes sense and put items there - can always move later',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'medium',
-              tips: 'Finishing one room completely feels better than partial progress everywhere'
+              tips: 'Done is better than perfect - you can refine locations anytime'
             },
             {
               id: '5',
-              title: 'Deliver "elsewhere" pile to destinations',
-              duration: '5-10 mins',
-              description: 'Grab pile and walk to each room, dropping items as you go',
+              title: 'Label the "decide later" container',
+              duration: '1 min',
+              description: 'Write "Sort by [date]" on the container and put it somewhere visible',
               selected: true,
               editable: false,
               type: 'work',
-              energyRequired: 'medium',
-              tips: 'Walking with purpose helps maintain momentum'
+              energyRequired: 'low',
+              tips: 'Making it official reduces guilt about not deciding now'
             }
           ];
         } else if (taskTitle.includes('laundry') || taskTitle.includes('hamper') || taskTitle.includes('clothes')) {
@@ -251,58 +251,47 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
           mockBreakdown = [
             {
               id: '1',
-              title: `Prepare for ${task.title}`,
+              title: 'Start with the easiest visible part',
               duration: '5 mins',
-              description: 'Clear workspace, gather materials, take deep breath',
+              description: 'Pick the most obvious/simple aspect and just begin there',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'low',
-              tips: 'Starting is often the hardest part'
+              tips: 'Starting anywhere beats planning everywhere'
             },
             {
               id: '2',
-              title: `Break down ${task.title} into smallest steps`,
-              duration: '5-10 mins',
-              description: 'List the tiniest possible actions needed',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'low',
-              tips: 'Smaller steps = less overwhelm'
-            },
-            {
-              id: '3',
-              title: 'Movement/sensory break',
-              duration: '5 mins',
-              description: 'Walk, stretch, fidget toy, or music',
-              selected: preferences.includeBreaks,
-              editable: false,
-              type: 'break',
-              energyRequired: 'low',
-              tips: 'Physical movement helps mental reset'
-            },
-            {
-              id: '4',
-              title: `Do main work on ${task.title}`,
-              duration: '15-20 mins',
-              description: 'Focus on completing the core task',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'high',
-              tips: 'Use pomodoro timer to maintain focus'
-            },
-            {
-              id: '4',
-              title: 'Make it "good enough" and declare done',
-              duration: '5-10 mins',
-              description: 'Polish just enough to meet your definition of done',
+              title: 'Complete one concrete piece',
+              duration: '10 mins',
+              description: 'Do any small part that can be finished without needing decisions',
               selected: true,
               editable: false,
               type: 'work',
               energyRequired: 'medium',
-              tips: '80% perfect shipped beats 100% perfect procrastinated'
+              tips: 'Progress beats perfection - build momentum'
+            },
+            {
+              id: '3',
+              title: 'Try the simplest approach for 10 mins',
+              duration: '10 mins',
+              description: 'Use the most basic method - you can always refine later',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'medium',
+              tips: 'Set timer - when it rings you can stop or adjust approach'
+            },
+            {
+              id: '4',
+              title: 'Capture what\'s left in a note',
+              duration: '3 mins',
+              description: 'Write down any remaining pieces/decisions for next time',
+              selected: true,
+              editable: false,
+              type: 'work',
+              energyRequired: 'low',
+              tips: 'Externalizing unfinished parts reduces mental load'
             }
           ];
         }
@@ -318,62 +307,61 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
     const messages = [
           {
             role: 'system',
-            content: `You are an ADHD-aware assistant breaking tasks into 3-5 strategic steps. 
+            content: `You are an ADHD-aware assistant creating actionable task breakdowns.
 
-CRITICAL RULES:
-1. NEVER include filler steps like "take a break", "gather materials", "set timer", "reward yourself"
-2. Each step must be a CONCRETE ACTION that advances the task
-3. Focus on reducing overwhelm and clarifying decisions
-4. Use action verbs and specific instructions
-5. Steps should address ADHD challenges naturally (without mentioning breaks)
+CRITICAL PRINCIPLES:
+1. Start with what CAN be done NOW, not what needs to be decided
+2. If there are blockers, work AROUND them, not through them
+3. Prioritize partial progress over perfect planning
+4. Scaffold decisions - don't require them upfront
+5. Default to action over ideation
 
-AVOID THESE COMMON FILLER STEPS:
-❌ "Prepare workspace" or "Gather supplies"
-❌ "Take a break" or "Rest for X minutes"
-❌ "Set a timer" or "Check time"
-❌ "Reward yourself" or "Celebrate completion"
-❌ "Remember to..." or "Don't forget..."
+BREAKDOWN STRATEGY:
+- If location is unclear → "Put items that DO have homes away first"
+- If process is unknown → "Start with the obvious/easy parts"
+- If decision needed → "Try one approach for 10 mins, then adjust"
+- If overwhelmed → "Pick any corner and clear just that"
 
-INSTEAD CREATE STEPS THAT:
-✓ Break complex decisions into simple ones
-✓ Turn vague tasks into specific actions
-✓ Address the hardest part first
-✓ Create external accountability
-✓ Focus on starting, not preparing
+NEVER ASK QUESTIONS in steps. Instead:
+❌ "Decide where clothes will go" 
+✓ "Put away clothes with existing homes (skip the rest for now)"
 
-Format as JSON array:
-{
-  "title": "Action verb + specific task",
-  "duration": "X-Y mins",
-  "description": "Exact steps to take",
-  "type": "work",
-  "energyRequired": "low|medium|high",
-  "tips": "ADHD-specific strategy"
-}`
+❌ "Figure out tracking format"
+✓ "Open notes app and write today's data in any format"
+
+ALWAYS:
+- Make progress possible WITHOUT solving all blockers
+- Offer "good enough" paths alongside ideal ones
+- Break decisions into experiments, not commitments
+- Focus on clearing what's clearable first
+
+Format as JSON array - each step must be immediately actionable.`
           },
           {
             role: 'user',
-            content: `Break this task into ${preferences.maxSteps} strategic steps for someone with ADHD:
+            content: `Task: "${task.title}"${task.description ? `\nDetails: ${task.description}` : ''}
 
-"${task.title}"${task.description ? `\nDetails: ${task.description}` : ''}
+${contextData.currentState ? `Current state: ${contextData.currentState}` : ''}
+${contextData.blockers ? `Blockers: ${contextData.blockers}` : ''}
+${contextData.specificGoal ? `Goal: ${contextData.specificGoal}` : ''}
+${contextData.environment ? `Constraints: ${contextData.environment}` : ''}
 
-${contextData.currentState ? `Current situation: ${contextData.currentState}` : ''}
-${contextData.blockers ? `Specific blockers: ${contextData.blockers}` : ''}
-${contextData.specificGoal ? `Specific goal: ${contextData.specificGoal}` : ''}
-${contextData.environment ? `Environment/constraints: ${contextData.environment}` : ''}
+Create ${preferences.maxSteps} steps that are IMMEDIATELY actionable.
 
-REQUIREMENTS:
-- Create exactly ${preferences.maxSteps} action steps (no prep, no breaks, no rewards)
-- Each step: ${preferences.maxDuration} minutes max
-- Focus on what makes this task hard for ADHD (decision fatigue, getting started, overwhelm)
-- Make each step a specific, concrete action
+CRITICAL: 
+- NO questions or decisions as steps
+- Work AROUND blockers, not through them
+- Enable partial progress even if full solution unclear
+- If user mentions a blocker like "don't know where X goes", create steps that handle what IS known first
 
-For example:
-- Instead of "prepare to clean", say "dump all clothes on bed to sort"
-- Instead of "organize papers", say "create 3 piles: keep, toss, unsure"
-- Instead of "start writing", say "write 3 bullet points about main idea"
+Examples:
+- If blocker is "deciding where items go" → Step: "Put away items that already have designated spots"
+- If blocker is "choosing format" → Step: "Start with simplest format (bullet list) for 5 mins"
+- If blocker is "too overwhelming" → Step: "Clear just the 2-foot area directly in front of you"
 
-Return ONLY a JSON array with NO additional text.`
+Each step should move the task forward WITHOUT requiring the blocker to be solved first.
+
+Return JSON array only.`
           }
         ];
     

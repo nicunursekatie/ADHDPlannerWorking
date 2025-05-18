@@ -2,6 +2,18 @@
 
 ## Changes Made to Improve AI Task Breakdowns
 
+### LATEST UPDATE: Work-Around-Blockers Philosophy
+Completely revamped the breakdown approach to address these issues:
+- AI was fixating on single blockers mentioned by users
+- Steps were becoming questions rather than actions
+- Breakdowns required decisions before enabling progress
+
+New system:
+- Works AROUND blockers instead of through them
+- Prioritizes partial progress over perfect planning
+- Never asks questions as steps
+- Enables immediate action despite uncertainty
+
 ### NEW: Context-Aware Breakdowns
 Added a context gathering form that appears before generating breakdowns to collect:
 - Current state with the task
