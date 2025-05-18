@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, Save, Eye, EyeOff, Info, AlertCircle } from 'lucide-react';
+import { Brain, Save, Eye, EyeOff, Info, AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import { AI_PROVIDERS } from '../../utils/aiProviders';
@@ -15,6 +15,9 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [isTestingApi, setIsTestingApi] = useState(false);
+  const [apiStatus, setApiStatus] = useState<'untested' | 'testing' | 'success' | 'error'>('untested');
+  const [apiStatusMessage, setApiStatusMessage] = useState('');
 
   useEffect(() => {
     // Load existing settings
@@ -26,6 +29,53 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
     setApiKey(savedApiKey);
     setApiEndpoint(savedEndpoint);
   }, []);
+
+  const testApiConnection = async () => {
+    if (!apiKey) {
+      setApiStatus('error');
+      setApiStatusMessage('Please enter an API key');
+      return;
+    }
+
+    setIsTestingApi(true);
+    setApiStatus('testing');
+    setApiStatusMessage('Testing API connection...');
+
+    try {
+      const providerInfo = AI_PROVIDERS[provider];
+      const testMessages = [
+        { role: 'system', content: 'Test connection' },
+        { role: 'user', content: 'Reply with "OK" if you can read this.' }
+      ];
+
+      const response = await fetch(providerInfo.baseUrl, {
+        method: 'POST',
+        headers: providerInfo.headers(apiKey),
+        body: JSON.stringify(providerInfo.formatRequest(testMessages, providerInfo.defaultModel))
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const content = providerInfo.parseResponse(data);
+        if (content) {
+          setApiStatus('success');
+          setApiStatusMessage(`API is working! Provider: ${providerInfo.name}`);
+        } else {
+          setApiStatus('error');
+          setApiStatusMessage('Invalid response from API');
+        }
+      } else {
+        const errorData = await response.json();
+        setApiStatus('error');
+        setApiStatusMessage(errorData.error?.message || 'API request failed');
+      }
+    } catch (error) {
+      setApiStatus('error');
+      setApiStatusMessage('Connection error: ' + (error as Error).message);
+    } finally {
+      setIsTestingApi(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -135,6 +185,42 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
               <p className="mt-1 text-sm text-gray-600">
                 Leave default unless you're using a custom endpoint.
               </p>
+            </div>
+            
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  API Status
+                </label>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={testApiConnection}
+                  disabled={isTestingApi || !apiKey}
+                  icon={isTestingApi ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                >
+                  Test Connection
+                </Button>
+              </div>
+              <div className={`flex items-center p-3 rounded-lg border ${
+                apiStatus === 'success' ? 'bg-green-50 border-green-200' :
+                apiStatus === 'error' ? 'bg-red-50 border-red-200' :
+                apiStatus === 'testing' ? 'bg-blue-50 border-blue-200' :
+                'bg-gray-50 border-gray-200'
+              }`}>
+                {apiStatus === 'success' && <CheckCircle className="w-5 h-5 text-green-600 mr-2" />}
+                {apiStatus === 'error' && <XCircle className="w-5 h-5 text-red-600 mr-2" />}
+                {apiStatus === 'testing' && <Loader2 className="w-5 h-5 text-blue-600 mr-2 animate-spin" />}
+                {apiStatus === 'untested' && <Info className="w-5 h-5 text-gray-600 mr-2" />}
+                <span className={`text-sm ${
+                  apiStatus === 'success' ? 'text-green-800' :
+                  apiStatus === 'error' ? 'text-red-800' :
+                  apiStatus === 'testing' ? 'text-blue-800' :
+                  'text-gray-600'
+                }`}>
+                  {apiStatusMessage || 'API key not tested yet'}
+                </span>
+              </div>
             </div>
           </div>
           

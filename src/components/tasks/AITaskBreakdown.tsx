@@ -16,7 +16,8 @@ import {
   Sparkles,
   Trash2,
   X,
-  GripVertical
+  GripVertical,
+  AlertCircle
 } from 'lucide-react';
 
 interface AITaskBreakdownProps {
@@ -51,6 +52,7 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
   });
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
+  const [usingFallback, setUsingFallback] = useState(false);
 
   const generateBreakdown = async () => {
     setIsLoading(true);
@@ -68,6 +70,7 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       if (!apiKey) {
         // Use fallback if no API key
         console.log('Using fallback breakdown - no API key');
+        setUsingFallback(true);
         await new Promise(resolve => setTimeout(resolve, 1000));
         // Create adaptive, task-specific breakdown
         const taskTitle = task.title.toLowerCase();
@@ -538,16 +541,41 @@ Provide a JSON array of steps.`
             <Brain className="w-5 h-5 text-blue-600 mr-2" />
             <div>
               <h4 className="font-medium text-gray-900">Breaking down: {task.title}</h4>
-              <p className="text-sm text-gray-600">AI is creating manageable steps for you</p>
+              <p className="text-sm text-gray-600">
+                {usingFallback ? 'Using fallback suggestions (no API key)' : 'AI is creating manageable steps for you'}
+              </p>
             </div>
           </div>
-          {isLoading && <Loader2 className="w-5 h-5 animate-spin text-blue-600" />}
+          <div className="flex items-center space-x-2">
+            {usingFallback && !isLoading && (
+              <div className="flex items-center text-amber-600">
+                <AlertCircle className="w-4 h-4 mr-1" />
+                <span className="text-xs">Fallback Mode</span>
+              </div>
+            )}
+            {isLoading && <Loader2 className="w-5 h-5 animate-spin text-blue-600" />}
+          </div>
         </div>
 
         {error && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center text-red-800">
             <X size={16} className="mr-2" />
             <span className="text-sm">{error}</span>
+          </div>
+        )}
+        
+        {usingFallback && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start">
+              <AlertCircle className="w-5 h-5 text-amber-600 mr-2 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-amber-800 font-medium">Fallback Mode Active</p>
+                <p className="text-sm text-amber-700 mt-1">
+                  These are pre-configured suggestions. To get personalized AI-generated breakdowns, 
+                  please add your API key in the <a href="/settings" className="underline font-medium">Settings</a> page.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
