@@ -410,20 +410,30 @@ Return JSON array only.`
       throw new Error('Invalid response format');
     }
     
+    // Log the steps before conversion
+    console.log('Steps before conversion:', JSON.stringify(steps, null, 2));
+    
+    // Check if steps is actually an array with content
+    if (!Array.isArray(steps) || steps.length === 0) {
+      console.error('Invalid steps array:', steps);
+      throw new Error('No steps returned from AI');
+    }
+    
     // Convert to BreakdownOption format
     const breakdown: BreakdownOption[] = steps.map((step: any, index: number) => ({
       id: `${index + 1}`,
-      title: step.title,
-      duration: step.duration,
-      description: step.description,
+      title: step.title || step.Step || `Step ${index + 1}`,
+      duration: step.duration || '5-10 mins',
+      description: step.description || step.Step || `Complete step ${index + 1}`,
       selected: true,
       editable: false,
       type: step.type || 'work',
       energyRequired: step.energyRequired || 'medium',
-      tips: step.tips
+      tips: step.tips || 'Focus on this specific action'
     }));
     
     console.log('Generated breakdown:', breakdown);
+    console.log('Setting breakdown options, length:', breakdown.length);
     setBreakdownOptions(breakdown);
     } catch (err) {
       console.error('Error generating breakdown:', err);
@@ -579,6 +589,14 @@ Return JSON array only.`
     }
   }, [showContextForm]);
 
+  console.log('AITaskBreakdown render:', {
+    showContextForm,
+    breakdownOptionsLength: breakdownOptions.length,
+    isLoading,
+    error,
+    usingFallback
+  });
+
   return (
     <Modal isOpen={true} onClose={onClose} title="AI Task Breakdown" size="lg">
       <div className="space-y-4">
@@ -707,7 +725,9 @@ Return JSON array only.`
                 <Button
                   variant="primary"
                   onClick={() => {
+                    console.log('Create Personalized Breakdown clicked, contextData:', contextData);
                     setShowContextForm(false);
+                    // The useEffect will trigger generateBreakdown when showContextForm becomes false
                   }}
                   className="flex items-center"
                 >
@@ -735,10 +755,15 @@ Return JSON array only.`
           </div>
         )}
 
-        {breakdownOptions.length > 0 && !showContextForm && (
+        {(() => {
+          console.log('Checking breakdown render - options:', breakdownOptions.length, 'showContextForm:', showContextForm);
+          return breakdownOptions.length > 0 && !showContextForm;
+        })() && (
           <>
             <div className="space-y-2">
-              {breakdownOptions.map(option => (
+              {breakdownOptions.map(option => {
+                console.log('Rendering option:', option);
+                return (
                 <Card 
                   key={option.id} 
                   className={`p-3 transition-all cursor-move ${
@@ -842,7 +867,7 @@ Return JSON array only.`
                     </div>
                   </div>
                 </Card>
-              ))}
+              );})}
             </div>
 
             <div className="flex justify-between items-center">
