@@ -58,7 +58,6 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
     // Default to true unless explicitly set to false
     alwaysAskContext !== 'false'
   );
-  console.log('Initial showContextForm state:', alwaysAskContext !== 'false', 'alwaysAskContext:', alwaysAskContext);
   const [contextData, setContextData] = useState({
     currentState: '',
     blockers: '',
@@ -391,6 +390,19 @@ Return JSON array only.`
         steps = JSON.parse(jsonMatch[0]);
       } else {
         steps = JSON.parse(content);
+      }
+      
+      // Handle Groq's different response format
+      if (steps.length > 0 && steps[0].Step) {
+        console.log('Detected Groq format, converting...');
+        steps = steps.map((step, index) => ({
+          title: step.Step || `Step ${index + 1}`,
+          duration: '5-10 mins',
+          description: step.Step || `Step ${index + 1}`,
+          type: 'work',
+          energyRequired: 'medium',
+          tips: 'Focus on this specific action'
+        }));
       }
     } catch (e) {
       console.error('Failed to parse AI response:', e);
