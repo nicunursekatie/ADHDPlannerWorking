@@ -118,11 +118,11 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center bg-gradient-to-r from-gray-800 to-gray-800/80 rounded-xl shadow-lg border border-gray-700 p-6 mb-6">
+      <div className="flex flex-col md:flex-row justify-between md:items-center bg-white dark:bg-gray-800/30 rounded-xl shadow-sm dark:shadow-xl border border-gray-200 dark:border-gray-700/50 p-6 mb-6">
         <div className="flex items-center gap-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-100 tracking-tight">Dashboard</h1>
-            <p className="text-gray-400 mt-1">Your task overview</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Dashboard</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Your task overview</p>
           </div>
           {/* Progress Ring */}
           <div className="hidden md:flex items-center gap-3">
@@ -141,12 +141,12 @@ const Dashboard: React.FC = () => {
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-semibold text-gray-100">{completionRate}%</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{completionRate}%</span>
               </div>
             </div>
             <div className="text-sm">
-              <div className="font-medium text-gray-200">Daily Progress</div>
-              <div className="text-gray-400">{completedTasks.length}/{tasks.length} tasks</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">Daily Progress</div>
+              <div className="text-gray-600 dark:text-gray-400">{completedTasks.length}/{tasks.length} tasks</div>
             </div>
           </div>
         </div>
