@@ -56,18 +56,18 @@ const Modal: React.FC<ModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn">
       <div className="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity" />
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity" />
         
         <div
           ref={modalRef}
-          className={`inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle ${sizeClasses[size]} w-full animate-slideIn`}
+          className={`inline-block align-bottom bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle ${sizeClasses[size]} w-full animate-slideIn border border-gray-700`}
         >
-          <div className="bg-white px-6 pt-6 pb-6">
+          <div className="bg-gray-800 px-6 pt-6 pb-6">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
+              <h3 className="text-xl font-semibold text-gray-100">{title}</h3>
               <button
                 type="button"
-                className="rounded-lg p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                className="rounded-lg p-2 text-gray-400 hover:text-gray-200 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
                 onClick={onClose}
               >
                 <span className="sr-only">Close</span>

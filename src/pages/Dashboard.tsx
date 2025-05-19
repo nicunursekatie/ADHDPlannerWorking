@@ -118,11 +118,11 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+      <div className="flex flex-col md:flex-row justify-between md:items-center bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-4 mb-4">
         <div className="flex items-center gap-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600">Your task overview</p>
+            <h1 className="text-2xl font-bold text-gray-100">Dashboard</h1>
+            <p className="text-gray-400">Your task overview</p>
           </div>
           {/* Progress Ring */}
           <div className="hidden md:flex items-center gap-3">
@@ -130,7 +130,7 @@ const Dashboard: React.FC = () => {
               <svg className="w-16 h-16 transform -rotate-90">
                 <circle 
                   cx="32" cy="32" r="28" 
-                  stroke="#e5e7eb" strokeWidth="4" fill="none"
+                  stroke="#374151" strokeWidth="4" fill="none"
                 />
                 <circle 
                   cx="32" cy="32" r="28" 
@@ -141,12 +141,12 @@ const Dashboard: React.FC = () => {
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-semibold">{completionRate}%</span>
+                <span className="text-sm font-semibold text-gray-100">{completionRate}%</span>
               </div>
             </div>
             <div className="text-sm">
-              <div className="font-medium">Daily Progress</div>
-              <div className="text-gray-500">{completedTasks.length}/{tasks.length} tasks</div>
+              <div className="font-medium text-gray-200">Daily Progress</div>
+              <div className="text-gray-400">{completedTasks.length}/{tasks.length} tasks</div>
             </div>
           </div>
         </div>

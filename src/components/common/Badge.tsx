@@ -17,9 +17,9 @@ const Badge: React.FC<BadgeProps> = ({
     <span
       className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium border ${className}`}
       style={{ 
-        backgroundColor: `${bgColor}20`,
+        backgroundColor: `${bgColor}30`,
         color: bgColor,
-        borderColor: bgColor
+        borderColor: `${bgColor}80`
       }}
     >
       {text}

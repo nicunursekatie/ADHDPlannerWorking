@@ -38,13 +38,13 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm">
+    <header className="bg-gray-800 border-b border-gray-700">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-14 items-center">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <ClipboardList className="h-7 w-7 text-primary-600" />
-              <span className="ml-2 text-lg font-bold text-gray-900">ADHD Planner</span>
+              <ClipboardList className="h-7 w-7 text-primary-400" />
+              <span className="ml-2 text-lg font-bold text-gray-100">ADHD Planner</span>
             </Link>
           </div>
           
@@ -56,8 +56,8 @@ const Header: React.FC = () => {
                 to={item.path}
                 className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all ${
                   isActive(item.path)
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-gray-700 text-primary-400'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-gray-100'
                 }`}
               >
                 {item.icon}

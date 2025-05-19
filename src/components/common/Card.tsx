@@ -15,8 +15,8 @@ const Card: React.FC<CardProps> = ({
   headerAction,
   onClick,
 }) => {
-  const baseClasses = 'bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 overflow-hidden rounded-xl';
-  const clickableClasses = onClick ? 'cursor-pointer' : '';
+  const baseClasses = 'bg-gray-800 shadow-sm border border-gray-700 hover:shadow-md transition-shadow duration-200 overflow-hidden rounded-xl';
+  const clickableClasses = onClick ? 'cursor-pointer hover:border-gray-600' : '';
   
   return (
     <div 
@@ -24,8 +24,8 @@ const Card: React.FC<CardProps> = ({
       onClick={onClick}
     >
       {title && (
-        <div className="border-b border-gray-100 px-6 py-4 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <div className="border-b border-gray-700 px-6 py-4 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-100">{title}</h3>
           {headerAction && <div>{headerAction}</div>}
         </div>
       )}
