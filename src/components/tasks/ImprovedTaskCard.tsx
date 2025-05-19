@@ -192,165 +192,77 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
   };
   
   return (
-    <div 
-      className={`rounded-md p-3 mb-2 border-l-4 transition-all hover:bg-gray-800/50 ${getTaskBackground()} ${
-        task.priority === 'high' ? 'border-l-red-500' : 
-        task.priority === 'medium' ? 'border-l-amber-500' : 
-        task.priority === 'low' ? 'border-l-green-500' :
-        'border-l-gray-600'
-      } ${isSubtask ? 'ml-6 border-l-2' : ''}`}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
-      <div className="flex items-start">
-        <button 
-          className="mr-3 mt-1 flex-shrink-0 focus:outline-none group" 
-          onClick={handleComplete}
-          aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
-        >
-          {task.completed ? (
-            <CheckCircle2 className="h-5 w-5 text-green-500 group-hover:text-green-400" />
-          ) : (
-            <Circle className="h-5 w-5 text-gray-400 group-hover:text-primary-500" />
-          )}
-        </button>
-        
-        <div className="flex-grow">
-          <div 
-            className="flex items-start justify-between cursor-pointer"
-            onClick={handleEdit}
+    <div className={`border rounded-lg p-4 ${getTaskBackground()}`}>
+      <div className="flex justify-between items-start">
+        <div className="flex items-start space-x-3">
+          <button
+            onClick={handleComplete}
+            className="mt-1"
           >
-            <div className="flex-grow">
-              <div className="flex items-center">
-                {isSubtask && (
-                  <span className="text-gray-400 mr-2">↳</span>
-                )}
-                <h3 className={`text-base font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-200'}`}>
-                  {task.title}
-                </h3>
-                
-                {task.priority && (
-                  <div className={`ml-2 w-2 h-2 rounded-full ${getPriorityColor()}`} />
-                )}
-              </div>
-              
-              {task.description && (
-                <p className={`mt-1 text-sm ${task.completed ? 'text-gray-500' : 'text-gray-400'}`}>
-                  {task.description.length > 100 
-                    ? `${task.description.substring(0, 100)}...` 
-                    : task.description}
-                </p>
-              )}
-              
-              <div className="mt-2 flex flex-wrap gap-2 items-center">
-                {renderDueDate()}
-                
-                {project && (
-                  <div className="flex items-center text-xs">
-                    <Folder size={14} className="mr-1" style={{ color: project.color }} />
-                    <span style={{ color: project.color }}>{project.name}</span>
-                  </div>
-                )}
-                
-                {task.estimatedMinutes && (
-                  <div className="flex items-center text-xs text-gray-400">
-                    <Clock size={14} className="mr-1" />
-                    {task.estimatedMinutes} min
-                  </div>
-                )}
-                
-                {taskCategories.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <Tags size={14} className="text-gray-500" />
-                    {taskCategories.map(category => (
-                      <Badge 
-                        key={category.id}
-                        text={category.name}
-                        bgColor={category.color}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {showActions && (
-              <div className="flex space-x-1 ml-2">
-                {!task.completed && task.dueDate && (
-                  <button
-                    onClick={handlePostpone}
-                    className="p-1.5 text-gray-400 hover:text-primary-400 rounded transition-colors hover:bg-primary-900/20"
-                    title="Postpone by 1 day"
-                  >
-                    <ArrowRight size={16} />
-                  </button>
-                )}
-                
-                <button
-                  onClick={handleEdit}
-                  className="p-1.5 text-gray-400 hover:text-primary-400 rounded transition-colors hover:bg-primary-900/20"
-                  title="Edit task"
-                >
-                  <Edit2 size={16} />
-                </button>
-                
-                <button
-                  onClick={handleDuplicate}
-                  className="p-1.5 text-gray-400 hover:text-primary-400 rounded transition-colors hover:bg-primary-900/20"
-                  title="Duplicate task"
-                >
-                  <Copy size={16} />
-                </button>
-                
-                {onDelete && (
-                  <button
-                    onClick={handleDelete}
-                    className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors hover:bg-red-900/20"
-                    title="Delete task"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
+            {task.completed ? (
+              <CheckCircle2 size={20} className="text-green-500" />
+            ) : (
+              <Circle size={20} className="text-gray-400" />
+            )}
+          </button>
+          <div>
+            <h3 className={`text-base font-medium ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+              {task.title}
+            </h3>
+            {task.description && (
+              <p className="mt-1 text-sm text-gray-500">
+                {task.description}
+              </p>
             )}
           </div>
-          
-          {task.subtasks?.length > 0 && (
-            <div className="mt-3">
-              <button
-                className="flex items-center text-sm text-gray-400 hover:text-gray-200"
-                onClick={toggleExpand}
-                aria-expanded={expanded}
-                aria-label={expanded ? "Collapse subtasks" : "Expand subtasks"}
-              >
-                {expanded ? (
-                  <ChevronDown size={16} className="mr-1" />
-                ) : (
-                  <ChevronRight size={16} className="mr-1" />
-                )}
-                <span>
-                  {task.subtasks?.length} subtask{task.subtasks?.length !== 1 ? 's' : ''}
-                </span>
-              </button>
-              
-              {expanded && (
-                <div className="mt-2">
-                  {subtasks.map(subtask => (
-                    <ImprovedTaskCard
-                      key={subtask.id}
-                      task={subtask}
-                      projects={projects}
-                      categories={categories}
-                      isSubtask={true}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+        </div>
+        <div className="flex space-x-2">
+          {onEdit && (
+            <button
+              onClick={handleEdit}
+              className="p-1 text-gray-400 hover:text-amber-500 rounded"
+            >
+              <Edit2 size={16} />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={handleDelete}
+              className="p-1 text-gray-400 hover:text-red-500 rounded"
+            >
+              <Trash2 size={16} />
+            </button>
           )}
         </div>
+      </div>
+      
+      <div className="mt-3 flex flex-wrap gap-2 items-center">
+        {task.dueDate && (
+          <div className="flex items-center text-xs text-gray-500">
+            <Calendar size={14} className="mr-1" />
+            {formatDateForDisplay(task.dueDate)}
+          </div>
+        )}
+        
+        {project && (
+          <div className="flex items-center text-xs">
+            <Folder size={14} className="mr-1" style={{ color: project.color }} />
+            <span style={{ color: project.color }}>{project.name}</span>
+          </div>
+        )}
+        
+        {taskCategories.length > 0 && (
+          <div className="flex items-center gap-1">
+            <Tags size={14} className="text-gray-400" />
+            {taskCategories.map(category => (
+              <Badge 
+                key={category.id}
+                text={category.name}
+                bgColor={category.color}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

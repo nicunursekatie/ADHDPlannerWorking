@@ -88,15 +88,20 @@ const TaskCardWithDependencies: React.FC<TaskCardWithDependenciesProps> = ({
     }
   };
   
+  const getTaskStyling = () => {
+    if (task.completed) {
+      return 'bg-gray-100 border-gray-200';
+    } else if (!canComplete) {
+      return 'bg-amber-50 border-amber-200';
+    } else {
+      return 'bg-white border-gray-200';
+    }
+  };
+  
   return (
-    <div className={`bg-white rounded-lg shadow-sm border transition-all hover:shadow-md ${
-      task.completed ? 'opacity-75' : ''
-    }`}>
-      <div 
-        className="p-4 cursor-pointer"
-        onClick={handleEdit}
-      >
-        <div className="flex items-start gap-3">
+    <div className={`border rounded-lg p-4 ${getTaskStyling()}`}>
+      <div className="flex justify-between items-start">
+        <div className="flex items-start space-x-3">
           {showSelection && (
             <input
               type="checkbox"
@@ -108,237 +113,158 @@ const TaskCardWithDependencies: React.FC<TaskCardWithDependenciesProps> = ({
               className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
             />
           )}
-          
-          <button 
-            className={`mt-0.5 flex-shrink-0 focus:outline-none ${
-              !canComplete && !task.completed ? 'cursor-not-allowed' : ''
-            }`}
+          <button
             onClick={handleComplete}
-            disabled={!canComplete && !task.completed}
+            className="mt-1"
           >
             {task.completed ? (
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-            ) : !canComplete ? (
-              <LockKeyhole className="h-5 w-5 text-gray-400" />
+              <CheckCircle2 size={20} className="text-green-500" />
             ) : (
-              <Circle className="h-5 w-5 text-gray-400 hover:text-indigo-500" />
+              <Circle size={20} className="text-gray-400" />
             )}
           </button>
-          
-          <div className="flex-grow min-w-0">
-            <div className="flex items-start justify-between">
-              <div className="flex-grow">
-                <h3 className={`text-base font-medium ${
-                  task.completed ? 'line-through text-gray-500' : 'text-gray-900'
-                }`}>
-                  {task.title}
-                  {task.priority && (
-                    <span className={`ml-2 text-sm ${getPriorityColor(task.priority)}`}>
-                      {task.priority === 'high' ? '!!!' : task.priority === 'medium' ? '!!' : '!'}
-                    </span>
-                  )}
-                </h3>
-                
-                {task.description && (
-                  <p className={`mt-1 text-sm ${
-                    task.completed ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    {task.description}
-                  </p>
-                )}
-                
-                {/* Show blocked message if task can't be completed */}
-                {!canComplete && !task.completed && dependencies.length > 0 && (
-                  <div className="mt-2 flex items-center text-sm text-orange-600">
-                    <AlertCircle size={14} className="mr-1" />
-                    <span>Blocked by incomplete dependencies</span>
-                  </div>
-                )}
-                
-                <div className="mt-2 flex flex-wrap gap-4 text-xs text-gray-500">
-                  {task.dueDate && (
-                    <div className="flex items-center">
-                      <Calendar size={12} className="mr-1" />
-                      {formatDateForDisplay(task.dueDate)}
-                    </div>
-                  )}
-                  
-                  {project && (
-                    <div className="flex items-center">
-                      <Folder size={12} className="mr-1" />
-                      <span style={{ color: project.color }}>{project.name}</span>
-                    </div>
-                  )}
-                  
-                  {taskCategories.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Tags size={12} />
-                      {taskCategories.map(category => (
-                        <Badge 
-                          key={category.id}
-                          text={category.name}
-                          bgColor={category.color}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  
-                  {dependencies.length > 0 && (
-                    <div className="flex items-center text-indigo-600">
-                      <Link size={12} className="mr-1" />
-                      <span>{dependencies.length} dep{dependencies.length !== 1 ? 's' : ''}</span>
-                    </div>
-                  )}
-                  
-                  {dependents.length > 0 && (
-                    <div className="flex items-center text-purple-600">
-                      <Link size={12} className="mr-1 transform rotate-180" />
-                      <span>{dependents.length} task{dependents.length !== 1 ? 's' : ''} depend on this</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="mt-2 flex justify-between items-center">
-                  <div className="flex gap-3 text-xs">
-                    {task.energyLevel && (
-                      <span className="text-yellow-600" title={`Energy: ${task.energyLevel}`}>
-                        {getEnergyIcon(task.energyLevel)}
-                      </span>
-                    )}
-                    {task.size && (
-                      <span className="text-blue-600" title={`Size: ${task.size}`}>
-                        {getSizeIcon(task.size)}
-                      </span>
-                    )}
-                    {task.estimatedMinutes && (
-                      <span className="text-gray-500">
-                        {task.estimatedMinutes}m
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* Action buttons */}
-                  <div className="flex gap-1">
-                    {!task.completed && !task.parentTaskId && onBreakdown && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onBreakdown(task);
-                        }}
-                        className="p-1 text-gray-400 hover:text-purple-500 rounded transition-colors"
-                        title="AI Breakdown"
-                      >
-                        <Brain size={16} />
-                      </button>
-                    )}
-                    
-                    {onEdit && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit(task);
-                        }}
-                        className="p-1 text-gray-400 hover:text-blue-500 rounded transition-colors"
-                        title="Edit task"
-                      >
-                        <Edit3 size={16} />
-                      </button>
-                    )}
-                    
-                    {onDelete && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(task.id);
-                        }}
-                        className="p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
-                        title="Delete task"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Expandable sections */}
-            {(subtasks.length > 0 || dependencies.length > 0 || dependents.length > 0) && (
-              <div className="mt-3">
-                <button
-                  className="flex items-center text-sm text-gray-500 hover:text-gray-700"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleExpand();
-                  }}
-                >
-                  {expanded ? (
-                    <ChevronDown size={16} className="mr-1" />
-                  ) : (
-                    <ChevronRight size={16} className="mr-1" />
-                  )}
-                  <span>
-                    {subtasks.length > 0 && `${subtasks.length} subtask${subtasks.length !== 1 ? 's' : ''}`}
-                    {subtasks.length > 0 && (dependencies.length > 0 || dependents.length > 0) && ' • '}
-                    {dependencies.length > 0 && `${dependencies.length} dependency${dependencies.length !== 1 ? 'ies' : ''}`}
-                    {dependencies.length > 0 && dependents.length > 0 && ' • '}
-                    {dependents.length > 0 && `${dependents.length} dependent${dependents.length !== 1 ? 's' : ''}`}
-                  </span>
-                </button>
-                
-                {expanded && (
-                  <div className="mt-3 space-y-3">
-                    {/* Dependencies */}
-                    {dependencies.length > 0 && (
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-700 mb-2">Dependencies (must complete first):</h4>
-                        <div className="space-y-1">
-                          {dependencies.map(dep => (
-                            <div key={dep.id} className={`text-sm pl-4 ${dep.completed ? 'text-green-600' : 'text-gray-600'}`}>
-                              {dep.completed ? '✓' : '○'} {dep.title}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Dependent tasks */}
-                    {dependents.length > 0 && (
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-700 mb-2">Dependent tasks (blocked by this):</h4>
-                        <div className="space-y-1">
-                          {dependents.map(dep => (
-                            <div key={dep.id} className="text-sm pl-4 text-gray-600">
-                              ○ {dep.title}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Subtasks */}
-                    {subtasks.length > 0 && (
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-700 mb-2">Subtasks:</h4>
-                        <div className="space-y-2">
-                          {subtasks.map(subtask => (
-                            <TaskCardWithDependencies
-                              key={subtask.id}
-                              task={subtask}
-                              onEdit={onEdit}
-                              onDelete={onDelete}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+          <div>
+            <h3 className={`text-base font-medium ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+              {task.title}
+              {task.priority && (
+                <span className={`ml-2 text-sm ${getPriorityColor(task.priority)}`}>
+                  {task.priority === 'high' ? '!!!' : task.priority === 'medium' ? '!!' : '!'}
+                </span>
+              )}
+            </h3>
+            {task.description && (
+              <p className="mt-1 text-sm text-gray-500">
+                {task.description}
+              </p>
             )}
           </div>
         </div>
+        <div className="flex space-x-2">
+          {onEdit && (
+            <button
+              onClick={handleEdit}
+              className="p-1 text-gray-400 hover:text-amber-500 rounded"
+            >
+              <Edit3 size={16} />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(task.id);
+              }}
+              className="p-1 text-gray-400 hover:text-red-500 rounded"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
+        </div>
       </div>
+      
+      <div className="mt-3 flex flex-wrap gap-2 items-center">
+        {task.dueDate && (
+          <div className="flex items-center text-xs text-gray-500">
+            <Calendar size={14} className="mr-1" />
+            {formatDateForDisplay(task.dueDate)}
+          </div>
+        )}
+        
+        {project && (
+          <div className="flex items-center text-xs">
+            <Folder size={14} className="mr-1" style={{ color: project.color }} />
+            <span style={{ color: project.color }}>{project.name}</span>
+          </div>
+        )}
+        
+        {taskCategories.length > 0 && (
+          <div className="flex items-center gap-1">
+            <Tags size={14} className="text-gray-400" />
+            {taskCategories.map(category => (
+              <Badge 
+                key={category.id}
+                text={category.name}
+                bgColor={category.color}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      
+      {/* Expandable sections */}
+      {(subtasks.length > 0 || dependencies.length > 0 || dependents.length > 0) && (
+        <div className="mt-3">
+          <button
+            className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleExpand();
+            }}
+          >
+            {expanded ? (
+              <ChevronDown size={16} className="mr-1" />
+            ) : (
+              <ChevronRight size={16} className="mr-1" />
+            )}
+            <span>
+              {subtasks.length > 0 && `${subtasks.length} subtask${subtasks.length !== 1 ? 's' : ''}`}
+              {subtasks.length > 0 && (dependencies.length > 0 || dependents.length > 0) && ' • '}
+              {dependencies.length > 0 && `${dependencies.length} dependency${dependencies.length !== 1 ? 'ies' : ''}`}
+              {dependencies.length > 0 && dependents.length > 0 && ' • '}
+              {dependents.length > 0 && `${dependents.length} dependent${dependents.length !== 1 ? 's' : ''}`}
+            </span>
+          </button>
+          
+          {expanded && (
+            <div className="mt-3 space-y-3">
+              {/* Dependencies */}
+              {dependencies.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-medium text-gray-700 mb-2">Dependencies (must complete first):</h4>
+                  <div className="space-y-1">
+                    {dependencies.map(dep => (
+                      <div key={dep.id} className={`text-sm pl-4 ${dep.completed ? 'text-green-600' : 'text-gray-600'}`}>
+                        {dep.completed ? '✓' : '○'} {dep.title}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Dependent tasks */}
+              {dependents.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-medium text-gray-700 mb-2">Dependent tasks (blocked by this):</h4>
+                  <div className="space-y-1">
+                    {dependents.map(dep => (
+                      <div key={dep.id} className="text-sm pl-4 text-gray-600">
+                        ○ {dep.title}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Subtasks */}
+              {subtasks.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-medium text-gray-700 mb-2">Subtasks:</h4>
+                  <div className="space-y-2">
+                    {subtasks.map(subtask => (
+                      <TaskCardWithDependencies
+                        key={subtask.id}
+                        task={subtask}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

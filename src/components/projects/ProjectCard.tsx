@@ -67,7 +67,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2">
                 <div 
-                  className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                  className="bg-amber-500 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${completionPercentage}%` }}
                 />
               </div>
@@ -79,7 +79,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               {taskCount} task{taskCount !== 1 ? 's' : ''}
             </div>
             
-            <Link to={`/projects/${project.id}`} className="text-primary-600 hover:text-primary-700">
+            <Link to={`/projects/${project.id}`} className="text-amber-600 hover:text-amber-700">
               <ArrowRight size={20} />
             </Link>
           </div>
