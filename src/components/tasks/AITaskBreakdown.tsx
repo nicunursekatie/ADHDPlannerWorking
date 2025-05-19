@@ -721,6 +721,7 @@ Return JSON array only.`
                   variant="outline"
                   onClick={() => {
                     setShowContextForm(false);
+                    setHasGenerated(false); // Allow regeneration
                   }}
                   className="flex items-center"
                 >
@@ -730,6 +731,7 @@ Return JSON array only.`
                   variant="primary"
                   onClick={() => {
                     setShowContextForm(false);
+                    setHasGenerated(false); // Allow regeneration with new context
                     // The useEffect will trigger generateBreakdown when showContextForm becomes false
                   }}
                   className="flex items-center"
@@ -945,10 +947,15 @@ Return JSON array only.`
           {!showContextForm && breakdownOptions.length > 0 && (
             <Button
               variant="outline"
-              onClick={() => setShowContextForm(true)}
+              onClick={() => {
+                setShowContextForm(true);
+                setHasGenerated(false); // Reset so it will regenerate
+                setBreakdownOptions([]); // Clear old results
+                setError(null); // Clear any errors
+              }}
               icon={<Edit3 size={16} />}
             >
-              Add Context
+              Add Context & Regenerate
             </Button>
           )}
           {!showContextForm && (
