@@ -118,11 +118,11 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-4 mb-4">
+      <div className="flex flex-col md:flex-row justify-between md:items-center bg-gradient-to-r from-gray-800 to-gray-800/80 rounded-xl shadow-lg border border-gray-700 p-6 mb-6">
         <div className="flex items-center gap-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-100">Dashboard</h1>
-            <p className="text-gray-400">Your task overview</p>
+            <h1 className="text-3xl font-bold text-gray-100 tracking-tight">Dashboard</h1>
+            <p className="text-gray-400 mt-1">Your task overview</p>
           </div>
           {/* Progress Ring */}
           <div className="hidden md:flex items-center gap-3">

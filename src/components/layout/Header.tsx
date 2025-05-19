@@ -38,30 +38,32 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-gray-800 border-b border-gray-700">
+    <header className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between h-14 items-center">
+        <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <ClipboardList className="h-7 w-7 text-primary-400" />
-              <span className="ml-2 text-lg font-bold text-gray-100">ADHD Planner</span>
+              <div className="p-2 bg-primary-600 rounded-lg">
+                <ClipboardList className="h-5 w-5 text-white" />
+              </div>
+              <span className="ml-3 text-xl font-semibold text-gray-100 tracking-tight">ADHD Planner</span>
             </Link>
           </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                   isActive(item.path)
-                    ? 'bg-gray-700 text-primary-400'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-gray-100'
+                    ? 'bg-gray-800 text-primary-400'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
                 }`}
               >
                 {item.icon}
-                <span className="ml-1">{item.label}</span>
+                <span className="ml-2">{item.label}</span>
               </Link>
             ))}
           </nav>

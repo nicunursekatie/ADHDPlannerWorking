@@ -177,8 +177,8 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
   
   // Determine task background color based on status
   const getTaskBackground = () => {
-    if (task.completed) return 'bg-green-900/30 border-green-700';
-    if (!task.dueDate) return 'bg-gray-800 border-gray-700';
+    if (task.completed) return 'bg-gray-800/30 border-gray-700/50 opacity-75';
+    if (!task.dueDate) return 'bg-gray-800/40 border-gray-700/50';
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -186,18 +186,18 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
     const dueDate = new Date(year, month - 1, day);
     dueDate.setHours(0, 0, 0, 0);
     
-    if (dueDate < today) return 'bg-red-900/30 border-red-700';
-    if (dueDate.getTime() === today.getTime()) return 'bg-blue-900/30 border-blue-700';
-    return 'bg-gray-800 border-gray-700';
+    if (dueDate < today) return 'bg-red-950/20 border-red-800/50';
+    if (dueDate.getTime() === today.getTime()) return 'bg-blue-950/20 border-blue-800/50';
+    return 'bg-gray-800/40 border-gray-700/50';
   };
   
   return (
     <div 
-      className={`rounded-lg shadow-sm p-4 mb-3 border-l-4 hover:shadow transition-all ${getTaskBackground()} ${
+      className={`rounded-md p-3 mb-2 border-l-4 transition-all hover:bg-gray-800/50 ${getTaskBackground()} ${
         task.priority === 'high' ? 'border-l-red-500' : 
-        task.priority === 'medium' ? 'border-l-orange-500' : 
+        task.priority === 'medium' ? 'border-l-amber-500' : 
         task.priority === 'low' ? 'border-l-green-500' :
-        ''
+        'border-l-gray-600'
       } ${isSubtask ? 'ml-6 border-l-2' : ''}`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -225,7 +225,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
                 {isSubtask && (
                   <span className="text-gray-400 mr-2">↳</span>
                 )}
-                <h3 className={`text-lg font-medium ${task.completed ? 'line-through text-gray-400' : 'text-gray-100'}`}>
+                <h3 className={`text-base font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-200'}`}>
                   {task.title}
                 </h3>
                 

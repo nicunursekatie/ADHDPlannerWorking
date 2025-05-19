@@ -25,14 +25,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
     : 0;
     
   return (
-    <div className="bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-700 transition-all hover:shadow-md hover:border-gray-600">
+    <div className="bg-gray-800/40 rounded-lg overflow-hidden border border-gray-700/50 transition-all hover:bg-gray-800/60 hover:border-gray-600/50">
       <div 
-        className="h-3"
+        className="h-2"
         style={{ backgroundColor: project.color }}
       ></div>
-      <div className="p-5">
+      <div className="p-4">
         <div className="flex justify-between items-start">
-          <h3 className="text-lg font-semibold text-gray-100">
+          <h3 className="text-base font-medium text-gray-100">
             {project.name}
           </h3>
           <div className="flex gap-2">

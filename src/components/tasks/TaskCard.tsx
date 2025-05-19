@@ -80,19 +80,19 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const getTaskStyling = () => {
     switch (taskStatus) {
       case 'completed':
-        return 'border-green-800 bg-green-900/30 text-green-200';
+        return 'border-gray-700/50 bg-gray-800/30 opacity-75';
       case 'overdue':
-        return 'border-red-700 bg-red-900/30 text-red-200';
+        return 'border-red-800/50 bg-red-950/20';
       case 'today':
-        return 'border-blue-700 bg-blue-900/30 text-blue-200';
+        return 'border-blue-800/50 bg-blue-950/20';
       default:
-        return 'border-gray-700 bg-gray-800 text-gray-200';
+        return 'border-gray-700/50 bg-gray-800/30';
     }
   };
   
   return (
     <div 
-      className={`rounded-lg shadow-sm border p-3 mb-2 transition-all hover:shadow-md hover:border-gray-600 ${getTaskStyling()} ${isSubtask ? 'ml-6' : ''}`}
+      className={`rounded-md border p-3 mb-2 transition-all hover:bg-gray-800/50 ${getTaskStyling()} ${isSubtask ? 'ml-6' : ''}`}
     >
       <div className="flex items-start">
         <button 
