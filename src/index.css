@@ -13,9 +13,61 @@
     -moz-osx-font-smoothing: grayscale;
   }
   
-  /* Light mode background */
+  /* Light mode color tokens */
+  .light {
+    /* Backgrounds */
+    --bg-main: 248 250 252;        /* slate-50 */
+    --bg-card: 255 255 255;        /* white */
+    --bg-elevated: 255 255 255;    /* white */
+    --bg-hover: 248 250 252;       /* slate-50 */
+    --bg-active: 241 245 249;      /* slate-100 */
+    
+    /* Borders */
+    --border-main: 226 232 240;    /* slate-300 */
+    --border-subtle: 241 245 249;  /* slate-100 */
+    --border-strong: 203 213 225;  /* slate-400 */
+    
+    /* Text */
+    --text-primary: 15 23 42;      /* slate-900 */
+    --text-secondary: 71 85 105;   /* slate-600 */
+    --text-muted: 148 163 184;     /* slate-400 */
+    
+    /* Shadows */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: 0 2px 4px -1px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.03);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+  
+  /* Dark mode color tokens */
+  .dark {
+    /* Backgrounds */
+    --bg-main: 17 24 39;          /* gray-900 */
+    --bg-card: 31 41 55;          /* gray-800 */
+    --bg-elevated: 31 41 55;      /* gray-800 */
+    --bg-hover: 55 65 81;         /* gray-700 */
+    --bg-active: 75 85 99;        /* gray-600 */
+    
+    /* Borders */
+    --border-main: 55 65 81;      /* gray-700 */
+    --border-subtle: 31 41 55;    /* gray-800 */
+    --border-strong: 75 85 99;    /* gray-600 */
+    
+    /* Text */
+    --text-primary: 243 244 246;  /* gray-100 */
+    --text-secondary: 209 213 219; /* gray-300 */
+    --text-muted: 156 163 175;    /* gray-400 */
+    
+    /* Shadows */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: 0 2px 4px -1px rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+  }
+  
+  /* Light mode background gradient */
   .light body {
-    @apply bg-gray-50;
+    @apply bg-gradient-to-br from-slate-50 via-white to-slate-50;
   }
   
   /* Dark mode background */
@@ -45,7 +97,7 @@
   
   /* Professional form styling */
   input, textarea, select {
-    @apply font-medium bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600;
+    @apply font-medium bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-slate-300 dark:border-gray-600;
   }
   
   /* Smooth scrolling */
@@ -55,7 +107,7 @@
   
   /* Focus styles */
   *:focus {
-    @apply outline-none ring-2 ring-primary-400 ring-offset-2 ring-offset-white dark:ring-offset-gray-900;
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-primary-400 dark:ring-offset-gray-900;
   }
   
   /* Form inputs default styling */
@@ -63,7 +115,7 @@
     @apply transition-colors duration-200 font-sans;
   }
   
-  /* Color system variables */
+  /* Enhanced color system variables */
   :root {
     --color-success: #10b981; /* green-500 */
     --color-danger: #ef4444; /* red-500 */
@@ -74,21 +126,21 @@
 
   /* Improve contrast for secondary and muted text */
   .text-secondary {
-    @apply text-gray-600 dark:text-gray-400;
+    @apply text-slate-600 dark:text-gray-400;
   }
   .text-muted {
-    @apply text-gray-500 dark:text-gray-500;
+    @apply text-slate-400 dark:text-gray-500;
   }
 
-  /* Improve contrast for buttons and badges */
+  /* Enhanced button styles */
   .button-primary {
-    @apply bg-indigo-500 text-white hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700;
+    @apply bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-700 shadow-sm;
   }
   .badge-warning {
-    @apply bg-amber-500 text-gray-900 dark:bg-amber-600 dark:text-gray-100;
+    @apply bg-amber-500 text-white dark:bg-amber-600 dark:text-gray-100;
   }
   .badge-success {
-    @apply bg-green-500 text-gray-900 dark:bg-green-600 dark:text-gray-100;
+    @apply bg-green-500 text-white dark:bg-green-600 dark:text-gray-100;
   }
   .badge-danger {
     @apply bg-red-500 text-white dark:bg-red-600;
@@ -96,9 +148,18 @@
 }
 
 @layer components {
+  /* Enhanced card styles */
+  .card {
+    @apply bg-white dark:bg-gray-800/40 border border-slate-200 dark:border-gray-700/50 shadow-sm dark:shadow-none;
+  }
+  
+  .card-elevated {
+    @apply bg-white dark:bg-gray-800/40 border border-slate-200 dark:border-gray-700/50 shadow-md dark:shadow-none;
+  }
+  
   /* Card hover animation */
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-md;
+    @apply transition-all duration-200 hover:shadow-md dark:hover:shadow-none hover:border-slate-300 dark:hover:border-gray-600;
   }
   
   /* Button disabled state */
@@ -126,6 +187,11 @@
   .task-hover {
     @apply transition-all duration-150 hover:translate-x-1;
   }
+  
+  /* Enhanced focus states */
+  .focus-primary {
+    @apply focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-primary-400 dark:focus:ring-offset-gray-900;
+  }
 }
 
 @layer utilities {
@@ -140,5 +206,48 @@
   /* Transition classes */
   .transition-smooth {
     @apply transition-all duration-300 ease-in-out;
+  }
+  
+  /* Custom shadow utilities */
+  .shadow-xs {
+    box-shadow: var(--shadow-xs);
+  }
+  .shadow-sm-custom {
+    box-shadow: var(--shadow-sm);
+  }
+  .shadow-md-custom {
+    box-shadow: var(--shadow-md);
+  }
+  .shadow-lg-custom {
+    box-shadow: var(--shadow-lg);
+  }
+  
+  /* Custom color utilities using CSS variables */
+  .bg-main {
+    background-color: rgb(var(--bg-main));
+  }
+  .bg-card {
+    background-color: rgb(var(--bg-card));
+  }
+  .bg-elevated {
+    background-color: rgb(var(--bg-elevated));
+  }
+  .border-main {
+    border-color: rgb(var(--border-main));
+  }
+  .border-subtle {
+    border-color: rgb(var(--border-subtle));
+  }
+  .border-strong {
+    border-color: rgb(var(--border-strong));
+  }
+  .text-primary {
+    color: rgb(var(--text-primary));
+  }
+  .text-secondary {
+    color: rgb(var(--text-secondary));
+  }
+  .text-muted {
+    color: rgb(var(--text-muted));
   }
 }
