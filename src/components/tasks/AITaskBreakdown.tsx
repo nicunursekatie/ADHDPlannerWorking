@@ -53,6 +53,7 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
   const [usingFallback, setUsingFallback] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(false);
   const alwaysAskContext = localStorage.getItem('ai_always_ask_context');
   const [showContextForm, setShowContextForm] = useState(
     // Default to true unless explicitly set to false
@@ -392,13 +393,13 @@ Return JSON array only.`
         steps = JSON.parse(content);
       }
       
-      // Handle Groq's different response format
-      if (steps.length > 0 && steps[0].Step) {
+      // Handle Groq's different response format (check both "Step" and "step")
+      if (steps.length > 0 && (steps[0].Step || steps[0].step)) {
         console.log('Detected Groq format, converting...');
         steps = steps.map((step, index) => ({
-          title: step.Step || `Step ${index + 1}`,
+          title: step.Step || step.step || `Step ${index + 1}`,
           duration: '5-10 mins',
-          description: step.Step || `Step ${index + 1}`,
+          description: step.Step || step.step || `Step ${index + 1}`,
           type: 'work',
           energyRequired: 'medium',
           tips: 'Focus on this specific action'
@@ -422,9 +423,9 @@ Return JSON array only.`
     // Convert to BreakdownOption format
     const breakdown: BreakdownOption[] = steps.map((step: any, index: number) => ({
       id: `${index + 1}`,
-      title: step.title || step.Step || `Step ${index + 1}`,
+      title: step.title || step.Step || step.step || `Step ${index + 1}`,
       duration: step.duration || '5-10 mins',
-      description: step.description || step.Step || `Complete step ${index + 1}`,
+      description: step.description || step.Step || step.step || `Complete step ${index + 1}`,
       selected: true,
       editable: false,
       type: step.type || 'work',
@@ -582,20 +583,11 @@ Return JSON array only.`
 
   React.useEffect(() => {
     // Don't generate breakdown automatically if we're showing context form
-    console.log('useEffect running, showContextForm:', showContextForm);
-    if (!showContextForm) {
-      console.log('Generating breakdown because showContextForm is false');
+    if (!showContextForm && !hasGenerated) {
+      setHasGenerated(true);
       generateBreakdown();
     }
-  }, [showContextForm]);
-
-  console.log('AITaskBreakdown render:', {
-    showContextForm,
-    breakdownOptionsLength: breakdownOptions.length,
-    isLoading,
-    error,
-    usingFallback
-  });
+  }, [showContextForm, hasGenerated]);
 
   return (
     <Modal isOpen={true} onClose={onClose} title="AI Task Breakdown" size="lg">
@@ -632,9 +624,7 @@ Return JSON array only.`
           </div>
         )}
 
-        {showContextForm && !isLoading && (() => {
-          console.log('Rendering context form, showContextForm:', showContextForm, 'isLoading:', isLoading);
-          return (
+        {showContextForm && !isLoading && (
           <div className="space-y-4">
             <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
               <h3 className="font-medium text-purple-900 mb-3">Tell me more about this task</h3>
@@ -725,7 +715,6 @@ Return JSON array only.`
                 <Button
                   variant="primary"
                   onClick={() => {
-                    console.log('Create Personalized Breakdown clicked, contextData:', contextData);
                     setShowContextForm(false);
                     // The useEffect will trigger generateBreakdown when showContextForm becomes false
                   }}
@@ -737,8 +726,7 @@ Return JSON array only.`
               </div>
             </div>
           </div>
-          );
-        })()}
+        )}
         
         {usingFallback && !showContextForm && (
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
@@ -755,15 +743,10 @@ Return JSON array only.`
           </div>
         )}
 
-        {(() => {
-          console.log('Checking breakdown render - options:', breakdownOptions.length, 'showContextForm:', showContextForm);
-          return breakdownOptions.length > 0 && !showContextForm;
-        })() && (
+        {breakdownOptions.length > 0 && !showContextForm && (
           <>
             <div className="space-y-2">
-              {breakdownOptions.map(option => {
-                console.log('Rendering option:', option);
-                return (
+              {breakdownOptions.map(option => (
                 <Card 
                   key={option.id} 
                   className={`p-3 transition-all cursor-move ${
@@ -867,7 +850,7 @@ Return JSON array only.`
                     </div>
                   </div>
                 </Card>
-              );})}
+              ))}
             </div>
 
             <div className="flex justify-between items-center">
