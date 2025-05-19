@@ -218,7 +218,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
           {onEdit && (
             <button
               onClick={handleEdit}
-              className="p-1 text-gray-400 hover:text-amber-500 rounded"
+              className="p-1 text-amber-700 hover:text-amber-800 rounded"
             >
               <Edit2 size={16} />
             </button>
@@ -226,7 +226,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
           {onDelete && (
             <button
               onClick={handleDelete}
-              className="p-1 text-gray-400 hover:text-red-500 rounded"
+              className="p-1 text-amber-700 hover:text-red-600 rounded"
             >
               <Trash2 size={16} />
             </button>
@@ -251,7 +251,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
         
         {taskCategories.length > 0 && (
           <div className="flex items-center gap-1">
-            <Tags size={14} className="text-gray-400" />
+            <Tags size={14} className="text-amber-700" />
             {taskCategories.map(category => (
               <Badge 
                 key={category.id}

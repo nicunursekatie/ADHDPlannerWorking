@@ -38,13 +38,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           <div className="flex gap-2">
             <button
               onClick={() => onEdit(project)}
-              className="p-2 text-gray-400 hover:text-gray-200 hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 text-amber-700 hover:text-amber-800 hover:bg-amber-100 rounded-lg transition-colors"
             >
               <Edit size={16} />
             </button>
             <button
               onClick={() => onDelete(project.id)}
-              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-900/30 rounded-lg transition-colors"
+              className="p-2 text-amber-700 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
             >
               <Trash size={16} />
             </button>
@@ -61,7 +61,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           {/* Progress bar */}
           {taskCount > 0 && (
             <div className="mb-3">
-              <div className="flex justify-between text-xs text-gray-400 mb-1">
+              <div className="flex justify-between text-xs text-amber-700 mb-1">
                 <span>{completedTaskCount} of {taskCount} completed</span>
                 <span>{completionPercentage}%</span>
               </div>
