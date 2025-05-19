@@ -18,16 +18,19 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
   const [isTestingApi, setIsTestingApi] = useState(false);
   const [apiStatus, setApiStatus] = useState<'untested' | 'testing' | 'success' | 'error'>('untested');
   const [apiStatusMessage, setApiStatusMessage] = useState('');
+  const [alwaysAskContext, setAlwaysAskContext] = useState(true);
 
   useEffect(() => {
     // Load existing settings
     const savedProvider = localStorage.getItem('ai_provider') || 'openai';
     const savedApiKey = localStorage.getItem('ai_api_key') || '';
     const savedEndpoint = localStorage.getItem('ai_api_endpoint') || '/api/ai/breakdown';
+    const savedContextPref = localStorage.getItem('ai_always_ask_context');
     
     setProvider(savedProvider);
     setApiKey(savedApiKey);
     setApiEndpoint(savedEndpoint);
+    setAlwaysAskContext(savedContextPref !== 'false');
   }, []);
 
   const testApiConnection = async () => {
@@ -86,6 +89,7 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
       localStorage.setItem('ai_provider', provider);
       localStorage.setItem('ai_api_key', apiKey);
       localStorage.setItem('ai_api_endpoint', apiEndpoint);
+      localStorage.setItem('ai_always_ask_context', alwaysAskContext.toString());
       
       // Initialize the AI service with new settings
       if (apiKey) {
@@ -221,6 +225,28 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
                   {apiStatusMessage || 'API key not tested yet'}
                 </span>
               </div>
+            </div>
+            
+            <div className="pt-4 border-t border-gray-200">
+              <h4 className="font-medium text-gray-900 mb-4">Task Breakdown Preferences</h4>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="alwaysAskContext"
+                  checked={alwaysAskContext}
+                  onChange={(e) => setAlwaysAskContext(e.target.checked)}
+                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                />
+                <label htmlFor="alwaysAskContext" className="ml-2 block text-sm text-gray-700">
+                  Always ask for context before generating breakdown
+                </label>
+              </div>
+              <p className="mt-1 text-sm text-gray-600 ml-6">
+                {alwaysAskContext 
+                  ? "You'll be prompted to provide specific details about each task for better breakdowns"
+                  : "Task breakdowns will be generated immediately based on the task title and description"
+                }
+              </p>
             </div>
           </div>
           
