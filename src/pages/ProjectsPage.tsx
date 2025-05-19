@@ -106,6 +106,7 @@ const ProjectsPage: React.FC = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         title={editingProject ? 'Edit Project' : 'Create New Project'}
+        key={editingProject ? editingProject.id : 'new'}
       >
         <ProjectForm
           project={editingProject || undefined}

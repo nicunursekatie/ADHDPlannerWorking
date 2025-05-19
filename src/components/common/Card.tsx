@@ -17,7 +17,7 @@ const Card: React.FC<CardProps> = ({
   onClick,
   variant = 'default',
 }) => {
-  const baseClasses = 'bg-white dark:bg-gray-800/40 backdrop-blur-sm transition-all duration-200 overflow-hidden rounded-xl';
+  const baseClasses = 'bg-white dark:bg-gray-800/40 backdrop-blur-sm transition-all duration-200 overflow-hidden rounded-xl font-sans';
   
   const variantClasses = {
     default: 'border border-gray-200 dark:border-gray-700/50 shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-none',
@@ -36,11 +36,11 @@ const Card: React.FC<CardProps> = ({
     >
       {title && (
         <div className="border-b border-gray-200 dark:border-gray-700/50 px-6 py-4 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 tracking-tight">{title}</h3>
+          <h3 className="text-lg font-bold text-black dark:text-gray-100 tracking-tight font-sans">{title}</h3>
           {headerAction && <div className="text-sm">{headerAction}</div>}
         </div>
       )}
-      <div className="px-6 py-5">{children}</div>
+      <div className="px-6 py-5 font-sans text-gray-900 dark:text-gray-100">{children}</div>
     </div>
   );
 };
