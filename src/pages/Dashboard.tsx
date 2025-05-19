@@ -228,25 +228,25 @@ const Dashboard: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-100 mb-3">Memory Tools</h3>
               <div className="space-y-2">
                 <Link to="/brain-dump">
-                  <div className="p-3 bg-indigo-900/30 rounded-lg hover:bg-indigo-900/40 transition-colors cursor-pointer flex items-center justify-between">
+                  <div className="p-3 bg-amber-100 rounded-lg hover:bg-amber-200 transition-colors cursor-pointer flex items-center justify-between">
                     <div className="flex items-center">
-                      <BrainCircuit className="w-5 h-5 text-indigo-400 mr-2" />
+                      <BrainCircuit className="w-5 h-5 text-amber-600 mr-2" />
                       <span className="font-medium text-gray-200">Brain Dump</span>
                     </div>
-                    <ArrowRight size={16} className="text-indigo-400" />
+                    <ArrowRight size={16} className="text-amber-600" />
                   </div>
                 </Link>
 
                 <Link to="/weekly-review">
-                  <div className={`p-3 ${showWeeklyReviewReminder ? 'bg-yellow-900/30 border border-yellow-700' : 'bg-blue-900/30'} rounded-lg hover:bg-blue-900/40 transition-colors cursor-pointer flex items-center justify-between`}>
+                  <div className={`p-3 ${showWeeklyReviewReminder ? 'bg-yellow-900/30 border border-yellow-700' : 'bg-yellow-900/30'} rounded-lg hover:bg-yellow-900/40 transition-colors cursor-pointer flex items-center justify-between`}>
                     <div className="flex items-center">
-                      <RefreshCw className={`w-5 h-5 ${showWeeklyReviewReminder ? 'text-yellow-400' : 'text-blue-400'} mr-2`} />
+                      <RefreshCw className={`w-5 h-5 ${showWeeklyReviewReminder ? 'text-yellow-400' : 'text-yellow-400'} mr-2`} />
                       <span className="font-medium text-gray-200">Weekly Review</span>
                       {showWeeklyReviewReminder && (
                         <span className="ml-2 px-2 py-0.5 bg-yellow-700 text-yellow-200 text-xs rounded-full">Due</span>
                       )}
                     </div>
-                    <ArrowRight size={16} className={`${showWeeklyReviewReminder ? 'text-yellow-400' : 'text-blue-400'}`} />
+                    <ArrowRight size={16} className={`${showWeeklyReviewReminder ? 'text-yellow-400' : 'text-yellow-400'}`} />
                   </div>
                 </Link>
 
@@ -271,15 +271,15 @@ const Dashboard: React.FC = () => {
 
           {/* Mini Brain Dump Widget */}
           <Card className="lg:col-span-2 overflow-hidden">
-            <div className="p-3 bg-indigo-900/30 border-b border-indigo-700">
+            <div className="p-3 bg-amber-100 border-b border-amber-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <BrainCircuit className="w-5 h-5 text-indigo-400 mr-2" />
+                  <BrainCircuit className="w-5 h-5 text-amber-600 mr-2" />
                   <h3 className="font-medium text-gray-100">Quick Brain Dump</h3>
                 </div>
                 <Link
                   to="/brain-dump"
-                  className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
+                  className="text-sm text-amber-600 hover:text-amber-500 flex items-center"
                 >
                   Full Version
                   <ArrowRight size={14} className="ml-1" />
@@ -287,8 +287,8 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
             <div className="p-4">
-              <div className="bg-indigo-900/30 rounded-lg p-3 mb-4">
-                <div className="text-indigo-200">
+              <div className="bg-amber-100 rounded-lg p-3 mb-4">
+                <div className="text-amber-200">
                   Think of something you need to remember? Add it now:
                 </div>
               </div>
@@ -326,7 +326,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
+              className="text-sm text-amber-600 hover:text-amber-500 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />
@@ -349,7 +349,7 @@ const Dashboard: React.FC = () => {
               <div className="pt-1">
                 <Link 
                   to="/tasks"
-                  className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center justify-center"
+                  className="text-sm text-amber-600 hover:text-amber-500 flex items-center justify-center"
                 >
                   View all {overdueTasks.length} overdue tasks
                 </Link>
@@ -367,7 +367,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
+              className="text-sm text-amber-600 hover:text-amber-500 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />
@@ -399,7 +399,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
+              className="text-sm text-amber-600 hover:text-amber-500 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />
@@ -432,7 +432,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
+              className="text-sm text-amber-600 hover:text-amber-500 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />
@@ -468,7 +468,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/projects"
-              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
+              className="text-sm text-amber-600 hover:text-amber-500 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />
@@ -517,7 +517,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/recurring-tasks"
-              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
+              className="text-sm text-amber-600 hover:text-amber-500 flex items-center"
             >
               Manage
               <ArrowRight size={14} className="ml-1" />
@@ -526,9 +526,9 @@ const Dashboard: React.FC = () => {
           className="lg:col-span-1"
         >
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-blue-900/30 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-yellow-900/30 rounded-lg">
               <div className="flex items-center">
-                <Repeat size={20} className="text-blue-400 mr-3" />
+                <Repeat size={20} className="text-yellow-400 mr-3" />
                 <div>
                   <p className="font-medium text-gray-100">{recurringTasks.length}</p>
                   <p className="text-sm text-gray-400">Active Recurring Tasks</p>
@@ -560,7 +560,7 @@ const Dashboard: React.FC = () => {
             {recurringTasks.length === 0 && (
               <div className="text-center py-3 text-gray-500">
                 <p>No recurring tasks yet</p>
-                <Link to="/recurring-tasks" className="text-indigo-600 hover:text-indigo-800 text-sm">
+                <Link to="/recurring-tasks" className="text-amber-600 hover:text-amber-800 text-sm">
                   Create your first recurring task
                 </Link>
               </div>
@@ -587,8 +587,8 @@ const Dashboard: React.FC = () => {
                 <p className="text-2xl font-bold text-green-400">{completedTasks.length}</p>
                 <p className="text-sm text-gray-400">Completed</p>
               </div>
-              <div className="text-center p-3 bg-blue-900/30 rounded-lg">
-                <p className="text-2xl font-bold text-blue-400">{projects.length}</p>
+              <div className="text-center p-3 bg-yellow-900/30 rounded-lg">
+                <p className="text-2xl font-bold text-yellow-400">{projects.length}</p>
                 <p className="text-sm text-gray-400">Projects</p>
               </div>
             </div>
@@ -605,7 +605,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
+              className="text-sm text-amber-600 hover:text-amber-500 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />
