@@ -30,6 +30,11 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
     existingSubtasks.includes(task.id)
   );
   
+  // Add this for clarity:
+  useEffect(() => {
+    console.log("Rendering subtasks for", parentTaskId, subtasks.map(t => t.title));
+  }, [subtasks, parentTaskId]);
+  
   // Toggle expand/collapse
   const toggleExpand = () => {
     setExpanded(!expanded);
