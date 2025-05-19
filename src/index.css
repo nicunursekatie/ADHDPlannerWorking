@@ -2,21 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+/* System UI font stack for maximum compatibility */
 @layer base {
   body {
     @apply antialiased bg-gray-900 text-gray-100;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-size: 16px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   
-  /* Typography */
-  h1 { @apply text-3xl font-semibold tracking-tight; }
-  h2 { @apply text-2xl font-semibold tracking-tight; }
-  h3 { @apply text-xl font-medium; }
-  h4 { @apply text-lg font-medium; }
+  /* Use system fonts for consistency */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  /* Typography with professional system font styling */
+  h1 { 
+    @apply text-4xl font-black tracking-tight;
+    letter-spacing: -0.02em;
+  }
+  h2 { 
+    @apply text-3xl font-bold tracking-tight;
+    letter-spacing: -0.015em;
+  }
+  h3 { @apply text-xl font-bold; }
+  h4 { @apply text-lg font-semibold; }
+  
+  /* Make UI text more readable */
+  p { @apply leading-relaxed; }
+  
+  /* Professional form styling */
+  input, textarea, select {
+    @apply font-medium;
+  }
   
   /* Smooth scrolling */
   html {
