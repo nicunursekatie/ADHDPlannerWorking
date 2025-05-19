@@ -114,12 +114,12 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center bg-white rounded-lg shadow-sm p-4 mb-4">
+      <div className="flex flex-col md:flex-row justify-between md:items-center bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Your task overview</p>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-1">Your task overview</p>
         </div>
-        <div className="mt-4 md:mt-0 flex space-x-2">
+        <div className="mt-4 md:mt-0 flex gap-3">
           <Button
             variant="primary"
             icon={<Plus size={16} />}
@@ -139,7 +139,7 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* Quick Task Input */}
-      <div className="mb-4">
+      <div className="mb-6">
         <EnhancedQuickCapture
           placeholder="Add a new task... (try !today, !tomorrow, !high)"
         />
@@ -147,15 +147,15 @@ const Dashboard: React.FC = () => {
 
       {/* Weekly Review Reminder */}
       {showWeeklyReviewReminder && (
-        <Card className="mb-4 bg-yellow-50 border-l-4 border-yellow-500">
+        <Card className="mb-6 bg-amber-50 border-2 border-amber-200">
           <div className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-yellow-600" aria-hidden="true" />
+                <AlertTriangle className="h-5 w-5 text-amber-600" aria-hidden="true" />
               </div>
               <div className="ml-3">
-                <h3 className="text-lg font-medium text-yellow-800">Time for your weekly review!</h3>
-                <div className="mt-2 text-sm text-yellow-700">
+                <h3 className="text-lg font-medium text-amber-800">Time for your weekly review!</h3>
+                <div className="mt-2 text-sm text-amber-700">
                   <p>It's been a week since your last review. Taking time to reflect helps with ADHD management.</p>
                 </div>
                 <div className="mt-4">

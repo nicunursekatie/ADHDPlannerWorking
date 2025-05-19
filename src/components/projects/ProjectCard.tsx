@@ -19,26 +19,26 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   onDelete,
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 transition-all hover:shadow-md">
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 transition-all hover:shadow-md">
       <div 
-        className="h-2"
+        className="h-3"
         style={{ backgroundColor: project.color }}
       ></div>
-      <div className="p-4">
+      <div className="p-5">
         <div className="flex justify-between items-start">
-          <h3 className="text-lg font-medium text-gray-900">
+          <h3 className="text-lg font-semibold text-gray-900">
             {project.name}
           </h3>
-          <div className="flex space-x-1">
+          <div className="flex gap-2">
             <button
               onClick={() => onEdit(project)}
-              className="p-1 text-gray-400 hover:text-gray-500 rounded"
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <Edit size={16} />
             </button>
             <button
               onClick={() => onDelete(project.id)}
-              className="p-1 text-gray-400 hover:text-red-500 rounded"
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
             >
               <Trash size={16} />
             </button>

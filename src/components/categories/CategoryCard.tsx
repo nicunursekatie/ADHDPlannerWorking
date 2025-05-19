@@ -17,31 +17,31 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
 }) => {
   return (
     <div 
-      className="flex items-center justify-between p-3 rounded-lg shadow-sm border border-gray-100 bg-white hover:shadow-md transition-all"
+      className="flex items-center justify-between p-4 rounded-xl shadow-sm border border-gray-200 bg-white hover:shadow-md transition-all"
     >
       <div className="flex items-center">
         <div 
-          className="h-4 w-4 rounded-full mr-3" 
+          className="h-5 w-5 rounded-lg mr-3" 
           style={{ backgroundColor: category.color }}
         ></div>
-        <span className="font-medium">{category.name}</span>
+        <span className="font-medium text-gray-900">{category.name}</span>
       </div>
       
-      <div className="flex items-center space-x-4">
-        <span className="text-sm text-gray-500">
+      <div className="flex items-center gap-4">
+        <span className="text-sm text-gray-600">
           {taskCount} task{taskCount !== 1 ? 's' : ''}
         </span>
         
-        <div className="flex space-x-1">
+        <div className="flex gap-2">
           <button
             onClick={() => onEdit(category)}
-            className="p-1 text-gray-400 hover:text-gray-500 rounded"
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Edit size={16} />
           </button>
           <button
             onClick={() => onDelete(category.id)}
-            className="p-1 text-gray-400 hover:text-red-500 rounded"
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
             <Trash size={16} />
           </button>

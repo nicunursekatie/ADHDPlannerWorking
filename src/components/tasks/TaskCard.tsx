@@ -62,8 +62,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
   
   return (
     <div 
-      className={`bg-white rounded-lg shadow p-4 mb-3 border-l-4 transition-all ${
-        task.completed ? 'border-green-500 bg-green-50' : 'border-indigo-500'
+      className={`bg-white rounded-xl shadow-sm border p-4 mb-3 transition-all hover:shadow-md ${
+        task.completed ? 'border-green-400 bg-green-50' : 'border-gray-200'
       } ${isSubtask ? 'ml-6' : ''}`}
     >
       <div className="flex items-start">
@@ -74,7 +74,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
           {task.completed ? (
             <CheckCircle2 className="h-5 w-5 text-green-500" />
           ) : (
-            <Circle className="h-5 w-5 text-gray-400 hover:text-indigo-500" />
+            <Circle className="h-5 w-5 text-gray-400 hover:text-primary-600 transition-colors" />
           )}
         </button>
         
@@ -84,7 +84,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             onClick={handleEdit}
           >
             <div>
-              <h3 className={`text-lg font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+              <h3 className={`text-base font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                 {task.title}
               </h3>
               
@@ -94,7 +94,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 </p>
               )}
               
-              <div className="mt-2 flex flex-wrap gap-2 items-center">
+              <div className="mt-3 flex flex-wrap gap-2 items-center">
                 {task.dueDate && (
                   <div className="flex items-center text-xs text-gray-500">
                     <Calendar size={14} className="mr-1" />
