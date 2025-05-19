@@ -88,35 +88,46 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
     const messages = [
           {
             role: 'system',
-            content: `You are an ADHD-aware assistant creating actionable task breakdowns.
+            content: `You are an ADHD-aware assistant creating actionable task breakdowns. 
 
-CRITICAL PRINCIPLES:
-1. Start with what CAN be done NOW, not what needs to be decided
-2. If there are blockers, work AROUND them, not through them
-3. Prioritize partial progress over perfect planning
-4. Scaffold decisions - don't require them upfront
-5. Default to action over ideation
+CRITICAL RULES:
+1. READ AND USE THE CONTEXT PROVIDED - especially blockers, current state, and specific goals
+2. Address blockers FIRST, not last - if they don't know where things go, don't tell them to fold first
+3. Reduce decision fatigue by grouping, categorizing, or deferring decisions
+4. Create momentum with easy wins before harder tasks
+5. Each step must reduce overwhelm, clarify decision-making, or externalize mental load
+
+ADHD-AWARE PRINCIPLES:
+- Triage before action: Sort into categories before detailed work
+- Decision scaffolding: Break big decisions into micro-decisions  
+- Externalize memory: Write things down, use containers, label clearly
+- Easy wins first: Start with obvious/simple items to build momentum
+- Batch similar items: Group processing reduces context switching
+- Visual cues: Use physical separation, containers, or notes
 
 BREAKDOWN STRATEGY:
-- If location is unclear → "Put items that DO have homes away first"
-- If process is unknown → "Start with the obvious/easy parts"
-- If decision needed → "Try one approach for 10 mins, then adjust"
-- If overwhelmed → "Pick any corner and clear just that"
+- If "don't know where to put things" → First create categories/piles, THEN process each pile
+- If "decision fatigue" → Start with items that have obvious homes, defer harder decisions
+- If "overwhelmed by volume" → Break into smaller visual chunks first
+- If "boring/unmotivating" → Add variety, breaks, or rewards between steps
 
-NEVER ASK QUESTIONS in steps. Instead:
-❌ "Decide where clothes will go" 
-✓ "Put away clothes with existing homes (skip the rest for now)"
+NEVER:
+- Jump to detailed work before triage
+- Ask questions as steps
+- Require decisions without scaffolding
+- Process items one-by-one when batching would help
 
-❌ "Figure out tracking format"
-✓ "Open notes app and write today's data in any format"
-
-ALWAYS:
-- Make progress possible WITHOUT solving all blockers
-- Offer "good enough" paths alongside ideal ones
-- Break decisions into experiments, not commitments
-- Focus on clearing what's clearable first
-
-Format as JSON array - each step must be immediately actionable.`
+Format as JSON array with structure:
+[
+  {
+    "title": "Action-oriented title",
+    "duration": "5-10 mins",
+    "description": "What to do and why",
+    "type": "work|break|review",
+    "energyRequired": "low|medium|high",
+    "tips": "ADHD-friendly tips"
+  }
+]`
           },
           {
             role: 'user',
@@ -127,20 +138,20 @@ ${contextData.blockers ? `Blockers: ${contextData.blockers}` : ''}
 ${contextData.specificGoal ? `Goal: ${contextData.specificGoal}` : ''}
 ${contextData.environment ? `Constraints: ${contextData.environment}` : ''}
 
-Create ${preferences.maxSteps} steps that are IMMEDIATELY actionable.
+Create ${preferences.maxSteps} steps that DIRECTLY ADDRESS THE BLOCKERS LISTED ABOVE.
 
-CRITICAL: 
-- NO questions or decisions as steps
-- Work AROUND blockers, not through them
-- Enable partial progress even if full solution unclear
-- If user mentions a blocker like "don't know where X goes", create steps that handle what IS known first
+IMPORTANT REQUIREMENTS:
+1. If the blocker is "don't know where things go" - START with categorization/sorting, not with folding
+2. If the blocker is "decision fatigue" - DEFER hard decisions, process easy items first
+3. If the blocker is "overwhelming amount" - BREAK into visual chunks before processing
+4. Use the context to customize steps - don't give generic task sequences
 
-Examples:
-- If blocker is "deciding where items go" → Step: "Put away items that already have designated spots"
-- If blocker is "choosing format" → Step: "Start with simplest format (bullet list) for 5 mins"
-- If blocker is "too overwhelming" → Step: "Clear just the 2-foot area directly in front of you"
+Example adaptations:
+- Blocker: "don't know where clothes go" → First step: "Sort into 3 piles: has home, needs home, donate/unsure"
+- Blocker: "bored with folding" → Mix folding with other actions, add music/podcast, or batch by type
+- Blocker: "decision fatigue" → Start with socks/underwear (easy homes), defer complex items
 
-Each step should move the task forward WITHOUT requiring the blocker to be solved first.
+Each step should ACTIVELY WORK AROUND the stated blockers, not ignore them.
 
 Return JSON array only.`
           }
@@ -456,13 +467,13 @@ Return JSON array only.`
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    What makes this task challenging?
+                    What makes this task challenging? (Be specific!)
                   </label>
                   <input
                     type="text"
                     value={contextData.blockers}
                     onChange={(e) => setContextData({...contextData, blockers: e.target.value})}
-                    placeholder="e.g., 'Too many steps', 'Don't know the process', 'Requires decisions I haven't made'"
+                    placeholder="e.g., 'Decision fatigue - don't know where things go', 'Boring/unmotivating', 'Too overwhelming to start'"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                   />
                 </div>
