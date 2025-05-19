@@ -289,7 +289,7 @@ const EnhancedTasksPage: React.FC = () => {
         <button
           className={`px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
             activeTab === 'today' 
-              ? 'border-indigo-500 text-indigo-600 bg-indigo-50' 
+              ? 'border-amber-500 text-amber-600 bg-amber-50' 
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
           onClick={() => setActiveTab('today')}
@@ -303,7 +303,7 @@ const EnhancedTasksPage: React.FC = () => {
         <button
           className={`px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
             activeTab === 'tomorrow' 
-              ? 'border-indigo-500 text-indigo-600 bg-indigo-50' 
+              ? 'border-amber-500 text-amber-600 bg-amber-50' 
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
           onClick={() => setActiveTab('tomorrow')}
@@ -317,7 +317,7 @@ const EnhancedTasksPage: React.FC = () => {
         <button
           className={`px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
             activeTab === 'week' 
-              ? 'border-indigo-500 text-indigo-600 bg-indigo-50' 
+              ? 'border-amber-500 text-amber-600 bg-amber-50' 
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
           onClick={() => setActiveTab('week')}
@@ -331,13 +331,13 @@ const EnhancedTasksPage: React.FC = () => {
         <button
           className={`px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
             activeTab === 'overdue' 
-              ? 'border-red-500 text-red-600 bg-red-50' 
+              ? 'border-amber-500 text-amber-600 bg-amber-50' 
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
           onClick={() => setActiveTab('overdue')}
         >
           <div className="flex items-center space-x-2">
-            <AlertTriangle size={16} className={overdueTasks.length > 0 ? 'text-red-500' : ''} />
+            <AlertTriangle size={16} className={overdueTasks.length > 0 ? 'text-amber-500' : ''} />
             <span>Overdue{overdueTasks.length > 0 && ` (${overdueTasks.length})`}</span>
           </div>
         </button>
@@ -345,7 +345,7 @@ const EnhancedTasksPage: React.FC = () => {
         <button
           className={`px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
             activeTab === 'all' 
-              ? 'border-indigo-500 text-indigo-600 bg-indigo-50' 
+              ? 'border-amber-500 text-amber-600 bg-amber-50' 
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
           onClick={() => setActiveTab('all')}
@@ -398,7 +398,7 @@ const EnhancedTasksPage: React.FC = () => {
                       id="showCompleted"
                       checked={showCompleted}
                       onChange={() => setShowCompleted(!showCompleted)}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      className="h-4 w-4 text-amber-600 border-gray-300 rounded"
                     />
                     <label htmlFor="showCompleted" className="ml-2 text-sm text-gray-700">
                       Show completed tasks
@@ -410,7 +410,7 @@ const EnhancedTasksPage: React.FC = () => {
                       id="showArchived"
                       checked={showArchived}
                       onChange={() => setShowArchived(!showArchived)}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      className="h-4 w-4 text-amber-600 border-gray-300 rounded"
                     />
                     <label htmlFor="showArchived" className="ml-2 text-sm text-gray-700">
                       Show archived tasks
@@ -427,7 +427,7 @@ const EnhancedTasksPage: React.FC = () => {
                   id="projectFilter"
                   value={filterProjectId || ''}
                   onChange={(e) => setFilterProjectId(e.target.value || null)}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm"
                 >
                   <option value="">All Projects</option>
                   {projects.map(project => (
@@ -446,7 +446,7 @@ const EnhancedTasksPage: React.FC = () => {
                   id="categoryFilter"
                   value={filterCategoryId || ''}
                   onChange={(e) => setFilterCategoryId(e.target.value || null)}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm"
                 >
                   <option value="">All Categories</option>
                   {categories.map(category => (
@@ -477,31 +477,31 @@ const EnhancedTasksPage: React.FC = () => {
         <div className="mb-4">
           {activeTab === 'today' && (
             <div className="flex items-center space-x-2">
-              <Calendar size={20} className="text-indigo-500" />
+              <Calendar size={20} className="text-amber-500" />
               <h2 className="text-xl font-semibold text-gray-900">Today's Tasks</h2>
             </div>
           )}
           {activeTab === 'tomorrow' && (
             <div className="flex items-center space-x-2">
-              <CalendarDays size={20} className="text-indigo-500" />
+              <CalendarDays size={20} className="text-amber-500" />
               <h2 className="text-xl font-semibold text-gray-900">Tomorrow's Tasks</h2>
             </div>
           )}
           {activeTab === 'week' && (
             <div className="flex items-center space-x-2">
-              <CalendarDays size={20} className="text-indigo-500" />
+              <CalendarDays size={20} className="text-amber-500" />
               <h2 className="text-xl font-semibold text-gray-900">This Week's Tasks</h2>
             </div>
           )}
           {activeTab === 'overdue' && (
             <div className="flex items-center space-x-2">
-              <AlertTriangle size={20} className="text-red-500" />
+              <AlertTriangle size={20} className="text-amber-500" />
               <h2 className="text-xl font-semibold text-gray-900">Overdue Tasks</h2>
             </div>
           )}
           {activeTab === 'all' && (
             <div className="flex items-center space-x-2">
-              <Layers size={20} className="text-indigo-500" />
+              <Layers size={20} className="text-amber-500" />
               <h2 className="text-xl font-semibold text-gray-900">All Tasks</h2>
             </div>
           )}
@@ -520,7 +520,7 @@ const EnhancedTasksPage: React.FC = () => {
                       {/* Overdue section */}
                       {overdueTasks.length > 0 && (
                         <div>
-                          <h3 className="text-lg font-medium text-red-600 mb-3 flex items-center">
+                          <h3 className="text-lg font-medium text-amber-600 mb-3 flex items-center">
                             <AlertTriangle size={16} className="mr-2" />
                             Overdue
                           </h3>
@@ -546,7 +546,7 @@ const EnhancedTasksPage: React.FC = () => {
                       {/* Today section */}
                       {todayTasks.length > 0 && (
                         <div>
-                          <h3 className="text-lg font-medium text-indigo-600 mb-3 flex items-center">
+                          <h3 className="text-lg font-medium text-amber-600 mb-3 flex items-center">
                             <Calendar size={16} className="mr-2" />
                             Today
                           </h3>
@@ -572,7 +572,7 @@ const EnhancedTasksPage: React.FC = () => {
                       {/* Tomorrow section */}
                       {tomorrowTasks.length > 0 && (
                         <div>
-                          <h3 className="text-lg font-medium text-indigo-600 mb-3 flex items-center">
+                          <h3 className="text-lg font-medium text-amber-600 mb-3 flex items-center">
                             <CalendarDays size={16} className="mr-2" />
                             Tomorrow
                           </h3>
@@ -598,7 +598,7 @@ const EnhancedTasksPage: React.FC = () => {
                       {/* This week section */}
                       {thisWeekTasks.length > 0 && (
                         <div>
-                          <h3 className="text-lg font-medium text-indigo-600 mb-3 flex items-center">
+                          <h3 className="text-lg font-medium text-amber-600 mb-3 flex items-center">
                             <CalendarDays size={16} className="mr-2" />
                             This Week
                           </h3>
