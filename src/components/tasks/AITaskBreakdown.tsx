@@ -52,7 +52,6 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
   });
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
-  const [usingFallback, setUsingFallback] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
   const alwaysAskContext = localStorage.getItem('ai_always_ask_context');
   const [showContextForm, setShowContextForm] = useState(
@@ -80,226 +79,8 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       console.log('API key present:', !!apiKey);
       
       if (!apiKey) {
-        // Use fallback if no API key
-        console.log('Using fallback breakdown - no API key');
-        setUsingFallback(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        // Create adaptive, task-specific breakdown
-        const taskTitle = task.title.toLowerCase();
-        let mockBreakdown: BreakdownOption[] = [];
-        
-        // Task-specific breakdowns
-        if (taskTitle.includes('clean') || taskTitle.includes('put away')) {
-          console.log('Using clean/put away specific breakdown');
-          mockBreakdown = [
-            {
-              id: '1',
-              title: 'Put away items that already have homes',
-              duration: '5-10 mins',
-              description: 'Only grab things you KNOW where they go - skip everything else',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'low',
-              tips: 'This clears space without any decisions needed'
-            },
-            {
-              id: '2',
-              title: 'Gather homeless items into one container',
-              duration: '3-5 mins',
-              description: 'Put all items without obvious homes into a box/bag - deal with them later',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'low',
-              tips: 'Containing the chaos makes the space functional now'
-            },
-            {
-              id: '3',
-              title: 'Clear obvious trash only',
-              duration: '2-3 mins',
-              description: 'Only grab things that are definitely trash - when in doubt, leave it out',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'low',
-              tips: 'No decisions = faster progress'
-            },
-            {
-              id: '4',
-              title: 'Try temporary homes for 2-3 items',
-              duration: '5 mins',
-              description: 'Pick any spot that makes sense and put items there - can always move later',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'medium',
-              tips: 'Done is better than perfect - you can refine locations anytime'
-            },
-            {
-              id: '5',
-              title: 'Label the "decide later" container',
-              duration: '1 min',
-              description: 'Write "Sort by [date]" on the container and put it somewhere visible',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'low',
-              tips: 'Making it official reduces guilt about not deciding now'
-            }
-          ];
-        } else if (taskTitle.includes('laundry') || taskTitle.includes('hamper') || taskTitle.includes('clothes')) {
-          // Simple laundry-specific breakdown
-          const isLoading = taskTitle.includes('load') || taskTitle.includes('hamper');
-          console.log('Using laundry specific breakdown, isLoading:', isLoading);
-          mockBreakdown = [
-            {
-              id: '1',
-              title: isLoading ? 'Dump hamper directly into machine' : 'Pull everything out at once',
-              duration: '2-3 mins',
-              description: isLoading ? 'Empty entire hamper into washer - sort later if needed' : 'Transfer entire load to dryer/basket in one go',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'low',
-              tips: 'One big action is easier than many small decisions'
-            },
-            {
-              id: '2',
-              title: isLoading ? 'Add soap & hit start immediately' : 'Start dryer or dump on bed',
-              duration: '1-2 mins',
-              description: isLoading ? 'Pour detergent (amount doesn\'t need to be perfect) and start' : 'Either start dryer or create one big pile on bed',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'low',
-              tips: 'Starting the machine creates commitment to finish later'
-            },
-            ...(preferences.includeBreaks ? [{
-              id: '3',
-              title: 'Quick reward break',
-              duration: '5 mins',
-              description: 'Watch a short video or have a snack',
-              selected: true,
-              editable: false,
-              type: 'break',
-              energyRequired: 'low',
-              tips: 'You did it! Enjoy a small dopamine boost'
-            }] : [])
-          ];
-        } else if (taskTitle.includes('write') || taskTitle.includes('email') || taskTitle.includes('report')) {
-          mockBreakdown = [
-            {
-              id: '1',
-              title: 'Write 3 main points you want to make',
-              duration: '3-5 mins',
-              description: 'Just 3 bullet points - what\'s the core message?',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'low',
-              tips: 'Starting with structure prevents rambling'
-            },
-            {
-              id: '2',
-              title: 'Turn easiest point into 2-3 sentences',
-              duration: '5-7 mins',
-              description: 'Pick the point you\'re most confident about and expand it',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'medium',
-              tips: 'Starting with easy wins builds momentum'
-            },
-            {
-              id: '3',
-              title: 'Write opening sentence using your strongest point',
-              duration: '5 mins',
-              description: 'Lead with your best idea - hook them immediately',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'medium',
-              tips: 'Strong start makes the rest flow easier'
-            },
-            {
-              id: '4',
-              title: 'Fill in remaining points - stream of consciousness',
-              duration: '10-15 mins',
-              description: 'Write continuously without stopping to edit - just get ideas down',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'high',
-              tips: 'Editing while writing is the enemy - separate creation from correction'
-            },
-            {
-              id: '5',
-              title: 'Read once out loud and hit send',
-              duration: '3-5 mins',
-              description: 'One read through for obvious errors, then send immediately',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'low',
-              tips: 'Reading aloud catches errors your eyes miss'
-            }
-          ];
-        } else {
-          // Generic breakdown for other tasks
-          console.log('Using generic breakdown for task:', taskTitle);
-          mockBreakdown = [
-            {
-              id: '1',
-              title: 'Start with the easiest visible part',
-              duration: '5 mins',
-              description: 'Pick the most obvious/simple aspect and just begin there',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'low',
-              tips: 'Starting anywhere beats planning everywhere'
-            },
-            {
-              id: '2',
-              title: 'Complete one concrete piece',
-              duration: '10 mins',
-              description: 'Do any small part that can be finished without needing decisions',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'medium',
-              tips: 'Progress beats perfection - build momentum'
-            },
-            {
-              id: '3',
-              title: 'Try the simplest approach for 10 mins',
-              duration: '10 mins',
-              description: 'Use the most basic method - you can always refine later',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'medium',
-              tips: 'Set timer - when it rings you can stop or adjust approach'
-            },
-            {
-              id: '4',
-              title: 'Capture what\'s left in a note',
-              duration: '3 mins',
-              description: 'Write down any remaining pieces/decisions for next time',
-              selected: true,
-              editable: false,
-              type: 'work',
-              energyRequired: 'low',
-              tips: 'Externalizing unfinished parts reduces mental load'
-            }
-          ];
-        }
-      
-      console.log('Setting breakdown options:', mockBreakdown.length, 'steps');
-      setBreakdownOptions(mockBreakdown);
-      return;
-    }
+        throw new Error('No API key configured. Please add your API key in Settings to use AI task breakdown.');
+      }
     
     // Real AI API call
     console.log('Making real API call to:', providerName, 'with model:', provider.defaultModel);
@@ -438,11 +219,22 @@ Return JSON array only.`
     setBreakdownOptions(breakdown);
     } catch (err) {
       console.error('Error generating breakdown:', err);
-      setError(`Failed to generate breakdown: ${err.message}`);
-      // Log more details about the error
+      let errorMessage = 'Failed to generate breakdown: ';
+      
       if (err instanceof Error) {
+        if (err.message.includes('No API key')) {
+          errorMessage = err.message;
+        } else if (err.message.includes('API request failed') || err.message.includes('fetch')) {
+          errorMessage += 'Unable to connect to AI service. Please check your API settings and try again.';
+        } else {
+          errorMessage += err.message;
+        }
         console.error('Error stack:', err.stack);
+      } else {
+        errorMessage += 'An unknown error occurred.';
       }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -614,27 +406,29 @@ Return JSON array only.`
               <p className="text-sm text-gray-600">
                 {showContextForm 
                   ? 'Let\'s understand this task better for a personalized breakdown' 
-                  : usingFallback 
-                    ? 'Using fallback suggestions (no API key)' 
-                    : 'AI is creating manageable steps for you'}
+                  : 'AI is creating manageable steps for you'}
               </p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            {usingFallback && !isLoading && (
-              <div className="flex items-center text-amber-600">
-                <AlertCircle className="w-4 h-4 mr-1" />
-                <span className="text-xs">Fallback Mode</span>
-              </div>
-            )}
             {isLoading && <Loader2 className="w-5 h-5 animate-spin text-blue-600" />}
           </div>
         </div>
 
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center text-red-800">
-            <X size={16} className="mr-2" />
-            <span className="text-sm">{error}</span>
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start">
+              <X size={20} className="mr-3 text-red-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium text-red-800">Unable to generate breakdown</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+                {error.includes('API key') && (
+                  <p className="text-sm text-red-700 mt-2">
+                    <a href="/settings" className="underline font-medium">Go to Settings</a> to configure your AI provider.
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -744,20 +538,6 @@ Return JSON array only.`
           </div>
         )}
         
-        {usingFallback && !showContextForm && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <div className="flex items-start">
-              <AlertCircle className="w-5 h-5 text-amber-600 mr-2 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm text-amber-800 font-medium">Fallback Mode Active</p>
-                <p className="text-sm text-amber-700 mt-1">
-                  These are pre-configured suggestions. To get personalized AI-generated breakdowns, 
-                  please add your API key in the <a href="/settings" className="underline font-medium">Settings</a> page.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {breakdownOptions.length > 0 && !showContextForm && (
           <>
