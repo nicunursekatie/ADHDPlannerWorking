@@ -179,15 +179,15 @@ const Dashboard: React.FC = () => {
 
       {/* Weekly Review Reminder */}
       {showWeeklyReviewReminder && (
-        <Card className="mb-6 bg-amber-50 border-2 border-amber-200">
+        <Card className="mb-6 bg-amber-900/30 border-2 border-amber-700">
           <div className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-amber-600" aria-hidden="true" />
+                <AlertTriangle className="h-5 w-5 text-amber-400" aria-hidden="true" />
               </div>
               <div className="ml-3">
-                <h3 className="text-lg font-medium text-amber-800">Time for your weekly review!</h3>
-                <div className="mt-2 text-sm text-amber-700">
+                <h3 className="text-lg font-medium text-amber-200">Time for your weekly review!</h3>
+                <div className="mt-2 text-sm text-amber-300">
                   <p>It's been a week since your last review. Taking time to reflect helps with ADHD management.</p>
                 </div>
                 <div className="mt-4">
@@ -210,7 +210,7 @@ const Dashboard: React.FC = () => {
       {/* Memory Tools Section */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-semibold text-gray-800">Remember & Review</h2>
+          <h2 className="text-xl font-semibold text-gray-100">Remember & Review</h2>
           <Button
             variant="outline"
             size="sm"
@@ -225,38 +225,38 @@ const Dashboard: React.FC = () => {
           {/* Quick links to memory tools */}
           <Card className="lg:col-span-1">
             <div className="p-4">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Memory Tools</h3>
+              <h3 className="text-lg font-medium text-gray-100 mb-3">Memory Tools</h3>
               <div className="space-y-2">
                 <Link to="/brain-dump">
-                  <div className="p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors cursor-pointer flex items-center justify-between">
+                  <div className="p-3 bg-indigo-900/30 rounded-lg hover:bg-indigo-900/40 transition-colors cursor-pointer flex items-center justify-between">
                     <div className="flex items-center">
-                      <BrainCircuit className="w-5 h-5 text-indigo-600 mr-2" />
-                      <span className="font-medium">Brain Dump</span>
+                      <BrainCircuit className="w-5 h-5 text-indigo-400 mr-2" />
+                      <span className="font-medium text-gray-200">Brain Dump</span>
                     </div>
-                    <ArrowRight size={16} className="text-indigo-500" />
+                    <ArrowRight size={16} className="text-indigo-400" />
                   </div>
                 </Link>
 
                 <Link to="/weekly-review">
-                  <div className={`p-3 ${showWeeklyReviewReminder ? 'bg-yellow-100 border border-yellow-200' : 'bg-blue-50'} rounded-lg hover:bg-blue-100 transition-colors cursor-pointer flex items-center justify-between`}>
+                  <div className={`p-3 ${showWeeklyReviewReminder ? 'bg-yellow-900/30 border border-yellow-700' : 'bg-blue-900/30'} rounded-lg hover:bg-blue-900/40 transition-colors cursor-pointer flex items-center justify-between`}>
                     <div className="flex items-center">
-                      <RefreshCw className={`w-5 h-5 ${showWeeklyReviewReminder ? 'text-yellow-600' : 'text-blue-600'} mr-2`} />
-                      <span className="font-medium">Weekly Review</span>
+                      <RefreshCw className={`w-5 h-5 ${showWeeklyReviewReminder ? 'text-yellow-400' : 'text-blue-400'} mr-2`} />
+                      <span className="font-medium text-gray-200">Weekly Review</span>
                       {showWeeklyReviewReminder && (
-                        <span className="ml-2 px-2 py-0.5 bg-yellow-200 text-yellow-800 text-xs rounded-full">Due</span>
+                        <span className="ml-2 px-2 py-0.5 bg-yellow-700 text-yellow-200 text-xs rounded-full">Due</span>
                       )}
                     </div>
-                    <ArrowRight size={16} className={`${showWeeklyReviewReminder ? 'text-yellow-500' : 'text-blue-500'}`} />
+                    <ArrowRight size={16} className={`${showWeeklyReviewReminder ? 'text-yellow-400' : 'text-blue-400'}`} />
                   </div>
                 </Link>
 
                 <Link to="/accountability">
-                  <div className="p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors cursor-pointer flex items-center justify-between">
+                  <div className="p-3 bg-orange-900/30 rounded-lg hover:bg-orange-900/40 transition-colors cursor-pointer flex items-center justify-between">
                     <div className="flex items-center">
-                      <ListChecks className="w-5 h-5 text-orange-600 mr-2" />
-                      <span className="font-medium">Accountability Check-In</span>
+                      <ListChecks className="w-5 h-5 text-orange-400 mr-2" />
+                      <span className="font-medium text-gray-200">Accountability Check-In</span>
                     </div>
-                    <ArrowRight size={16} className="text-orange-500" />
+                    <ArrowRight size={16} className="text-orange-400" />
                   </div>
                 </Link>
 
@@ -271,15 +271,15 @@ const Dashboard: React.FC = () => {
 
           {/* Mini Brain Dump Widget */}
           <Card className="lg:col-span-2 overflow-hidden">
-            <div className="p-3 bg-indigo-50 border-b border-indigo-100">
+            <div className="p-3 bg-indigo-900/30 border-b border-indigo-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <BrainCircuit className="w-5 h-5 text-indigo-600 mr-2" />
-                  <h3 className="font-medium text-gray-900">Quick Brain Dump</h3>
+                  <BrainCircuit className="w-5 h-5 text-indigo-400 mr-2" />
+                  <h3 className="font-medium text-gray-100">Quick Brain Dump</h3>
                 </div>
                 <Link
                   to="/brain-dump"
-                  className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
+                  className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
                 >
                   Full Version
                   <ArrowRight size={14} className="ml-1" />
@@ -287,15 +287,15 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
             <div className="p-4">
-              <div className="bg-indigo-50 rounded-lg p-3 mb-4">
-                <div className="text-indigo-800">
+              <div className="bg-indigo-900/30 rounded-lg p-3 mb-4">
+                <div className="text-indigo-200">
                   Think of something you need to remember? Add it now:
                 </div>
               </div>
               <div className="flex">
                 <input
                   type="text"
-                  className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="flex-1 rounded-l-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm placeholder-gray-400"
                   placeholder="Add something you just remembered..."
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && e.currentTarget.value.trim()) {
@@ -571,25 +571,25 @@ const Dashboard: React.FC = () => {
         {/* Quick Stats */}
         <Card className="lg:col-span-2">
           <div className="p-4">
-            <h3 className="font-medium text-gray-900 mb-4">Task Overview</h3>
+            <h3 className="font-medium text-gray-100 mb-4">Task Overview</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {overdueTasks.length > 0 && (
-                <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-                  <p className="text-2xl font-bold text-red-600">{overdueTasks.length}!</p>
-                  <p className="text-sm text-red-700 font-medium">Overdue</p>
+                <div className="text-center p-3 bg-red-900/30 rounded-lg border border-red-700">
+                  <p className="text-2xl font-bold text-red-400">{overdueTasks.length}!</p>
+                  <p className="text-sm text-red-300 font-medium">Overdue</p>
                 </div>
               )}
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-2xl font-bold text-gray-700">{incompleteTasks.length}</p>
-                <p className="text-sm text-gray-600">Active Tasks</p>
+              <div className="text-center p-3 bg-gray-700 rounded-lg">
+                <p className="text-2xl font-bold text-gray-200">{incompleteTasks.length}</p>
+                <p className="text-sm text-gray-400">Active Tasks</p>
               </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <p className="text-2xl font-bold text-green-600">{completedTasks.length}</p>
-                <p className="text-sm text-gray-600">Completed</p>
+              <div className="text-center p-3 bg-green-900/30 rounded-lg">
+                <p className="text-2xl font-bold text-green-400">{completedTasks.length}</p>
+                <p className="text-sm text-gray-400">Completed</p>
               </div>
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <p className="text-2xl font-bold text-blue-600">{projects.length}</p>
-                <p className="text-sm text-gray-600">Projects</p>
+              <div className="text-center p-3 bg-blue-900/30 rounded-lg">
+                <p className="text-2xl font-bold text-blue-400">{projects.length}</p>
+                <p className="text-sm text-gray-400">Projects</p>
               </div>
             </div>
           </div>

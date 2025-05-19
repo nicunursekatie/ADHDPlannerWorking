@@ -94,12 +94,12 @@ export const EnhancedQuickCapture: React.FC<EnhancedQuickCaptureProps> = ({
     if (!showHelp) return null;
     
     return (
-      <div className="absolute right-0 top-full mt-2 bg-white shadow-lg rounded-md border border-gray-200 p-4 z-10 w-64 md:w-72 max-w-[90vw]">
+      <div className="absolute right-0 top-full mt-2 bg-gray-800 shadow-lg rounded-md border border-gray-700 p-4 z-10 w-64 md:w-72 max-w-[90vw]">
         <div className="flex justify-between items-center mb-2">
-          <h4 className="font-medium text-gray-900">Quick Add Shortcuts:</h4>
+          <h4 className="font-medium text-gray-100">Quick Add Shortcuts:</h4>
           <button 
             onClick={() => setShowHelp(false)}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-200"
             aria-label="Close help"
           >
             <X size={16} />
@@ -107,21 +107,21 @@ export const EnhancedQuickCapture: React.FC<EnhancedQuickCaptureProps> = ({
         </div>
         <ul className="space-y-3 text-sm">
           <li className="flex items-start">
-            <Calendar size={16} className="text-indigo-500 mr-2 mt-0.5 flex-shrink-0" />
+            <Calendar size={16} className="text-primary-400 mr-2 mt-0.5 flex-shrink-0" />
             <div>
-              <div className="font-medium">Date Shortcuts</div>
-              <div className="text-gray-600">!today, !tomorrow, !3d (3 days)</div>
+              <div className="font-medium text-gray-200">Date Shortcuts</div>
+              <div className="text-gray-400">!today, !tomorrow, !3d (3 days)</div>
             </div>
           </li>
           <li className="flex items-start">
-            <Flag size={16} className="text-indigo-500 mr-2 mt-0.5 flex-shrink-0" />
+            <Flag size={16} className="text-primary-400 mr-2 mt-0.5 flex-shrink-0" />
             <div>
-              <div className="font-medium">Priority</div>
-              <div className="text-gray-600">!high, !low</div>
+              <div className="font-medium text-gray-200">Priority</div>
+              <div className="text-gray-400">!high, !low</div>
             </div>
           </li>
         </ul>
-        <div className="text-xs text-gray-500 mt-3 p-2 bg-gray-50 rounded border border-gray-100">
+        <div className="text-xs text-gray-400 mt-3 p-2 bg-gray-900 rounded border border-gray-700">
           Example: "Call doctor !tomorrow !high"
         </div>
       </div>
@@ -130,10 +130,10 @@ export const EnhancedQuickCapture: React.FC<EnhancedQuickCaptureProps> = ({
   
   return (
     <div className="relative">
-      <div className="flex items-center px-3 py-3 bg-white rounded-lg shadow-md border border-gray-200 focus-within:border-indigo-400 transition-colors hover:border-gray-300">
+      <div className="flex items-center px-3 py-3 bg-gray-800 rounded-lg shadow-md border border-gray-700 focus-within:border-primary-500 transition-colors hover:border-gray-600">
         <Circle 
           size={18} 
-          className="mr-3 text-gray-400 flex-shrink-0" 
+          className="mr-3 text-gray-500 flex-shrink-0" 
         />
         
         <input
@@ -142,7 +142,7 @@ export const EnhancedQuickCapture: React.FC<EnhancedQuickCaptureProps> = ({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="flex-grow bg-transparent border-0 focus:ring-0 text-gray-700 placeholder-gray-400 text-base"
+          className="flex-grow bg-transparent border-0 focus:ring-0 text-gray-100 placeholder-gray-400 text-base"
           placeholder={placeholder}
           aria-label="Task title"
         />
@@ -151,7 +151,7 @@ export const EnhancedQuickCapture: React.FC<EnhancedQuickCaptureProps> = ({
           <button 
             type="button"
             onClick={() => setShowHelp(!showHelp)}
-            className="mx-1 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            className="mx-1 p-1.5 rounded-full hover:bg-gray-700 text-gray-400 hover:text-gray-200 transition-colors"
             aria-label="Show shortcuts help"
           >
             <Info size={18} />
@@ -160,7 +160,7 @@ export const EnhancedQuickCapture: React.FC<EnhancedQuickCaptureProps> = ({
           {title.trim() && (
             <button
               onClick={handleAddTask}
-              className="ml-1 p-1.5 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+              className="ml-1 p-1.5 rounded-full bg-primary-900/30 text-primary-400 hover:bg-primary-900/50 transition-colors"
               aria-label="Add task"
             >
               <Plus size={18} className="transform transition-transform hover:scale-110" />

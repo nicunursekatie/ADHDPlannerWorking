@@ -154,7 +154,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
     }
     
     return (
-      <div className={`flex items-center text-xs ${textColor}`}>
+      <div className={`flex items-center text-xs ${textColor.replace('gray-500', 'gray-400').replace('red-600', 'red-400').replace('green-600', 'green-400').replace('orange-500', 'orange-400')}`}>
         <Calendar size={14} className="mr-1" />
         {formatDateForDisplay(task.dueDate)}
       </div>
@@ -175,14 +175,29 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
     return dueDate.getTime() === today.getTime();
   };
   
+  // Determine task background color based on status
+  const getTaskBackground = () => {
+    if (task.completed) return 'bg-green-900/30 border-green-700';
+    if (!task.dueDate) return 'bg-gray-800 border-gray-700';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const [year, month, day] = task.dueDate.split('-').map(num => parseInt(num, 10));
+    const dueDate = new Date(year, month - 1, day);
+    dueDate.setHours(0, 0, 0, 0);
+    
+    if (dueDate < today) return 'bg-red-900/30 border-red-700';
+    if (dueDate.getTime() === today.getTime()) return 'bg-blue-900/30 border-blue-700';
+    return 'bg-gray-800 border-gray-700';
+  };
+  
   return (
     <div 
-      className={`bg-white rounded-lg shadow-sm p-4 mb-3 border-l-4 hover:shadow transition-all ${
-        task.completed ? 'border-green-500 bg-green-50' : 
-        isDueToday() ? 'border-green-500' :
-        task.priority === 'high' ? 'border-red-500' : 
-        task.priority === 'medium' ? 'border-orange-500' : 
-        'border-indigo-500'
+      className={`rounded-lg shadow-sm p-4 mb-3 border-l-4 hover:shadow transition-all ${getTaskBackground()} ${
+        task.priority === 'high' ? 'border-l-red-500' : 
+        task.priority === 'medium' ? 'border-l-orange-500' : 
+        task.priority === 'low' ? 'border-l-green-500' :
+        ''
       } ${isSubtask ? 'ml-6 border-l-2' : ''}`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -194,9 +209,9 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
           aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
         >
           {task.completed ? (
-            <CheckCircle2 className="h-5 w-5 text-green-500 group-hover:text-green-600" />
+            <CheckCircle2 className="h-5 w-5 text-green-500 group-hover:text-green-400" />
           ) : (
-            <Circle className="h-5 w-5 text-gray-400 group-hover:text-indigo-500" />
+            <Circle className="h-5 w-5 text-gray-400 group-hover:text-primary-500" />
           )}
         </button>
         
@@ -210,7 +225,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
                 {isSubtask && (
                   <span className="text-gray-400 mr-2">↳</span>
                 )}
-                <h3 className={`text-lg font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                <h3 className={`text-lg font-medium ${task.completed ? 'line-through text-gray-400' : 'text-gray-100'}`}>
                   {task.title}
                 </h3>
                 
@@ -220,7 +235,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
               </div>
               
               {task.description && (
-                <p className={`mt-1 text-sm ${task.completed ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`mt-1 text-sm ${task.completed ? 'text-gray-500' : 'text-gray-400'}`}>
                   {task.description.length > 100 
                     ? `${task.description.substring(0, 100)}...` 
                     : task.description}
@@ -238,7 +253,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
                 )}
                 
                 {task.estimatedMinutes && (
-                  <div className="flex items-center text-xs text-gray-500">
+                  <div className="flex items-center text-xs text-gray-400">
                     <Clock size={14} className="mr-1" />
                     {task.estimatedMinutes} min
                   </div>
@@ -246,7 +261,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
                 
                 {taskCategories.length > 0 && (
                   <div className="flex items-center gap-1">
-                    <Tags size={14} className="text-gray-400" />
+                    <Tags size={14} className="text-gray-500" />
                     {taskCategories.map(category => (
                       <Badge 
                         key={category.id}
@@ -264,7 +279,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
                 {!task.completed && task.dueDate && (
                   <button
                     onClick={handlePostpone}
-                    className="p-1.5 text-gray-400 hover:text-indigo-500 rounded transition-colors hover:bg-indigo-50"
+                    className="p-1.5 text-gray-400 hover:text-primary-400 rounded transition-colors hover:bg-primary-900/20"
                     title="Postpone by 1 day"
                   >
                     <ArrowRight size={16} />
@@ -273,7 +288,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
                 
                 <button
                   onClick={handleEdit}
-                  className="p-1.5 text-gray-400 hover:text-indigo-500 rounded transition-colors hover:bg-indigo-50"
+                  className="p-1.5 text-gray-400 hover:text-primary-400 rounded transition-colors hover:bg-primary-900/20"
                   title="Edit task"
                 >
                   <Edit2 size={16} />
@@ -281,7 +296,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
                 
                 <button
                   onClick={handleDuplicate}
-                  className="p-1.5 text-gray-400 hover:text-indigo-500 rounded transition-colors hover:bg-indigo-50"
+                  className="p-1.5 text-gray-400 hover:text-primary-400 rounded transition-colors hover:bg-primary-900/20"
                   title="Duplicate task"
                 >
                   <Copy size={16} />
@@ -290,7 +305,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
                 {onDelete && (
                   <button
                     onClick={handleDelete}
-                    className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors hover:bg-red-50"
+                    className="p-1.5 text-gray-400 hover:text-red-400 rounded transition-colors hover:bg-red-900/20"
                     title="Delete task"
                   >
                     <Trash2 size={16} />
@@ -303,7 +318,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
           {task.subtasks?.length > 0 && (
             <div className="mt-3">
               <button
-                className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+                className="flex items-center text-sm text-gray-400 hover:text-gray-200"
                 onClick={toggleExpand}
                 aria-expanded={expanded}
                 aria-label={expanded ? "Collapse subtasks" : "Expand subtasks"}
