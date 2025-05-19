@@ -183,7 +183,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
         task.priority === 'high' ? 'border-red-500' : 
         task.priority === 'medium' ? 'border-orange-500' : 
         'border-indigo-500'
-      } ${isSubtask ? 'ml-6' : ''}`}
+      } ${isSubtask ? 'ml-6 border-l-2' : ''}`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -207,6 +207,9 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
           >
             <div className="flex-grow">
               <div className="flex items-center">
+                {isSubtask && (
+                  <span className="text-gray-400 mr-2">↳</span>
+                )}
                 <h3 className={`text-lg font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                   {task.title}
                 </h3>

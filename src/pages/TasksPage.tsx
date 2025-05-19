@@ -23,6 +23,7 @@ const TasksPage: React.FC = () => {
   // Filter state
   const [showCompleted, setShowCompleted] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [showSubtasks, setShowSubtasks] = useState(false);
   const [filterProjectId, setFilterProjectId] = useState<string | null>(null);
   const [filterCategoryId, setFilterCategoryId] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -71,6 +72,7 @@ const TasksPage: React.FC = () => {
   const clearFilters = () => {
     setShowCompleted(false);
     setShowArchived(false);
+    setShowSubtasks(false);
     setFilterProjectId(null);
     setFilterCategoryId(null);
   };
@@ -178,9 +180,16 @@ const TasksPage: React.FC = () => {
     }
   };
   
+  // Filter function to handle subtask display
+  const filterForDisplay = (tasks: Task[]) => {
+    return showSubtasks 
+      ? tasks 
+      : tasks.filter(task => !task.parentTaskId);
+  };
+  
   // Group tasks by parent/child for the active list
   const activeTaskList = getActiveTaskList();
-  const parentTasks = activeTaskList.filter(task => !task.parentTaskId);
+  const displayTasks = filterForDisplay(activeTaskList);
   
   return (
     <div className="space-y-6">
@@ -403,6 +412,18 @@ const TasksPage: React.FC = () => {
                       Show archived tasks
                     </label>
                   </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="showSubtasks"
+                      checked={showSubtasks}
+                      onChange={() => setShowSubtasks(!showSubtasks)}
+                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                    />
+                    <label htmlFor="showSubtasks" className="ml-2 text-sm text-gray-700">
+                      Show subtasks in main list
+                    </label>
+                  </div>
                 </div>
               </div>
               
@@ -496,7 +517,7 @@ const TasksPage: React.FC = () => {
         
         {/* Tasks */}
         <div className="space-y-4">
-          {parentTasks.length > 0 ? (
+          {displayTasks.length > 0 ? (
             <div>
               {/* For 'All' tab, group by categories */}
               {activeTab === 'all' && (
@@ -509,14 +530,14 @@ const TasksPage: React.FC = () => {
                         Overdue
                       </h3>
                       <div className="space-y-2">
-                        {overdueTasks
-                          .filter(task => !task.parentTaskId)
+                        {filterForDisplay(overdueTasks)
                           .map(task => (
                             <ImprovedTaskCard
                               key={task.id}
                               task={task}
                               projects={projects}
                               categories={categories}
+                              isSubtask={!!task.parentTaskId}
                               onEdit={handleOpenModal}
                               onDelete={handleDeleteTask}
                             />
@@ -534,14 +555,14 @@ const TasksPage: React.FC = () => {
                         Today
                       </h3>
                       <div className="space-y-2">
-                        {todayTasks
-                          .filter(task => !task.parentTaskId)
+                        {filterForDisplay(todayTasks)
                           .map(task => (
                             <ImprovedTaskCard
                               key={task.id}
                               task={task}
                               projects={projects}
                               categories={categories}
+                              isSubtask={!!task.parentTaskId}
                               onEdit={handleOpenModal}
                               onDelete={handleDeleteTask}
                             />
@@ -559,14 +580,14 @@ const TasksPage: React.FC = () => {
                         Tomorrow
                       </h3>
                       <div className="space-y-2">
-                        {tomorrowTasks
-                          .filter(task => !task.parentTaskId)
+                        {filterForDisplay(tomorrowTasks)
                           .map(task => (
                             <ImprovedTaskCard
                               key={task.id}
                               task={task}
                               projects={projects}
                               categories={categories}
+                              isSubtask={!!task.parentTaskId}
                               onEdit={handleOpenModal}
                               onDelete={handleDeleteTask}
                             />
@@ -584,14 +605,14 @@ const TasksPage: React.FC = () => {
                         This Week
                       </h3>
                       <div className="space-y-2">
-                        {thisWeekTasks
-                          .filter(task => !task.parentTaskId)
+                        {filterForDisplay(thisWeekTasks)
                           .map(task => (
                             <ImprovedTaskCard
                               key={task.id}
                               task={task}
                               projects={projects}
                               categories={categories}
+                              isSubtask={!!task.parentTaskId}
                               onEdit={handleOpenModal}
                               onDelete={handleDeleteTask}
                             />
@@ -609,14 +630,14 @@ const TasksPage: React.FC = () => {
                         Other Tasks
                       </h3>
                       <div className="space-y-2">
-                        {otherTasks
-                          .filter(task => !task.parentTaskId)
+                        {filterForDisplay(otherTasks)
                           .map(task => (
                             <ImprovedTaskCard
                               key={task.id}
                               task={task}
                               projects={projects}
                               categories={categories}
+                              isSubtask={!!task.parentTaskId}
                               onEdit={handleOpenModal}
                               onDelete={handleDeleteTask}
                             />
@@ -631,12 +652,13 @@ const TasksPage: React.FC = () => {
               {/* Standard view for specific tabs */}
               {activeTab !== 'all' && (
                 <div className="space-y-2">
-                  {parentTasks.map(task => (
+                  {displayTasks.map(task => (
                     <ImprovedTaskCard
                       key={task.id}
                       task={task}
                       projects={projects}
                       categories={categories}
+                      isSubtask={!!task.parentTaskId}
                       onEdit={handleOpenModal}
                       onDelete={handleDeleteTask}
                     />

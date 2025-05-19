@@ -529,6 +529,11 @@ Return JSON array only.`
     
     console.log('Subtasks to create:', subtasks);
     onAccept(subtasks);
+    
+    // Reset the component state for next use
+    setHasGenerated(false);
+    setShowContextForm(localStorage.getItem('ai_always_ask_context') !== 'false');
+    setBreakdownOptions([]);
   };
 
   const handleDragStart = (e: React.DragEvent, itemId: string) => {
@@ -588,6 +593,15 @@ Return JSON array only.`
       generateBreakdown();
     }
   }, [showContextForm, hasGenerated]);
+  
+  // Reset state when component mounts/unmounts
+  React.useEffect(() => {
+    return () => {
+      setHasGenerated(false);
+      setBreakdownOptions([]);
+      setError(null);
+    };
+  }, []);
 
   return (
     <Modal isOpen={true} onClose={onClose} title="AI Task Breakdown" size="lg">

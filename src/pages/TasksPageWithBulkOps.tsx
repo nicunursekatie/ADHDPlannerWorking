@@ -75,6 +75,7 @@ const TasksPageWithBulkOps: React.FC = () => {
   // Filter state
   const [showCompleted, setShowCompleted] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [showSubtasks, setShowSubtasks] = useState(false);
   const [filterProjectId, setFilterProjectId] = useState<string | null>(null);
   const [filterCategoryId, setFilterCategoryId] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
