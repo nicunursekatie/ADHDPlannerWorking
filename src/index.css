@@ -61,6 +61,28 @@
     --color-primary: #6366f1; /* indigo-500 */
     --color-secondary: #6b7280; /* gray-500 */
   }
+
+  /* Improve contrast for secondary and muted text */
+  .text-secondary {
+    @apply text-gray-400;
+  }
+  .text-muted {
+    @apply text-gray-500;
+  }
+
+  /* Improve contrast for buttons and badges */
+  .button-primary {
+    @apply bg-indigo-500 text-white hover:bg-indigo-600;
+  }
+  .badge-warning {
+    @apply bg-amber-500 text-gray-900;
+  }
+  .badge-success {
+    @apply bg-green-500 text-gray-900;
+  }
+  .badge-danger {
+    @apply bg-red-500 text-white;
+  }
 }
 
 @layer components {
