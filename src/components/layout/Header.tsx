@@ -42,15 +42,18 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-gray-800 shadow-sm dark:shadow-none">
-      <div className="max-w-7xl mx-auto px-4">
+    <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm dark:shadow-none">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
+          {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center">
-              <div className="p-2 bg-indigo-600 rounded-lg shadow-sm">
+            <Link to="/" className="flex items-center group">
+              <div className="p-2 bg-indigo-600 rounded-lg shadow-sm group-hover:bg-indigo-700 transition-colors">
                 <ClipboardList className="h-5 w-5 text-white" />
               </div>
-              <span className="ml-3 text-xl font-bold text-slate-900 dark:text-gray-100 tracking-tight">ADHD Planner</span>
+              <span className="ml-3 text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                ADHD Planner
+              </span>
             </Link>
           </div>
           
@@ -60,10 +63,10 @@ const Header: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                   isActive(item.path)
-                    ? 'bg-slate-100 dark:bg-gray-800 text-indigo-700 dark:text-primary-400 shadow-sm'
-                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-800/50'
+                    ? 'bg-indigo-50 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                 }`}
               >
                 {item.icon}
@@ -72,11 +75,12 @@ const Header: React.FC = () => {
             ))}
           </nav>
           
+          {/* Right side buttons */}
           <div className="flex items-center space-x-3">
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors shadow-sm dark:shadow-none border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800/50"
+              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 shadow-sm dark:shadow-none border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50"
               aria-label="Toggle theme"
             >
               {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
@@ -85,9 +89,9 @@ const Header: React.FC = () => {
             {/* What Now Button */}
             <Link
               to="/what-now"
-              className="hidden md:inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 border border-transparent transition-all"
+              className="hidden md:inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 border border-transparent transition-all duration-200"
             >
-              <HelpCircle size={16} className="mr-1" />
+              <HelpCircle size={16} className="mr-1.5" />
               What Now?
             </Link>
           </div>
@@ -96,7 +100,7 @@ const Header: React.FC = () => {
           <div className="md:hidden">
             <button
               onClick={toggleMobileMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-slate-400 dark:text-gray-400 hover:text-slate-500 dark:hover:text-gray-500 hover:bg-slate-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+              className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 dark:text-gray-400 hover:text-gray-500 dark:hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 transition-all duration-200"
             >
               <span className="sr-only">Open main menu</span>
               {isMobileMenuOpen ? (
@@ -110,16 +114,20 @@ const Header: React.FC = () => {
       </div>
       
       {/* Mobile menu */}
-      <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden bg-white dark:bg-gray-900 border-t border-slate-200 dark:border-gray-800`}>
+      <div 
+        className={`${
+          isMobileMenuOpen ? 'block' : 'hidden'
+        } md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 transition-all duration-200`}
+      >
         <div className="pt-2 pb-3 space-y-1">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+              className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
                 isActive(item.path)
-                  ? 'bg-indigo-50 dark:bg-gray-800 border-indigo-500 text-indigo-700 dark:text-indigo-400'
-                  : 'border-transparent text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-800 hover:border-slate-300 dark:hover:border-gray-600 hover:text-slate-900 dark:hover:text-gray-200'
+                  ? 'bg-indigo-50 dark:bg-gray-800 border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -132,7 +140,7 @@ const Header: React.FC = () => {
           
           <Link
             to="/what-now"
-            className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-800 hover:border-indigo-300"
+            className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-800 hover:border-indigo-300 transition-all duration-200"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <div className="flex items-center">
@@ -144,7 +152,7 @@ const Header: React.FC = () => {
           {/* Mobile Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-slate-600 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-gray-800 hover:text-slate-900 dark:hover:text-gray-200"
+            className="w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200 transition-all duration-200"
           >
             <div className="flex items-center">
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
