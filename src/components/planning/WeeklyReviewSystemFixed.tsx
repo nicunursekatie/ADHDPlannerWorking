@@ -360,9 +360,9 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
       {!reviewComplete ? (
         <>
           {/* Quick task capture always visible */}
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-blue-900/30 border-blue-800/50">
             <div className="label-row">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Quick Capture: Add tasks as they come to mind
               </label>
               <div className="flex">
@@ -373,7 +373,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                     console.log('Input changed:', e.target.value);
                     setTaskInput(e.target.value);
                   }}
-                  className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="flex-1 rounded-l-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   placeholder="Add a task..."
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -398,7 +398,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
               <Card 
                 key={section.id}
                 className={`cursor-pointer transition-all hover:shadow-md ${
-                  section.complete ? 'bg-green-50 border-green-300' : ''
+                  section.complete ? 'bg-green-900/30 border-green-700/50' : ''
                 }`}
                 onClick={() => {
                   console.log('Card clicked for section:', section.id, 'complete:', section.complete);
@@ -410,13 +410,13 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className={`p-2 rounded-lg ${
-                      section.complete ? 'bg-green-200' : 'bg-gray-100'
+                      section.complete ? 'bg-green-700' : 'bg-gray-700'
                     }`}>
                       {section.complete ? <CheckCircle size={18} className="text-green-700" /> : section.icon}
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">{section.title}</h3>
-                      <p className="text-sm text-gray-600">{section.description}</p>
+                      <h3 className="font-medium text-gray-100">{section.title}</h3>
+                      <p className="text-sm text-gray-400">{section.description}</p>
                     </div>
                   </div>
                   {!section.complete && (
@@ -448,10 +448,10 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
               <CheckCircle size={32} className="text-green-600" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl font-bold text-gray-100 mb-4">
             Weekly Review Complete!
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-400 mb-6">
             Great job taking time to reflect and plan. You're set up for a successful week ahead.
           </p>
           <div className="flex justify-center space-x-4">
@@ -480,19 +480,19 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
           size="lg"
         >
           <div className="space-y-6">
-            <p className="text-gray-600">{activeSection.description}</p>
+            <p className="text-gray-400">{activeSection.description}</p>
             
             {/* Prompts */}
             <div className="space-y-4">
               {activeSection.prompts.map((prompt, index) => (
                 <div key={`${activeSectionId}-${index}`}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
                     {prompt}
                   </label>
                   <textarea
                     value={journalResponses[`${activeSectionId}-${index}`] || ''}
                     onChange={(e) => handleJournalChange(index, e.target.value)}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full rounded-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     rows={3}
                     placeholder="Type your thoughts here..."
                   />
@@ -502,8 +502,8 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
             
             {/* Relevant task lists based on the section */}
             {activeSectionId === 'upcoming' && tasksDueThisWeek.length > 0 && (
-              <div className="border rounded-lg p-3 bg-gray-50">
-                <h4 className="font-medium text-gray-700 mb-2">Tasks Due This Week:</h4>
+              <div className="border rounded-lg p-3 bg-gray-800/40 border-gray-700/50">
+                <h4 className="font-medium text-gray-300 mb-2">Tasks Due This Week:</h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {tasksDueThisWeek.slice(0, 5).map(task => (
                     <ImprovedTaskCard
@@ -523,25 +523,25 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
             )}
             
             {activeSectionId === 'projects' && projects.length > 0 && (
-              <div className="border rounded-lg p-3 bg-gray-50">
-                <h4 className="font-medium text-gray-700 mb-2">Your Projects:</h4>
+              <div className="border rounded-lg p-3 bg-gray-800/40 border-gray-700/50">
+                <h4 className="font-medium text-gray-300 mb-2">Your Projects:</h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {projects.map(project => {
                     const projectTasks = incompleteTasks.filter(t => t.projectId === project.id);
                     return (
-                      <div key={project.id} className="p-3 rounded-lg bg-white border">
+                      <div key={project.id} className="p-3 rounded-lg bg-gray-700/40 border border-gray-600/50">
                         <div className="flex items-center mb-2">
                           <div 
                             className="w-3 h-3 rounded-full mr-2" 
                             style={{ backgroundColor: project.color }}
                           ></div>
-                          <h5 className="font-medium">{project.name}</h5>
-                          <span className="ml-auto text-sm text-gray-500">
+                          <h5 className="font-medium text-gray-100">{project.name}</h5>
+                          <span className="ml-auto text-sm text-gray-400">
                             {projectTasks.length} tasks
                           </span>
                         </div>
                         {projectTasks.length === 0 && (
-                          <p className="text-sm text-gray-500 italic">No active tasks in this project</p>
+                          <p className="text-sm text-gray-400 italic">No active tasks in this project</p>
                         )}
                       </div>
                     );
@@ -551,8 +551,8 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
             )}
             
             {activeSectionId === 'reflect' && recentlyCompleted.length > 0 && (
-              <div className="border rounded-lg p-3 bg-gray-50">
-                <h4 className="font-medium text-gray-700 mb-2">Recently Completed:</h4>
+              <div className="border rounded-lg p-3 bg-gray-800/40 border-gray-700/50">
+                <h4 className="font-medium text-gray-300 mb-2">Recently Completed:</h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {recentlyCompleted.slice(0, 5).map(task => (
                     <ImprovedTaskCard
@@ -573,27 +573,27 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
 
             {/* Journal entries for this section */}
             {activeSection && activeSection.hasJournal && weeklyJournalEntries.filter(entry => entry.section === activeSectionId).length > 0 && (
-              <div className="border rounded-lg p-3 bg-gray-50 mt-4">
-                <h4 className="font-medium text-gray-700 mb-2">Previous Reflections:</h4>
+              <div className="border rounded-lg p-3 bg-gray-800/40 border-gray-700/50 mt-4">
+                <h4 className="font-medium text-gray-300 mb-2">Previous Reflections:</h4>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {weeklyJournalEntries
                     .filter(entry => entry.section === activeSectionId)
                     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                     .slice(0, 3)
                     .map(entry => (
-                      <div key={entry.id} className="p-2 bg-white rounded border text-sm">
-                        <div className="font-medium text-gray-800">{entry.title}</div>
-                        <div className="text-gray-600 text-xs">
+                      <div key={entry.id} className="p-2 bg-gray-700/40 rounded border border-gray-600/50 text-sm">
+                        <div className="font-medium text-gray-200">{entry.title}</div>
+                        <div className="text-gray-400 text-xs">
                           {new Date(entry.date).toLocaleDateString()}
                         </div>
-                        <div className="text-gray-700 mt-1">{entry.content}</div>
+                        <div className="text-gray-300 mt-1">{entry.content}</div>
                       </div>
                     ))}
                 </div>
               </div>
             )}
             
-            <div className="flex justify-between pt-3 border-t border-gray-100">
+            <div className="flex justify-between pt-3 border-t border-gray-700">
               <Button 
                 variant="outline"
                 onClick={() => {
@@ -622,15 +622,15 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
       >
         {currentOverdueTask && (
           <div className="space-y-6">
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="bg-orange-900/30 border border-orange-800/50 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="text-orange-600 mt-1" size={20} />
+                <AlertTriangle className="text-orange-400 mt-1" size={20} />
                 <div>
-                  <h3 className="font-medium text-gray-900">{currentOverdueTask.title}</h3>
+                  <h3 className="font-medium text-gray-100">{currentOverdueTask.title}</h3>
                   {currentOverdueTask.description && (
-                    <p className="text-sm text-gray-600 mt-1">{currentOverdueTask.description}</p>
+                    <p className="text-sm text-gray-400 mt-1">{currentOverdueTask.description}</p>
                   )}
-                  <p className="text-sm text-orange-600 mt-2">
+                  <p className="text-sm text-orange-400 mt-2">
                     Due: {formatDateForDisplay(currentOverdueTask.dueDate!)}
                   </p>
                 </div>
@@ -639,20 +639,20 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Why didn't this get done?
                 </label>
                 <textarea
                   value={overdueReason}
                   onChange={(e) => setOverdueReason(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full rounded-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   rows={3}
                   placeholder="Be honest - what prevented you from completing this task?"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   What should we do with this task?
                 </label>
                 <div className="space-y-2">
@@ -668,11 +668,11 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                         value={option.value}
                         checked={overdueAction === option.value}
                         onChange={(e) => setOverdueAction(e.target.value as typeof overdueAction)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 bg-gray-700 border-gray-600"
                       />
                       <div className="flex items-center gap-2">
                         {option.icon}
-                        <span>{option.label}</span>
+                        <span className="text-gray-300">{option.label}</span>
                       </div>
                     </label>
                   ))}
@@ -681,26 +681,26 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
 
               {overdueAction === 'reschedule' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     New due date
                   </label>
                   <input
                     type="date"
                     value={overdueNewDate}
                     onChange={(e) => setOverdueNewDate(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="block w-full rounded-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Any additional notes?
                 </label>
                 <textarea
                   value={overdueNotes}
                   onChange={(e) => setOverdueNotes(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  className="w-full rounded-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   rows={2}
                   placeholder="Optional: Add any context or next steps..."
                 />
@@ -708,7 +708,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
             </div>
 
             <div className="flex justify-between items-center pt-4 border-t">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-400">
                 Task {currentOverdueTaskIndex + 1} of {overdueTasks.length}
               </span>
               <div className="flex gap-3">

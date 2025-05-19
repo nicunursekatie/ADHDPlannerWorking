@@ -260,8 +260,8 @@ const Dashboard: React.FC = () => {
                   </div>
                 </Link>
 
-                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg mt-3">
-                  <p className="text-sm text-gray-600">
+                <div className="p-3 bg-gray-800/40 border border-gray-700/50 rounded-lg mt-3">
+                  <p className="text-sm text-gray-400">
                     Use these tools to help capture tasks you might forget, review your progress, and adjust your approach.
                   </p>
                 </div>
@@ -326,7 +326,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
+              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />
@@ -367,7 +367,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
+              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />
@@ -399,7 +399,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
+              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />
@@ -432,7 +432,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
+              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />
@@ -468,7 +468,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/projects"
-              className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
+              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />
@@ -485,16 +485,16 @@ const Dashboard: React.FC = () => {
                 <Link 
                   key={project.id} 
                   to={`/projects/${project.id}`}
-                  className="flex items-center justify-between p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-2 rounded-lg bg-gray-800/40 hover:bg-gray-700/40 transition-colors"
                 >
                   <div className="flex items-center">
                     <div 
                       className="w-3 h-3 rounded-full mr-3" 
                       style={{ backgroundColor: project.color }}
                     ></div>
-                    <span className="font-medium">{project.name}</span>
+                    <span className="font-medium text-gray-100">{project.name}</span>
                   </div>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-400">
                     {projectTasks.length} task{projectTasks.length !== 1 ? 's' : ''}
                   </span>
                 </Link>
@@ -517,7 +517,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/recurring-tasks"
-              className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
+              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
             >
               Manage
               <ArrowRight size={14} className="ml-1" />
@@ -526,12 +526,12 @@ const Dashboard: React.FC = () => {
           className="lg:col-span-1"
         >
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-blue-900/30 rounded-lg">
               <div className="flex items-center">
-                <Repeat size={20} className="text-blue-600 mr-3" />
+                <Repeat size={20} className="text-blue-400 mr-3" />
                 <div>
-                  <p className="font-medium text-gray-900">{recurringTasks.length}</p>
-                  <p className="text-sm text-gray-600">Active Recurring Tasks</p>
+                  <p className="font-medium text-gray-100">{recurringTasks.length}</p>
+                  <p className="text-sm text-gray-400">Active Recurring Tasks</p>
                 </div>
               </div>
             </div>
@@ -539,10 +539,10 @@ const Dashboard: React.FC = () => {
             {recurringTasks.filter(rt => rt.active).slice(0, 3).map(task => {
               const daysUntilDue = Math.ceil((new Date(task.nextDue).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
               return (
-                <div key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <div key={task.id} className="flex items-center justify-between p-2 bg-gray-800/40 rounded-lg">
                   <div className="flex items-center">
                     <Repeat size={16} className="text-gray-400 mr-2" />
-                    <span className="text-sm font-medium text-gray-900">{task.title}</span>
+                    <span className="text-sm font-medium text-gray-100">{task.title}</span>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     daysUntilDue <= 0 ? 'bg-red-100 text-red-700' :
@@ -605,7 +605,7 @@ const Dashboard: React.FC = () => {
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center"
+              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center"
             >
               View All
               <ArrowRight size={14} className="ml-1" />

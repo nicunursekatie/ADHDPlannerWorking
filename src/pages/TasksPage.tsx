@@ -194,10 +194,10 @@ const TasksPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header - Improved for mobile */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center bg-white rounded-lg shadow-sm p-4">
+      <div className="flex flex-col md:flex-row justify-between md:items-center bg-gray-800/40 rounded-lg shadow-sm p-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl font-bold text-gray-100">Tasks</h1>
+          <p className="text-gray-400">
             {activeTaskList.length} task{activeTaskList.length !== 1 ? 's' : ''}
             {(filterProjectId || filterCategoryId) && ' (filtered)'}
           </p>
@@ -269,12 +269,12 @@ const TasksPage: React.FC = () => {
       
       {/* Tab navigation - improved for mobile */}
       <div className="overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
-        <div className="flex min-w-max border-b border-gray-200">
+        <div className="flex min-w-max border-b border-gray-700">
           <button
             className={`flex-shrink-0 px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
               activeTab === 'today' 
-                ? 'border-indigo-500 text-indigo-600 bg-indigo-50' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-indigo-500 text-indigo-400 bg-indigo-950/30' 
+                : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'
             }`}
             onClick={() => setActiveTab('today')}
           >
@@ -287,8 +287,8 @@ const TasksPage: React.FC = () => {
           <button
             className={`flex-shrink-0 px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
               activeTab === 'tomorrow' 
-                ? 'border-indigo-500 text-indigo-600 bg-indigo-50' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-indigo-500 text-indigo-400 bg-indigo-950/30' 
+                : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'
             }`}
             onClick={() => setActiveTab('tomorrow')}
           >
@@ -301,8 +301,8 @@ const TasksPage: React.FC = () => {
           <button
             className={`flex-shrink-0 px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
               activeTab === 'week' 
-                ? 'border-indigo-500 text-indigo-600 bg-indigo-50' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-indigo-500 text-indigo-400 bg-indigo-950/30' 
+                : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'
             }`}
             onClick={() => setActiveTab('week')}
           >
@@ -315,8 +315,8 @@ const TasksPage: React.FC = () => {
           <button
             className={`flex-shrink-0 px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
               activeTab === 'overdue' 
-                ? 'border-red-500 text-red-600 bg-red-50' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-red-500 text-red-400 bg-red-950/30' 
+                : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'
             }`}
             onClick={() => setActiveTab('overdue')}
           >
@@ -329,8 +329,8 @@ const TasksPage: React.FC = () => {
           <button
             className={`flex-shrink-0 px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
               activeTab === 'all' 
-                ? 'border-indigo-500 text-indigo-600 bg-indigo-50' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-indigo-500 text-indigo-400 bg-indigo-950/30' 
+                : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600'
             }`}
             onClick={() => setActiveTab('all')}
           >
@@ -370,10 +370,10 @@ const TasksPage: React.FC = () => {
       
       {/* Filter panel */}
       {isFilterOpen && (
-        <Card className="bg-gray-50">
+        <Card className="bg-gray-800/40">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium text-gray-900">Filters</h3>
+              <h3 className="text-lg font-medium text-gray-100">Filters</h3>
               <button
                 className="text-gray-400 hover:text-gray-500"
                 onClick={toggleFilter}
@@ -384,7 +384,7 @@ const TasksPage: React.FC = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Task Status
                 </label>
                 <div className="flex flex-col space-y-2">
@@ -394,9 +394,9 @@ const TasksPage: React.FC = () => {
                       id="showCompleted"
                       checked={showCompleted}
                       onChange={() => setShowCompleted(!showCompleted)}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      className="h-4 w-4 text-indigo-600 border-gray-600 rounded bg-gray-700"
                     />
-                    <label htmlFor="showCompleted" className="ml-2 text-sm text-gray-700">
+                    <label htmlFor="showCompleted" className="ml-2 text-sm text-gray-300">
                       Show completed tasks
                     </label>
                   </div>
@@ -406,9 +406,9 @@ const TasksPage: React.FC = () => {
                       id="showArchived"
                       checked={showArchived}
                       onChange={() => setShowArchived(!showArchived)}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      className="h-4 w-4 text-indigo-600 border-gray-600 rounded bg-gray-700"
                     />
-                    <label htmlFor="showArchived" className="ml-2 text-sm text-gray-700">
+                    <label htmlFor="showArchived" className="ml-2 text-sm text-gray-300">
                       Show archived tasks
                     </label>
                   </div>
@@ -418,9 +418,9 @@ const TasksPage: React.FC = () => {
                       id="showSubtasks"
                       checked={showSubtasks}
                       onChange={() => setShowSubtasks(!showSubtasks)}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      className="h-4 w-4 text-indigo-600 border-gray-600 rounded bg-gray-700"
                     />
-                    <label htmlFor="showSubtasks" className="ml-2 text-sm text-gray-700">
+                    <label htmlFor="showSubtasks" className="ml-2 text-sm text-gray-300">
                       Show subtasks in main list
                     </label>
                   </div>
@@ -428,14 +428,14 @@ const TasksPage: React.FC = () => {
               </div>
               
               <div>
-                <label htmlFor="projectFilter" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="projectFilter" className="block text-sm font-medium text-gray-300 mb-1">
                   Project
                 </label>
                 <select
                   id="projectFilter"
                   value={filterProjectId || ''}
                   onChange={(e) => setFilterProjectId(e.target.value || null)}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 >
                   <option value="">All Projects</option>
                   {projects.map(project => (
@@ -447,14 +447,14 @@ const TasksPage: React.FC = () => {
               </div>
               
               <div>
-                <label htmlFor="categoryFilter" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="categoryFilter" className="block text-sm font-medium text-gray-300 mb-1">
                   Category
                 </label>
                 <select
                   id="categoryFilter"
                   value={filterCategoryId || ''}
                   onChange={(e) => setFilterCategoryId(e.target.value || null)}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="block w-full rounded-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 >
                   <option value="">All Categories</option>
                   {categories.map(category => (
@@ -480,37 +480,37 @@ const TasksPage: React.FC = () => {
       )}
       
       {/* Task list */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
+      <div className="bg-gray-800/40 rounded-lg shadow-sm p-4">
         {/* Tab header */}
         <div className="mb-4">
           {activeTab === 'today' && (
             <div className="flex items-center space-x-2">
-              <Calendar size={20} className="text-indigo-500" />
-              <h2 className="text-xl font-semibold text-gray-900">Today's Tasks</h2>
+              <Calendar size={20} className="text-indigo-400" />
+              <h2 className="text-xl font-semibold text-gray-100">Today's Tasks</h2>
             </div>
           )}
           {activeTab === 'tomorrow' && (
             <div className="flex items-center space-x-2">
-              <CalendarDays size={20} className="text-indigo-500" />
-              <h2 className="text-xl font-semibold text-gray-900">Tomorrow's Tasks</h2>
+              <CalendarDays size={20} className="text-indigo-400" />
+              <h2 className="text-xl font-semibold text-gray-100">Tomorrow's Tasks</h2>
             </div>
           )}
           {activeTab === 'week' && (
             <div className="flex items-center space-x-2">
-              <CalendarDays size={20} className="text-indigo-500" />
-              <h2 className="text-xl font-semibold text-gray-900">This Week's Tasks</h2>
+              <CalendarDays size={20} className="text-indigo-400" />
+              <h2 className="text-xl font-semibold text-gray-100">This Week's Tasks</h2>
             </div>
           )}
           {activeTab === 'overdue' && (
             <div className="flex items-center space-x-2">
-              <AlertTriangle size={20} className="text-red-500" />
-              <h2 className="text-xl font-semibold text-gray-900">Overdue Tasks</h2>
+              <AlertTriangle size={20} className="text-red-400" />
+              <h2 className="text-xl font-semibold text-gray-100">Overdue Tasks</h2>
             </div>
           )}
           {activeTab === 'all' && (
             <div className="flex items-center space-x-2">
-              <Layers size={20} className="text-indigo-500" />
-              <h2 className="text-xl font-semibold text-gray-900">All Tasks</h2>
+              <Layers size={20} className="text-indigo-400" />
+              <h2 className="text-xl font-semibold text-gray-100">All Tasks</h2>
             </div>
           )}
         </div>
@@ -525,7 +525,7 @@ const TasksPage: React.FC = () => {
                   {/* Overdue section */}
                   {overdueTasks.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-medium text-red-600 mb-3 flex items-center">
+                      <h3 className="text-lg font-medium text-red-400 mb-3 flex items-center">
                         <AlertTriangle size={16} className="mr-2" />
                         Overdue
                       </h3>
@@ -550,7 +550,7 @@ const TasksPage: React.FC = () => {
                   {/* Today section */}
                   {todayTasks.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-medium text-indigo-600 mb-3 flex items-center">
+                      <h3 className="text-lg font-medium text-indigo-400 mb-3 flex items-center">
                         <Calendar size={16} className="mr-2" />
                         Today
                       </h3>
@@ -575,7 +575,7 @@ const TasksPage: React.FC = () => {
                   {/* Tomorrow section */}
                   {tomorrowTasks.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-medium text-indigo-600 mb-3 flex items-center">
+                      <h3 className="text-lg font-medium text-indigo-400 mb-3 flex items-center">
                         <CalendarDays size={16} className="mr-2" />
                         Tomorrow
                       </h3>
@@ -625,7 +625,7 @@ const TasksPage: React.FC = () => {
                   {/* Other tasks section */}
                   {otherTasks.filter(t => !t.parentTaskId).length > 0 && (
                     <div>
-                      <h3 className="text-lg font-medium text-gray-700 mb-3 flex items-center">
+                      <h3 className="text-lg font-medium text-gray-300 mb-3 flex items-center">
                         <Layers size={16} className="mr-2" />
                         Other Tasks
                       </h3>
