@@ -162,9 +162,33 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
       />
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-4 gap-6">
-          <div className="col-span-3">
-            <Button onClick={handleAddBlock} icon={<Plus size={16} />}>Add Block</Button>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="lg:col-span-3">
+            <div className="mb-4 flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Time Blocks</h2>
+              <Button 
+                onClick={handleAddBlock} 
+                icon={<Plus size={18} />}
+                variant="primary"
+                size="md"
+              >
+                Add Time Block
+              </Button>
+            </div>
+            
+            {/* Time grid with hour labels */}
+            <div className="relative">
+              {/* Hour labels */}
+              <div className="absolute left-0 top-0 bottom-0 w-16">
+                {[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].map(hour => (
+                  <div key={hour} className="h-16 border-t border-gray-200 text-xs text-gray-500 pt-1">
+                    {hour <= 12 ? `${hour}am` : `${hour - 12}pm`}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Time blocks */}
+              <div className="ml-20">
             {sortedTimeBlocks.map(block => {
               const blockTaskIds = block.taskIds || [];
               const blockTasks = tasks.filter(t => blockTaskIds.includes(t.id));
@@ -172,7 +196,7 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
               
               return (
                 <DroppableTimeBlock key={block.id} block={block}>
-                  <Card className="my-3 cursor-pointer hover:shadow-md transition-shadow">
+                  <Card className="mb-3 cursor-pointer hover:shadow-md transition-shadow">
                     <div 
                       className="mb-3"
                       onClick={() => {
@@ -242,10 +266,13 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
                 </DroppableTimeBlock>
               );
             })}
-          </div>
+              </div>
+            </div>
 
-          <div>
-            <h2 className="text-lg font-semibold">Unscheduled Tasks</h2>
+          </div>
+          
+          <div className="lg:col-span-1">
+            <h2 className="text-lg font-semibold mb-3">Unscheduled Tasks</h2>
             {unscheduledTasks.length > 0 ? (
               unscheduledTasks.map(task => <DraggableTask key={task.id} task={task} />)
             ) : (

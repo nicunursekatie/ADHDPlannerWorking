@@ -14,11 +14,21 @@ const Empty: React.FC<EmptyProps> = ({
   icon = <InboxIcon className="mx-auto h-12 w-12 text-gray-300" />,
   action,
 }) => {
+  const encouragements = [
+    "Ready to tackle your day?",
+    "Let's get started!",
+    "Time to make progress!",
+    "You've got this!"
+  ];
+  
+  const randomEncouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
+  
   return (
-    <div className="text-center py-16">
+    <div className="text-center py-12">
       <div className="inline-block mb-4">{icon}</div>
-      <h3 className="text-base font-medium text-gray-900">{title}</h3>
+      <h3 className="text-lg font-medium text-gray-900">{title}</h3>
       {description && <p className="mt-2 text-sm text-gray-600">{description}</p>}
+      <p className="mt-3 text-sm text-gray-500">{randomEncouragement}</p>
       {action && <div className="mt-6">{action}</div>}
     </div>
   );

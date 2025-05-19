@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply antialiased;
+    @apply antialiased bg-gray-50;
   }
   
   /* Smooth scrolling */
@@ -20,6 +20,15 @@
   /* Form inputs default styling */
   input, textarea, select {
     @apply transition-colors duration-200;
+  }
+  
+  /* Color system variables */
+  :root {
+    --color-success: #10b981; /* green-500 */
+    --color-danger: #ef4444; /* red-500 */
+    --color-warning: #f59e0b; /* amber-500 */
+    --color-primary: #6366f1; /* indigo-500 */
+    --color-secondary: #6b7280; /* gray-500 */
   }
 }
 
@@ -37,6 +46,22 @@
   /* Loading spinner */
   .spinner {
     @apply animate-spin h-5 w-5 text-primary-600;
+  }
+  
+  /* Task completion animation */
+  @keyframes checkComplete {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  .task-complete {
+    animation: checkComplete 0.3s ease-in-out;
+  }
+  
+  /* Task hover effect */
+  .task-hover {
+    @apply transition-all duration-150 hover:translate-x-1;
   }
 }
 

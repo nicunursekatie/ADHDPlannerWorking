@@ -111,19 +111,51 @@ const Dashboard: React.FC = () => {
     setEditingTask(null);
   };
   
+  const completionRate = tasks.length > 0 
+    ? Math.round((completedTasks.length / tasks.length) * 100)
+    : 0;
+  
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Your task overview</p>
+      <div className="flex flex-col md:flex-row justify-between md:items-center bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+        <div className="flex items-center gap-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600">Your task overview</p>
+          </div>
+          {/* Progress Ring */}
+          <div className="hidden md:flex items-center gap-3">
+            <div className="relative w-16 h-16">
+              <svg className="w-16 h-16 transform -rotate-90">
+                <circle 
+                  cx="32" cy="32" r="28" 
+                  stroke="#e5e7eb" strokeWidth="4" fill="none"
+                />
+                <circle 
+                  cx="32" cy="32" r="28" 
+                  stroke="#10b981" strokeWidth="4" fill="none"
+                  strokeDasharray={`${2 * Math.PI * 28}`}
+                  strokeDashoffset={`${2 * Math.PI * 28 * (1 - completionRate / 100)}`}
+                  className="transition-all duration-300"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-semibold">{completionRate}%</span>
+              </div>
+            </div>
+            <div className="text-sm">
+              <div className="font-medium">Daily Progress</div>
+              <div className="text-gray-500">{completedTasks.length}/{tasks.length} tasks</div>
+            </div>
+          </div>
         </div>
-        <div className="mt-4 md:mt-0 flex gap-3">
+        <div className="mt-4 md:mt-0 flex gap-2">
           <Button
             variant="primary"
             icon={<Plus size={16} />}
             onClick={() => handleOpenTaskModal()}
+            size="sm"
           >
             New Task
           </Button>
@@ -539,23 +571,25 @@ const Dashboard: React.FC = () => {
         {/* Quick Stats */}
         <Card className="lg:col-span-2">
           <div className="p-4">
-            <h3 className="font-medium text-gray-900 mb-4">Quick Stats</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <h3 className="font-medium text-gray-900 mb-4">Task Overview</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {overdueTasks.length > 0 && (
+                <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
+                  <p className="text-2xl font-bold text-red-600">{overdueTasks.length}!</p>
+                  <p className="text-sm text-red-700 font-medium">Overdue</p>
+                </div>
+              )}
               <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-2xl font-bold text-indigo-600">{incompleteTasks.length}</p>
+                <p className="text-2xl font-bold text-gray-700">{incompleteTasks.length}</p>
                 <p className="text-sm text-gray-600">Active Tasks</p>
               </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <div className="text-center p-3 bg-green-50 rounded-lg">
                 <p className="text-2xl font-bold text-green-600">{completedTasks.length}</p>
                 <p className="text-sm text-gray-600">Completed</p>
               </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <p className="text-2xl font-bold text-blue-600">{projects.length}</p>
                 <p className="text-sm text-gray-600">Projects</p>
-              </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-2xl font-bold text-purple-600">{recurringTasks.length}</p>
-                <p className="text-sm text-gray-600">Recurring</p>
               </div>
             </div>
           </div>

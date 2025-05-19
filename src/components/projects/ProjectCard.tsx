@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 interface ProjectCardProps {
   project: Project;
   taskCount: number;
+  completedTaskCount?: number;
   onEdit: (project: Project) => void;
   onDelete: (projectId: string) => void;
 }
@@ -15,9 +16,14 @@ interface ProjectCardProps {
 const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
   taskCount,
+  completedTaskCount = 0,
   onEdit,
   onDelete,
 }) => {
+  const completionPercentage = taskCount > 0 
+    ? Math.round((completedTaskCount / taskCount) * 100)
+    : 0;
+    
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 transition-all hover:shadow-md">
       <div 
@@ -51,20 +57,32 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </p>
         )}
         
-        <div className="mt-4 flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            {taskCount} task{taskCount !== 1 ? 's' : ''}
-          </div>
+        <div className="mt-4">
+          {/* Progress bar */}
+          {taskCount > 0 && (
+            <div className="mb-3">
+              <div className="flex justify-between text-xs text-gray-600 mb-1">
+                <span>{completedTaskCount} of {taskCount} completed</span>
+                <span>{completionPercentage}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${completionPercentage}%` }}
+                />
+              </div>
+            </div>
+          )}
           
-          <Link to={`/projects/${project.id}`}>
-            <Button
-              variant="outline"
-              size="sm"
-              icon={<ArrowRight size={14} />}
-            >
-              View
-            </Button>
-          </Link>
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-500">
+              {taskCount} task{taskCount !== 1 ? 's' : ''}
+            </div>
+            
+            <Link to={`/projects/${project.id}`} className="text-primary-600 hover:text-primary-700">
+              <ArrowRight size={20} />
+            </Link>
+          </div>
         </div>
       </div>
     </div>

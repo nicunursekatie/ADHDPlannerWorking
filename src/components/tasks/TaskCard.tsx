@@ -37,6 +37,23 @@ const TaskCard: React.FC<TaskCardProps> = ({
     task.subtasks?.includes(t.id) || false
   );
   
+  // Determine task status
+  const getTaskStatus = () => {
+    if (task.completed) return 'completed';
+    if (!task.dueDate) return 'no-date';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(task.dueDate);
+    dueDate.setHours(0, 0, 0, 0);
+    
+    if (dueDate < today) return 'overdue';
+    if (dueDate.getTime() === today.getTime()) return 'today';
+    return 'future';
+  };
+  
+  const taskStatus = getTaskStatus();
+  
   const toggleExpand = () => {
     setExpanded(!expanded);
   };
@@ -60,11 +77,22 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
   };
   
+  const getTaskStyling = () => {
+    switch (taskStatus) {
+      case 'completed':
+        return 'border-green-200 bg-green-50';
+      case 'overdue':
+        return 'border-red-300 bg-red-50';
+      case 'today':
+        return 'border-blue-300 bg-blue-50';
+      default:
+        return 'border-gray-200 bg-white';
+    }
+  };
+  
   return (
     <div 
-      className={`bg-white rounded-xl shadow-sm border p-4 mb-3 transition-all hover:shadow-md ${
-        task.completed ? 'border-green-400 bg-green-50' : 'border-gray-200'
-      } ${isSubtask ? 'ml-6' : ''}`}
+      className={`rounded-lg shadow-sm border p-3 mb-2 transition-all hover:shadow-md ${getTaskStyling()} ${isSubtask ? 'ml-6' : ''}`}
     >
       <div className="flex items-start">
         <button 
