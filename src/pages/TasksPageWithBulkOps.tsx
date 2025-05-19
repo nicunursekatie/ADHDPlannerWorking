@@ -59,7 +59,7 @@ const TasksPageWithBulkOps: React.FC = () => {
     bulkCompleteTasks,
     bulkMoveTasks,
     bulkArchiveTasks,
-    addSubtask
+    bulkAddTasks
   } = useAppContext();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -152,27 +152,23 @@ const TasksPageWithBulkOps: React.FC = () => {
     if (breakdownTask) {
       console.log('Breakdown task:', breakdownTask);
       console.log('Subtasks received:', subtasks);
-      
-      // Create all subtasks using the proper addSubtask function
-      for (const subtask of subtasks) {
-        try {
-          // Use addSubtask which properly manages parent-child relationships
-          addSubtask(breakdownTask.id, {
-            title: subtask.title || '',
-            description: subtask.description || '',
-            dueDate: subtask.dueDate || breakdownTask.dueDate || null,
-            priority: subtask.priority || breakdownTask.priority || 'medium',
-            energyLevel: subtask.energyLevel || breakdownTask.energyLevel,
-            estimatedMinutes: subtask.estimatedMinutes,
-            tags: subtask.tags || [],
-            projectId: breakdownTask.projectId,
-            categoryIds: breakdownTask.categoryIds || []
-          });
-        } catch (error) {
-          console.error('Error adding subtask:', error);
-        }
-      }
-      
+
+      // Prepare all subtasks with parentTaskId and other inherited fields
+      const preparedSubtasks = subtasks.map((subtask) => ({
+        ...subtask,
+        parentTaskId: breakdownTask.id,
+        projectId: breakdownTask.projectId,
+        categoryIds: breakdownTask.categoryIds || [],
+        dueDate: subtask.dueDate || breakdownTask.dueDate || null,
+        priority: subtask.priority || breakdownTask.priority || 'medium',
+        energyLevel: subtask.energyLevel || breakdownTask.energyLevel,
+        estimatedMinutes: subtask.estimatedMinutes,
+        tags: subtask.tags || [],
+      }));
+
+      // Use bulkAddTasks to add all subtasks at once
+      bulkAddTasks(preparedSubtasks);
+
       console.log('Subtasks added successfully');
       setBreakdownTask(null);
     }
