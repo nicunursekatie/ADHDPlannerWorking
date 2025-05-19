@@ -386,7 +386,7 @@ const TasksPageWithBulkOps: React.FC = () => {
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                variant="success"
+                variant="primary"
                 icon={<CheckCircle2 size={14} />}
                 onClick={handleBulkComplete}
                 disabled={selectedTasks.size === 0}
@@ -518,7 +518,7 @@ const TasksPageWithBulkOps: React.FC = () => {
       </div>
       
       {/* Add CSS for hiding scrollbar but allowing scroll */}
-      <style jsx>{`
+      <style>{`
         .hide-scrollbar {
           -ms-overflow-style: none;  /* IE and Edge */
           scrollbar-width: none;  /* Firefox */
