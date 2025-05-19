@@ -67,9 +67,9 @@
   
   /* Light mode background gradient */
   .light body {
-    @apply bg-gradient-to-br from-slate-50 via-white to-slate-50;
-  }
-  
+  @apply bg-main text-primary;
+}
+
   /* Dark mode background */
   .dark body {
     @apply bg-gray-900;
