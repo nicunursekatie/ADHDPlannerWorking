@@ -4,7 +4,8 @@
 
 @layer base {
   body {
-    @apply antialiased bg-gray-900 text-gray-100 font-sans;
+    @apply antialiased bg-gray-900 text-gray-100;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-size: 16px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
