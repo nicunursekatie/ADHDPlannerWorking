@@ -12,11 +12,15 @@ import {
   X,
   Settings,
   Repeat,
+  Sun,
+  Moon,
 } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 const Header: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -38,7 +42,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+    <header className="bg-white dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
@@ -46,7 +50,7 @@ const Header: React.FC = () => {
               <div className="p-2 bg-primary-600 rounded-lg">
                 <ClipboardList className="h-5 w-5 text-white" />
               </div>
-              <span className="ml-3 text-xl font-semibold text-gray-100 tracking-tight">ADHD Planner</span>
+              <span className="ml-3 text-xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">ADHD Planner</span>
             </Link>
           </div>
           
@@ -58,8 +62,8 @@ const Header: React.FC = () => {
                 to={item.path}
                 className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                   isActive(item.path)
-                    ? 'bg-gray-800 text-primary-400'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                    ? 'bg-gray-100 dark:bg-gray-800 text-primary-600 dark:text-primary-400'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                 }`}
               >
                 {item.icon}
@@ -68,20 +72,31 @@ const Header: React.FC = () => {
             ))}
           </nav>
           
-          {/* What Now Button */}
-          <Link
-            to="/what-now"
-            className="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            <HelpCircle size={16} className="mr-1" />
-            What Now?
-          </Link>
+          <div className="flex items-center space-x-3">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
+            
+            {/* What Now Button */}
+            <Link
+              to="/what-now"
+              className="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <HelpCircle size={16} className="mr-1" />
+              What Now?
+            </Link>
+          </div>
           
           {/* Mobile menu button */}
           <div className="md:hidden">
             <button
               onClick={toggleMobileMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
             >
               <span className="sr-only">Open main menu</span>
               {isMobileMenuOpen ? (
@@ -103,8 +118,8 @@ const Header: React.FC = () => {
               to={item.path}
               className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
                 isActive(item.path)
-                  ? 'bg-indigo-50 border-indigo-500 text-indigo-700'
-                  : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
+                  ? 'bg-indigo-50 dark:bg-gray-800 border-indigo-500 text-indigo-700 dark:text-indigo-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -117,7 +132,7 @@ const Header: React.FC = () => {
           
           <Link
             to="/what-now"
-            className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+            className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-800 hover:border-indigo-300"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <div className="flex items-center">
@@ -125,6 +140,17 @@ const Header: React.FC = () => {
               <span className="ml-2">What Now?</span>
             </div>
           </Link>
+          
+          {/* Mobile Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200"
+          >
+            <div className="flex items-center">
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+              <span className="ml-2">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+            </div>
+          </button>
         </div>
       </div>
     </header>

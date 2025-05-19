@@ -1,6 +1,7 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/layout/Layout';
 
 // Pages
@@ -23,10 +24,11 @@ import RecurringTasksPage from './pages/RecurringTasksPage';
 
 function App() {
   return (
-    <AppProvider>
-      <Router>
-        <Layout>
-          <Routes>
+    <ThemeProvider>
+      <AppProvider>
+        <Router>
+          <Layout>
+            <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/tasks" element={<TasksPageWithBulkOps />} />
             <Route path="/projects" element={<ProjectsPage />} />
@@ -47,6 +49,7 @@ function App() {
         </Layout>
       </Router>
     </AppProvider>
+    </ThemeProvider>
   );
 }
 
