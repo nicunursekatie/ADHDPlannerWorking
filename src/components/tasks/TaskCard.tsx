@@ -105,11 +105,11 @@ const TaskCard: React.FC<TaskCardProps> = ({
             )}
           </button>
           <div>
-            <h3 className={`text-base font-medium ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+            <h3 className={`text-base font-medium ${task.completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
               {task.title}
             </h3>
             {task.description && (
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-800">
                 {task.description}
               </p>
             )}
@@ -137,7 +137,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       
       <div className="mt-3 flex flex-wrap gap-2 items-center">
         {task.dueDate && (
-          <div className="flex items-center text-xs text-gray-500">
+          <div className="flex items-center text-xs text-amber-700">
             <Calendar size={14} className="mr-1" />
             {formatDateForDisplay(task.dueDate)}
           </div>

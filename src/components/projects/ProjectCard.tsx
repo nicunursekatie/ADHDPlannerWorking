@@ -52,7 +52,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
         
         {project.description && (
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-2 text-sm text-gray-800">
             {project.description}
           </p>
         )}
@@ -75,7 +75,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           )}
           
           <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-gray-800">
               {taskCount} task{taskCount !== 1 ? 's' : ''}
             </div>
             
