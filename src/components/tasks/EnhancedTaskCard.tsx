@@ -191,10 +191,10 @@ const EnhancedTaskCard: React.FC<EnhancedTaskCardProps> = ({
   
   // Get card border style based on completion and due date
   const getCardBorderStyle = () => {
-    if (task.completed) return 'border-green-500 bg-green-50';
+    if (task.completed) return 'border-amber-200 bg-amber-50';
     if (isOverdue) return 'border-red-500 bg-red-50';
-    if (isToday) return 'border-green-500'; // Green border without background color for today's tasks
-    return 'border-indigo-500';
+    if (isToday) return 'border-amber-400 bg-amber-50';
+    return 'border-amber-200 bg-white';
   };
   
   const getTaskStyling = () => {

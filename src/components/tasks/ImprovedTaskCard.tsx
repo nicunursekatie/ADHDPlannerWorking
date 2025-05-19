@@ -177,18 +177,16 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
   
   // Determine task background color based on status
   const getTaskBackground = () => {
-    if (task.completed) return 'bg-gray-800/30 border-gray-700/50 opacity-75';
-    if (!task.dueDate) return 'bg-gray-800/40 border-gray-700/50';
-    
+    if (task.completed) return 'bg-amber-50 border-amber-200 opacity-75';
+    if (!task.dueDate) return 'bg-white border-amber-200';
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const [year, month, day] = task.dueDate.split('-').map(num => parseInt(num, 10));
     const dueDate = new Date(year, month - 1, day);
     dueDate.setHours(0, 0, 0, 0);
-    
-    if (dueDate < today) return 'bg-red-950/20 border-red-800/50';
-    if (dueDate.getTime() === today.getTime()) return 'bg-blue-950/20 border-blue-800/50';
-    return 'bg-gray-800/40 border-gray-700/50';
+    if (dueDate < today) return 'bg-red-50 border-red-500';
+    if (dueDate.getTime() === today.getTime()) return 'bg-amber-50 border-amber-400';
+    return 'bg-white border-amber-200';
   };
   
   return (

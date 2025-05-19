@@ -80,13 +80,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const getTaskStyling = () => {
     switch (taskStatus) {
       case 'completed':
-        return 'border-gray-700/50 bg-gray-800/30 opacity-75';
+        return 'border-amber-200 bg-amber-50 opacity-75';
       case 'overdue':
-        return 'border-red-800/50 bg-red-950/20';
+        return 'border-red-500 bg-red-50';
       case 'today':
-        return 'border-blue-800/50 bg-blue-950/20';
+        return 'border-amber-400 bg-amber-50';
       default:
-        return 'border-gray-700/50 bg-gray-800/30';
+        return 'border-amber-200 bg-white';
     }
   };
   
