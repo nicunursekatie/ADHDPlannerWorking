@@ -186,8 +186,8 @@ const Dashboard: React.FC = () => {
                 <AlertTriangle className="h-5 w-5 text-amber-400" aria-hidden="true" />
               </div>
               <div className="ml-3">
-                <h3 className="text-lg font-medium text-amber-200">Time for your weekly review!</h3>
-                <div className="mt-2 text-sm text-amber-300">
+                <h3 className="text-lg font-bold text-amber-900">Time for your weekly review!</h3>
+                <div className="mt-2 text-sm text-amber-800">
                   <p>It's been a week since your last review. Taking time to reflect helps with ADHD management.</p>
                 </div>
                 <div className="mt-4">
@@ -228,7 +228,7 @@ const Dashboard: React.FC = () => {
               <h3 className="text-lg font-medium text-gray-900 mb-3">Memory Tools</h3>
               <div className="space-y-2">
                 <Link to="/brain-dump">
-                  <div className="p-3 bg-amber-100 rounded-lg hover:bg-amber-200 transition-colors cursor-pointer flex items-center justify-between">
+                  <div className="p-3 bg-yellow-50 rounded-lg hover:bg-amber-100 transition-colors cursor-pointer flex items-center justify-between">
                     <div className="flex items-center">
                       <BrainCircuit className="w-5 h-5 text-amber-600 mr-2" />
                       <span className="font-medium text-amber-900">Brain Dump</span>
@@ -238,12 +238,12 @@ const Dashboard: React.FC = () => {
                 </Link>
 
                 <Link to="/weekly-review">
-                  <div className={`p-3 ${showWeeklyReviewReminder ? 'bg-yellow-900/30 border border-yellow-700' : 'bg-yellow-900/30'} rounded-lg hover:bg-yellow-900/40 transition-colors cursor-pointer flex items-center justify-between`}>
+                  <div className={`p-3 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors cursor-pointer flex items-center justify-between`}>
                     <div className="flex items-center">
                       <RefreshCw className={`w-5 h-5 ${showWeeklyReviewReminder ? 'text-yellow-400' : 'text-yellow-400'} mr-2`} />
                       <span className="font-medium text-amber-900">Weekly Review</span>
                       {showWeeklyReviewReminder && (
-                        <span className="ml-2 px-2 py-0.5 bg-yellow-700 text-yellow-200 text-xs rounded-full">Due</span>
+                        <span className="ml-2 px-2 py-0.5 bg-amber-400 text-amber-900 text-xs rounded-full border border-amber-700">Due</span>
                       )}
                     </div>
                     <ArrowRight size={16} className={`${showWeeklyReviewReminder ? 'text-yellow-400' : 'text-yellow-400'}`} />
@@ -251,17 +251,17 @@ const Dashboard: React.FC = () => {
                 </Link>
 
                 <Link to="/accountability">
-                  <div className="p-3 bg-orange-900/30 rounded-lg hover:bg-orange-900/40 transition-colors cursor-pointer flex items-center justify-between">
+                  <div className="p-3 bg-amber-100 rounded-lg hover:bg-amber-200 transition-colors cursor-pointer flex items-center justify-between">
                     <div className="flex items-center">
-                      <ListChecks className="w-5 h-5 text-orange-400 mr-2" />
+                      <ListChecks className="w-5 h-5 text-amber-400 mr-2" />
                       <span className="font-medium text-amber-900">Accountability Check-In</span>
                     </div>
-                    <ArrowRight size={16} className="text-orange-400" />
+                    <ArrowRight size={16} className="text-amber-400" />
                   </div>
                 </Link>
 
-                <div className="p-3 bg-gray-800/40 border border-gray-700/50 rounded-lg mt-3">
-                  <p className="text-sm bg-amber-50 text-amber-800 rounded-lg p-3">
+                <div className="p-3 bg-amber-50 text-amber-800 rounded-lg mt-3">
+                  <p className="text-sm">
                     Use these tools to help capture tasks you might forget, review your progress, and adjust your approach.
                   </p>
                 </div>
