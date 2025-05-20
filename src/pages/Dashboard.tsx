@@ -261,7 +261,7 @@ const Dashboard: React.FC = () => {
                 </Link>
 
                 <div className="p-3 bg-gray-800/40 border border-gray-700/50 rounded-lg mt-3">
-                  <p className="text-sm text-amber-700">
+                  <p className="text-sm bg-amber-50 text-amber-800 rounded-lg p-3">
                     Use these tools to help capture tasks you might forget, review your progress, and adjust your approach.
                   </p>
                 </div>

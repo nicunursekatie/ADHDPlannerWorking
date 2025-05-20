@@ -9,8 +9,8 @@ interface BadgeProps {
 
 const Badge: React.FC<BadgeProps> = ({ 
   text, 
-  color = '#f59e0b', // amber-500
-  bgColor = '#fef3c7', // amber-100
+  color = '#f59e0b', // amber-500 (goldenrod)
+  bgColor = '#fef3c7', // amber-100 (pale gold)
   className = '',
 }) => {
   return (

@@ -68,17 +68,17 @@ const Modal: React.FC<ModalProps> = ({
         {/* Modal panel */}
         <div
           ref={modalRef}
-          className={`inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all duration-300 ease-out sm:my-8 sm:align-middle ${sizeClasses[size]} w-full border border-gray-200 dark:border-gray-700`}
+          className={`inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all duration-300 ease-out sm:my-8 sm:align-middle ${sizeClasses[size]} w-full border border-amber-200`}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="px-6 py-4 border-b border-amber-200">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
+              <h3 className="text-lg font-semibold text-amber-900 tracking-tight">
                 {title}
               </h3>
               <button
                 type="button"
-                className="rounded-lg p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-400 transition-all duration-200"
+                className="rounded-lg p-2 text-amber-500 hover:text-amber-700 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all duration-200"
                 onClick={onClose}
               >
                 <span className="sr-only">Close</span>
@@ -88,13 +88,13 @@ const Modal: React.FC<ModalProps> = ({
           </div>
           
           {/* Content */}
-          <div className="px-6 py-4">
+          <div className="px-6 py-4 text-amber-900">
             {children}
           </div>
           
           {/* Footer */}
           {footer && (
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            <div className="px-6 py-4 border-t border-amber-200 bg-amber-50">
               {footer}
             </div>
           )}
