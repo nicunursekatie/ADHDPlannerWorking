@@ -489,7 +489,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                   <textarea
                     value={journalResponses[`${activeSectionId}-${index}`] || ''}
                     onChange={(e) => handleJournalChange(index, e.target.value)}
-                    className="w-full rounded-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 placeholder-amber-700 shadow-sm focus:border-amber-400 focus:ring-amber-400"
                     rows={3}
                     placeholder="Type your thoughts here..."
                   />
@@ -642,7 +642,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                 <textarea
                   value={overdueReason}
                   onChange={(e) => setOverdueReason(e.target.value)}
-                  className="w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 shadow-sm focus:border-amber-400 focus:ring-amber-400"
+                  className="w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 placeholder-amber-700 shadow-sm focus:border-amber-400 focus:ring-amber-400"
                   rows={2}
                   placeholder="Be honest - what prevented you from completing this task?"
                 />
@@ -659,13 +659,13 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                     { value: 'drop', label: 'Drop it', icon: <X size={18} /> },
                     { value: 'delegate', label: 'Delegate it', icon: <Check size={18} /> },
                   ].map(option => (
-                    <label key={option.value} className="flex items-center space-x-3">
+                    <label key={option.value} className="flex items-center space-x-3 text-amber-900">
                       <input
                         type="radio"
                         value={option.value}
                         checked={overdueAction === option.value}
                         onChange={(e) => setOverdueAction(e.target.value as typeof overdueAction)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 bg-gray-700 border-gray-600"
+                        className="h-4 w-4 text-amber-500 focus:ring-amber-400 bg-amber-50 border-amber-300"
                       />
                       <div className="flex items-center gap-2">
                         {option.icon}
@@ -685,7 +685,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                     type="date"
                     value={overdueNewDate}
                     onChange={(e) => setOverdueNewDate(e.target.value)}
-                    className="block w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 shadow-sm focus:ring-amber-400 focus:border-amber-400 sm:text-xs"
+                    className="block w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 placeholder-amber-700 shadow-sm focus:ring-amber-400 focus:border-amber-400 sm:text-xs"
                   />
                 </div>
               )}
@@ -697,7 +697,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                 <textarea
                   value={overdueNotes}
                   onChange={(e) => setOverdueNotes(e.target.value)}
-                  className="w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 shadow-sm focus:border-amber-400 focus:ring-amber-400"
+                  className="w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 placeholder-amber-700 shadow-sm focus:border-amber-400 focus:ring-amber-400"
                   rows={1}
                   placeholder="Optional: Add any context or next steps..."
                 />
