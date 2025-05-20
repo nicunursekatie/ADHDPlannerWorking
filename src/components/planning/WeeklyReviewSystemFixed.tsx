@@ -70,7 +70,9 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
   const [showOverdueModal, setShowOverdueModal] = useState(false);
   const [currentOverdueTaskIndex, setCurrentOverdueTaskIndex] = useState(0);
   const [overdueTaskReviews, setOverdueTaskReviews] = useState<OverdueTaskReview[]>([]);
-  const [overdueReason, setOverdueReason] = useState('');
+  const [overdueReasons, setOverdueReasons] = useState<string[]>([]);
+  const [overdueOtherReason, setOverdueOtherReason] = useState('');
+  const [markComplete, setMarkComplete] = useState(false);
   const [overdueAction, setOverdueAction] = useState<'reschedule' | 'keep' | 'drop' | 'delegate'>('reschedule');
   const [overdueNewDate, setOverdueNewDate] = useState('');
   const [overdueNotes, setOverdueNotes] = useState('');
@@ -278,7 +280,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
     // Save the review
     const review: OverdueTaskReview = {
       taskId: currentTask.id,
-      reason: overdueReason,
+      reason: overdueReasons.join(', ') + (overdueReasons.includes('Other') && overdueOtherReason ? `: ${overdueOtherReason}` : ''),
       action: overdueAction,
       newDate: overdueNewDate,
       notes: overdueNotes,
@@ -287,32 +289,35 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
     setOverdueTaskReviews(prev => [...prev, review]);
 
     // Apply the action
-    switch (overdueAction) {
-      case 'reschedule':
-        updateTask({
-          ...currentTask,
-          dueDate: overdueNewDate || null,
-        });
-        break;
-      case 'drop':
-        deleteTask(currentTask.id);
-        break;
-      case 'delegate':
-        // You might want to add a "delegated" flag or tag
-        updateTask({
-          ...currentTask,
-          tags: [...(currentTask.tags || []), 'delegated'],
-        });
-        break;
-      case 'keep':
-        // No action needed, keep as overdue
-        break;
+    if (markComplete) {
+      updateTask({ ...currentTask, completed: true });
+    } else {
+      switch (overdueAction) {
+        case 'reschedule':
+          updateTask({
+            ...currentTask,
+            dueDate: overdueNewDate || null,
+          });
+          break;
+        case 'drop':
+          deleteTask(currentTask.id);
+          break;
+        case 'delegate':
+          updateTask({
+            ...currentTask,
+            tags: [...(currentTask.tags || []), 'delegated'],
+          });
+          break;
+        case 'keep':
+          // No action needed, keep as overdue
+          break;
+      }
     }
 
     // Save journal entry about this review
     addJournalEntry({
       title: `Overdue task review: ${currentTask.title}`,
-      content: `Reason: ${overdueReason}\nAction: ${overdueAction}\nNotes: ${overdueNotes}`,
+      content: `Reason: ${review.reason}\nAction: ${overdueAction}\nNotes: ${overdueNotes}`,
       date: new Date().toISOString(),
       section: 'overdue',
       weekNumber,
@@ -323,7 +328,9 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
     // Move to next task or close modal
     if (currentOverdueTaskIndex < overdueTasks.length - 1) {
       setCurrentOverdueTaskIndex(prev => prev + 1);
-      setOverdueReason('');
+      setOverdueReasons([]);
+      setOverdueOtherReason('');
+      setMarkComplete(false);
       setOverdueAction('reschedule');
       setOverdueNotes('');
       // Reset default date to tomorrow
@@ -639,13 +646,34 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                 <label className="block text-xs font-medium text-amber-900 mb-2">
                   Why didn't this get done?
                 </label>
-                <textarea
-                  value={overdueReason}
-                  onChange={(e) => setOverdueReason(e.target.value)}
-                  className="w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 placeholder-amber-700 shadow-sm focus:border-amber-400 focus:ring-amber-400"
-                  rows={2}
-                  placeholder="Be honest - what prevented you from completing this task?"
-                />
+                <div className="space-y-2">
+                  {['Forgot', 'Too busy', 'Task was unclear', 'Lost motivation', 'Waiting on someone', 'Other'].map(reason => (
+                    <label key={reason} className="flex items-center gap-2 text-amber-900">
+                      <input
+                        type="checkbox"
+                        checked={overdueReasons.includes(reason)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setOverdueReasons([...overdueReasons, reason]);
+                          } else {
+                            setOverdueReasons(overdueReasons.filter(r => r !== reason));
+                          }
+                        }}
+                        className="accent-amber-500"
+                      />
+                      <span>{reason}</span>
+                    </label>
+                  ))}
+                  {overdueReasons.includes('Other') && (
+                    <input
+                      type="text"
+                      value={overdueOtherReason}
+                      onChange={e => setOverdueOtherReason(e.target.value)}
+                      className="w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 placeholder-amber-700 shadow-sm focus:border-amber-400 focus:ring-amber-400 mt-1"
+                      placeholder="Other reason..."
+                    />
+                  )}
+                </div>
               </div>
 
               <div>
@@ -681,14 +709,33 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                   <label className="block text-xs font-medium text-amber-900 mb-2">
                     New due date
                   </label>
-                  <input
-                    type="date"
-                    value={overdueNewDate}
-                    onChange={(e) => setOverdueNewDate(e.target.value)}
-                    className="block w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 placeholder-amber-700 shadow-sm focus:ring-amber-400 focus:border-amber-400 sm:text-xs"
-                  />
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="date"
+                      value={overdueNewDate}
+                      onChange={(e) => setOverdueNewDate(e.target.value)}
+                      className="block w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 placeholder-amber-700 shadow-sm focus:ring-amber-400 focus:border-amber-400 sm:text-xs"
+                    />
+                    <Button size="sm" variant="secondary" onClick={() => setOverdueNewDate(formatDate(new Date(Date.now() + 24*60*60*1000)))}>Tomorrow</Button>
+                    <Button size="sm" variant="secondary" onClick={() => {
+                      const d = new Date(); d.setDate(d.getDate() + 7); setOverdueNewDate(formatDate(d));
+                    }}>Next Week</Button>
+                    <Button size="sm" variant="outline" onClick={() => setOverdueNewDate('')}>Remove Due Date</Button>
+                  </div>
                 </div>
               )}
+
+              <div>
+                <label className="flex items-center gap-2 text-xs font-medium text-amber-900 mb-2">
+                  <input
+                    type="checkbox"
+                    checked={markComplete}
+                    onChange={e => setMarkComplete(e.target.checked)}
+                    className="accent-amber-500"
+                  />
+                  Mark as complete (I actually did this, just forgot to check it off)
+                </label>
+              </div>
 
               <div>
                 <label className="block text-xs font-medium text-amber-900 mb-2">

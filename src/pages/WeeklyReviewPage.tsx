@@ -5,7 +5,7 @@ const WeeklyReviewPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center bg-gray-800/40 rounded-lg shadow-sm p-4 mb-6">
+      <div className="flex flex-col md:flex-row justify-between md:items-center bg-amber-100 rounded-lg shadow-sm p-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-amber-900">Weekly Review</h1>
           <p className="text-amber-800">Review your progress and plan for the week ahead</p>
