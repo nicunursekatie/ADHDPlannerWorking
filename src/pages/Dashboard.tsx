@@ -210,7 +210,7 @@ const Dashboard: React.FC = () => {
       {/* Memory Tools Section */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-semibold text-gray-100">Remember & Review</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Remember & Review</h2>
           <Button
             variant="outline"
             size="sm"
@@ -225,13 +225,13 @@ const Dashboard: React.FC = () => {
           {/* Quick links to memory tools */}
           <Card className="lg:col-span-1">
             <div className="p-4">
-              <h3 className="text-lg font-medium text-gray-100 mb-3">Memory Tools</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Memory Tools</h3>
               <div className="space-y-2">
                 <Link to="/brain-dump">
                   <div className="p-3 bg-amber-100 rounded-lg hover:bg-amber-200 transition-colors cursor-pointer flex items-center justify-between">
                     <div className="flex items-center">
                       <BrainCircuit className="w-5 h-5 text-amber-600 mr-2" />
-                      <span className="font-medium text-gray-200">Brain Dump</span>
+                      <span className="font-medium text-amber-900">Brain Dump</span>
                     </div>
                     <ArrowRight size={16} className="text-amber-600" />
                   </div>
@@ -241,7 +241,7 @@ const Dashboard: React.FC = () => {
                   <div className={`p-3 ${showWeeklyReviewReminder ? 'bg-yellow-900/30 border border-yellow-700' : 'bg-yellow-900/30'} rounded-lg hover:bg-yellow-900/40 transition-colors cursor-pointer flex items-center justify-between`}>
                     <div className="flex items-center">
                       <RefreshCw className={`w-5 h-5 ${showWeeklyReviewReminder ? 'text-yellow-400' : 'text-yellow-400'} mr-2`} />
-                      <span className="font-medium text-gray-200">Weekly Review</span>
+                      <span className="font-medium text-amber-900">Weekly Review</span>
                       {showWeeklyReviewReminder && (
                         <span className="ml-2 px-2 py-0.5 bg-yellow-700 text-yellow-200 text-xs rounded-full">Due</span>
                       )}
@@ -254,14 +254,14 @@ const Dashboard: React.FC = () => {
                   <div className="p-3 bg-orange-900/30 rounded-lg hover:bg-orange-900/40 transition-colors cursor-pointer flex items-center justify-between">
                     <div className="flex items-center">
                       <ListChecks className="w-5 h-5 text-orange-400 mr-2" />
-                      <span className="font-medium text-gray-200">Accountability Check-In</span>
+                      <span className="font-medium text-amber-900">Accountability Check-In</span>
                     </div>
                     <ArrowRight size={16} className="text-orange-400" />
                   </div>
                 </Link>
 
                 <div className="p-3 bg-gray-800/40 border border-gray-700/50 rounded-lg mt-3">
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-amber-700">
                     Use these tools to help capture tasks you might forget, review your progress, and adjust your approach.
                   </p>
                 </div>
@@ -275,7 +275,7 @@ const Dashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <BrainCircuit className="w-5 h-5 text-amber-600 mr-2" />
-                  <h3 className="font-medium text-gray-100">Quick Brain Dump</h3>
+                  <h3 className="font-medium text-gray-900">Quick Brain Dump</h3>
                 </div>
                 <Link
                   to="/brain-dump"
@@ -288,14 +288,14 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="p-4">
               <div className="bg-amber-100 rounded-lg p-3 mb-4">
-                <div className="text-amber-200">
+                <div className="text-amber-900">
                   Think of something you need to remember? Add it now:
                 </div>
               </div>
               <div className="flex">
                 <input
                   type="text"
-                  className="flex-1 rounded-l-md bg-gray-700 border-gray-600 text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm placeholder-gray-400"
+                  className="flex-1 rounded-l-md bg-amber-50 border-amber-300 text-gray-900 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm placeholder-amber-400"
                   placeholder="Add something you just remembered..."
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && e.currentTarget.value.trim()) {
