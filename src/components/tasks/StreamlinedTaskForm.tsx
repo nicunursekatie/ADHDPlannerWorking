@@ -88,6 +88,8 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+
+    console.log('Due date updated:', formData.dueDate);
   }, [errors]);
 
   const handleProjectChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {

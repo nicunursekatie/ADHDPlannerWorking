@@ -485,16 +485,20 @@ const Dashboard: React.FC = () => {
                 <Link 
                   key={project.id} 
                   to={`/projects/${project.id}`}
-                  className="flex items-center justify-between p-2 rounded-lg bg-gray-800/40 hover:bg-gray-700/40 transition-colors"
+                  className="flex items-center justify-between p-2 rounded-lg border transition-colors"
+                  style={{ 
+                    backgroundColor: project.color + '20', // 12.5% opacity for pale background
+                    borderColor: project.color
+                  }}
                 >
                   <div className="flex items-center">
                     <div 
                       className="w-3 h-3 rounded-full mr-3" 
                       style={{ backgroundColor: project.color }}
                     ></div>
-                    <span className="font-medium text-gray-100">{project.name}</span>
+                    <span className="font-medium text-gray-900">{project.name}</span>
                   </div>
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-amber-700">
                     {projectTasks.length} task{projectTasks.length !== 1 ? 's' : ''}
                   </span>
                 </Link>
