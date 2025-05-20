@@ -77,6 +77,10 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
   const [overdueNewDate, setOverdueNewDate] = useState('');
   const [overdueNotes, setOverdueNotes] = useState('');
 
+  // --- State for prompt chunking ---
+  const PROMPTS_PER_CHUNK = 2;
+  const [promptChunkIndex, setPromptChunkIndex] = useState(0);
+
   const getCurrentWeekDetails = () => {
     const date = new Date();
     const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
@@ -479,29 +483,64 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
       {activeSection && activeSectionId !== 'overdue' && (
         <Modal
           isOpen={!!activeSectionId}
-          onClose={() => setActiveSectionId(null)}
+          onClose={() => { setActiveSectionId(null); setPromptChunkIndex(0); }}
           title={activeSection.title}
           size="lg"
         >
           <div className="space-y-6">
             <p className="text-base text-amber-800">{activeSection.description}</p>
             
-            {/* Prompts */}
+            {/* Prompts in chunks */}
             <div className="space-y-4">
-              {activeSection.prompts.map((prompt, index) => (
-                <div key={`${activeSectionId}-${index}`}>
-                  <label className="block text-sm font-medium text-amber-900 mb-1">
-                    {prompt}
-                  </label>
-                  <textarea
-                    value={journalResponses[`${activeSectionId}-${index}`] || ''}
-                    onChange={(e) => handleJournalChange(index, e.target.value)}
-                    className="w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 placeholder-amber-700 shadow-sm focus:border-amber-400 focus:ring-amber-400"
-                    rows={3}
-                    placeholder="Type your thoughts here..."
-                  />
-                </div>
-              ))}
+              {activeSection.prompts
+                .slice(promptChunkIndex * PROMPTS_PER_CHUNK, (promptChunkIndex + 1) * PROMPTS_PER_CHUNK)
+                .map((prompt, index) => {
+                  const globalIndex = promptChunkIndex * PROMPTS_PER_CHUNK + index;
+                  return (
+                    <div key={`${activeSectionId}-${globalIndex}`}>
+                      <label className="block text-sm font-medium text-amber-900 mb-1">
+                        {prompt}
+                      </label>
+                      <textarea
+                        value={journalResponses[`${activeSectionId}-${globalIndex}`] || ''}
+                        onChange={(e) => handleJournalChange(globalIndex, e.target.value)}
+                        className="w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 placeholder-amber-700 shadow-sm focus:border-amber-400 focus:ring-amber-400"
+                        rows={3}
+                        placeholder="Type your thoughts here..."
+                      />
+                    </div>
+                  );
+                })}
+            </div>
+            {/* Navigation for prompt chunks */}
+            <div className="flex justify-between pt-3 border-t border-amber-200">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  if (promptChunkIndex > 0) setPromptChunkIndex(promptChunkIndex - 1);
+                  else setActiveSectionId(null);
+                }}
+              >
+                {promptChunkIndex > 0 ? 'Back' : 'Back to Review'}
+              </Button>
+              {((promptChunkIndex + 1) * PROMPTS_PER_CHUNK) < activeSection.prompts.length ? (
+                <Button 
+                  onClick={() => setPromptChunkIndex(promptChunkIndex + 1)}
+                  variant="primary"
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button 
+                  onClick={() => {
+                    handleSaveJournalEntries();
+                    setPromptChunkIndex(0);
+                  }}
+                  variant="primary"
+                >
+                  Save All Responses & Continue
+                </Button>
+              )}
             </div>
             
             {/* Relevant task lists based on the section */}
@@ -596,23 +635,6 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                 </div>
               </div>
             )}
-            
-            <div className="flex justify-between pt-3 border-t border-amber-200">
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  setActiveSectionId(null);
-                }}
-              >
-                Back to Review
-              </Button>
-              <Button 
-                onClick={handleSaveJournalEntries}
-                variant="primary"
-              >
-                Save All Responses & Continue
-              </Button>
-            </div>
           </div>
         </Modal>
       )}
