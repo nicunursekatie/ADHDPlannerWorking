@@ -184,7 +184,8 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
     }
     
     if (isEdit && task) {
-      updateTask({ ...task, ...formData } as Task);
+      const newDueDate = new Date().toISOString(); // or a specific date
+      updateTask({ ...task, ...formData, dueDate: newDueDate } as Task);
     } else {
       addTask(formData);
     }
