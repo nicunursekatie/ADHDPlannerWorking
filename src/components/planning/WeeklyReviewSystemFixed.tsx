@@ -19,7 +19,8 @@ import {
   RefreshCw,
   AlertTriangle,
   X,
-  Check
+  Check,
+  Brain
 } from 'lucide-react';
 
 interface WeeklyReviewSystemFixedProps {
@@ -39,7 +40,7 @@ type ReviewSection = {
 interface OverdueTaskReview {
   taskId: string;
   reason: string;
-  action: 'reschedule' | 'keep' | 'drop' | 'delegate';
+  action: 'reschedule' | 'keep' | 'drop' | 'delegate' | 'breakdown';
   newDate?: string;
   notes?: string;
 }
@@ -73,7 +74,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
   const [overdueReasons, setOverdueReasons] = useState<string[]>([]);
   const [overdueOtherReason, setOverdueOtherReason] = useState('');
   const [markComplete, setMarkComplete] = useState(false);
-  const [overdueAction, setOverdueAction] = useState<'reschedule' | 'keep' | 'drop' | 'delegate'>('reschedule');
+  const [overdueAction, setOverdueAction] = useState<'reschedule' | 'keep' | 'drop' | 'delegate' | 'breakdown'>('reschedule');
   const [overdueNewDate, setOverdueNewDate] = useState('');
   const [overdueNotes, setOverdueNotes] = useState('');
 
@@ -301,6 +302,12 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
           updateTask({
             ...currentTask,
             dueDate: overdueNewDate || null,
+          });
+          break;
+        case 'breakdown':
+          updateTask({
+            ...currentTask,
+            tags: [...(currentTask.tags || []), 'needs-breakdown'],
           });
           break;
         case 'drop':
@@ -706,6 +713,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                   {[
                     { value: 'reschedule', label: 'Reschedule it', icon: <Calendar size={18} /> },
                     { value: 'keep', label: 'Keep it overdue', icon: <Clock size={18} /> },
+                    { value: 'breakdown', label: 'Break it down', icon: <Brain size={18} /> },
                     { value: 'drop', label: 'Drop it', icon: <X size={18} /> },
                     { value: 'delegate', label: 'Delegate it', icon: <Check size={18} /> },
                   ].map(option => (
