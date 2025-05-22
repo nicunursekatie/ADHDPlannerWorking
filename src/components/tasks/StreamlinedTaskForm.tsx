@@ -336,6 +336,38 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
         </div>
       </div>
       
+      {/* Repeat/Recurrence Button Group */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
+        <div className="flex space-x-2">
+          {[
+            { label: 'None', value: 'none' },
+            { label: 'Daily', value: 'daily' },
+            { label: 'Weekly', value: 'weekly' },
+            { label: 'Monthly', value: 'monthly' },
+            { label: 'Custom', value: 'custom' },
+          ].map(option => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setFormData(prev => ({
+                ...prev,
+                isRecurring: option.value !== 'none',
+                recurrencePattern: option.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
+                recurrenceInterval: option.value === 'custom' ? 1 : undefined,
+              }))}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors focus:outline-none ${
+                (formData.recurrencePattern || 'none') === option.value
+                  ? 'bg-amber-500 text-white border-amber-500'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-amber-50'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      
       {/* Priority selection - visual buttons */}
       <div className="flex space-x-2">
         <span className="text-sm text-gray-500 flex items-center mr-1">
