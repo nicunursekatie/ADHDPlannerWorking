@@ -668,9 +668,9 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                 <label className="block text-xs font-medium text-amber-900 mb-2">
                   Why didn't this get done?
                 </label>
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   {['Forgot', 'Too busy', 'Task was unclear', 'Lost motivation', 'Waiting on someone', 'Other'].map(reason => (
-                    <label key={reason} className="flex items-center gap-2 text-amber-900">
+                    <label key={reason} className="flex flex-row items-center gap-3 text-amber-900 text-base font-normal">
                       <input
                         type="checkbox"
                         checked={overdueReasons.includes(reason)}
@@ -681,7 +681,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                             setOverdueReasons(overdueReasons.filter(r => r !== reason));
                           }
                         }}
-                        className="accent-amber-500"
+                        className="accent-amber-500 h-4 w-4"
                       />
                       <span>{reason}</span>
                     </label>
