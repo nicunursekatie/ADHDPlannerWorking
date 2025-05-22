@@ -20,6 +20,10 @@ export interface Task {
   recurringTaskId?: string; // ID of the recurring task that generated this task
   createdAt: string;
   updatedAt: string;
+  // Recurrence fields
+  isRecurring?: boolean;
+  recurrencePattern?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
+  recurrenceInterval?: number; // For custom recurrence, e.g., every X days
 }
 
 export interface Project {
