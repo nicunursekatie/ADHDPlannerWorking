@@ -4,6 +4,7 @@ import { Task } from '../types';
 import { ImprovedTaskCard } from '../components/tasks/ImprovedTaskCard';
 import { StreamlinedTaskForm } from '../components/tasks/StreamlinedTaskForm';
 import Modal from '../components/common/Modal';
+import { TaskDisplay } from '@/components/TaskDisplay';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Empty from '../components/common/Empty';
@@ -648,7 +649,18 @@ const TasksPage: React.FC = () => {
                   )}
                 </div>
               )}
-              
+              {/* TEST NEW COMPONENT */}
+              {tasks && tasks.length > 0 && (
+                <div className="mb-4 p-4 border-2 border-blue-500 rounded-lg bg-blue-50">
+                  <p className="text-blue-600 font-bold mb-2">NEW COMPONENT TEST:</p>
+                  <TaskDisplay 
+                    task={tasks[0]}
+                    onToggle={(id) => console.log('Toggle:', id)}
+                    onEdit={(task) => console.log('Edit:', task)}
+                    onDelete={(id) => console.log('Delete:', id)}
+                  />
+                </div>
+              )}
               {/* Standard view for specific tabs */}
               {activeTab !== 'all' && (
                 <div className="space-y-2">
