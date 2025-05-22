@@ -82,6 +82,14 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
   const PROMPTS_PER_CHUNK = 2;
   const [promptChunkIndex, setPromptChunkIndex] = useState(0);
 
+  
+  const breakdownOptions = [
+    { value: 'reschedule', label: 'Reschedule it', icon: <Calendar size={18} /> },
+    { value: 'keep', label: 'Keep it overdue', icon: <Clock size={18} /> },
+    { value: 'breakdown', label: 'Break it down', icon: <Brain size={18} /> },
+    { value: 'drop', label: 'Drop it', icon: <X size={18} /> },
+    { value: 'delegate', label: 'Delegate it', icon: <Check size={18} /> },
+  ];
   const getCurrentWeekDetails = () => {
     const date = new Date();
     const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
@@ -708,13 +716,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                   What should we do with this task?
                 </label>
                 <div className="space-y-2">
-                  {[
-                    { value: 'reschedule', label: 'Reschedule it', icon: <Calendar size={18} /> },
-                    { value: 'keep', label: 'Keep it overdue', icon: <Clock size={18} /> },
-                    { value: 'breakdown', label: 'Break it down', icon: <Brain size={18} /> },
-                    { value: 'drop', label: 'Drop it', icon: <X size={18} /> },
-                    { value: 'delegate', label: 'Delegate it', icon: <Check size={18} /> },
-                  ].map(option => (
+                {breakdownOptions.map(option => (
                     <label key={option.value} className="flex items-center space-x-3 text-amber-900">
                       <input
                         type="radio"
@@ -737,18 +739,20 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                   <label className="block text-xs font-medium text-amber-900 mb-2">
                     New due date
                   </label>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex flex-col gap-2">
                     <input
                       type="date"
                       value={overdueNewDate}
                       onChange={(e) => setOverdueNewDate(e.target.value)}
                       className="block w-full rounded-md bg-amber-50 border-amber-200 text-amber-900 placeholder-amber-700 shadow-sm focus:ring-amber-400 focus:border-amber-400 sm:text-xs"
                     />
-                    <Button size="sm" variant="secondary" onClick={() => setOverdueNewDate(formatDate(new Date(Date.now() + 24*60*60*1000)))}>Tomorrow</Button>
-                    <Button size="sm" variant="secondary" onClick={() => {
-                      const d = new Date(); d.setDate(d.getDate() + 7); setOverdueNewDate(formatDate(d));
-                    }}>Next Week</Button>
-                    <Button size="sm" variant="outline" onClick={() => setOverdueNewDate('')}>Remove Due Date</Button>
+                    <div className="flex flex-row gap-2 mt-1">
+                      <Button size="sm" variant="secondary" className="rounded-full px-4 py-1 text-amber-900 bg-amber-100 border border-amber-200 hover:bg-amber-200" onClick={() => setOverdueNewDate(formatDate(new Date(Date.now() + 24*60*60*1000)))}>Tomorrow</Button>
+                      <Button size="sm" variant="secondary" className="rounded-full px-4 py-1 text-amber-900 bg-amber-100 border border-amber-200 hover:bg-amber-200" onClick={() => {
+                        const d = new Date(); d.setDate(d.getDate() + 7); setOverdueNewDate(formatDate(d));
+                      }}>Next Week</Button>
+                      <Button size="sm" variant="outline" className="rounded-full px-4 py-1 text-amber-700 border-amber-300 hover:bg-amber-50" onClick={() => setOverdueNewDate('')}>Remove Due Date</Button>
+                    </div>
                   </div>
                 </div>
               )}

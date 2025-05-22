@@ -171,6 +171,7 @@ const ProjectDetailPage: React.FC = () => {
           task={editingTask || undefined}
           onClose={handleCloseTaskModal}
           isEdit={!!editingTask}
+          initialProjectId={projectId}
         />
       </Modal>
       

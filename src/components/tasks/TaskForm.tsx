@@ -10,6 +10,7 @@ interface TaskFormProps {
   parentTask?: Task | null;
   onClose: () => void;
   isEdit?: boolean;
+  initialProjectId?: string | null;
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({
@@ -17,6 +18,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
   parentTask = null,
   onClose,
   isEdit = false,
+  initialProjectId = null,
 }) => {
   const { addTask, updateTask, deleteTask, projects, categories } = useAppContext();
   
@@ -24,7 +26,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
     title: '',
     description: '',
     dueDate: null,
-    projectId: parentTask?.projectId || null,
+    projectId: parentTask?.projectId || initialProjectId || null,
     categoryIds: [],
     parentTaskId: parentTask?.id || null,
     priority: 'medium',
