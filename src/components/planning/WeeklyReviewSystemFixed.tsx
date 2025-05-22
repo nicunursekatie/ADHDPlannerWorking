@@ -417,9 +417,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                 }`}
                 onClick={() => {
                   console.log('Card clicked for section:', section.id, 'complete:', section.complete);
-                  if (!section.complete) {
-                    openReviewModal(section.id);
-                  }
+                  openReviewModal(section.id);
                 }}
               >
                 <div className="flex items-center justify-between">
