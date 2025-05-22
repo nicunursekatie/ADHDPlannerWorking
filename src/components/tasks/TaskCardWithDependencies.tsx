@@ -159,6 +159,15 @@ const TaskCardWithDependencies: React.FC<TaskCardWithDependenciesProps> = ({
               <Trash2 size={16} />
             </button>
           )}
+          {onBreakdown && (
+            <button
+              onClick={() => onBreakdown(task)}
+              className="p-1 text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded"
+              title="AI Breakdown"
+            >
+              <Brain size={16} />
+            </button>
+          )}
         </div>
       </div>
       
