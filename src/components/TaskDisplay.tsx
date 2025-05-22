@@ -1,7 +1,7 @@
 import React from 'react';
 import { format, formatDistanceToNow, isPast, isToday } from 'date-fns';
 import { CheckCircle2, Circle, Calendar, AlertCircle } from 'lucide-react';
-import { Task } from '@/types/task';
+import { Task } from '../types';
 
 interface TaskDisplayProps {
   task: Task;
