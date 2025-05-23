@@ -4,7 +4,7 @@ import { Task, TimeBlock } from '../../types';
 import { useAppContext } from '../../context/AppContext';
 import { Plus, Clock, Edit, Info } from 'lucide-react';
 import Button from '../common/Button';
-import TaskCard from '../tasks/TaskCard';
+import { TaskDisplay } from "../TaskDisplay";
 import { generateId, calculateDuration } from '../../utils/helpers';
 import TimeBlockModal from './TimeBlockModal';
 import Card from '../common/Card';
@@ -15,7 +15,7 @@ interface DailyPlannerGridProps {
 }
 
 const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
-  const { tasks, projects, categories, getDailyPlan, saveDailyPlan } = useAppContext();
+  const { tasks, projects, categories, getDailyPlan, saveDailyPlan, updateTask } = useAppContext();
   const [modalBlock, setModalBlock] = useState<TimeBlock | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -112,11 +112,17 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
   };
 
   const DraggableTask = ({ task }: { task: Task }) => {
+    const { updateTask } = useAppContext();
     const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: task.id });
     const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
     return (
       <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
-        <TaskCard task={task} projects={projects} categories={categories} onDelete={() => {}} />
+        <TaskDisplay 
+          task={task}
+          onToggle={(id) => updateTask(id, { completed: !task.completed })}
+          onEdit={() => {}} // Daily planner doesn't need edit
+          onDelete={() => {}} // Daily planner doesn't need delete from here
+        />
       </div>
     );
   };
@@ -241,19 +247,19 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
                         <h4 className="text-sm font-medium text-gray-700">Tasks ({blockTasks.length})</h4>
                         {blockTasks.map(task => (
                           <div key={task.id} className="pl-2">
-                            <TaskCard 
-                              task={task} 
-                              projects={projects} 
-                              categories={categories}
-                              onDelete={() => {
-                                const newTaskIds = blockTaskIds.filter(id => id !== task.id);
-                                const updatedBlock = { ...block, taskIds: newTaskIds };
-                                const updatedBlocks = timeBlocks.map(b => 
-                                  b.id === block.id ? updatedBlock : b
-                                );
-                                saveDailyPlan({ id: date, date, timeBlocks: updatedBlocks });
-                              }}
-                            />
+                            <TaskDisplay 
+                            task={task}
+                            onToggle={(id) => updateTask(id, { completed: !task.completed })}
+                            onEdit={() => {}}
+                            onDelete={() => {
+                              const newTaskIds = blockTaskIds.filter(id => id !== task.id);
+                              const updatedBlock = { ...block, taskIds: newTaskIds };
+                              const updatedBlocks = timeBlocks.map(b => 
+                                b.id === block.id ? updatedBlock : b
+                              );
+                              saveDailyPlan({ id: date, date, timeBlocks: updatedBlocks });
+                            }}
+                          />
                           </div>
                         ))}
                       </div>
@@ -283,11 +289,12 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
         <DragOverlay>
           {activeId && (
             <div className="opacity-50">
-              <TaskCard
-                task={tasks.find(t => t.id === activeId)!}
-                projects={projects}
-                categories={categories}
-              />
+              <TaskDisplay
+              task={tasks.find(t => t.id === activeId)!}
+              onToggle={() => {}}
+              onEdit={() => {}}
+              onDelete={() => {}}
+            />
             </div>
           )}
         </DragOverlay>
