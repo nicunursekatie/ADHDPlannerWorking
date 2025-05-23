@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Task } from '../types';
-import TaskCardWithDependencies from '../components/tasks/TaskCardWithDependencies';
+import { TaskDisplay } from '../components/TaskDisplay';
 import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
 import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Empty from '../components/common/Empty';
-import { TaskDisplay } from "../components/TaskDisplay";
 import { EnhancedQuickCapture } from '../components/tasks/EnhancedQuickCapture';
 import { 
   Plus, Filter, X, Undo2, Archive, 
@@ -34,16 +33,30 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
   onDelete,
   onBreakdown
 }) => {
+  const { updateTask } = useAppContext();
+  
   return (
-    <TaskCardWithDependencies
-      task={task}
-      isSelected={isSelected}
-      onSelectChange={onSelectChange}
-      showSelection={true}
-      onEdit={onEdit}
-      onDelete={onDelete}
-      onBreakdown={onBreakdown}
-    />
+    <div className="relative">
+      {/* Selection checkbox for bulk operations */}
+      <div className="absolute left-2 top-4 z-10">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => onSelectChange(e.target.checked)}
+          className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+        />
+      </div>
+      
+      {/* Task display with padding for checkbox */}
+      <div className={isSelected ? 'ml-8' : 'ml-8'}>
+        <TaskDisplay
+          task={task}
+          onToggle={(id) => updateTask(id, { completed: !task.completed })}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      </div>
+    </div>
   );
 };
 
@@ -488,18 +501,7 @@ const TasksPageWithBulkOps: React.FC = () => {
               <span className="whitespace-nowrap">This Week{thisWeekTasks.length > 0 && ` (${thisWeekTasks.length})`}</span>
             </div>
           </button>
-          {/* TEST NEW COMPONENT */}
-          {tasks && tasks.length > 0 && (
-            <div className="mb-4 p-4 border-2 border-blue-500 rounded-lg bg-blue-50">
-              <p className="text-blue-600 font-bold mb-2">NEW COMPONENT TEST:</p>
-              <TaskDisplay 
-                task={tasks[0]}
-                onToggle={(id) => console.log('Toggle:', id)}
-                onEdit={(task) => console.log('Edit:', task)}
-                onDelete={(id) => console.log('Delete:', id)}
-              />
-            </div>
-          )}
+          
           <button
             className={`flex-shrink-0 px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
               activeTab === 'overdue' 
