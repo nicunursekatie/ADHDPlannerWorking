@@ -530,6 +530,15 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                         </p>
                         <div className="grid grid-cols-2 gap-2">
                           <Button
+                            variant={taskWithReason.action === 'completed' ? 'secondary' : 'outline'}
+                            size="sm"
+                            className="justify-center"
+                            onClick={() => handleActionSelect(taskWithReason.task.id, 'completed')}
+                            icon={<CheckCircle size={14} />}
+                          >
+                            Mark Completed
+                          </Button>
+                          <Button
                             variant={taskWithReason.action === 'reschedule' ? 'secondary' : 'outline'}
                             size="sm"
                             className="justify-center"
