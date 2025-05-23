@@ -48,6 +48,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   
   // Common reasons for not completing tasks
   const [commonReasons, setCommonReasons] = useState<Reason[]>([
+    { id: 'already_done', text: 'I did - I completed it but forgot to mark it', frequency: 0, isCommon: true },
     { id: 'forgot', text: 'I forgot about it', frequency: 0, isCommon: true },
     { id: 'no_time', text: "I didn't have enough time", frequency: 0, isCommon: true },
     { id: 'too_difficult', text: 'It was more difficult than expected', frequency: 0, isCommon: true },
@@ -58,8 +59,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     { id: 'resources', text: 'I was missing resources or information', frequency: 0, isCommon: true },
     { id: 'interruptions', text: 'I was interrupted too many times', frequency: 0, isCommon: true },
     { id: 'not_clear', text: 'The task wasn\'t clear enough', frequency: 0, isCommon: true },
-    { id: 'not_important', text: 'It turned out not to be important', frequency: 0, isCommon: true },
-    { id: 'already_done', text: 'I actually completed it but forgot to mark it', frequency: 0, isCommon: true }
+    { id: 'not_important', text: 'It turned out not to be important', frequency: 0, isCommon: true }
   ]);
   
   // Get date for 7 days ago
