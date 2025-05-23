@@ -8,7 +8,7 @@ import Card from '../components/common/Card';
 import TaskForm from '../components/tasks/TaskForm';
 import TaskPlanningBoard from '../components/planning/TaskPlanningBoard';
 import BackwardPlanner from '../components/planning/BackwardPlanner';
-import ProjectBreakdown from '../components/planning/ProjectBreakdown';
+import ProjectBreakdown from '../components/planning/project-breakdown/ProjectBreakdown';
 import { formatDate } from '../utils/helpers';
 
 enum PlanningMode {

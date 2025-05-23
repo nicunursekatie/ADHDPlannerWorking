@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Task } from '../types';
-import CalendarView from '../components/calendar/CalendarView';
-import WorkScheduleSelector from '../components/calendar/WorkScheduleSelector';
+import CalendarView from '../components/planning/calendar/CalendarView';
+import WorkScheduleSelector from '../components/planning/calendar/WorkScheduleSelector';
 import Modal from '../components/common/Modal';
 import { StreamlinedTaskForm } from '../components/tasks/StreamlinedTaskForm';
 

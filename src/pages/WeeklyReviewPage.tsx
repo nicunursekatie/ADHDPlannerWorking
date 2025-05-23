@@ -1,5 +1,5 @@
 import React from 'react';
-import WeeklyReviewSystemFixed from '../components/planning/WeeklyReviewSystemFixed';
+import WeeklyReviewSystemFixed from '../components/planning/weekly-review/WeeklyReviewSystemFixed';
 
 const WeeklyReviewPage: React.FC = () => {
   return (

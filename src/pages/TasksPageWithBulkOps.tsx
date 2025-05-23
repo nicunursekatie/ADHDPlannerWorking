@@ -8,7 +8,7 @@ import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Empty from '../components/common/Empty';
-import { EnhancedQuickCapture } from '../components/tasks/EnhancedQuickCapture';
+import { QuickCapture } from '../components/tasks/QuickCapture';
 import { 
   Plus, Filter, X, Undo2, Archive, 
   AlertTriangle, CalendarDays, Calendar, Layers, 
@@ -424,7 +424,7 @@ const TasksPageWithBulkOps: React.FC = () => {
       
       {/* Quick Task Input */}
       <div className="mb-6">
-        <EnhancedQuickCapture 
+        <QuickCapture 
           placeholder="Add a task quickly... (try !today, !tomorrow, !high)"
           defaultProjectId={filterProjectId}
           onTaskAdded={() => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Task } from '../../types';
-import { useAppContext } from '../../context/AppContext';
+import { Task } from '../../../types';
+import { useAppContext } from '../../../context/AppContext';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -9,9 +9,9 @@ import {
   List,
   Clock
 } from 'lucide-react';
-import Badge from '../common/Badge';
-import TaskCard from '../tasks/TaskCard';
-import Button from '../common/Button';
+import Badge from '../../common/Badge';
+import TaskCard from '../../tasks/TaskCard';
+import Button from '../../common/Button';
 
 interface CalendarViewProps {
   onEditTask: (task: Task) => void;

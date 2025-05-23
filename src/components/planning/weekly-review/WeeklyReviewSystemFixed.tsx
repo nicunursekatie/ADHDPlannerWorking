@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '../../context/AppContext';
-import { Task, Project } from '../../types';
-import Card from '../common/Card';
-import Button from '../common/Button';
-import { ImprovedTaskCard } from '../tasks/ImprovedTaskCard';
-import { formatDate, formatDateForDisplay } from '../../utils/helpers';
-import Modal from '../common/Modal';
+import { useAppContext } from '../../../context/AppContext';
+import { Task, Project } from '../../../types';
+import Card from '../../common/Card';
+import Button from '../../common/Button';
+import { ImprovedTaskCard } from '../../tasks/ImprovedTaskCard';
+import { formatDate, formatDateForDisplay } from '../../../utils/helpers';
+import Modal from '../../common/Modal';
 import { 
   Calendar, 
   CheckCircle, 

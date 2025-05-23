@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { TimeBlock } from '../../types';
-import Modal from '../common/Modal';
-import Button from '../common/Button';
+import { TimeBlock } from '../../../types';
+import Modal from '../../common/Modal';
+import Button from '../../common/Button';
 import { Save, Trash2, X, AlertCircle } from 'lucide-react';
-import { calculateDuration } from '../../utils/helpers';
+import { calculateDuration } from '../../../utils/helpers';
 
 interface TimeBlockModalProps {
   block: TimeBlock | null;

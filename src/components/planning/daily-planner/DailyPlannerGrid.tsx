@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent } from '@dnd-kit/core';
-import { Task, TimeBlock } from '../../types';
-import { useAppContext } from '../../context/AppContext';
+import { Task, TimeBlock } from '../../../types';
+import { useAppContext } from '../../../context/AppContext';
 import { Plus, Clock, Edit, Info } from 'lucide-react';
-import Button from '../common/Button';
-import TaskCard from '../tasks/TaskCard';
-import { generateId, calculateDuration } from '../../utils/helpers';
+import Button from '../../common/Button';
+import TaskCard from '../../tasks/TaskCard';
+import { generateId, calculateDuration } from '../../../utils/helpers';
 import TimeBlockModal from './TimeBlockModal';
-import Card from '../common/Card';
+import Card from '../../common/Card';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 
 interface DailyPlannerGridProps {

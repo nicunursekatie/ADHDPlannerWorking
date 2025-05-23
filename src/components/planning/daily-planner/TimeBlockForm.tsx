@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { TimeBlock } from '../../types';
-import Button from '../common/Button';
+import { TimeBlock } from '../../../types';
+import Button from '../../common/Button';
 import { X, Save } from 'lucide-react';
 
 interface TimeBlockFormProps {

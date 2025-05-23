@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Task, Project, Category } from '../../types';
-import EnhancedTaskCard from '../tasks/EnhancedTaskCard';
+import { ImprovedTaskCard } from '../tasks/ImprovedTaskCard';
 import { useAppContext } from '../../context/AppContext';
 import { Clock, Target, Menu, Download, LayoutGrid, List, ArrowLeft, ArrowRight, Plus } from 'lucide-react';
 import Button from '../common/Button';
@@ -129,7 +129,7 @@ const TaskPlanningBoard: React.FC<TaskPlanningBoardProps> = ({
           ) : (
             tasks.map(task => (
               <div key={task.id} className="relative group">
-                <EnhancedTaskCard
+                <ImprovedTaskCard
                   task={task}
                   projects={projects}
                   categories={categories}
@@ -290,7 +290,7 @@ const TaskPlanningBoard: React.FC<TaskPlanningBoardProps> = ({
                 <div className="text-gray-500 italic">No tasks in backlog</div>
               ) : (
                 backlogTasks.map(task => (
-                  <EnhancedTaskCard
+                  <ImprovedTaskCard
                     key={task.id}
                     task={task}
                     projects={projects}
@@ -319,7 +319,7 @@ const TaskPlanningBoard: React.FC<TaskPlanningBoardProps> = ({
               ) : (
                 planningTasks.map(task => (
                   <div key={task.id} className="relative group">
-                    <EnhancedTaskCard
+                    <ImprovedTaskCard
                       task={task}
                       projects={projects}
                       categories={categories}
@@ -351,7 +351,7 @@ const TaskPlanningBoard: React.FC<TaskPlanningBoardProps> = ({
                 <div className="text-gray-500 italic">No tasks ready to work on</div>
               ) : (
                 readyTasks.map(task => (
-                  <EnhancedTaskCard
+                  <ImprovedTaskCard
                     key={task.id}
                     task={task}
                     projects={projects}
@@ -374,7 +374,7 @@ const TaskPlanningBoard: React.FC<TaskPlanningBoardProps> = ({
                 <div className="text-gray-500 italic">No tasks in progress</div>
               ) : (
                 inProgressTasks.map(task => (
-                  <EnhancedTaskCard
+                  <ImprovedTaskCard
                     key={task.id}
                     task={task}
                     projects={projects}

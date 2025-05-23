@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../../context/AppContext';
-import { WorkShift, ShiftType, DEFAULT_SHIFTS } from '../../types/WorkSchedule';
+import { useAppContext } from '../../../context/AppContext';
+import { WorkShift, ShiftType, DEFAULT_SHIFTS } from '../../../types/WorkSchedule';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface WorkScheduleSelectorProps {
