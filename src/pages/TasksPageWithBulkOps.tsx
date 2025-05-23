@@ -51,7 +51,7 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
       <div className={isSelected ? 'ml-8' : 'ml-8'}>
         <TaskDisplay
           task={task}
-          onToggle={(id) => updateTask(id, { completed: !task.completed })}
+          onToggle={(id) => updateTask({ ...task, completed: !task.completed })}
           onEdit={onEdit}
           onDelete={onDelete}
           onBreakdown={onBreakdown}
