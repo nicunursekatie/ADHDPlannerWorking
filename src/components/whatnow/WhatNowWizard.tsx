@@ -3,7 +3,7 @@ import { Task, WhatNowCriteria } from '../../types';
 import { useAppContext } from '../../context/AppContext';
 import Card from '../common/Card';
 import Button from '../common/Button';
-import TaskCard from '../tasks/TaskCard';
+import { TaskDisplay } from "../TaskDisplay";
 import { CloudLightning as Lightning, Clock, BrainCircuit } from 'lucide-react';
 
 interface WhatNowWizardProps {
@@ -11,7 +11,7 @@ interface WhatNowWizardProps {
 }
 
 const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
-  const { recommendTasks, projects, categories, deleteTask } = useAppContext();
+  const { recommendTasks, projects, categories, deleteTask, updateTask } = useAppContext();
   
   const [step, setStep] = useState(1);
   const [criteria, setCriteria] = useState<WhatNowCriteria>({
@@ -309,14 +309,15 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
       <div className="space-y-4">
         {recommendedTasks.length > 0 ? (
           recommendedTasks.map(task => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              projects={projects}
-              categories={categories}
-              onEdit={onSelectTask}
-              onDelete={deleteTask}
-            />
+            <TaskDisplay
+            key={task.id}
+            task={task}
+            onToggle={(id) => {
+              // WhatNow doesn't need toggle - tasks are selected, not completed
+            }}
+            onEdit={() => onSelectTask(task)}
+            onDelete={() => deleteTask(task.id)}
+          />
           ))
         ) : (
           <div className="text-center py-8 text-gray-500">

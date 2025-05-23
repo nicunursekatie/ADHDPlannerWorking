@@ -552,11 +552,11 @@ Return JSON array only.`
 
         {breakdownOptions.length > 0 && !showContextForm && (
           <>
-            <div className="space-y-2">
+            <div className="space-y-4 max-w-2xl mx-auto">
               {breakdownOptions.map(option => (
                 <Card 
                   key={option.id} 
-                  className={`p-3 transition-all cursor-move ${
+                  className={`p-5 flex flex-row items-start gap-4 transition-all cursor-move shadow-sm border-2 border-amber-200 bg-white rounded-xl ${
                     dragOverItem === option.id ? 'ring-2 ring-blue-400' : ''
                   } ${draggedItem === option.id ? 'opacity-50' : ''}`}
                   draggable={true}
@@ -566,95 +566,90 @@ Return JSON array only.`
                   onDrop={(e) => handleDrop(e, option.id)}
                   onDragEnd={handleDragEnd}
                 >
-                  <div className="flex items-start">
-                    <div className="mr-2 cursor-move">
-                      <GripVertical size={20} className="text-gray-400" />
-                    </div>
+                  <div className="flex flex-col items-center mr-2 pt-2">
+                    <GripVertical size={20} className="text-gray-400 mb-3" />
                     <input
                       type="checkbox"
                       checked={option.selected}
                       onChange={() => toggleOption(option.id)}
-                      className="mt-1 mr-3"
+                      className="mt-1"
                     />
-                    <div className="flex-1">
-                      {option.editable ? (
-                        <div className="space-y-2">
-                          <input
-                            type="text"
-                            value={option.title}
-                            onChange={(e) => updateOption(option.id, 'title', e.target.value)}
-                            className="w-full px-2 py-1 border rounded"
-                          />
-                          <input
-                            type="text"
-                            value={option.duration}
-                            onChange={(e) => updateOption(option.id, 'duration', e.target.value)}
-                            className="w-full px-2 py-1 border rounded"
-                          />
-                          <textarea
-                            value={option.description}
-                            onChange={(e) => updateOption(option.id, 'description', e.target.value)}
-                            className="w-full px-2 py-1 border rounded"
-                            rows={2}
-                          />
-                          <div className="flex space-x-2">
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {option.editable ? (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={option.title}
+                          onChange={(e) => updateOption(option.id, 'title', e.target.value)}
+                          className="w-full px-2 py-1 border rounded"
+                        />
+                        <input
+                          type="text"
+                          value={option.duration}
+                          onChange={(e) => updateOption(option.id, 'duration', e.target.value)}
+                          className="w-full px-2 py-1 border rounded"
+                        />
+                        <textarea
+                          value={option.description}
+                          onChange={(e) => updateOption(option.id, 'description', e.target.value)}
+                          className="w-full px-2 py-1 border rounded"
+                          rows={2}
+                        />
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            onClick={() => saveEdit(option.id)}
+                            icon={<CheckCircle size={14} />}
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => deleteOption(option.id)}
+                            icon={<Trash2 size={14} />}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="font-medium text-gray-900 text-lg">{option.title}</h4>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-500">{option.duration}</span>
                             <Button
                               size="sm"
-                              onClick={() => saveEdit(option.id)}
-                              icon={<CheckCircle size={14} />}
-                            >
-                              Save
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => deleteOption(option.id)}
-                              icon={<Trash2 size={14} />}
-                            >
-                              Delete
-                            </Button>
+                              variant="ghost"
+                              onClick={() => startEditing(option.id)}
+                              icon={<Edit3 size={14} />}
+                            />
                           </div>
                         </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-gray-900">{option.title}</h4>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm text-gray-500">{option.duration}</span>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => startEditing(option.id)}
-                                icon={<Edit3 size={14} />}
-                              />
-                            </div>
+                        <p className="text-sm text-gray-700 mb-2">{option.description}</p>
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                            ${option.type === 'break' ? 'bg-green-100 text-green-800' :
+                              option.type === 'review' ? 'bg-blue-100 text-blue-800' :
+                              'bg-gray-100 text-gray-800'}`}>
+                            {option.type}
+                          </span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                            ${option.energyRequired === 'low' ? 'bg-yellow-100 text-yellow-800' :
+                              option.energyRequired === 'medium' ? 'bg-orange-100 text-orange-800' :
+                              'bg-red-100 text-red-800'}`}>
+                            {option.energyRequired} energy
+                          </span>
+                        </div>
+                        {option.tips && (
+                          <div className="bg-blue-50 border-l-4 border-blue-300 p-3 rounded text-xs text-blue-900 mt-2">
+                            <span className="font-semibold">Tip:</span> {option.tips}
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">{option.description}</p>
-                          
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                              ${option.type === 'break' ? 'bg-green-100 text-green-800' :
-                                option.type === 'review' ? 'bg-blue-100 text-blue-800' :
-                                'bg-gray-100 text-gray-800'}`}>
-                              {option.type}
-                            </span>
-                            
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                              ${option.energyRequired === 'low' ? 'bg-yellow-100 text-yellow-800' :
-                                option.energyRequired === 'medium' ? 'bg-orange-100 text-orange-800' :
-                                'bg-red-100 text-red-800'}`}>
-                              {option.energyRequired} energy
-                            </span>
-                          </div>
-                          
-                          {option.tips && (
-                            <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                              <strong>Tip:</strong> {option.tips}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 </Card>
               ))}

@@ -287,6 +287,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     setTasks(updatedTasks);
     localStorage.saveTasks(updatedTasks);
+    
+    console.log('Updating task:', updatedTask);
   }, [tasks]);
   
   const deleteTask = useCallback((taskId: string) => {

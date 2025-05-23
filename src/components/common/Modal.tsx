@@ -6,7 +6,8 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  footer?: ReactNode;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -15,6 +16,7 @@ const Modal: React.FC<ModalProps> = ({
   title,
   children,
   size = 'md',
+  footer,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   
@@ -51,31 +53,51 @@ const Modal: React.FC<ModalProps> = ({
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
+    full: 'max-w-full mx-4',
   };
   
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto animate-fadeIn">
+    <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
-        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity" />
+        {/* Backdrop */}
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out"
+          aria-hidden="true"
+        />
         
+        {/* Modal panel */}
         <div
           ref={modalRef}
-          className={`inline-block align-bottom bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle ${sizeClasses[size]} w-full animate-slideIn border border-gray-700`}
+          className={`inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all duration-300 ease-out sm:my-8 sm:align-middle ${sizeClasses[size]} w-full border border-amber-200`}
         >
-          <div className="bg-gray-800 px-6 pt-6 pb-6">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-semibold text-gray-100">{title}</h3>
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-amber-200">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-amber-900 tracking-tight">
+                {title}
+              </h3>
               <button
                 type="button"
-                className="rounded-lg p-2 text-gray-400 hover:text-gray-200 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                className="rounded-lg p-2 text-amber-500 hover:text-amber-700 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all duration-200"
                 onClick={onClose}
               >
                 <span className="sr-only">Close</span>
                 <X size={20} />
               </button>
             </div>
-            <div>{children}</div>
           </div>
+          
+          {/* Content */}
+          <div className="px-6 py-4 text-amber-900">
+            {children}
+          </div>
+          
+          {/* Footer */}
+          {footer && (
+            <div className="px-6 py-4 border-t border-amber-200 bg-amber-50">
+              {footer}
+            </div>
+          )}
         </div>
       </div>
     </div>

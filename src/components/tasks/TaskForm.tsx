@@ -10,6 +10,7 @@ interface TaskFormProps {
   parentTask?: Task | null;
   onClose: () => void;
   isEdit?: boolean;
+  initialProjectId?: string | null;
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({
@@ -17,6 +18,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
   parentTask = null,
   onClose,
   isEdit = false,
+  initialProjectId = null,
 }) => {
   const { addTask, updateTask, deleteTask, projects, categories } = useAppContext();
   
@@ -24,7 +26,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
     title: '',
     description: '',
     dueDate: null,
-    projectId: parentTask?.projectId || null,
+    projectId: parentTask?.projectId || initialProjectId || null,
     categoryIds: [],
     parentTaskId: parentTask?.id || null,
     priority: 'medium',
@@ -173,43 +175,78 @@ const TaskForm: React.FC<TaskFormProps> = ({
         />
       </div>
 
-      <div>
-        <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
-          Due Date
-        </label>
-        <div className="flex items-center">
-          <Calendar size={18} className="text-gray-400 mr-2" />
-          <input
-            type="date"
-            id="dueDate"
-            name="dueDate"
-            value={formData.dueDate || ''}
-            onChange={handleChange}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Due Date */}
+        <div>
+          <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
+            Due Date
+          </label>
+          <div className="flex items-center">
+            <Calendar size={18} className="text-gray-400 mr-2" />
+            <input
+              type="date"
+              id="dueDate"
+              name="dueDate"
+              value={formData.dueDate || ''}
+              onChange={handleChange}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+          </div>
+        </div>
+        {/* Project */}
+        <div>
+          <label htmlFor="project" className="block text-sm font-medium text-gray-700 mb-1">
+            Project
+          </label>
+          <div className="flex items-center">
+            <Folder size={18} className="text-gray-400 mr-2" />
+            <select
+              id="project"
+              name="project"
+              value={formData.projectId || ''}
+              onChange={handleProjectChange}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            >
+              <option value="">No Project</option>
+              {projects.map(project => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
+      {/* Repeat/Recurrence Button Group */}
       <div>
-        <label htmlFor="project" className="block text-sm font-medium text-gray-700 mb-1">
-          Project
-        </label>
-        <div className="flex items-center">
-          <Folder size={18} className="text-gray-400 mr-2" />
-          <select
-            id="project"
-            name="project"
-            value={formData.projectId || ''}
-            onChange={handleProjectChange}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          >
-            <option value="">No Project</option>
-            {projects.map(project => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </select>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
+        <div className="flex space-x-2">
+          {[
+            { label: 'None', value: 'none' },
+            { label: 'Daily', value: 'daily' },
+            { label: 'Weekly', value: 'weekly' },
+            { label: 'Monthly', value: 'monthly' },
+            { label: 'Custom', value: 'custom' },
+          ].map(option => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setFormData(prev => ({
+                ...prev,
+                isRecurring: option.value !== 'none',
+                recurrencePattern: option.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
+                recurrenceInterval: option.value === 'custom' ? 1 : undefined,
+              }))}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors focus:outline-none ${
+                (formData.recurrencePattern || 'none') === option.value
+                  ? 'bg-amber-500 text-white border-amber-500'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-amber-50'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
       </div>
 

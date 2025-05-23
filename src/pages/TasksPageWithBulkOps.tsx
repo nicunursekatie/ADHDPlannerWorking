@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Task } from '../types';
-import TaskCardWithDependencies from '../components/tasks/TaskCardWithDependencies';
+import { TaskDisplay } from '../components/TaskDisplay';
 import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
 import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
 import Modal from '../components/common/Modal';
@@ -33,16 +33,30 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
   onDelete,
   onBreakdown
 }) => {
+  const { updateTask } = useAppContext();
+  
   return (
-    <TaskCardWithDependencies
-      task={task}
-      isSelected={isSelected}
-      onSelectChange={onSelectChange}
-      showSelection={true}
-      onEdit={onEdit}
-      onDelete={onDelete}
-      onBreakdown={onBreakdown}
-    />
+    <div className="relative">
+      {/* Selection checkbox for bulk operations */}
+      <div className="absolute left-2 top-4 z-10">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => onSelectChange(e.target.checked)}
+          className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+        />
+      </div>
+      
+      {/* Task display with padding for checkbox */}
+      <div className={isSelected ? 'ml-8' : 'ml-8'}>
+        <TaskDisplay
+          task={task}
+          onToggle={(id) => updateTask(id, { completed: !task.completed })}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      </div>
+    </div>
   );
 };
 
@@ -154,19 +168,23 @@ const TasksPageWithBulkOps: React.FC = () => {
       console.log('Subtasks received:', subtasks);
 
       // Prepare all subtasks with parentTaskId and other inherited fields
-      const preparedSubtasks = subtasks.map((subtask) => ({
-        ...subtask,
-        parentTaskId: breakdownTask.id,
-        projectId: breakdownTask.projectId,
-        categoryIds: breakdownTask.categoryIds || [],
-        dueDate: subtask.dueDate || breakdownTask.dueDate || null,
-        priority: subtask.priority || breakdownTask.priority || 'medium',
-        energyLevel: subtask.energyLevel || breakdownTask.energyLevel,
-        estimatedMinutes: subtask.estimatedMinutes,
-        tags: subtask.tags || [],
-      }));
+      const preparedSubtasks = subtasks.map((subtask) => {
+        // Remove id if present, so the backend/context can generate it
+        const { id, ...rest } = subtask;
+        return {
+          ...rest,
+          parentTaskId: breakdownTask.id,
+          projectId: breakdownTask.projectId,
+          categoryIds: breakdownTask.categoryIds || [],
+          dueDate: subtask.dueDate || breakdownTask.dueDate || null,
+          priority: subtask.priority || breakdownTask.priority || 'medium',
+          energyLevel: subtask.energyLevel || breakdownTask.energyLevel,
+          estimatedMinutes: subtask.estimatedMinutes,
+          tags: subtask.tags || [],
+        };
+      });
 
-      // Use bulkAddTasks to add all subtasks at once
+      // @ts-expect-error: preparedSubtasks may not have id, but that's intentional for new tasks
       bulkAddTasks(preparedSubtasks);
 
       console.log('Subtasks added successfully');

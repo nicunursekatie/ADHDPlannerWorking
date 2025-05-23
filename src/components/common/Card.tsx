@@ -6,6 +6,7 @@ interface CardProps {
   className?: string;
   headerAction?: ReactNode;
   onClick?: () => void;
+  variant?: 'default' | 'elevated' | 'bordered';
 }
 
 const Card: React.FC<CardProps> = ({
@@ -14,22 +15,32 @@ const Card: React.FC<CardProps> = ({
   className = '',
   headerAction,
   onClick,
+  variant = 'default',
 }) => {
-  const baseClasses = 'bg-white dark:bg-gray-800/40 backdrop-blur-sm border border-slate-200 dark:border-gray-700/50 transition-all duration-200 overflow-hidden rounded-lg shadow-sm hover:shadow-md dark:shadow-none dark:hover:shadow-none';
-  const clickableClasses = onClick ? 'cursor-pointer hover:border-slate-300 dark:hover:border-gray-600 hover:bg-slate-50 dark:hover:bg-gray-800/60' : '';
+  const baseClasses = 'bg-white backdrop-blur-sm transition-all duration-200 overflow-hidden rounded-xl font-sans';
+  
+  const variantClasses = {
+    default: 'border border-amber-200 shadow-sm hover:shadow-md',
+    elevated: 'border border-amber-200 shadow-md hover:shadow-lg',
+    bordered: 'border-2 border-amber-200 shadow-none hover:border-amber-300',
+  };
+  
+  const clickableClasses = onClick 
+    ? 'cursor-pointer hover:border-amber-300 hover:bg-amber-50/50 hover:-translate-y-0.5' 
+    : '';
   
   return (
     <div 
-      className={`${baseClasses} ${clickableClasses} ${className}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${clickableClasses} ${className}`}
       onClick={onClick}
     >
       {title && (
-        <div className="border-b border-slate-200 dark:border-gray-700/50 px-5 py-3 flex justify-between items-center bg-slate-50 dark:bg-transparent">
-          <h3 className="text-base font-semibold text-slate-800 dark:text-gray-100">{title}</h3>
+        <div className="border-b border-amber-200 px-6 py-4 flex justify-between items-center bg-amber-50/50">
+          <h3 className="text-lg font-bold text-amber-900 tracking-tight font-sans">{title}</h3>
           {headerAction && <div className="text-sm">{headerAction}</div>}
         </div>
       )}
-      <div className="px-5 py-4">{children}</div>
+      <div className="px-6 py-5 font-sans text-amber-900">{children}</div>
     </div>
   );
 };

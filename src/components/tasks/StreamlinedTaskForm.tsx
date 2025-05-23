@@ -88,6 +88,8 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+
+    console.log('Due date updated:', formData.dueDate);
   }, [errors]);
 
   const handleProjectChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -184,7 +186,8 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
     }
     
     if (isEdit && task) {
-      updateTask({ ...task, ...formData } as Task);
+      const newDueDate = new Date().toISOString(); // or a specific date
+      updateTask({ ...task, ...formData, dueDate: newDueDate } as Task);
     } else {
       addTask(formData);
     }
@@ -330,6 +333,38 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
               ))}
             </select>
           </div>
+        </div>
+      </div>
+      
+      {/* Repeat/Recurrence Button Group */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
+        <div className="flex space-x-2">
+          {[
+            { label: 'None', value: 'none' },
+            { label: 'Daily', value: 'daily' },
+            { label: 'Weekly', value: 'weekly' },
+            { label: 'Monthly', value: 'monthly' },
+            { label: 'Custom', value: 'custom' },
+          ].map(option => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setFormData(prev => ({
+                ...prev,
+                isRecurring: option.value !== 'none',
+                recurrencePattern: option.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
+                recurrenceInterval: option.value === 'custom' ? 1 : undefined,
+              }))}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors focus:outline-none ${
+                (formData.recurrencePattern || 'none') === option.value
+                  ? 'bg-amber-500 text-white border-amber-500'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-amber-50'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
       </div>
       

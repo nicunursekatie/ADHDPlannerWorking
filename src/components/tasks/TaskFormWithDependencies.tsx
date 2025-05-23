@@ -64,6 +64,10 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
   
+  const [isRecurring, setIsRecurring] = useState(task?.isRecurring || false);
+  const [recurrencePattern, setRecurrencePattern] = useState<'none' | 'daily' | 'weekly' | 'monthly' | 'custom'>(task?.recurrencePattern || 'none');
+  const [recurrenceInterval, setRecurrenceInterval] = useState<number>(task?.recurrenceInterval || 1);
+  
   // Get available tasks for dependencies (excluding self and tasks that would create cycles)
   const getAvailableTasksForDependency = () => {
     if (!task) return tasks.filter(t => !t.completed && !t.archived);
@@ -99,6 +103,9 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
       estimatedMinutes,
       tags,
       dependsOn: selectedDependencies,
+      isRecurring,
+      recurrencePattern,
+      recurrenceInterval,
     };
     
     if (isEdit && task) {
@@ -239,6 +246,37 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+        
+        {/* Repeat/Recurrence Button Group */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
+          <div className="flex space-x-2">
+            {[
+              { label: 'None', value: 'none' },
+              { label: 'Daily', value: 'daily' },
+              { label: 'Weekly', value: 'weekly' },
+              { label: 'Monthly', value: 'monthly' },
+              { label: 'Custom', value: 'custom' },
+            ].map(option => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  setIsRecurring(option.value !== 'none');
+                  setRecurrencePattern(option.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom');
+                  setRecurrenceInterval(option.value === 'custom' ? 1 : 1);
+                }}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors focus:outline-none ${
+                  (recurrencePattern || 'none') === option.value
+                    ? 'bg-amber-500 text-white border-amber-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-amber-50'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
         

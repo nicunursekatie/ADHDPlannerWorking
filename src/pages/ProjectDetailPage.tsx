@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { Task } from '../types';
-import TaskCard from '../components/tasks/TaskCard';
+import { TaskDisplay } from "../components/TaskDisplay";
 import TaskForm from '../components/tasks/TaskForm';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
@@ -13,7 +13,7 @@ import ProjectForm from '../components/projects/ProjectForm';
 const ProjectDetailPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const { projects, tasks, categories, deleteProject, deleteTask } = useAppContext();
+  const { projects, tasks, categories, deleteProject, deleteTask, updateTask } = useAppContext();
   
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -134,14 +134,13 @@ const ProjectDetailPage: React.FC = () => {
       <div className="space-y-4">
         {projectTasks.length > 0 ? (
           projectTasks.map(task => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              projects={projects}
-              categories={categories}
-              onEdit={handleOpenTaskModal}
-              onDelete={deleteTask}
-            />
+            <TaskDisplay
+            key={task.id}
+            task={task}
+            onToggle={(id) => updateTask(id, { completed: !task.completed })}
+            onEdit={() => handleOpenTaskModal(task)}
+            onDelete={() => deleteTask(task.id)}
+          />
           ))
         ) : (
           <Empty
@@ -171,6 +170,7 @@ const ProjectDetailPage: React.FC = () => {
           task={editingTask || undefined}
           onClose={handleCloseTaskModal}
           isEdit={!!editingTask}
+          initialProjectId={projectId}
         />
       </Modal>
       

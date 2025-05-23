@@ -84,6 +84,36 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
     '#6366F1', // Indigo
     '#A855F7', // Violet
     '#F97316', // Orange
+    '#FBBF24', // Light Amber
+    '#34D399', // Light Green
+    '#60A5FA', // Light Blue
+    '#C084FC', // Light Purple
+    '#F87171', // Light Red
+    '#FCD34D', // Light Yellow
+    '#6EE7B7', // Light Teal
+    '#93C5FD', // Light Sky Blue
+    '#A78BFA', // Light Indigo
+    '#FCA5A5', // Light Rose
+    '#FDE68A', // Light Gold
+    '#A7F3D0', // Light Mint
+    '#BFDBFE', // Light Cornflower Blue
+    '#DDD6FE', // Light Lavender
+    '#FECACA', // Light Salmon
+    '#FEF3C7', // Light Peach
+    '#D1FAE5', // Light Aqua
+    '#DBEAFE', // Light Powder Blue
+    '#E0E7FF', // Light Periwinkle
+    '#FEE2E2', // Light Coral
+    '#FEF9C3', // Light Cream
+    '#DCFCE7', // Light Lime
+    '#E0F2FE', // Light Azure
+    '#EDE9FE', // Light Lilac
+    '#FEE2E2', // Light Blush
+    '#FEF3C7', // Light Apricot
+    '#D1FAE5', // Light Seafoam
+    '#DBEAFE', // Light Ice Blue
+    '#E0E7FF', // Light Slate Blue
+    '#FEE2E2', // Light Dusty Rose
   ];
 
   return (

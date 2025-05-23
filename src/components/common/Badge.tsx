@@ -9,17 +9,17 @@ interface BadgeProps {
 
 const Badge: React.FC<BadgeProps> = ({ 
   text, 
-  color = 'white', 
-  bgColor = '#6366f1',
+  color = '#f59e0b', // amber-500 (goldenrod)
+  bgColor = '#fef3c7', // amber-100 (pale gold)
   className = '',
 }) => {
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${className}`}
       style={{ 
-        backgroundColor: `${bgColor}15`,
-        color: bgColor,
-        borderColor: `${bgColor}50`
+        backgroundColor: `${bgColor}`,
+        color: color,
+        borderColor: color
       }}
     >
       {text}
