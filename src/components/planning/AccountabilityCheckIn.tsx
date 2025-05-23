@@ -210,14 +210,12 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     
     // Apply action to the task
     if (action === 'reschedule') {
-      // Use the selected reschedule date
+      // Use the selected reschedule date or leave it blank
       if (rescheduleDate) {
         updatedTask.dueDate = rescheduleDate;
       } else {
-        // Fallback to tomorrow if no date selected
-        const tomorrow = new Date();
-        tomorrow.setDate(today.getDate() + 1);
-        updatedTask.dueDate = formatDate(tomorrow);
+        // Clear the due date if no date is selected (task remains unscheduled)
+        updatedTask.dueDate = '';
       }
     } else if (action === 'abandon') {
       // Mark as completed but add note about abandonment
@@ -494,6 +492,9 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                             <CalendarDays size={16} className="mr-2 text-blue-600" />
                             When would you like to reschedule this task?
                           </h5>
+                          <p className="text-xs text-gray-600 mb-2">
+                            Leave blank if you're not ready to schedule a specific date yet
+                          </p>
                           <div className="relative">
                             <input
                               type="date"
@@ -573,8 +574,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                           disabled={
                             !taskWithReason.selectedReason || 
                             !taskWithReason.action || 
-                            (taskWithReason.selectedReason === 'custom' && !taskWithReason.customReason) ||
-                            (taskWithReason.action === 'reschedule' && !taskWithReason.rescheduleDate)
+                            (taskWithReason.selectedReason === 'custom' && !taskWithReason.customReason)
                           }
                           onClick={() => handleTaskUpdate(taskWithReason)}
                           icon={<CheckCircle size={14} />}
