@@ -59,6 +59,8 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
   useEffect(() => {
     // Reset form data when the task prop changes
     if (task) {
+      console.log('StreamlinedTaskForm: Loading task:', task);
+      console.log('StreamlinedTaskForm: Task has subtasks:', task.subtasks);
       setFormData({ ...task });
       // Show advanced options if they have values
       if (task.energyLevel || task.size || task.estimatedMinutes || task.description) {
@@ -163,8 +165,12 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
   }, [newSubtaskTitle, newSubtaskTime, task, formData.subtasks, addTask, handleSubtasksChange]);
   
   const handleRemoveSubtask = useCallback((subtaskId: string) => {
+    // Remove from subtasks array
     handleSubtasksChange((formData.subtasks || []).filter(id => id !== subtaskId));
-  }, [formData.subtasks, handleSubtasksChange]);
+    
+    // Also delete the actual subtask
+    deleteTask(subtaskId);
+  }, [formData.subtasks, handleSubtasksChange, deleteTask]);
 
   const validateForm = useCallback((): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -476,11 +482,29 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
           <p className="text-sm text-gray-500 mb-3">Break this task down into smaller, more manageable steps.</p>
           
           {/* List existing subtasks */}
-          {formData.subtasks && formData.subtasks.length > 0 ? (
-            <div className="mb-3 space-y-1">
-              {tasks
-                .filter(t => formData.subtasks?.includes(t.id))
-                .map(subtask => (
+          {console.log('StreamlinedTaskForm: Checking subtasks:', formData.subtasks)}
+          {console.log('StreamlinedTaskForm: Current task ID:', task?.id)}
+          {console.log('StreamlinedTaskForm: All tasks:', tasks.length)}
+          {console.log('StreamlinedTaskForm: Tasks with parentTaskId matching current task:', tasks.filter(t => t.parentTaskId === task?.id))}
+          {console.log('StreamlinedTaskForm: Filtered subtasks by ID:', tasks.filter(t => formData.subtasks?.includes(t.id)))}
+          
+          {/* Get subtasks either from subtasks array or by parentTaskId */}
+          {(() => {
+            const subtasksFromArray = formData.subtasks && formData.subtasks.length > 0 
+              ? tasks.filter(t => formData.subtasks?.includes(t.id))
+              : [];
+            const subtasksFromParentId = task?.id 
+              ? tasks.filter(t => t.parentTaskId === task.id)
+              : [];
+            
+            // Combine both sources and remove duplicates
+            const allSubtasks = [...new Map([...subtasksFromArray, ...subtasksFromParentId].map(t => [t.id, t])).values()];
+            
+            console.log('StreamlinedTaskForm: Combined subtasks:', allSubtasks);
+            
+            return allSubtasks.length > 0 ? (
+              <div className="mb-3 space-y-1">
+                {allSubtasks.map(subtask => (
                   <div key={subtask.id} className="bg-blue-50 p-2 rounded-md">
                     <div className="flex items-center justify-between">
                       <span className={`text-sm flex-grow ${subtask.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
@@ -524,12 +548,12 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
                       </div>
                     </div>
                   </div>
-                ))
-              }
-            </div>
-          ) : (
-            <p className="text-sm text-blue-500 mb-3">No subtasks yet. Break down this task into smaller steps.</p>
-          )}
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-blue-500 mb-3">No subtasks yet. Break down this task into smaller steps.</p>
+            );
+          })()}
           
           {/* Add new subtask input with time estimate */}
           <div className="space-y-2 mb-4">

@@ -27,7 +27,7 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
   
   // Get the actual subtask objects
   const subtasks = tasks.filter(task => 
-    existingSubtasks.includes(task.id)
+    existingSubtasks.includes(task.id) || task.parentTaskId === parentTaskId
   );
   
   // Add this for clarity:

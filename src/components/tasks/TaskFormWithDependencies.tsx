@@ -4,6 +4,7 @@ import { useAppContext } from '../../context/AppContext';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Badge from '../common/Badge';
+import SubtaskList from './SubtaskList';
 import { formatDateForHtml } from '../../utils/helpers';
 import { 
   Clock,
@@ -67,6 +68,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   const [isRecurring, setIsRecurring] = useState(task?.isRecurring || false);
   const [recurrencePattern, setRecurrencePattern] = useState<'none' | 'daily' | 'weekly' | 'monthly' | 'custom'>(task?.recurrencePattern || 'none');
   const [recurrenceInterval, setRecurrenceInterval] = useState<number>(task?.recurrenceInterval || 1);
+  const [subtasks, setSubtasks] = useState<string[]>(task?.subtasks || []);
   
   // Get available tasks for dependencies (excluding self and tasks that would create cycles)
   const getAvailableTasksForDependency = () => {
@@ -106,6 +108,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
       isRecurring,
       recurrencePattern,
       recurrenceInterval,
+      subtasks,
     };
     
     if (isEdit && task) {
@@ -474,6 +477,17 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
             </div>
           </div>
         </div>
+        
+        {/* Subtasks */}
+        {isEdit && task && (
+          <div className="pt-4">
+            <SubtaskList
+              parentTaskId={task.id}
+              existingSubtasks={subtasks}
+              onSubtasksChange={setSubtasks}
+            />
+          </div>
+        )}
         
         {/* Form Actions */}
         <div className="flex justify-end space-x-3 pt-4">
