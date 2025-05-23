@@ -89,7 +89,6 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
 
-    console.log('Due date updated:', formData.dueDate);
   }, [errors]);
 
   const handleProjectChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -186,7 +185,9 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
     }
     
     if (isEdit && task) {
-      updateTask({ ...task, ...formData } as Task);
+      const updatedTask = { ...task, ...formData };
+      console.log('Updating task with dueDate:', updatedTask.dueDate);
+      updateTask(updatedTask as Task);
     } else {
       addTask(formData);
     }
@@ -304,7 +305,13 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
             <button
               type="button"
               onClick={() => {
-                setFormData(prev => ({ ...prev, dueDate: null }));
+                console.log('No Date clicked');
+                setFormData(prev => {
+                  console.log('Previous dueDate:', prev.dueDate);
+                  const newData = { ...prev, dueDate: null };
+                  console.log('New formData with null dueDate:', newData);
+                  return newData;
+                });
               }}
               className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200"
             >

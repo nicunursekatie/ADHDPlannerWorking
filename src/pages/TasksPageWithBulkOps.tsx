@@ -54,6 +54,7 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
           onToggle={(id) => updateTask(id, { completed: !task.completed })}
           onEdit={onEdit}
           onDelete={onDelete}
+          onBreakdown={onBreakdown}
         />
       </div>
     </div>

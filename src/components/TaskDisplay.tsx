@@ -7,13 +7,15 @@ interface TaskDisplayProps {
   onToggle: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onBreakdown?: (task: Task) => void;
 }
 
 export const TaskDisplay: React.FC<TaskDisplayProps> = ({ 
   task, 
   onToggle, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onBreakdown 
 }) => {
   const getDueDateInfo = () => {
     if (!task.dueDate) return null;
@@ -100,6 +102,17 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       
       {/* Actions - Only visible on hover */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {onBreakdown && !task.completed && (
+          <button
+            onClick={() => onBreakdown(task)}
+            className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-gray-100"
+            title="Break down into subtasks"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+          </button>
+        )}
         <button
           onClick={() => onEdit(task)}
           className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"

@@ -572,25 +572,25 @@ const Dashboard: React.FC = () => {
         {/* Quick Stats */}
         <Card className="lg:col-span-2">
           <div className="p-4">
-            <h3 className="font-medium text-gray-100 mb-4">Task Overview</h3>
+            <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4">Task Overview</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {overdueTasks.length > 0 && (
-                <div className="text-center p-3 bg-red-900/30 rounded-lg border border-red-700">
-                  <p className="text-2xl font-bold text-red-400">{overdueTasks.length}!</p>
-                  <p className="text-sm text-red-300 font-medium">Overdue</p>
+                <div className="text-center p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-700">
+                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">{overdueTasks.length}!</p>
+                  <p className="text-sm text-red-700 dark:text-red-300 font-medium">Overdue</p>
                 </div>
               )}
-              <div className="text-center p-3 bg-gray-700 rounded-lg">
-                <p className="text-2xl font-bold text-gray-200">{incompleteTasks.length}</p>
-                <p className="text-sm text-gray-700">Active Tasks</p>
+              <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-200">{incompleteTasks.length}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Active Tasks</p>
               </div>
-              <div className="text-center p-3 bg-green-900/30 rounded-lg">
-                <p className="text-2xl font-bold text-green-400">{completedTasks.length}</p>
-                <p className="text-sm text-gray-700">Completed</p>
+              <div className="text-center p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{completedTasks.length}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
               </div>
-              <div className="text-center p-3 bg-yellow-900/30 rounded-lg">
-                <p className="text-2xl font-bold text-yellow-400">{projects.length}</p>
-                <p className="text-sm text-gray-700">Projects</p>
+              <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{projects.length}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Projects</p>
               </div>
             </div>
           </div>
