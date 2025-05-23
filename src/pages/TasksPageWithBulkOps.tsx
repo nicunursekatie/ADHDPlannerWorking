@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { Task } from '../types';
 import { TaskDisplay } from '../components/TaskDisplay';
@@ -62,6 +63,7 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
 };
 
 const TasksPageWithBulkOps: React.FC = () => {
+  const location = useLocation();
   const { 
     tasks, 
     projects, 
@@ -76,6 +78,11 @@ const TasksPageWithBulkOps: React.FC = () => {
     bulkArchiveTasks,
     bulkAddTasks
   } = useAppContext();
+  
+  // Get initial tab from URL query params
+  const searchParams = new URLSearchParams(location.search);
+  const tabParam = searchParams.get('tab') as 'today' | 'tomorrow' | 'week' | 'overdue' | 'all' | null;
+  const initialTab = tabParam || 'today';
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -96,7 +103,7 @@ const TasksPageWithBulkOps: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   // View state
-  const [activeTab, setActiveTab] = useState<'today' | 'tomorrow' | 'week' | 'overdue' | 'all'>('today');
+  const [activeTab, setActiveTab] = useState<'today' | 'tomorrow' | 'week' | 'overdue' | 'all'>(initialTab);
   
   // Show undo notification when a task is deleted
   useEffect(() => {

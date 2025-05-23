@@ -33,7 +33,7 @@ type TaskWithReason = {
   task: Task;
   selectedReason: string | null;
   customReason: string;
-  action: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | null;
+  action: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | 'completed' | null;
   rescheduleDate?: string;
 };
 
@@ -58,7 +58,8 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     { id: 'resources', text: 'I was missing resources or information', frequency: 0, isCommon: true },
     { id: 'interruptions', text: 'I was interrupted too many times', frequency: 0, isCommon: true },
     { id: 'not_clear', text: 'The task wasn\'t clear enough', frequency: 0, isCommon: true },
-    { id: 'not_important', text: 'It turned out not to be important', frequency: 0, isCommon: true }
+    { id: 'not_important', text: 'It turned out not to be important', frequency: 0, isCommon: true },
+    { id: 'already_done', text: 'I actually completed it but forgot to mark it', frequency: 0, isCommon: true }
   ]);
   
   // Get date for 7 days ago
@@ -162,7 +163,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     );
   };
   
-  const handleActionSelect = (taskId: string, action: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | null) => {
+  const handleActionSelect = (taskId: string, action: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | 'completed' | null) => {
     setTasksWithReasons(prev => 
       prev.map(item => 
         item.task.id === taskId 
@@ -227,6 +228,10 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     } else if (action === 'delegate') {
       // Add note that task will be delegated
       updatedTask.description = `${updatedTask.description}\n[To be delegated]`;
+    } else if (action === 'completed') {
+      // Mark as completed - user forgot to mark it earlier
+      updatedTask.completed = true;
+      updatedTask.description = `${updatedTask.description}\n[Marked as completed during accountability check-in]`;
     }
     
     // Get the reason text
@@ -234,13 +239,13 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
       ? taskWithReason.customReason 
       : commonReasons.find(r => r.id === taskWithReason.selectedReason)?.text || '';
     
-    // Save accountability response
-    if (reasonText && action) {
-      saveAccountabilityResponse(task.id, reasonText, action, rescheduleDate);
+    // Save accountability response if we have a reason (action is optional)
+    if (reasonText) {
+      saveAccountabilityResponse(task.id, reasonText, action || 'no_action', rescheduleDate);
     }
     
     // Add the reason to task description for future reference
-    if (reasonText && action !== 'abandon') {
+    if (reasonText && action !== 'abandon' && action !== 'completed') {
       updatedTask.description = `${updatedTask.description}\n[Incomplete: ${reasonText}]`;
     }
     
@@ -518,8 +523,11 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                       
                       <div className="mb-4">
                         <h5 className="text-sm font-medium text-gray-700 mb-2">
-                          What would you like to do with this task?
+                          What would you like to do with this task? (Optional)
                         </h5>
+                        <p className="text-xs text-gray-600 mb-2">
+                          You can save without selecting an action if you just want to log the reason
+                        </p>
                         <div className="grid grid-cols-2 gap-2">
                           <Button
                             variant={taskWithReason.action === 'reschedule' ? 'secondary' : 'outline'}
@@ -573,7 +581,6 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                           size="sm"
                           disabled={
                             !taskWithReason.selectedReason || 
-                            !taskWithReason.action || 
                             (taskWithReason.selectedReason === 'custom' && !taskWithReason.customReason)
                           }
                           onClick={() => handleTaskUpdate(taskWithReason)}

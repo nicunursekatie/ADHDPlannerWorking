@@ -348,7 +348,7 @@ const Dashboard: React.FC = () => {
             {overdueTasks.length > 2 && (
               <div className="pt-1">
                 <Link 
-                  to="/tasks"
+                  to="/tasks?tab=overdue"
                   className="text-sm text-amber-600 hover:text-amber-500 flex items-center justify-center"
                 >
                   View all {overdueTasks.length} overdue tasks
