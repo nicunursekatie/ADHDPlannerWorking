@@ -28,12 +28,12 @@ const Header: React.FC = () => {
   
   const navItems = [
     { path: '/', label: 'Dashboard', icon: <Layout size={18} /> },
-    { path: '/tasks', label: 'All Tasks', icon: <ClipboardList size={18} /> },
+    { path: '/tasks', label: 'Tasks', icon: <ClipboardList size={18} /> },  // Changed from "All Tasks"
     { path: '/projects', label: 'Projects', icon: <Folder size={18} /> },
     { path: '/categories', label: 'Categories', icon: <Tag size={18} /> },
     { path: '/recurring-tasks', label: 'Recurring', icon: <Repeat size={18} /> },
     { path: '/calendar', label: 'Calendar', icon: <Calendar size={18} /> },
-    { path: '/planner', label: 'Daily Planner', icon: <Clock size={18} /> },
+    { path: '/planner', label: 'Planner', icon: <Clock size={18} /> },  // Changed from "Daily Planner"
     { path: '/settings', label: 'Settings', icon: <Settings size={18} /> },
   ];
   

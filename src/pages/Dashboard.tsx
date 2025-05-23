@@ -18,7 +18,7 @@ import {
 import { useAppContext } from '../context/AppContext';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
-import { ImprovedTaskCard } from '../components/tasks/ImprovedTaskCard';
+import { TaskDisplay } from '../components/TaskDisplay';
 import Modal from '../components/common/Modal';
 import { StreamlinedTaskForm } from '../components/tasks/StreamlinedTaskForm';
 import { EnhancedQuickCapture } from '../components/tasks/EnhancedQuickCapture';
@@ -39,6 +39,7 @@ const Dashboard: React.FC = () => {
     isDataInitialized,
     initializeSampleData,
     deleteTask,
+    updateTask,
     needsWeeklyReview,
     getLastWeeklyReviewDate
   } = useAppContext();
@@ -335,14 +336,13 @@ const Dashboard: React.FC = () => {
         >
           <div className="space-y-2">
             {overdueTasks.slice(0, 2).map(task => (
-              <ImprovedTaskCard
-                key={task.id}
-                task={task}
-                projects={projects}
-                categories={categories}
-                onEdit={handleOpenTaskModal}
-                onDelete={deleteTask}
-              />
+              <TaskDisplay
+              key={task.id}
+              task={task}
+              onToggle={(id) => updateTask(id, { completed: !task.completed })}
+              onEdit={() => handleOpenTaskModal(task)}
+              onDelete={() => deleteTask(task.id)}
+            />
             ))}
             
             {overdueTasks.length > 2 && (
@@ -376,14 +376,13 @@ const Dashboard: React.FC = () => {
         >
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {tasksDueToday.slice(0, 3).map(task => (
-              <ImprovedTaskCard
-                key={task.id}
-                task={task}
-                projects={projects}
-                categories={categories}
-                onEdit={handleOpenTaskModal}
-                onDelete={deleteTask}
-              />
+              <TaskDisplay
+              key={task.id}
+              task={task}
+              onToggle={(id) => updateTask(id, { completed: !task.completed })}
+              onEdit={() => handleOpenTaskModal(task)}
+              onDelete={() => deleteTask(task.id)}
+            />
             ))}
             
             {tasksDueToday.length === 0 && (
@@ -408,14 +407,13 @@ const Dashboard: React.FC = () => {
         >
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {tasksDueThisWeek.filter(task => !tasksDueToday.some(t => t.id === task.id)).slice(0, 3).map(task => (
-              <ImprovedTaskCard
-                key={task.id}
-                task={task}
-                projects={projects}
-                categories={categories}
-                onEdit={handleOpenTaskModal}
-                onDelete={deleteTask}
-              />
+              <TaskDisplay
+              key={task.id}
+              task={task}
+              onToggle={(id) => updateTask(id, { completed: !task.completed })}
+              onEdit={() => handleOpenTaskModal(task)}
+              onDelete={() => deleteTask(task.id)}
+            />
             ))}
             
             {tasksDueThisWeek.filter(task => !tasksDueToday.some(t => t.id === task.id)).length === 0 && (
@@ -444,14 +442,13 @@ const Dashboard: React.FC = () => {
               .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
               .slice(0, 3)
               .map(task => (
-                <ImprovedTaskCard
-                  key={task.id}
-                  task={task}
-                  projects={projects}
-                  categories={categories}
-                  onEdit={handleOpenTaskModal}
-                  onDelete={deleteTask}
-                />
+                <TaskDisplay
+                key={task.id}
+                task={task}
+                onToggle={(id) => updateTask(id, { completed: !task.completed })}
+                onEdit={() => handleOpenTaskModal(task)}
+                onDelete={() => deleteTask(task.id)}
+              />
               ))
             }
             
@@ -534,8 +531,8 @@ const Dashboard: React.FC = () => {
               <div className="flex items-center">
                 <Repeat size={20} className="text-yellow-400 mr-3" />
                 <div>
-                  <p className="font-medium text-gray-100">{recurringTasks.length}</p>
-                  <p className="text-sm text-gray-400">Active Recurring Tasks</p>
+                <p className="font-medium text-gray-900">{recurringTasks.length}</p>
+                <p className="text-sm text-gray-600">Active Recurring Tasks</p>
                 </div>
               </div>
             </div>
@@ -546,7 +543,7 @@ const Dashboard: React.FC = () => {
                 <div key={task.id} className="flex items-center justify-between p-2 bg-gray-800/40 rounded-lg">
                   <div className="flex items-center">
                     <Repeat size={16} className="text-gray-400 mr-2" />
-                    <span className="text-sm font-medium text-gray-100">{task.title}</span>
+                    <span className="text-sm font-medium text-gray-700">{task.title}</span>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     daysUntilDue <= 0 ? 'bg-red-100 text-red-700' :
@@ -585,15 +582,15 @@ const Dashboard: React.FC = () => {
               )}
               <div className="text-center p-3 bg-gray-700 rounded-lg">
                 <p className="text-2xl font-bold text-gray-200">{incompleteTasks.length}</p>
-                <p className="text-sm text-gray-400">Active Tasks</p>
+                <p className="text-sm text-gray-700">Active Tasks</p>
               </div>
               <div className="text-center p-3 bg-green-900/30 rounded-lg">
                 <p className="text-2xl font-bold text-green-400">{completedTasks.length}</p>
-                <p className="text-sm text-gray-400">Completed</p>
+                <p className="text-sm text-gray-700">Completed</p>
               </div>
               <div className="text-center p-3 bg-yellow-900/30 rounded-lg">
                 <p className="text-2xl font-bold text-yellow-400">{projects.length}</p>
-                <p className="text-sm text-gray-400">Projects</p>
+                <p className="text-sm text-gray-700">Projects</p>
               </div>
             </div>
           </div>
@@ -621,14 +618,13 @@ const Dashboard: React.FC = () => {
               .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
               .slice(0, 3)
               .map(task => (
-                <ImprovedTaskCard
-                  key={task.id}
-                  task={task}
-                  projects={projects}
-                  categories={categories}
-                  onEdit={handleOpenTaskModal}
-                  onDelete={deleteTask}
-                />
+                <TaskDisplay
+                key={task.id}
+                task={task}
+                onToggle={(id) => updateTask(id, { completed: !task.completed })}
+                onEdit={() => handleOpenTaskModal(task)}
+                onDelete={() => deleteTask(task.id)}
+              />
               ))
             }
           </div>

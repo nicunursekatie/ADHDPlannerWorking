@@ -10,7 +10,7 @@ import {
   Clock
 } from 'lucide-react';
 import Badge from '../common/Badge';
-import TaskCard from '../tasks/TaskCard';
+import { TaskDisplay } from "../TaskDisplay";
 import Button from '../common/Button';
 
 interface CalendarViewProps {
@@ -18,7 +18,7 @@ interface CalendarViewProps {
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
-  const { tasks, projects, categories, deleteTask } = useAppContext();
+  const { tasks, projects, categories, deleteTask, updateTask } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   
@@ -347,14 +347,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
         {tasksForDay.length > 0 ? (
           <div className="space-y-3">
             {tasksForDay.map(task => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                projects={projects}
-                categories={categories}
-                onEdit={onEditTask}
-                onDelete={deleteTask}
-              />
+              <TaskDisplay
+              key={task.id}
+              task={task}
+              onToggle={(id) => updateTask(id, { completed: !task.completed })}
+              onEdit={() => onEditTask(task)}
+              onDelete={() => deleteTask(task.id)}
+            />
             ))}
           </div>
         ) : (
