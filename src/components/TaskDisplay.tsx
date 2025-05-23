@@ -95,7 +95,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
         {/* Subtasks */}
         {task.subtasks && task.subtasks.length > 0 && (
           <div className="mt-2 text-sm text-gray-500">
-            {task.subtasks.filter(st => !st.completed).length} of {task.subtasks.length} subtasks remaining
+            {task.subtasks.filter(st => st && !st.completed).length} of {task.subtasks.length} subtasks remaining
           </div>
         )}
       </div>
