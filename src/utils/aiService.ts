@@ -125,8 +125,7 @@ export class AITaskBreakdownService {
           title: title.trim(),
           duration: '10 mins',
           description: rest.join(':').trim() || title.trim(),
-          type: 'work',
-          difficulty: 'medium'
+          type: 'work'
         });
       }
     }
