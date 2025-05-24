@@ -126,6 +126,10 @@ export class AITaskBreakdownService {
           duration: '10 mins',
           description: rest.join(':').trim() || title.trim(),
           type: 'work',
+<<<<<<< HEAD
+=======
+          energyRequired: 'medium'
+>>>>>>> 98ca01db813112db908bb3250afbde2f9b32c881
         });
       }
     }
