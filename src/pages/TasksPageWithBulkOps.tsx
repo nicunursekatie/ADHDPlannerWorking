@@ -218,7 +218,6 @@ const TasksPageWithBulkOps: React.FC = () => {
         tags: subtask.tags || [],
       }));
 
-      // @ts-expect-error: preparedSubtasks may not have id, but that's intentional for new tasks
       bulkAddTasks(preparedSubtasks);
 
       setBreakdownTask(null);
