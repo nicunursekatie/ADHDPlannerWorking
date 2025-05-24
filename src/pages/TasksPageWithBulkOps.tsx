@@ -76,7 +76,8 @@ const TasksPageWithBulkOps: React.FC = () => {
     bulkCompleteTasks,
     bulkMoveTasks,
     bulkArchiveTasks,
-    bulkAddTasks
+    bulkAddTasks,
+    bulkConvertToSubtasks
   } = useAppContext();
   
   // Get initial tab from URL query params
@@ -93,6 +94,8 @@ const TasksPageWithBulkOps: React.FC = () => {
   const [showBulkMoveModal, setShowBulkMoveModal] = useState(false);
   const [selectedProjectForMove, setSelectedProjectForMove] = useState<string | null>(null);
   const [breakdownTask, setBreakdownTask] = useState<Task | null>(null);
+  const [showConvertToSubtasksModal, setShowConvertToSubtasksModal] = useState(false);
+  const [selectedParentTaskId, setSelectedParentTaskId] = useState<string | null>(null);
   
   // Filter state
   const [showCompleted, setShowCompleted] = useState(false);
@@ -255,6 +258,19 @@ const TasksPageWithBulkOps: React.FC = () => {
     if (selectedTasks.size > 0) {
       bulkArchiveTasks(Array.from(selectedTasks));
       setSelectedTasks(new Set());
+    }
+  };
+  
+  const handleBulkConvertToSubtasks = () => {
+    setShowConvertToSubtasksModal(true);
+  };
+  
+  const executeBulkConvertToSubtasks = () => {
+    if (selectedTasks.size > 0 && selectedParentTaskId) {
+      bulkConvertToSubtasks(Array.from(selectedTasks), selectedParentTaskId);
+      setSelectedTasks(new Set());
+      setShowConvertToSubtasksModal(false);
+      setSelectedParentTaskId(null);
     }
   };
   
@@ -424,6 +440,15 @@ const TasksPageWithBulkOps: React.FC = () => {
                 disabled={selectedTasks.size === 0}
               >
                 Move
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<Layers size={14} />}
+                onClick={handleBulkConvertToSubtasks}
+                disabled={selectedTasks.size === 0}
+              >
+                Make Subtasks
               </Button>
               <Button
                 size="sm"
@@ -984,6 +1009,83 @@ const TasksPageWithBulkOps: React.FC = () => {
           onClose={handleBreakdownClose}
         />
       )}
+      
+      {/* Convert to Subtasks Modal */}
+      <Modal
+        isOpen={showConvertToSubtasksModal}
+        onClose={() => {
+          setShowConvertToSubtasksModal(false);
+          setSelectedParentTaskId(null);
+        }}
+        title="Convert to Subtasks"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Convert {selectedTasks.size} selected task{selectedTasks.size !== 1 ? 's' : ''} into subtasks of:
+          </p>
+          
+          <div className="max-h-96 overflow-y-auto space-y-2 border rounded-md p-3">
+            {tasks
+              .filter(task => 
+                !task.completed && 
+                !task.archived && 
+                !selectedTasks.has(task.id) // Can't make a task a subtask of itself
+              )
+              .map(task => (
+                <label
+                  key={task.id}
+                  className={`flex items-start p-3 rounded-lg cursor-pointer transition-colors ${
+                    selectedParentTaskId === task.id 
+                      ? 'bg-indigo-50 border-2 border-indigo-500' 
+                      : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="parentTask"
+                    value={task.id}
+                    checked={selectedParentTaskId === task.id}
+                    onChange={() => setSelectedParentTaskId(task.id)}
+                    className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                  />
+                  <div className="ml-3 flex-1">
+                    <div className="font-medium text-gray-900">{task.title}</div>
+                    {task.description && (
+                      <div className="text-sm text-gray-500 mt-1">{task.description}</div>
+                    )}
+                    {task.projectId && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Project: {projects.find(p => p.id === task.projectId)?.name}
+                      </div>
+                    )}
+                  </div>
+                </label>
+              ))
+            }
+          </div>
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowConvertToSubtasksModal(false);
+                setSelectedParentTaskId(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              icon={<Layers size={16} />}
+              onClick={executeBulkConvertToSubtasks}
+              disabled={!selectedParentTaskId}
+            >
+              Convert to Subtasks
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

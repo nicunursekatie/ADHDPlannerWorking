@@ -1022,6 +1022,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.saveTasks(updatedTasks);
   }, [tasks]);
 
+  const bulkConvertToSubtasks = useCallback((taskIds: string[], parentTaskId: string) => {
+    const timestamp = new Date().toISOString();
+    
+    // Find the parent task
+    const parentTask = tasks.find(t => t.id === parentTaskId);
+    if (!parentTask) {
+      console.error('Parent task not found');
+      return;
+    }
+    
+    // Update all tasks
+    const updatedTasks = tasks.map(task => {
+      if (taskIds.includes(task.id)) {
+        // Convert to subtask
+        return {
+          ...task,
+          parentTaskId: parentTaskId,
+          projectId: parentTask.projectId, // Inherit project from parent
+          updatedAt: timestamp
+        };
+      } else if (task.id === parentTaskId) {
+        // Update parent to include new subtasks
+        const newSubtaskIds = taskIds.filter(id => !task.subtasks.includes(id));
+        return {
+          ...task,
+          subtasks: [...task.subtasks, ...newSubtaskIds],
+          updatedAt: timestamp
+        };
+      }
+      return task;
+    });
+    
+    setTasks(updatedTasks);
+    localStorage.saveTasks(updatedTasks);
+  }, [tasks]);
+
   // Dependency management functions
   const addTaskDependency = useCallback((taskId: string, dependsOnId: string) => {
     const timestamp = new Date().toISOString();
@@ -1222,6 +1258,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     bulkCompleteTasks,
     bulkMoveTasks,
     bulkArchiveTasks,
+    bulkConvertToSubtasks,
     
     // Dependencies
     addTaskDependency,
