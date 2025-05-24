@@ -46,20 +46,16 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   const [completionRate, setCompletionRate] = useState(0);
   const [lastUpdatedTask, setLastUpdatedTask] = useState<string | null>(null);
   
-  // Common reasons for not completing tasks
+  // Common reasons for not completing tasks - focused list
   const [commonReasons, setCommonReasons] = useState<Reason[]>([
     { id: 'already_done', text: 'I did - I completed it but forgot to mark it', frequency: 0, isCommon: true },
+    { id: 'not_important', text: 'It\'s no longer necessary/relevant', frequency: 0, isCommon: true },
+    { id: 'not_clear', text: 'The task was unclear', frequency: 0, isCommon: true },
     { id: 'forgot', text: 'I forgot about it', frequency: 0, isCommon: true },
     { id: 'no_time', text: "I didn't have enough time", frequency: 0, isCommon: true },
-    { id: 'too_difficult', text: 'It was more difficult than expected', frequency: 0, isCommon: true },
-    { id: 'energy', text: "I didn't have the energy", frequency: 0, isCommon: true },
-    { id: 'focus', text: "I couldn't focus enough", frequency: 0, isCommon: true },
-    { id: 'motivation', text: "I wasn't motivated", frequency: 0, isCommon: true },
-    { id: 'prerequisite', text: 'A prerequisite task wasn\'t completed', frequency: 0, isCommon: true },
-    { id: 'resources', text: 'I was missing resources or information', frequency: 0, isCommon: true },
-    { id: 'interruptions', text: 'I was interrupted too many times', frequency: 0, isCommon: true },
-    { id: 'not_clear', text: 'The task was unclear', frequency: 0, isCommon: true },
-    { id: 'not_important', text: 'It\'s no longer necessary/relevant', frequency: 0, isCommon: true }
+    { id: 'energy', text: "I didn't have the energy/focus", frequency: 0, isCommon: true },
+    { id: 'prerequisite', text: 'Blocked by another task', frequency: 0, isCommon: true },
+    { id: 'resources', text: 'Missing resources or information', frequency: 0, isCommon: true }
   ]);
   
   // Get date for 7 days ago
@@ -453,7 +449,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                           Why wasn't this task completed?
                         </h5>
                         <div className="space-y-2">
-                          {commonReasons.slice(0, 6).map(reason => {
+                          {commonReasons.map(reason => {
                             const isChecked = tasksWithReasons.find(item => item.task.id === taskWithReason.task.id)?.selectedReason === reason.id;
                             return (
                               <div key={reason.id} className="flex items-center">
