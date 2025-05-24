@@ -204,8 +204,6 @@ const TasksPageWithBulkOps: React.FC = () => {
   
   const handleBreakdownAccept = async (subtasks: Partial<Task>[]) => {
     if (breakdownTask) {
-      console.log('Breakdown task:', breakdownTask);
-      console.log('Subtasks received:', subtasks);
 
       // Prepare all subtasks with parentTaskId and other inherited fields
       const preparedSubtasks = subtasks.map((subtask) => ({
@@ -223,7 +221,6 @@ const TasksPageWithBulkOps: React.FC = () => {
       // @ts-expect-error: preparedSubtasks may not have id, but that's intentional for new tasks
       bulkAddTasks(preparedSubtasks);
 
-      console.log('Subtasks added successfully');
       setBreakdownTask(null);
     }
   };

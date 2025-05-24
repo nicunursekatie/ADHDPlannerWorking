@@ -43,7 +43,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
   useEffect(() => {
     // Reset form data when the task prop changes
     if (task) {
-      console.log('TaskForm - Task provided:', task);
       setFormData({ ...task });
     } else {
       setFormData(initialState);
@@ -52,7 +51,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
   
   // Debug current formData
   useEffect(() => {
-    console.log('TaskForm - Current formData:', formData);
   }, [formData]);
 
   const handleChange = (
