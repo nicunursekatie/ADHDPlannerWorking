@@ -58,8 +58,8 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     { id: 'prerequisite', text: 'A prerequisite task wasn\'t completed', frequency: 0, isCommon: true },
     { id: 'resources', text: 'I was missing resources or information', frequency: 0, isCommon: true },
     { id: 'interruptions', text: 'I was interrupted too many times', frequency: 0, isCommon: true },
-    { id: 'not_clear', text: 'The task wasn\'t clear enough', frequency: 0, isCommon: true },
-    { id: 'not_important', text: 'It turned out not to be important', frequency: 0, isCommon: true }
+    { id: 'not_clear', text: 'The task was unclear', frequency: 0, isCommon: true },
+    { id: 'not_important', text: 'It\'s no longer necessary/relevant', frequency: 0, isCommon: true }
   ]);
   
   // Get date for 7 days ago
@@ -131,12 +131,26 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   
   const handleReasonSelect = (taskId: string, reasonId: string) => {
     console.log('handleReasonSelect called with:', { taskId, reasonId });
+    
+    // Map of reasons to automatic actions
+    const reasonToAction: { [key: string]: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | 'completed' } = {
+      'already_done': 'completed',
+      'not_clear': 'break_down',
+      'not_important': 'abandon'
+    };
+    
     setTasksWithReasons(prev => {
-      const updated = prev.map(item => 
-        item.task.id === taskId 
-          ? { ...item, selectedReason: reasonId } 
-          : item
-      );
+      const updated = prev.map(item => {
+        if (item.task.id === taskId) {
+          const newItem = { ...item, selectedReason: reasonId };
+          // Automatically select action if there's a mapping
+          if (reasonToAction[reasonId]) {
+            newItem.action = reasonToAction[reasonId];
+          }
+          return newItem;
+        }
+        return item;
+      });
       console.log('Updated tasksWithReasons:', updated);
       return updated;
     });
