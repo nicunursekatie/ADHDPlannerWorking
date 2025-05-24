@@ -11,10 +11,10 @@ import {
   CheckCircle, 
   ChevronDown, 
   Clock, 
-  EyeOff, 
+  Trash2, 
   ListChecks, 
   RefreshCw, 
-  TrendingUp, 
+  Ban, 
   X
 } from 'lucide-react';
 
@@ -33,12 +33,12 @@ type TaskWithReason = {
   task: Task;
   selectedReason: string | null;
   customReason: string;
-  action: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | 'completed' | null;
+  action: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | 'completed' | 'blocked' | null;
   rescheduleDate?: string;
 };
 
 const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpdated }) => {
-  const { tasks, updateTask } = useAppContext();
+  const { tasks, updateTask, deleteTask } = useAppContext();
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const [tasksWithReasons, setTasksWithReasons] = useState<TaskWithReason[]>([]);
   const [showProgress, setShowProgress] = useState(false);
@@ -46,16 +46,14 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   const [completionRate, setCompletionRate] = useState(0);
   const [lastUpdatedTask, setLastUpdatedTask] = useState<string | null>(null);
   
-  // Common reasons for not completing tasks - focused list
+  // Common reasons for not completing tasks - streamlined list
   const [commonReasons, setCommonReasons] = useState<Reason[]>([
-    { id: 'already_done', text: 'I did - I completed it but forgot to mark it', frequency: 0, isCommon: true },
-    { id: 'not_important', text: 'It\'s no longer necessary/relevant', frequency: 0, isCommon: true },
-    { id: 'not_clear', text: 'The task was unclear', frequency: 0, isCommon: true },
-    { id: 'forgot', text: 'I forgot about it', frequency: 0, isCommon: true },
-    { id: 'no_time', text: "I didn't have enough time", frequency: 0, isCommon: true },
-    { id: 'energy', text: "I didn't have the energy/focus", frequency: 0, isCommon: true },
-    { id: 'prerequisite', text: 'Blocked by another task', frequency: 0, isCommon: true },
-    { id: 'resources', text: 'Missing resources or information', frequency: 0, isCommon: true }
+    { id: 'already_done', text: 'I completed it', frequency: 0, isCommon: true },
+    { id: 'not_relevant', text: 'No longer relevant', frequency: 0, isCommon: true },
+    { id: 'too_vague', text: 'Too vague or complex', frequency: 0, isCommon: true },
+    { id: 'no_time', text: 'Ran out of time', frequency: 0, isCommon: true },
+    { id: 'overwhelming', text: 'Felt overwhelming', frequency: 0, isCommon: true },
+    { id: 'waiting', text: 'Waiting on someone/something', frequency: 0, isCommon: true }
   ]);
   
   // Get date for 7 days ago
@@ -129,10 +127,13 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     console.log('handleReasonSelect called with:', { taskId, reasonId });
     
     // Map of reasons to automatic actions
-    const reasonToAction: { [key: string]: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | 'completed' } = {
+    const reasonToAction: { [key: string]: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | 'completed' | 'blocked' } = {
       'already_done': 'completed',
-      'not_clear': 'break_down',
-      'not_important': 'abandon'
+      'not_relevant': 'abandon',
+      'too_vague': 'break_down',
+      'no_time': 'reschedule',
+      'overwhelming': 'break_down',
+      'waiting': 'blocked'
     };
     
     setTasksWithReasons(prev => {
@@ -173,7 +174,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     );
   };
   
-  const handleActionSelect = (taskId: string, action: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | 'completed' | null) => {
+  const handleActionSelect = (taskId: string, action: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | 'completed' | 'blocked' | null) => {
     setTasksWithReasons(prev => 
       prev.map(item => 
         item.task.id === taskId 
@@ -219,6 +220,11 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     
     let updatedTask: Task = { ...task };
     
+    // Get the reason text first
+    const reasonText = taskWithReason.selectedReason === 'custom' 
+      ? taskWithReason.customReason 
+      : commonReasons.find(r => r.id === taskWithReason.selectedReason)?.text || '';
+    
     // Apply action to the task
     if (action === 'reschedule') {
       // Use the selected reschedule date or leave it blank
@@ -229,9 +235,8 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
         updatedTask.dueDate = '';
       }
     } else if (action === 'abandon') {
-      // Mark as completed but add note about abandonment
-      updatedTask.completed = true;
-      updatedTask.description = `${updatedTask.description}\n[Abandoned: Not relevant or necessary anymore]`;
+      // Delete the task - it's no longer relevant
+      // We'll handle deletion after updating
     } else if (action === 'break_down') {
       // Add note that task needs breaking down
       updatedTask.description = `${updatedTask.description}\n[Needs to be broken down into smaller tasks]`;
@@ -242,12 +247,14 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
       // Mark as completed - user forgot to mark it earlier
       updatedTask.completed = true;
       updatedTask.description = `${updatedTask.description}\n[Marked as completed during accountability check-in]`;
+    } else if (action === 'blocked') {
+      // Mark as blocked - waiting on someone/something
+      updatedTask.description = `${updatedTask.description}\n[BLOCKED: ${reasonText}]`;
+      // Add blocked tag if not already present
+      if (!updatedTask.tags?.includes('blocked')) {
+        updatedTask.tags = [...(updatedTask.tags || []), 'blocked'];
+      }
     }
-    
-    // Get the reason text
-    const reasonText = taskWithReason.selectedReason === 'custom' 
-      ? taskWithReason.customReason 
-      : commonReasons.find(r => r.id === taskWithReason.selectedReason)?.text || '';
     
     // Save accountability response if we have a reason (action is optional)
     if (reasonText) {
@@ -255,14 +262,19 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     }
     
     // Add the reason to task description for future reference
-    if (reasonText && action !== 'abandon' && action !== 'completed') {
+    if (reasonText && action !== 'abandon' && action !== 'completed' && action !== 'blocked') {
       updatedTask.description = `${updatedTask.description}\n[Incomplete: ${reasonText}]`;
     }
     
-    updatedTask.updatedAt = new Date().toISOString();
-    
-    // Update the task
-    updateTask(updatedTask);
+    // Handle task update or deletion
+    if (action === 'abandon') {
+      // Delete the task instead of updating
+      deleteTask(task.id);
+    } else {
+      updatedTask.updatedAt = new Date().toISOString();
+      // Update the task
+      updateTask(updatedTask);
+    }
     
     // Remove from list
     setTasksWithReasons(prev => prev.filter(item => item.task.id !== task.id));
@@ -567,22 +579,22 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                             Break down
                           </Button>
                           <Button
-                            variant={taskWithReason.action === 'delegate' ? 'secondary' : 'outline'}
+                            variant={taskWithReason.action === 'blocked' ? 'secondary' : 'outline'}
                             size="sm"
                             className="justify-center"
-                            onClick={() => handleActionSelect(taskWithReason.task.id, 'delegate')}
-                            icon={<TrendingUp size={14} />}
+                            onClick={() => handleActionSelect(taskWithReason.task.id, 'blocked')}
+                            icon={<Ban size={14} />}
                           >
-                            Delegate
+                            Mark Blocked
                           </Button>
                           <Button
-                            variant={taskWithReason.action === 'abandon' ? 'secondary' : 'outline'}
+                            variant={taskWithReason.action === 'abandon' ? 'danger' : 'outline'}
                             size="sm"
                             className="justify-center"
                             onClick={() => handleActionSelect(taskWithReason.task.id, 'abandon')}
-                            icon={<EyeOff size={14} />}
+                            icon={<Trash2 size={14} />}
                           >
-                            Abandon
+                            Delete Task
                           </Button>
                         </div>
                       </div>
