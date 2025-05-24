@@ -179,23 +179,18 @@ const TasksPageWithBulkOps: React.FC = () => {
       console.log('Subtasks received:', subtasks);
 
       // Prepare all subtasks with parentTaskId and other inherited fields
-      const preparedSubtasks = subtasks.map((subtask) => {
-        // Remove id if present, so the backend/context can generate it
-        const { id, ...rest } = subtask;
-        return {
-          ...rest,
-          parentTaskId: breakdownTask.id,
-          projectId: breakdownTask.projectId,
-          categoryIds: breakdownTask.categoryIds || [],
-          dueDate: subtask.dueDate || breakdownTask.dueDate || null,
-          priority: subtask.priority || breakdownTask.priority || 'medium',
-          energyLevel: subtask.energyLevel || breakdownTask.energyLevel,
-          estimatedMinutes: subtask.estimatedMinutes,
-          tags: subtask.tags || [],
-        };
-      });
+      const preparedSubtasks = subtasks.map((subtask) => ({
+        ...subtask,
+        parentTaskId: breakdownTask.id,
+        projectId: breakdownTask.projectId,
+        categoryIds: breakdownTask.categoryIds || [],
+        dueDate: subtask.dueDate || breakdownTask.dueDate || null,
+        priority: subtask.priority || breakdownTask.priority || 'medium',
+        energyLevel: subtask.energyLevel || breakdownTask.energyLevel,
+        estimatedMinutes: subtask.estimatedMinutes,
+        tags: subtask.tags || [],
+      }));
 
-      // @ts-expect-error: preparedSubtasks may not have id, but that's intentional for new tasks
       bulkAddTasks(preparedSubtasks);
 
       console.log('Subtasks added successfully');

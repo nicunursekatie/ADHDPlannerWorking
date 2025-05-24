@@ -23,7 +23,7 @@ interface AppContextType {
   hasRecentlyDeleted: boolean;
   
   // Bulk operations
-  bulkAddTasks: (tasks: Task[]) => void;
+  bulkAddTasks: (tasks: Partial<Task>[]) => void;
   bulkDeleteTasks: (taskIds: string[]) => void;
   bulkCompleteTasks: (taskIds: string[]) => void;
   bulkMoveTasks: (taskIds: string[], projectId: string | null) => void;
@@ -988,11 +988,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.saveTasks(updatedTasks);
   }, [tasks]);
 
-  const bulkAddTasks = useCallback((newTasks: Task[]) => {
+  const bulkAddTasks = useCallback((newTasks: Partial<Task>[]) => {
     const timestamp = new Date().toISOString();
-    
+
+    // Ensure every task has an ID
+    const tasksWithIds = newTasks.map(task => ({
+      ...task,
+      id: task.id || generateId(),
+    }));
+
     // Add timestamp to all new tasks
-    const tasksWithTimestamp = newTasks.map(task => ({
+    const tasksWithTimestamp = tasksWithIds.map(task => ({
       ...task,
       createdAt: task.createdAt || timestamp,
       updatedAt: task.updatedAt || timestamp,
@@ -1000,11 +1006,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     // Merge with existing tasks
     const allTasks = [...tasks, ...tasksWithTimestamp];
-    
+
     // Update parent tasks to include new subtask IDs
     const updatedTasks = allTasks.map(task => {
       // Check if this task is a parent of any new subtasks
-      const subtaskIds = newTasks
+      const subtaskIds = tasksWithIds
         .filter(newTask => newTask.parentTaskId === task.id)
         .map(subtask => subtask.id);
       
