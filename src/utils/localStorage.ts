@@ -12,6 +12,7 @@ const WORK_SCHEDULE_KEY = `${KEY_PREFIX}workSchedule`;
 const JOURNAL_ENTRIES_KEY = `${KEY_PREFIX}journalEntries`;
 const LAST_WEEKLY_REVIEW_KEY = `${KEY_PREFIX}lastWeeklyReview`;
 const RECURRING_TASKS_KEY = `${KEY_PREFIX}recurringTasks`;
+const DELETED_TASKS_KEY = `${KEY_PREFIX}deletedTasks`;
 
 // Tasks
 export const getTasks = (): Task[] => {
@@ -461,10 +462,12 @@ export const importData = (jsonData: string): boolean => {
     
     if (Array.isArray(data.tasks)) {
       // Remove projectName field from tasks if present (it's only for export convenience)
-      const cleanedTasks = data.tasks.map((task: any) => {
-        const { projectName, ...cleanTask } = task;
-        return cleanTask;
-      });
+            const cleanedTasks: Task[] = data.tasks.map(
+        (task: Task & { projectName?: string }): Task => {
+          const { projectName, ...cleanTask } = task;
+          return cleanTask;
+        }
+      );
       saveTasks(cleanedTasks);
       importSuccessful = true;
     }
@@ -705,4 +708,104 @@ export const deleteRecurringTask = (recurringTaskId: string): void => {
   const recurringTasks = getRecurringTasks();
   const filteredTasks = recurringTasks.filter(rt => rt.id !== recurringTaskId);
   saveRecurringTasks(filteredTasks);
+};
+
+// Deleted Tasks Management
+export interface DeletedTask {
+  task: Task;
+  deletedAt: string;
+  deletedBy?: string; // Optional: track who deleted it
+}
+
+export const getDeletedTasks = (): DeletedTask[] => {
+  try {
+    const deletedTasksJSON = localStorage.getItem(DELETED_TASKS_KEY);
+    if (!deletedTasksJSON) return [];
+    
+    const deletedTasks: DeletedTask[] = JSON.parse(deletedTasksJSON);
+    
+    // Clean up tasks older than 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const recentDeletedTasks = deletedTasks.filter(dt => 
+      new Date(dt.deletedAt) > thirtyDaysAgo
+    );
+    
+    // Save cleaned list if different
+    if (recentDeletedTasks.length !== deletedTasks.length) {
+      saveDeletedTasks(recentDeletedTasks);
+    }
+    
+    return recentDeletedTasks;
+  } catch (error) {
+    console.error('Error reading deleted tasks from localStorage:', error);
+    return [];
+  }
+};
+
+export const saveDeletedTasks = (deletedTasks: DeletedTask[]): void => {
+  try {
+    localStorage.setItem(DELETED_TASKS_KEY, JSON.stringify(deletedTasks));
+  } catch (error) {
+    console.error('Error saving deleted tasks to localStorage:', error);
+  }
+};
+
+export const addDeletedTask = (task: Task, deletedBy?: string): void => {
+  try {
+    const deletedTasks = getDeletedTasks();
+    const deletedTask: DeletedTask = {
+      task,
+      deletedAt: new Date().toISOString(),
+      deletedBy
+    };
+    deletedTasks.push(deletedTask);
+    saveDeletedTasks(deletedTasks);
+  } catch (error) {
+    console.error('Error adding deleted task:', error);
+  }
+};
+
+export const restoreDeletedTask = (taskId: string): Task | null => {
+  try {
+    const deletedTasks = getDeletedTasks();
+    const deletedTaskIndex = deletedTasks.findIndex(dt => dt.task.id === taskId);
+    
+    if (deletedTaskIndex === -1) return null;
+    
+    const restoredTask = deletedTasks[deletedTaskIndex].task;
+    
+    // Remove from deleted tasks
+    deletedTasks.splice(deletedTaskIndex, 1);
+    saveDeletedTasks(deletedTasks);
+    
+    // Add back to regular tasks
+    const tasks = getTasks();
+    tasks.push(restoredTask);
+    saveTasks(tasks);
+    
+    return restoredTask;
+  } catch (error) {
+    console.error('Error restoring deleted task:', error);
+    return null;
+  }
+};
+
+export const permanentlyDeleteTask = (taskId: string): void => {
+  try {
+    const deletedTasks = getDeletedTasks();
+    const filteredTasks = deletedTasks.filter(dt => dt.task.id !== taskId);
+    saveDeletedTasks(filteredTasks);
+  } catch (error) {
+    console.error('Error permanently deleting task:', error);
+  }
+};
+
+export const clearAllDeletedTasks = (): void => {
+  try {
+    saveDeletedTasks([]);
+  } catch (error) {
+    console.error('Error clearing deleted tasks:', error);
+  }
 };

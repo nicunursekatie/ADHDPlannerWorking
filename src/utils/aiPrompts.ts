@@ -54,7 +54,17 @@ Return JSON format:
   "tips": "ADHD nudge for this step"
 }`;
 
-export const BREAKDOWN_PATTERNS = {
+export interface PatternStep {
+  title: string;
+  duration: string;
+  description: string;
+  type: 'work' | 'break' | 'review' | 'reward';
+  energyRequired: 'low' | 'medium' | 'high';
+  tips: string;
+  prerequisites?: string[];
+}
+
+export const BREAKDOWN_PATTERNS: Record<string, { steps: PatternStep[] }> = {
   writing: {
     steps: [
       {

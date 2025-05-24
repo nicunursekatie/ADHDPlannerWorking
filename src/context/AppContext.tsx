@@ -300,6 +300,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         task: taskToDelete,
         timestamp: Date.now()
       }]);
+      
+      // Also store in long-term deleted tasks storage
+      localStorage.addDeletedTask(taskToDelete);
     }
     
     // Remove task from parent's subtasks if it's a subtask
@@ -325,6 +328,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .map(t => t.id);
       
       subtaskIds.forEach(id => {
+        // Store subtasks in deleted tasks as well
+        const subtask = tasks.find(t => t.id === id);
+        if (subtask) {
+          localStorage.addDeletedTask(subtask);
+        }
         deleteSubtasksRecursively(id);
       });
       
@@ -917,6 +925,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         task,
         timestamp: Date.now()
       }]);
+      // Also store in long-term deleted tasks storage
+      localStorage.addDeletedTask(task);
+    });
+    
+    // Also store subtasks that will be deleted
+    const subtasksToDelete = tasks.filter(task => 
+      task.parentTaskId && taskIds.includes(task.parentTaskId)
+    );
+    subtasksToDelete.forEach(subtask => {
+      localStorage.addDeletedTask(subtask);
     });
     
     // Remove tasks and their subtasks

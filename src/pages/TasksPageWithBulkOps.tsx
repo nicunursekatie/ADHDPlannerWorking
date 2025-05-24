@@ -13,9 +13,10 @@ import { QuickCapture } from '../components/tasks/QuickCapture';
 import { 
   Plus, Filter, X, Undo2, Archive, 
   AlertTriangle, CalendarDays, Calendar, Layers, 
-  Trash2, CheckCircle2, Folder, FileArchive
+  Trash2, CheckCircle2, Folder, FileArchive, RotateCcw
 } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek } from '../utils/helpers';
+import { DeletedTask, getDeletedTasks, restoreDeletedTask, permanentlyDeleteTask } from '../utils/localStorage';
 
 interface BulkTaskCardProps {
   task: Task;
@@ -96,6 +97,7 @@ const TasksPageWithBulkOps: React.FC = () => {
   const [breakdownTask, setBreakdownTask] = useState<Task | null>(null);
   const [showConvertToSubtasksModal, setShowConvertToSubtasksModal] = useState(false);
   const [selectedParentTaskId, setSelectedParentTaskId] = useState<string | null>(null);
+  const [deletedTasks, setDeletedTasks] = useState<DeletedTask[]>([]);
   
   // Filter state
   const [showCompleted, setShowCompleted] = useState(false);
@@ -106,7 +108,7 @@ const TasksPageWithBulkOps: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   // View state
-  const [activeTab, setActiveTab] = useState<'today' | 'tomorrow' | 'week' | 'overdue' | 'all'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'today' | 'tomorrow' | 'week' | 'overdue' | 'all' | 'deleted'>(initialTab);
   
   // Show undo notification when a task is deleted
   useEffect(() => {
@@ -118,6 +120,33 @@ const TasksPageWithBulkOps: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [hasRecentlyDeleted]);
+  
+  // Load deleted tasks when tab changes
+  useEffect(() => {
+    if (activeTab === 'deleted') {
+      loadDeletedTasks();
+    }
+  }, [activeTab]);
+  
+  const loadDeletedTasks = () => {
+    const deleted = getDeletedTasks();
+    setDeletedTasks(deleted.sort((a, b) => 
+      new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()
+    ));
+  };
+  
+  const handleRestoreTask = (taskId: string) => {
+    const restoredTask = restoreDeletedTask(taskId);
+    if (restoredTask) {
+      loadDeletedTasks();
+      // The context will automatically update with the restored task
+    }
+  };
+  
+  const handlePermanentlyDeleteTask = (taskId: string) => {
+    permanentlyDeleteTask(taskId);
+    loadDeletedTasks();
+  };
   
   const handleOpenModal = (task?: Task) => {
     if (task) {
@@ -560,6 +589,20 @@ const TasksPageWithBulkOps: React.FC = () => {
             <div className="flex items-center space-x-2">
               <Layers size={16} />
               <span className="whitespace-nowrap">All Tasks</span>
+            </div>
+          </button>
+          
+          <button
+            className={`flex-shrink-0 px-4 py-2 font-medium text-sm rounded-t-md border-b-2 transition-colors ${
+              activeTab === 'deleted' 
+                ? 'border-gray-500 text-gray-600 bg-gray-50' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+            onClick={() => setActiveTab('deleted')}
+          >
+            <div className="flex items-center space-x-2">
+              <Trash2 size={16} />
+              <span className="whitespace-nowrap">Deleted</span>
             </div>
           </button>
         </div>
