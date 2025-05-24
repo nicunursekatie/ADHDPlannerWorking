@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useCallback, ReactNode } fro
 import { Task, Project, Category, DailyPlan, WhatNowCriteria, JournalEntry, RecurringTask } from '../types';
 import { WorkSchedule, WorkShift, ShiftType, DEFAULT_SHIFTS, DEFAULT_SHIFT } from '../types/WorkSchedule';
 import * as localStorage from '../utils/localStorage';
-import { generateId, createSampleData } from '../utils/helpers';
+import { generateId, createSampleData, recommendTasks as recommendTasksUtil } from '../utils/helpers';
 
 interface DeletedTask {
   task: Task;
@@ -183,14 +183,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
         
         // Debug logging
-        console.log('Loading data from localStorage:');
-        console.log('Tasks:', loadedTasks.length);
-        console.log('Projects:', loadedProjects.length);
-        console.log('Categories:', loadedCategories.length);
-        console.log('DailyPlans:', loadedDailyPlans.length);
-        console.log('WorkSchedule:', loadedWorkSchedule ? 'found' : 'not found');
-        console.log('JournalEntries:', loadedJournalEntries.length);
-        console.log('RecurringTasks:', loadedRecurringTasks.length);
         
         setTasks(loadedTasks);
         setProjects(loadedProjects);
@@ -289,7 +281,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setTasks(updatedTasks);
     localStorage.saveTasks(updatedTasks);
     
-    console.log('Updating task:', updatedTask);
   }, [tasks]);
   
   const deleteTask = useCallback((taskId: string) => {
@@ -523,10 +514,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       // Debug logging
       if (!plan) {
-        console.log(`No daily plan found for date: ${date}`);
-        console.log('Available plans:', dailyPlans.map(p => p?.date || 'unknown').filter(Boolean));
       } else {
-        console.log(`Found daily plan for date: ${date}`, plan);
       }
       
       return plan || null;
@@ -590,7 +578,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Get the daily plan for the specified date
       const plan = getDailyPlan(date);
       if (!plan || !plan.timeBlocks || !Array.isArray(plan.timeBlocks) || plan.timeBlocks.length === 0) {
-        console.log(`No time blocks found for date: ${date}`);
         return 0; // No time blocks to export
       }
 
@@ -611,7 +598,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
       });
 
-      console.log(`Exported ${exportedCount} time blocks for date: ${date}`);
       
       // Instead of creating tasks, we simply update the UI to show that blocks were exported
       // The calendar view already reads from the dailyPlans data structure directly
@@ -709,36 +695,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   // What Now Wizard
   const recommendTasks = useCallback((criteria: WhatNowCriteria): Task[] => {
-    // Filter to incomplete tasks
-    let filteredTasks = tasks.filter(task => !task.completed);
-    
-    // Filter by available time
-    if (criteria.availableTime === 'short') {
-      // Prioritize tasks without subtasks, assuming they're quicker
-      filteredTasks = filteredTasks.filter(task => task.subtasks.length === 0);
-    }
-    
-    // Sort by energy level
-    filteredTasks.sort((a, b) => {
-      // For low energy, prioritize simpler tasks (those without subtasks)
-      if (criteria.energyLevel === 'low') {
-        return (a.subtasks.length - b.subtasks.length);
-      }
-      
-      // For high energy, prioritize complex tasks (those with subtasks)
-      if (criteria.energyLevel === 'high') {
-        return (b.subtasks.length - a.subtasks.length);
-      }
-      
-      // For medium energy, prioritize by due date
-      return a.dueDate && b.dueDate 
-        ? a.dueDate.localeCompare(b.dueDate)
-        : (a.dueDate ? -1 : (b.dueDate ? 1 : 0));
-    });
-    
-    // Return top 5 recommendations
-    return filteredTasks.slice(0, 5);
+    return recommendTasksUtil(tasks, criteria);
   }, [tasks]);
+
   
   // Data Management
   const exportData = useCallback((): string => {

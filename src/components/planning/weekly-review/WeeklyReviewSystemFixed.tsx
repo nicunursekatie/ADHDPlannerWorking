@@ -216,7 +216,6 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
   };
 
   const handleAddTask = () => {
-    console.log('handleAddTask called with input:', taskInput);
     if (taskInput.trim()) {
       const newTask = quickAddTask(taskInput);
       setTaskInput('');
@@ -372,7 +371,6 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
   const currentOverdueTask = overdueTasks[currentOverdueTaskIndex];
 
   const openReviewModal = (sectionId: string) => {
-    console.log('openReviewModal called with sectionId:', sectionId);
     if (sectionId === 'overdue' && overdueTasks.length > 0) {
       startOverdueReview();
     } else {
@@ -424,7 +422,6 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                   section.complete ? 'bg-green-50 border-green-400' : 'bg-amber-50 border-amber-200'
                 }`}
                 onClick={() => {
-                  console.log('Card clicked for section:', section.id, 'complete:', section.complete);
                   openReviewModal(section.id);
                 }}
               >

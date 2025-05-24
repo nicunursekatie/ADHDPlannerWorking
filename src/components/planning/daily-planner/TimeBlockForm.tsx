@@ -31,13 +31,11 @@ const TimeBlockForm: React.FC<TimeBlockFormProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     e.stopPropagation();
     const { name, value } = e.target;
-    console.log(`Updating ${name} to ${value}`); // Debug log
     setFormData(prev => {
       const newData = {
         ...prev,
         [name]: value
       };
-      console.log('New form data:', newData); // Debug log
       return newData;
     });
   };
