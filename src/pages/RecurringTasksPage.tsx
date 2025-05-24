@@ -42,6 +42,7 @@ const RecurringTasksPage: React.FC = () => {
     source: {
       type: 'manual' as 'manual' | 'medication' | 'bill' | 'chore' | 'appointment' | 'routine',
     },
+    startDate: formatDate(new Date()), // Default to today
   });
 
   const resetForm = () => {
@@ -59,6 +60,7 @@ const RecurringTasksPage: React.FC = () => {
       source: {
         type: 'manual',
       },
+      startDate: formatDate(new Date()), // Reset to today
     });
     setEditingTask(null);
   };
@@ -66,7 +68,9 @@ const RecurringTasksPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const nextDue = calculateNextDue(formData.pattern);
+    // Calculate next due date based on the start date
+    const startDate = new Date(formData.startDate);
+    const nextDue = calculateNextDue(formData.pattern, startDate);
     
     const recurringTask: RecurringTask = {
       id: editingTask?.id || generateId(),
@@ -96,14 +100,20 @@ const RecurringTasksPage: React.FC = () => {
     resetForm();
   };
 
-  const calculateNextDue = (pattern: RecurrencePattern): Date => {
+  const calculateNextDue = (pattern: RecurrencePattern, startDate?: Date): Date => {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const baseDate = startDate || now;
+    const today = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
     
     // If time is specified, use it
     if (pattern.time) {
       const [hours, minutes] = pattern.time.split(':').map(Number);
       today.setHours(hours, minutes, 0, 0);
+    }
+    
+    // If we have a start date and it's in the future, use it as the first occurrence
+    if (startDate && startDate > now) {
+      return today;
     }
     
     switch (pattern.type) {
@@ -145,6 +155,7 @@ const RecurringTasksPage: React.FC = () => {
       estimatedMinutes: task.estimatedMinutes || 30,
       categoryIds: task.categoryIds,
       source: task.source,
+      startDate: task.nextDue, // Use the next due date as start date for editing
     });
     setIsModalOpen(true);
   };
@@ -336,11 +347,10 @@ const RecurringTasksPage: React.FC = () => {
                             return category ? (
                               <Badge
                                 key={categoryId}
+                                text={category.name}
                                 color={category.color}
-                                size="sm"
-                              >
-                                {category.name}
-                              </Badge>
+                                className="text-sm"
+                              />
                             ) : null;
                           })}
                         </div>
@@ -358,7 +368,7 @@ const RecurringTasksPage: React.FC = () => {
                         Generate Now
                       </Button>
                       {!task.active && (
-                        <Badge color="red" size="sm">Inactive</Badge>
+                        <Badge text="Inactive" color="red" className="text-sm" />
                       )}
                     </div>
                   </div>
@@ -507,19 +517,36 @@ const RecurringTasksPage: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Time (optional)
-            </label>
-            <input
-              type="time"
-              value={formData.pattern.time}
-              onChange={(e) => setFormData({
-                ...formData,
-                pattern: { ...formData.pattern, time: e.target.value }
-              })}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Time (optional)
+              </label>
+              <input
+                type="time"
+                value={formData.pattern.time}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  pattern: { ...formData.pattern, time: e.target.value }
+                })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                min={formatDate(new Date())}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">First occurrence of this task</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -584,9 +611,11 @@ const RecurringTasksPage: React.FC = () => {
                     }}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <Badge color={category.color} size="sm">
-                    {category.name}
-                  </Badge>
+                  <Badge
+                    text={category.name}
+                    color={category.color}
+                    className="text-sm"
+                  />
                 </label>
               ))}
             </div>

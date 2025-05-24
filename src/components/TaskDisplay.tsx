@@ -1,6 +1,7 @@
-import React from 'react';
-import { CheckCircle2, Circle, Calendar, AlertCircle } from 'lucide-react';
-import { Task } from '../types/task';
+import React, { useState } from 'react';
+import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { Task } from '../types';
+import { useAppContext } from '../context/AppContext';
 
 interface TaskDisplayProps {
   task: Task;
@@ -17,6 +18,13 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   onDelete,
   onBreakdown 
 }) => {
+  const { tasks } = useAppContext();
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Get actual subtask objects
+  const subtasks = task.subtasks ? 
+    task.subtasks.map(subtaskId => tasks.find(t => t.id === subtaskId)).filter(Boolean) as Task[] : [];
+  
   const getDueDateInfo = () => {
     if (!task.dueDate) return null;
     
@@ -93,9 +101,52 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
         </div>
         
         {/* Subtasks */}
-        {task.subtasks && task.subtasks.length > 0 && (
-          <div className="mt-2 text-sm text-gray-500">
-            {task.subtasks.filter(st => st && !st.completed).length} of {task.subtasks.length} subtasks remaining
+        {subtasks.length > 0 && (
+          <div className="mt-2">
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+              <span>
+                {subtasks.filter(st => !st.completed).length} of {subtasks.length} subtasks
+              </span>
+            </button>
+            
+            {/* Expanded subtasks */}
+            {isExpanded && (
+              <div className="mt-2 ml-6 space-y-2">
+                {subtasks.map(subtask => (
+                  <div 
+                    key={subtask.id}
+                    className={`flex items-start gap-2 p-2 rounded-lg ${
+                      subtask.completed ? 'bg-gray-50' : 'bg-gray-100'
+                    }`}
+                  >
+                    <button
+                      onClick={() => onToggle(subtask.id)}
+                      className="mt-0.5 flex-shrink-0"
+                    >
+                      {subtask.completed ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <h4 className={`text-sm ${
+                        subtask.completed ? 'text-gray-500 line-through' : 'text-gray-700'
+                      }`}>
+                        {subtask.title}
+                      </h4>
+                      {subtask.description && (
+                        <p className="text-xs text-gray-500 mt-1">{subtask.description}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

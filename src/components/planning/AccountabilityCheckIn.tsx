@@ -49,6 +49,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   // Common reasons for not completing tasks - streamlined list
   const [commonReasons, setCommonReasons] = useState<Reason[]>([
     { id: 'already_done', text: 'I completed it', frequency: 0, isCommon: true },
+    { id: 'forgot', text: 'I forgot', frequency: 0, isCommon: true },
     { id: 'not_relevant', text: 'No longer relevant', frequency: 0, isCommon: true },
     { id: 'too_vague', text: 'Too vague or complex', frequency: 0, isCommon: true },
     { id: 'no_time', text: 'Ran out of time', frequency: 0, isCommon: true },
@@ -121,29 +122,6 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     setTasksWithReasons(initializedTasks);
   }
 }, [overdueTasks, tasksWithReasons.length]);
-
-  // Handle Enter key to save and continue
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input field
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-        return;
-      }
-      
-      if (e.key === 'Enter' && expandedTask) {
-        const currentTask = tasksWithReasons.find(t => t.task.id === expandedTask);
-        if (currentTask && currentTask.selectedReason && 
-            (currentTask.selectedReason !== 'custom' || currentTask.customReason)) {
-          e.preventDefault();
-          handleTaskUpdate(currentTask);
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [expandedTask, tasksWithReasons, handleTaskUpdate]);
 
   
   const handleReasonSelect = (taskId: string, reasonId: string) => {
@@ -310,6 +288,29 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
       onTaskUpdated();
     }
   }, [commonReasons, deleteTask, updateTask, onTaskUpdated]);
+
+  // Handle Enter key to save and continue
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input field
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+      
+      if (e.key === 'Enter' && expandedTask) {
+        const currentTask = tasksWithReasons.find(t => t.task.id === expandedTask);
+        if (currentTask && currentTask.selectedReason && 
+            (currentTask.selectedReason !== 'custom' || currentTask.customReason)) {
+          e.preventDefault();
+          handleTaskUpdate(currentTask);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [expandedTask, tasksWithReasons, handleTaskUpdate]);
   
   // Get the most common reasons for not completing tasks
   const topReasons = [...commonReasons]
