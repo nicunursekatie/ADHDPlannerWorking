@@ -126,7 +126,7 @@ export class AITaskBreakdownService {
           duration: '10 mins',
           description: rest.join(':').trim() || title.trim(),
           type: 'work',
-          difficulty: 'medium'
+          energyRequired: 'medium'
         });
       }
     }
