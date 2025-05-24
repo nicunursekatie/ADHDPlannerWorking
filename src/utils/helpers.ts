@@ -134,7 +134,7 @@ export const getTasksDueToday = (tasks: Task[]): Task[] => {
   todayDate.setHours(0, 0, 0, 0);
   
   return tasks.filter((task) => {
-    if (!task.dueDate || task.completed) return false;
+    if (!task.dueDate || task.dueDate === '' || task.completed) return false;
     
     // Parse the task due date
     const [year, month, day] = task.dueDate.split('-').map(num => parseInt(num, 10));
@@ -157,7 +157,7 @@ export const getTasksDueThisWeek = (tasks: Task[]): Task[] => {
   endOfWeek.setHours(23, 59, 59, 999); // End of the day
   
   return tasks.filter((task) => {
-    if (!task.dueDate || task.completed) return false;
+    if (!task.dueDate || task.dueDate === '' || task.completed) return false;
     
     // Parse the task due date
     const [year, month, day] = task.dueDate.split('-').map(num => parseInt(num, 10));
@@ -176,7 +176,7 @@ export const getOverdueTasks = (tasks: Task[]): Task[] => {
   todayDate.setHours(0, 0, 0, 0);
   
   return tasks.filter((task) => {
-    if (!task.dueDate || task.completed) return false;
+    if (!task.dueDate || task.dueDate === '' || task.completed) return false;
     
     // Parse the task due date
     const [year, month, day] = task.dueDate.split('-').map(num => parseInt(num, 10));

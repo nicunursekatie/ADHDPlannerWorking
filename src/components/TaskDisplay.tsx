@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder } from 'lucide-react';
 import { Task } from '../types';
 import { useAppContext } from '../context/AppContext';
 
@@ -18,7 +18,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   onDelete,
   onBreakdown 
 }) => {
-  const { tasks } = useAppContext();
+  const { tasks, projects } = useAppContext();
   const [isExpanded, setIsExpanded] = useState(false);
   
   // Get actual subtask objects
@@ -26,9 +26,12 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     task.subtasks.map(subtaskId => tasks.find(t => t.id === subtaskId)).filter(Boolean) as Task[] : [];
   
   const getDueDateInfo = () => {
-    if (!task.dueDate) return null;
+    if (!task.dueDate || task.dueDate === '') return null;
     
     const dueDate = new Date(task.dueDate);
+    // Check if the date is valid
+    if (isNaN(dueDate.getTime())) return null;
+    
     const now = new Date();
     const diffTime = dueDate.getTime() - now.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -64,14 +67,20 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const dueDateInfo = getDueDateInfo();
   
   return (
-    <div className={`
-      group flex items-start gap-3 p-4 rounded-xl border
-      ${task.completed ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-300 hover:border-gray-400 hover:shadow-sm'}
-      transition-all duration-200
-    `}>
+    <div 
+      className={`
+        group flex items-start gap-3 p-4 rounded-xl border cursor-pointer
+        ${task.completed ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-300 hover:border-gray-400 hover:shadow-sm'}
+        transition-all duration-200
+      `}
+      onClick={() => onEdit(task)}
+    >
       {/* Checkbox */}
       <button
-        onClick={() => onToggle(task.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle(task.id);
+        }}
         className="mt-0.5 flex-shrink-0"
       >
         {task.completed ? (
@@ -84,12 +93,23 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       {/* Main Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <h3 className={`
-            text-base font-medium tracking-tight
-            ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}
-          `}>
-            {task.title}
-          </h3>
+          <div className="flex-1">
+            <h3 className={`
+              text-base font-medium tracking-tight
+              ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}
+            `}>
+              {task.title}
+            </h3>
+            {/* Project info */}
+            {task.projectId && (
+              <div className="flex items-center gap-1 mt-0.5">
+                <Folder className="w-3 h-3 text-gray-400" />
+                <span className="text-xs text-gray-500">
+                  {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
+                </span>
+              </div>
+            )}
+          </div>
           
           {/* Due Date */}
           {dueDateInfo && (
@@ -104,7 +124,10 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
         {subtasks.length > 0 && (
           <div className="mt-2">
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
               className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
               {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -124,7 +147,10 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                     }`}
                   >
                     <button
-                      onClick={() => onToggle(subtask.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggle(subtask.id);
+                      }}
                       className="mt-0.5 flex-shrink-0"
                     >
                       {subtask.completed ? (
@@ -155,7 +181,10 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {onBreakdown && !task.completed && (
           <button
-            onClick={() => onBreakdown(task)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onBreakdown(task);
+            }}
             className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-gray-100"
             title="Break down into subtasks"
           >
@@ -165,7 +194,10 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
           </button>
         )}
         <button
-          onClick={() => onEdit(task)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(task);
+          }}
           className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,7 +205,10 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
           </svg>
         </button>
         <button
-          onClick={() => onDelete(task.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(task.id);
+          }}
           className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

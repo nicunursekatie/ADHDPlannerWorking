@@ -28,6 +28,7 @@ interface AppContextType {
   bulkCompleteTasks: (taskIds: string[]) => void;
   bulkMoveTasks: (taskIds: string[], projectId: string | null) => void;
   bulkArchiveTasks: (taskIds: string[]) => void;
+  bulkConvertToSubtasks: (taskIds: string[], parentTaskId: string) => void;
   
   // Dependencies
   addTaskDependency: (taskId: string, dependsOnId: string) => void;
