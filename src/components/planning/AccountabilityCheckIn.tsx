@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { Task } from '../../types';
 import Card from '../common/Card';
@@ -122,6 +122,29 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   }
 }, [overdueTasks, tasksWithReasons.length]);
 
+  // Handle Enter key to save and continue
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input field
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+      
+      if (e.key === 'Enter' && expandedTask) {
+        const currentTask = tasksWithReasons.find(t => t.task.id === expandedTask);
+        if (currentTask && currentTask.selectedReason && 
+            (currentTask.selectedReason !== 'custom' || currentTask.customReason)) {
+          e.preventDefault();
+          handleTaskUpdate(currentTask);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [expandedTask, tasksWithReasons, handleTaskUpdate]);
+
   
   const handleReasonSelect = (taskId: string, reasonId: string) => {
     console.log('handleReasonSelect called with:', { taskId, reasonId });
@@ -215,7 +238,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     localStorage.setItem('accountabilityResponses', JSON.stringify(existingResponses));
   };
   
-  const handleTaskUpdate = (taskWithReason: TaskWithReason) => {
+  const handleTaskUpdate = useCallback((taskWithReason: TaskWithReason) => {
     const { task, action, rescheduleDate } = taskWithReason;
     
     let updatedTask: Task = { ...task };
@@ -286,7 +309,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     if (onTaskUpdated) {
       onTaskUpdated();
     }
-  };
+  }, [commonReasons, deleteTask, updateTask, onTaskUpdated]);
   
   // Get the most common reasons for not completing tasks
   const topReasons = [...commonReasons]
@@ -617,7 +640,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                           onClick={() => handleTaskUpdate(taskWithReason)}
                           icon={<CheckCircle size={14} />}
                         >
-                          Save & Continue
+                          Save & Continue (Enter)
                         </Button>
                       </div>
                     </div>
