@@ -373,10 +373,23 @@ const generateId = (): string => {
 export const exportData = (): string => {
   try {
     // Wrap in try-catch to handle potential localStorage access issues
+    const tasks = getTasks() || [];
+    const projects = getProjects() || [];
+    const categories = getCategories() || [];
+    
+    // Create a map of project IDs to names for quick lookup
+    const projectMap = new Map(projects.map(p => [p.id, p.name]));
+    
+    // Add project names to tasks for easier reference
+    const tasksWithProjectNames = tasks.map(task => ({
+      ...task,
+      projectName: task.projectId ? projectMap.get(task.projectId) || null : null
+    }));
+    
     const data = {
-      tasks: getTasks() || [],
-      projects: getProjects() || [],
-      categories: getCategories() || [],
+      tasks: tasksWithProjectNames,
+      projects: projects,
+      categories: categories,
       dailyPlans: getDailyPlans() || [],
       workSchedule: getWorkSchedule(),
       recurringTasks: getRecurringTasks() || [],
@@ -447,7 +460,12 @@ export const importData = (jsonData: string): boolean => {
     let importSuccessful = false;
     
     if (Array.isArray(data.tasks)) {
-      saveTasks(data.tasks);
+      // Remove projectName field from tasks if present (it's only for export convenience)
+      const cleanedTasks = data.tasks.map((task: any) => {
+        const { projectName, ...cleanTask } = task;
+        return cleanTask;
+      });
+      saveTasks(cleanedTasks);
       importSuccessful = true;
     }
     
