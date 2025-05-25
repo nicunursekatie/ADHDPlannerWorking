@@ -85,7 +85,7 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       }
     
     // Real AI API call
-    console.log('Making real API call to:', providerName, 'with model:', selectedModel);
+    console.log('Making real API call to:', providerName, 'with model:', provider.defaultModel);
     console.log('Context data being sent:', contextData);
     const messages = [
           {
@@ -199,9 +199,7 @@ Return JSON array only.`
     }
     
     const data = await response.json();
-    console.log('Full API response:', JSON.stringify(data, null, 2));
     const content = provider.parseResponse(data);
-    console.log('Parsed content:', content);
     
     // Parse the JSON response
     let steps;
@@ -216,7 +214,6 @@ Return JSON array only.`
       
       // Handle Groq's different response format (check both "Step" and "step")
       if (steps.length > 0 && (steps[0].Step || steps[0].step)) {
-        console.log('Detected Groq format, converting...');
         steps = steps.map((step, index) => ({
           title: step.Step || step.step || `Step ${index + 1}`,
           duration: '5-10 mins',
@@ -233,7 +230,6 @@ Return JSON array only.`
     }
     
     // Log the steps before conversion
-    console.log('Steps before conversion:', JSON.stringify(steps, null, 2));
     
     // Check if steps is actually an array with content
     if (!Array.isArray(steps) || steps.length === 0) {
@@ -254,8 +250,6 @@ Return JSON array only.`
       tips: step.tips || 'Focus on this specific action'
     }));
     
-    console.log('Generated breakdown:', breakdown);
-    console.log('Setting breakdown options, length:', breakdown.length);
     setBreakdownOptions(breakdown);
     } catch (err) {
       console.error('Error generating breakdown:', err);
@@ -333,7 +327,6 @@ Return JSON array only.`
 
   const acceptBreakdown = () => {
     const selectedOptions = breakdownOptions.filter(opt => opt.selected);
-    console.log('Selected options:', selectedOptions);
     
     const subtasks: Partial<Task>[] = selectedOptions.map((opt, index) => {
       // Parse duration from formats like "5-10 mins" or "15 mins"
@@ -359,7 +352,6 @@ Return JSON array only.`
       };
     });
     
-    console.log('Subtasks to create:', subtasks);
     onAccept(subtasks);
     
     // Reset the component state for next use

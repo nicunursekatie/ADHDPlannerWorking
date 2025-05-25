@@ -22,7 +22,6 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
   
   // Log props for debugging
   useEffect(() => {
-    console.log('SubtaskList rendered with:', { parentTaskId, existingSubtasks });
   }, [parentTaskId, existingSubtasks]);
   
   // Get the actual subtask objects
@@ -32,7 +31,6 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
   
   // Add this for clarity:
   useEffect(() => {
-    console.log("Rendering subtasks for", parentTaskId, subtasks.map(t => t.title));
   }, [subtasks, parentTaskId]);
   
   // Toggle expand/collapse

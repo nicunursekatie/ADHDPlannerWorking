@@ -28,7 +28,6 @@ export const getTasks = (): Task[] => {
         saveTasks(legacyTasks);
         // Remove legacy data after successful migration
         localStorage.removeItem('tasks');
-        console.log('Migrated tasks data from legacy storage');
         return legacyTasks;
       }
     }
@@ -83,7 +82,6 @@ export const getProjects = (): Project[] => {
         saveProjects(legacyProjects);
         // Remove legacy data after successful migration
         localStorage.removeItem('projects');
-        console.log('Migrated projects data from legacy storage');
         return legacyProjects;
       }
     }
@@ -138,7 +136,6 @@ export const getCategories = (): Category[] => {
         saveCategories(legacyCategories);
         // Remove legacy data after successful migration
         localStorage.removeItem('categories');
-        console.log('Migrated categories data from legacy storage');
         return legacyCategories;
       }
     }
@@ -193,7 +190,6 @@ export const getDailyPlans = (): DailyPlan[] => {
         saveDailyPlans(legacyPlans);
         // Remove legacy data after successful migration
         localStorage.removeItem('dailyPlans');
-        console.log('Migrated daily plans data from legacy storage');
         return legacyPlans;
       }
     }
@@ -254,7 +250,6 @@ export const getWorkSchedule = (): WorkSchedule | null => {
         saveWorkSchedule(legacySchedule);
         // Remove legacy data after successful migration
         localStorage.removeItem('workSchedule');
-        console.log('Migrated work schedule data from legacy storage');
         return legacySchedule;
       }
     }
@@ -453,7 +448,6 @@ export const importData = (jsonData: string): boolean => {
       saveTasks(transformedData.tasks);
       saveProjects(transformedData.projects);
       saveCategories(transformedData.categories);
-      console.log('Successfully imported transformed data');
       return true;
     }
     
@@ -498,7 +492,6 @@ export const importData = (jsonData: string): boolean => {
     }
     
     if (importSuccessful) {
-      console.log('Successfully imported data');
       return true;
     } else {
       console.error('Import failed: No valid data sections found');
@@ -590,7 +583,6 @@ export const getJournalEntries = (): JournalEntry[] => {
         saveJournalEntries(legacyEntries);
         // Remove legacy data after successful migration
         localStorage.removeItem('journalEntries');
-        console.log('Migrated journal entries from legacy storage');
         return legacyEntries;
       }
     }

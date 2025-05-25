@@ -125,7 +125,6 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
 
   
   const handleReasonSelect = (taskId: string, reasonId: string) => {
-    console.log('handleReasonSelect called with:', { taskId, reasonId });
     
     // Map of reasons to automatic actions
     const reasonToAction: { [key: string]: 'reschedule' | 'break_down' | 'delegate' | 'abandon' | 'completed' | 'blocked' } = {
@@ -149,7 +148,6 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
         }
         return item;
       });
-      console.log('Updated tasksWithReasons:', updated);
       return updated;
     });
     
