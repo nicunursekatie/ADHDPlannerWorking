@@ -42,7 +42,6 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [breakdownOptions, setBreakdownOptions] = useState<BreakdownOption[]>([]);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [preferences, setPreferences] = useState({
     maxSteps: 5,
     maxDuration: 30,
@@ -73,9 +72,12 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       // Get settings from localStorage
       const apiKey = localStorage.getItem('ai_api_key');
       const providerName = localStorage.getItem('ai_provider') || 'openai';
+      const modelName = localStorage.getItem('ai_model');
       const provider = getProvider(providerName);
+      const selectedModel = modelName || provider.defaultModel;
       
       console.log('Generating breakdown for task:', task.title);
+      console.log('Provider:', providerName, 'Model:', selectedModel);
       console.log('API key present:', !!apiKey);
       
       if (!apiKey) {
@@ -83,7 +85,7 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       }
     
     // Real AI API call
-    console.log('Making real API call to:', providerName, 'with model:', provider.defaultModel);
+    console.log('Making real API call to:', providerName, 'with model:', selectedModel);
     console.log('Context data being sent:', contextData);
     const messages = [
           {
@@ -92,10 +94,13 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
 
 CRITICAL RULES:
 1. READ AND USE THE CONTEXT PROVIDED - especially blockers, current state, and specific goals
-2. Address blockers FIRST, not last - if they don't know where things go, don't tell them to fold first
-3. Reduce decision fatigue by grouping, categorizing, or deferring decisions
-4. Create momentum with easy wins before harder tasks
-5. Each step must reduce overwhelm, clarify decision-making, or externalize mental load
+2. The "Goal" field defines the task boundary - if goal is "clean dry clothes", do NOT include putting away steps
+3. UNDERSTAND THE SPECIFIC TASK - laundry means washing/drying, not folding; dishes means washing dishes, not organizing cabinets
+4. Address blockers FIRST, not last - adapt steps to work around the specific challenges mentioned
+5. Reduce decision fatigue by grouping, categorizing, or deferring decisions
+6. Create momentum with easy wins before harder tasks
+7. Each step must reduce overwhelm, clarify decision-making, or externalize mental load
+8. MINIMIZE REWARDS - Focus on actual work steps, not celebration/reward steps
 
 ADHD-AWARE PRINCIPLES:
 - Triage before action: Sort into categories before detailed work
@@ -104,18 +109,32 @@ ADHD-AWARE PRINCIPLES:
 - Easy wins first: Start with obvious/simple items to build momentum
 - Batch similar items: Group processing reduces context switching
 - Visual cues: Use physical separation, containers, or notes
+- CONTEXT MATTERS: "Laundry" tasks are about washing/drying; "organizing" tasks are about finding homes for items
 
 BREAKDOWN STRATEGY:
-- If "don't know where to put things" → First create categories/piles, THEN process each pile
-- If "decision fatigue" → Start with items that have obvious homes, defer harder decisions
-- If "overwhelmed by volume" → Break into smaller visual chunks first
-- If "boring/unmotivating" → Add variety, breaks, or rewards between steps
+- FIRST: Understand what the task actually requires (washing vs folding, writing vs researching, etc.)
+- If "don't know where to put things" AND task is about organizing → Create categories/zones
+- If "don't know where to put things" AND task is about laundry → Focus on sorting by wash settings/colors
+- If "decision fatigue" → Start with obvious/easy decisions, defer complex ones
+- If "overwhelmed by volume" → Break into smaller chunks or time blocks
+- If "boring/unmotivating" → Add variety, background entertainment, or alternate between task types
+- ALWAYS: Make steps match the actual task - washing/drying steps for laundry, NOT organizing/putting away
 
 NEVER:
 - Jump to detailed work before triage
 - Ask questions as steps
 - Require decisions without scaffolding
 - Process items one-by-one when batching would help
+- Include reward/celebration steps unless specifically requested
+- Add breaks unless the user's context indicates fatigue
+- Talk about "finding homes" or "putting away" for laundry tasks - that's a different task
+- Mix task types: laundry = washing/drying; organizing = finding homes/putting away
+
+STEP TYPES:
+- Use "work" for 95% of steps - actual task progress
+- Use "break" ONLY if task exceeds 1 hour or user mentions fatigue
+- Use "review" ONLY for final verification of complex tasks
+- AVOID "reward" type entirely
 
 Format as JSON array with structure:
 [
@@ -123,7 +142,7 @@ Format as JSON array with structure:
     "title": "Action-oriented title",
     "duration": "5-10 mins",
     "description": "What to do and why",
-    "type": "work|break|review",
+    "type": "work",
     "energyRequired": "low|medium|high",
     "tips": "ADHD-friendly tips"
   }
@@ -138,20 +157,30 @@ ${contextData.blockers ? `Blockers: ${contextData.blockers}` : ''}
 ${contextData.specificGoal ? `Goal: ${contextData.specificGoal}` : ''}
 ${contextData.environment ? `Constraints: ${contextData.environment}` : ''}
 
-Create ${preferences.maxSteps} steps that DIRECTLY ADDRESS THE BLOCKERS LISTED ABOVE.
+Create ${preferences.maxSteps} actionable WORK steps that DIRECTLY ADDRESS THE BLOCKERS LISTED ABOVE.
+Each step should be ${preferences.complexity === 'simple' ? 'very simple and specific' : preferences.complexity === 'detailed' ? 'detailed with clear sub-actions' : 'moderately detailed'}.
+Keep total task duration under ${preferences.maxDuration} minutes.
 
 IMPORTANT REQUIREMENTS:
-1. If the blocker is "don't know where things go" - START with categorization/sorting, not with folding
-2. If the blocker is "decision fatigue" - DEFER hard decisions, process easy items first
-3. If the blocker is "overwhelming amount" - BREAK into visual chunks before processing
-4. Use the context to customize steps - don't give generic task sequences
+1. IDENTIFY THE TASK TYPE FIRST - "do laundry" = washing/drying, NOT organizing/putting away
+2. If the blocker is "don't know where things go" - this blocker ONLY applies to organizing tasks, NOT laundry
+3. If the blocker is "decision fatigue" - DEFER hard decisions, process easy items first
+4. If the blocker is "overwhelming amount" - BREAK into visual chunks before processing
+5. Use the context to customize steps - don't give generic task sequences
+6. FOCUS ON WORK - No reward steps, minimal breaks (only if truly needed)
+7. Each step should move the task forward concretely
+8. LAUNDRY TASKS should include: gathering, sorting by wash type, loading washer, switching to dryer, etc.
 
 Example adaptations:
-- Blocker: "don't know where clothes go" → First step: "Sort into 3 piles: has home, needs home, donate/unsure"
-- Blocker: "bored with folding" → Mix folding with other actions, add music/podcast, or batch by type
-- Blocker: "decision fatigue" → Start with socks/underwear (easy homes), defer complex items
+- Task: "Clean room" + Blocker: "don't know where to put things" → First step: "Create 3 zones: keep here, belongs elsewhere, decide later"
+- Task: "Do laundry" + Blocker: "overwhelming amount" → First step: "Sort into 2 loads: urgent items needed this week, everything else"
+- Task: "Do laundry" + Blocker: "boring" → Steps like: "Gather while listening to podcast", "Start washer", "Set timer", "Switch to dryer"
+- Task: "Fold and put away clothes" + Blocker: "don't know where things go" → First step: "Sort into piles by person/room"
+- WRONG: Task "Do laundry" with steps about "finding homes" - that's organizing, not laundry!
 
 Each step should ACTIVELY WORK AROUND the stated blockers, not ignore them.
+CRITICAL: "Do laundry" = wash/dry only. "Put away laundry" = organizing/finding homes. Don't mix these!
+Mark all steps as type: "work" unless a break is absolutely essential.
 
 Return JSON array only.`
           }
@@ -160,7 +189,7 @@ Return JSON array only.`
     const response = await fetch(provider.baseUrl, {
       method: 'POST',
       headers: provider.headers(apiKey),
-      body: JSON.stringify(provider.formatRequest(messages, provider.defaultModel))
+      body: JSON.stringify(provider.formatRequest(messages, selectedModel))
     });
     
     if (!response.ok) {
@@ -446,62 +475,121 @@ Return JSON array only.`
         {showContextForm && !isLoading && (
           <div className="space-y-4">
             <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <h3 className="font-medium text-purple-900 mb-3">Tell me more about this task</h3>
+              <h3 className="font-medium text-purple-900 mb-3">Quick questions to customize your breakdown</h3>
               <p className="text-sm text-purple-700 mb-4">
-                The more context you provide, the better I can tailor the breakdown to your specific needs and challenges.
+                Answer these to get steps that work around your specific challenges.
               </p>
               
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Where are you with this task?
+                    Have you started this task yet?
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={contextData.currentState}
                     onChange={(e) => setContextData({...contextData, currentState: e.target.value})}
-                    placeholder="e.g., 'Need to start', 'Have some info but not organized', 'Tried before but got stuck'"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  />
+                  >
+                    <option value="">Select one...</option>
+                    <option value="Not started yet">Not started yet</option>
+                    <option value="Started but stuck">Started but stuck</option>
+                    <option value="Partially done">Partially done</option>
+                    <option value="Almost finished">Almost finished</option>
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    What makes this task challenging? (Be specific!)
+                    What's your biggest challenge with this task?
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={contextData.blockers}
                     onChange={(e) => setContextData({...contextData, blockers: e.target.value})}
-                    placeholder="e.g., 'Decision fatigue - don't know where things go', 'Boring/unmotivating', 'Too overwhelming to start'"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  />
+                  >
+                    <option value="">Select one...</option>
+                    <option value="Don't know where to start">Don't know where to start</option>
+                    <option value="Too many decisions to make">Too many decisions to make</option>
+                    <option value="It's boring/unmotivating">It's boring/unmotivating</option>
+                    <option value="It feels too big/overwhelming">It feels too big/overwhelming</option>
+                    <option value="Don't know what I need">Don't know what I need</option>
+                    <option value="Keep getting distracted">Keep getting distracted</option>
+                    <option value="Other">Other (I'll specify below)</option>
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    What outcome do you need?
+                    When this task is done, what will you have?
                   </label>
-                  <input
-                    type="text"
+                  <p className="text-xs text-gray-600 mb-1">
+                    For laundry: "Clean dry clothes" NOT "Clothes put away"
+                  </p>
+                  <textarea
                     value={contextData.specificGoal}
                     onChange={(e) => setContextData({...contextData, specificGoal: e.target.value})}
-                    placeholder="e.g., 'Complete application', 'Get documents in order', 'Have everything ready to submit'"
+                    placeholder="Be specific: 'Laundry washed and dried', 'Room clean', 'Report written', 'Dishes washed', etc."
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    rows={2}
                   />
                 </div>
 
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Max steps
+                    </label>
+                    <input
+                      type="number"
+                      min="3"
+                      max="15"
+                      value={preferences.maxSteps}
+                      onChange={(e) => setPreferences(prev => ({ ...prev, maxSteps: parseInt(e.target.value) }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Max duration (mins)
+                    </label>
+                    <input
+                      type="number"
+                      min="10"
+                      max="120"
+                      step="10"
+                      value={preferences.maxDuration}
+                      onChange={(e) => setPreferences(prev => ({ ...prev, maxDuration: parseInt(e.target.value) }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Step complexity
+                    </label>
+                    <select
+                      value={preferences.complexity}
+                      onChange={(e) => setPreferences(prev => ({ ...prev, complexity: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    >
+                      <option value="simple">Simple</option>
+                      <option value="moderate">Moderate</option>
+                      <option value="detailed">Detailed</option>
+                    </select>
+                  </div>
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Any constraints or special requirements?
+                    Anything else I should know? (Optional)
                   </label>
-                  <input
-                    type="text"
+                  <textarea
                     value={contextData.environment}
                     onChange={(e) => setContextData({...contextData, environment: e.target.value})}
-                    placeholder="e.g., 'Need specific documents', 'Must be done online', 'Requires appointment'"
+                    placeholder="Time limits, specific tools needed, other constraints..."
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    rows={2}
                   />
                 </div>
               </div>
@@ -655,7 +743,7 @@ Return JSON array only.`
               ))}
             </div>
 
-            <div className="flex justify-between items-center">
+            <div className="flex justify-start">
               <Button
                 variant="outline"
                 size="sm"
@@ -664,65 +752,7 @@ Return JSON array only.`
               >
                 Add custom step
               </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                icon={showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              >
-                Advanced options
-              </Button>
             </div>
-
-            {showAdvanced && (
-              <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Max steps</label>
-                    <input
-                      type="number"
-                      value={preferences.maxSteps}
-                      onChange={(e) => setPreferences(prev => ({ ...prev, maxSteps: parseInt(e.target.value) }))}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Max duration (mins)</label>
-                    <input
-                      type="number"
-                      value={preferences.maxDuration}
-                      onChange={(e) => setPreferences(prev => ({ ...prev, maxDuration: parseInt(e.target.value) }))}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Complexity</label>
-                  <select
-                    value={preferences.complexity}
-                    onChange={(e) => setPreferences(prev => ({ ...prev, complexity: e.target.value }))}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  >
-                    <option value="simple">Simple steps</option>
-                    <option value="moderate">Moderate detail</option>
-                    <option value="detailed">Very detailed</option>
-                  </select>
-                </div>
-                
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="includeBreaks"
-                    checked={preferences.includeBreaks}
-                    onChange={(e) => setPreferences(prev => ({ ...prev, includeBreaks: e.target.checked }))}
-                    className="mr-2"
-                  />
-                  <label htmlFor="includeBreaks" className="text-sm text-gray-700">Include break reminders</label>
-                </div>
-              </div>
-            )}
           </>
         )}
 

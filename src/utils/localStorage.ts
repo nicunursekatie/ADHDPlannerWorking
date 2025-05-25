@@ -462,11 +462,7 @@ export const importData = (jsonData: string): boolean => {
     
     if (Array.isArray(data.tasks)) {
       // Remove projectName field from tasks if present (it's only for export convenience)
-<<<<<<< HEAD
-            const cleanedTasks: Task[] = data.tasks.map(
-=======
       const cleanedTasks: Task[] = data.tasks.map(
->>>>>>> 98ca01db813112db908bb3250afbde2f9b32c881
         (task: Task & { projectName?: string }): Task => {
           const { projectName, ...cleanTask } = task;
           return cleanTask;

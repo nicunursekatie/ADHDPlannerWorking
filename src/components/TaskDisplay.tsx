@@ -22,8 +22,22 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   
   // Get actual subtask objects
+  console.log(`TaskDisplay: Processing task "${task.title}" with subtasks:`, task.subtasks);
+  
+  task.subtasks?.forEach(id => {
+    const found = tasks.find(t => t.id === id);
+    if (!found) {
+      console.warn(`Subtask ID ${id} not found in tasks array.`);
+    } else {
+      console.log(`  - Found subtask: "${found.title}" (ID: ${id})`);
+    }
+  });
+  
   const subtasks = task.subtasks ? 
     task.subtasks.map(subtaskId => tasks.find(t => t.id === subtaskId)).filter(Boolean) as Task[] : [];
+  
+  console.log(`TaskDisplay: Resolved ${subtasks.length} subtasks with titles:`, 
+    subtasks.map(st => st.title));
   
   const getDueDateInfo = () => {
     if (!task.dueDate || task.dueDate === '') return null;

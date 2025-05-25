@@ -10,6 +10,7 @@ interface AISettingsProps {
 
 const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
   const [provider, setProvider] = useState('openai');
+  const [model, setModel] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [apiEndpoint, setApiEndpoint] = useState('/api/ai/breakdown');
   const [showApiKey, setShowApiKey] = useState(false);
@@ -23,15 +24,25 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
   useEffect(() => {
     // Load existing settings
     const savedProvider = localStorage.getItem('ai_provider') || 'openai';
+    const savedModel = localStorage.getItem('ai_model') || '';
     const savedApiKey = localStorage.getItem('ai_api_key') || '';
     const savedEndpoint = localStorage.getItem('ai_api_endpoint') || '/api/ai/breakdown';
     const savedContextPref = localStorage.getItem('ai_always_ask_context');
     
     setProvider(savedProvider);
+    setModel(savedModel || AI_PROVIDERS[savedProvider]?.defaultModel || '');
     setApiKey(savedApiKey);
     setApiEndpoint(savedEndpoint);
     setAlwaysAskContext(savedContextPref !== 'false');
   }, []);
+
+  // Update model when provider changes
+  useEffect(() => {
+    const providerInfo = AI_PROVIDERS[provider];
+    if (providerInfo && !providerInfo.models.includes(model)) {
+      setModel(providerInfo.defaultModel);
+    }
+  }, [provider, model]);
 
   const testApiConnection = async () => {
     if (!apiKey) {
@@ -54,7 +65,7 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
       const response = await fetch(providerInfo.baseUrl, {
         method: 'POST',
         headers: providerInfo.headers(apiKey),
-        body: JSON.stringify(providerInfo.formatRequest(testMessages, providerInfo.defaultModel))
+        body: JSON.stringify(providerInfo.formatRequest(testMessages, model || providerInfo.defaultModel))
       });
 
       if (response.ok) {
@@ -87,6 +98,7 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
     try {
       // Save to localStorage (in production, you'd want more secure storage)
       localStorage.setItem('ai_provider', provider);
+      localStorage.setItem('ai_model', model);
       localStorage.setItem('ai_api_key', apiKey);
       localStorage.setItem('ai_api_endpoint', apiEndpoint);
       localStorage.setItem('ai_always_ask_context', alwaysAskContext.toString());
@@ -137,10 +149,34 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
                 ))}
               </select>
               <p className="mt-1 text-sm text-gray-600">
-                {AI_PROVIDERS[provider]?.name === 'Groq (Free)' 
+                {AI_PROVIDERS[provider]?.name === 'Groq (Free & Fast)' 
                   ? 'Free tier available with Groq API. Get your key at console.groq.com'
                   : 'Choose your preferred AI provider'
                 }
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="model" className="block text-sm font-medium text-gray-700 mb-1">
+                AI Model
+              </label>
+              <select
+                id="model"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+              >
+                {AI_PROVIDERS[provider]?.models.map((modelOption) => (
+                  <option key={modelOption} value={modelOption}>
+                    {modelOption}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-sm text-gray-600">
+                {provider === 'openai' && model === 'gpt-4o-mini' && 'Fast and cost-effective model, great for task breakdowns'}
+                {provider === 'openai' && model === 'gpt-4o' && 'Most capable OpenAI model with vision capabilities'}
+                {provider === 'groq' && model === 'llama-3.3-70b-versatile' && 'Latest Llama model, excellent for detailed breakdowns'}
+                {provider === 'anthropic' && model === 'claude-3-5-sonnet-20241022' && 'Claude 3.5 Sonnet - balanced performance and cost'}
               </p>
             </div>
             
@@ -280,7 +316,7 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
           
           <div className="space-y-3 text-sm text-gray-600">
             <p>
-              The AI Task Breakdown feature uses OpenAI's GPT-4 to create ADHD-friendly task breakdowns.
+              The AI Task Breakdown feature uses advanced language models to create ADHD-friendly task breakdowns.
             </p>
             
             <div>
@@ -299,7 +335,7 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
               <h4 className="font-medium text-gray-700 mb-1">Privacy & Security</h4>
               <ul className="list-disc list-inside space-y-1">
                 <li>Your API key is stored locally in your browser</li>
-                <li>Task data is sent to OpenAI for processing</li>
+                <li>Task data is sent to your chosen AI provider for processing</li>
                 <li>We don't store or have access to your API key</li>
                 <li>All communication is encrypted</li>
               </ul>
@@ -349,6 +385,23 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
                   <p className="text-green-800">
                     <strong>Free Tier:</strong> Groq offers a generous free tier with high-speed inference.
                     Perfect for personal use!
+                  </p>
+                </div>
+              </>
+            ) : provider === 'anthropic' ? (
+              <>
+                <ol className="list-decimal list-inside space-y-2">
+                  <li>Go to <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700">console.anthropic.com</a></li>
+                  <li>Create an account or sign in</li>
+                  <li>Navigate to API Keys section</li>
+                  <li>Create a new API key</li>
+                  <li>Copy the key and paste it above</li>
+                </ol>
+                
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <p className="text-blue-800">
+                    <strong>Claude Models:</strong> Anthropic's Claude models are known for helpful, harmless, and honest responses.
+                    Claude 3.5 Sonnet offers excellent performance for task breakdowns.
                   </p>
                 </div>
               </>
