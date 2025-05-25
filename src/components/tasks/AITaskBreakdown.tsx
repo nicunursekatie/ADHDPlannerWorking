@@ -85,7 +85,7 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       }
     
     // Real AI API call
-    console.log('Making real API call to:', providerName, 'with model:', provider.defaultModel);
+    console.log('Making real API call to:', providerName, 'with model:', selectedModel);
     console.log('Context data being sent:', contextData);
     const messages = [
           {
