@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder } from 'lucide-react';
+import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle } from 'lucide-react';
 import { Task } from '../types';
 import { useAppContext } from '../context/AppContext';
 import { getDueDateStatus } from '../utils/dateUtils';
+import { GuidedWalkthroughModal } from './tasks/GuidedWalkthroughModal';
 
 interface TaskDisplayProps {
   task: Task;
@@ -21,6 +22,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
 }) => {
   const { tasks, projects } = useAppContext();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
   
   // Get actual subtask objects
   const subtasks = task.subtasks ? 
@@ -90,18 +92,34 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
         {/* Subtasks */}
         {subtasks.length > 0 && (
           <div className="mt-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(!isExpanded);
-              }}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-              <span>
-                {subtasks.filter(st => !st.completed).length} of {subtasks.length} subtasks
-              </span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsExpanded(!isExpanded);
+                }}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                <span>
+                  {subtasks.filter(st => !st.completed).length} of {subtasks.length} subtasks
+                </span>
+              </button>
+              
+              {!task.completed && subtasks.some(st => !st.completed) && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowWalkthrough(true);
+                  }}
+                  className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 transition-colors"
+                  title="Start guided walkthrough"
+                >
+                  <PlayCircle className="w-3 h-3" />
+                  <span>Start Walkthrough</span>
+                </button>
+              )}
+            </div>
             
             {/* Expanded subtasks */}
             {isExpanded && (
@@ -183,6 +201,15 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
           </svg>
         </button>
       </div>
+      
+      {/* Guided Walkthrough Modal */}
+      {showWalkthrough && (
+        <GuidedWalkthroughModal
+          isOpen={showWalkthrough}
+          onClose={() => setShowWalkthrough(false)}
+          taskId={task.id}
+        />
+      )}
     </div>
   );
 };
