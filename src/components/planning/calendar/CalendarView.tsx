@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { TaskDisplay } from '../../TaskDisplay';
 import Button from '../../common/Button';
-import { formatDateString, parseDate } from '../../utils/dateUtils';
+import { formatDateString, parseDate } from '../../../utils/dateUtils';
 
 interface CalendarViewProps {
   onEditTask: (task: Task) => void;

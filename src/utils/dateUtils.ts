@@ -143,7 +143,11 @@ export function getDaysBetween(dateString1: string | null | undefined, dateStrin
   
   if (!date1 || !date2) return null;
   
-  const diffTime = date2.getTime() - date1.getTime();
+  // Normalize to start of day to avoid timezone issues
+  const date1Start = startOfDay(date1);
+  const date2Start = startOfDay(date2);
+  
+  const diffTime = date2Start.getTime() - date1Start.getTime();
   return Math.floor(diffTime / (1000 * 60 * 60 * 24));
 }
 
