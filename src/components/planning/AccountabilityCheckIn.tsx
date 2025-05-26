@@ -64,8 +64,8 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   const lastWeekStr = formatDate(lastWeek);
   
 
-  // Find tasks that were due in the last 7 days or don't have due dates
-  const overdueTasks = tasks.filter(task => {
+  // Find tasks that need attention (overdue or without due dates)
+  const tasksNeedingAttention = tasks.filter(task => {
     if (task.completed) return false;
     
     // Include tasks with due dates in the past week
@@ -111,8 +111,8 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     setCompletionRate(rate);
     
     // Initialize tasks with reasons
-  if (tasksWithReasons.length === 0 && overdueTasks.length > 0) {
-    const initializedTasks = overdueTasks.map(task => ({
+  if (tasksWithReasons.length === 0 && tasksNeedingAttention.length > 0) {
+    const initializedTasks = tasksNeedingAttention.map(task => ({
       task,
       selectedReason: null,
       customReason: '',
@@ -121,7 +121,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     }));
     setTasksWithReasons(initializedTasks);
   }
-}, [overdueTasks, tasksWithReasons.length]);
+}, [tasksNeedingAttention, tasksWithReasons.length]);
 
   
   const handleReasonSelect = (taskId: string, reasonId: string) => {
@@ -371,9 +371,9 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
                   <h5 className="text-sm font-medium text-gray-700">Tasks Needing Attention</h5>
                 </div>
                 <div className="flex items-end justify-between">
-                  <div className="text-2xl font-bold text-gray-900">{overdueTasks.length}</div>
+                  <div className="text-2xl font-bold text-gray-900">{tasksNeedingAttention.length}</div>
                   <div className="text-sm text-gray-600">
-                    {overdueTasks.length > 0 ? 'To review' : 'All caught up!'}
+                    {tasksNeedingAttention.length > 0 ? 'To review' : 'All caught up!'}
                   </div>
                 </div>
               </div>
@@ -410,7 +410,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
             <h4 className="font-medium text-gray-900 mb-1">Tasks to Review</h4>
             <p className="text-sm text-gray-600">
               Understanding why tasks don't get completed helps you plan more effectively. 
-              This includes overdue tasks and all tasks without due dates.
+              This includes tasks with recent due dates and all tasks without due dates.
             </p>
           </div>
           
@@ -419,7 +419,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
               <CheckCircle size={48} className="mx-auto mb-3 text-green-500" />
               <h4 className="text-lg font-medium text-gray-900 mb-1">All caught up!</h4>
               <p className="text-gray-600">
-                You have no overdue tasks from the past week that need reviewing.
+                You have no tasks from the past week that need reviewing.
               </p>
               
               <Button

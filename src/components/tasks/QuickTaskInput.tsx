@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Task } from '../../types';
 import { useAppContext } from '../../context/AppContext';
-import { Plus, Circle, Calendar, Folder, Tag, Clock } from 'lucide-react';
-import Button from '../common/Button';
+import { Plus, Circle, Calendar, Folder, Tag } from 'lucide-react';
+import { getTodayString, getTomorrowString, formatDateString } from '../../utils/dateUtils';
 
 interface QuickTaskInputProps {
   onTaskAdded?: () => void;
@@ -90,13 +90,10 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
     
     // Check for due date patterns like "!today", "!tomorrow", "!3d", "!2w"
     if (titleText.includes('!today')) {
-      const today = new Date();
-      setDueDate(today.toISOString().split('T')[0]);
+      setDueDate(getTodayString());
       setTitle(input.replace('!today', ''));
     } else if (titleText.includes('!tomorrow')) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      setDueDate(tomorrow.toISOString().split('T')[0]);
+      setDueDate(getTomorrowString());
       setTitle(input.replace('!tomorrow', ''));
     } else if (titleText.match(/!(\d+)d/)) {
       const match = titleText.match(/!(\d+)d/);
@@ -104,7 +101,7 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
         const days = parseInt(match[1], 10);
         const date = new Date();
         date.setDate(date.getDate() + days);
-        setDueDate(date.toISOString().split('T')[0]);
+        setDueDate(formatDateString(date) || '');
         setTitle(input.replace(/!(\d+)d/, ''));
       }
     } else if (titleText.match(/!(\d+)w/)) {
@@ -113,7 +110,7 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
         const weeks = parseInt(match[1], 10);
         const date = new Date();
         date.setDate(date.getDate() + (weeks * 7));
-        setDueDate(date.toISOString().split('T')[0]);
+        setDueDate(formatDateString(date) || '');
         setTitle(input.replace(/!(\d+)w/, ''));
       }
     }
@@ -221,8 +218,7 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
                 type="button"
                 className={`flex items-center text-sm ${dueDate ? 'text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full' : 'text-gray-500'}`}
                 onClick={() => {
-                  const today = new Date();
-                  setDueDate(dueDate ? null : today.toISOString().split('T')[0]);
+                  setDueDate(dueDate ? null : getTodayString());
                 }}
               >
                 <Calendar size={16} className="mr-1" />

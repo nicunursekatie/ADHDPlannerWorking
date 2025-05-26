@@ -103,11 +103,6 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
       localStorage.setItem('ai_api_endpoint', apiEndpoint);
       localStorage.setItem('ai_always_ask_context', alwaysAskContext.toString());
       
-      // Initialize the AI service with new settings
-      if (apiKey) {
-        // This would initialize your AI service
-        // initializeAIService(apiKey, apiEndpoint);
-      }
       
       setSaveMessage('Settings saved successfully!');
       

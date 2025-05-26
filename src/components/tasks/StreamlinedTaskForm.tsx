@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Task, Project, Category } from '../../types';
 import { useAppContext } from '../../context/AppContext';
 import Button from '../common/Button';
+import { getTodayString, getTomorrowString, formatDateString } from '../../utils/dateUtils';
 import { 
   Calendar, 
   Clock, 
@@ -259,12 +260,11 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
             <button
               type="button"
               onClick={() => {
-                const today = new Date();
-                const formattedDate = today.toISOString().split('T')[0];
+                const formattedDate = getTodayString();
                 setFormData(prev => ({ ...prev, dueDate: formattedDate }));
               }}
               className={`px-2 py-1 rounded text-xs font-medium ${
-                formData.dueDate === new Date().toISOString().split('T')[0]
+                formData.dueDate === getTodayString()
                   ? 'bg-indigo-500 text-white'
                   : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
               }`}
@@ -275,18 +275,11 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
             <button
               type="button"
               onClick={() => {
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                const formattedDate = tomorrow.toISOString().split('T')[0];
+                const formattedDate = getTomorrowString();
                 setFormData(prev => ({ ...prev, dueDate: formattedDate }));
               }}
               className={`px-2 py-1 rounded text-xs font-medium ${
-                (() => {
-                  const tomorrow = new Date();
-                  tomorrow.setDate(tomorrow.getDate() + 1);
-                  const formattedTomorrow = tomorrow.toISOString().split('T')[0];
-                  return formData.dueDate === formattedTomorrow ? 'bg-indigo-500 text-white' : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200';
-                })()
+                formData.dueDate === getTomorrowString() ? 'bg-indigo-500 text-white' : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
               }`}
             >
               Tomorrow
@@ -297,7 +290,7 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
               onClick={() => {
                 const nextWeek = new Date();
                 nextWeek.setDate(nextWeek.getDate() + 7);
-                const formattedDate = nextWeek.toISOString().split('T')[0];
+                const formattedDate = formatDateString(nextWeek);
                 setFormData(prev => ({ ...prev, dueDate: formattedDate }));
               }}
               className="px-2 py-1 rounded text-xs font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200"

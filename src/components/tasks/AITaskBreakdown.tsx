@@ -76,17 +76,12 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       const provider = getProvider(providerName);
       const selectedModel = modelName || provider.defaultModel;
       
-      console.log('Generating breakdown for task:', task.title);
-      console.log('Provider:', providerName, 'Model:', selectedModel);
-      console.log('API key present:', !!apiKey);
       
       if (!apiKey) {
         throw new Error('No API key configured. Please add your API key in Settings to use AI task breakdown.');
       }
     
     // Real AI API call
-    console.log('Making real API call to:', providerName, 'with model:', selectedModel);
-    console.log('Context data being sent:', contextData);
     const messages = [
           {
             role: 'system',
@@ -194,7 +189,6 @@ Return JSON array only.`
     
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('API Error:', errorData);
       throw new Error(errorData.error?.message || 'API request failed');
     }
     
@@ -224,8 +218,6 @@ Return JSON array only.`
         }));
       }
     } catch (e) {
-      console.error('Failed to parse AI response:', e);
-      console.error('Content that failed to parse:', content);
       throw new Error('Invalid response format');
     }
     
@@ -233,7 +225,6 @@ Return JSON array only.`
     
     // Check if steps is actually an array with content
     if (!Array.isArray(steps) || steps.length === 0) {
-      console.error('Invalid steps array:', steps);
       throw new Error('No steps returned from AI');
     }
     
@@ -252,7 +243,6 @@ Return JSON array only.`
     
     setBreakdownOptions(breakdown);
     } catch (err) {
-      console.error('Error generating breakdown:', err);
       let errorMessage = 'Failed to generate breakdown: ';
       
       if (err instanceof Error) {
@@ -263,7 +253,6 @@ Return JSON array only.`
         } else {
           errorMessage += err.message;
         }
-        console.error('Error stack:', err.stack);
       } else {
         errorMessage += 'An unknown error occurred.';
       }

@@ -1,5 +1,6 @@
 import { Task, Project, Category, WhatNowCriteria } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { formatDateString, isToday, isPastDate, getDaysBetween } from './dateUtils';
 
 // Generate a unique ID
 export const generateId = (): string => {
@@ -8,21 +9,7 @@ export const generateId = (): string => {
 
 // Format date to YYYY-MM-DD
 export const formatDate = (date: Date): string => {
-  try {
-    // Validate the date
-    if (!(date instanceof Date) || isNaN(date.getTime())) {
-      console.error('Invalid date passed to formatDate:', date);
-      return '';
-    }
-    
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  } catch (error) {
-    console.error('Error in formatDate:', error, date);
-    return '';
-  }
+  return formatDateString(date) || '';
 };
 
 /**
@@ -30,39 +17,11 @@ export const formatDate = (date: Date): string => {
  * Returns null if the date is invalid
  */
 export const toISODateString = (date: Date | null | undefined): string | null => {
-  try {
-    if (!date) return null;
-    
-    // Validate date
-    if (!(date instanceof Date) || isNaN(date.getTime())) {
-      console.warn('Invalid date passed to toISODateString:', date);
-      return null;
-    }
-    
-    // Format as YYYY-MM-DD
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}`;
-  } catch (error) {
-    console.error('Error creating ISO date string:', error, date);
-    return null;
-  }
+  return formatDateString(date);
 };
 
-// Format date for display (e.g., "Mon, Jan 15")
-export const formatDateForDisplay = (dateString: string): string => {
-  // Parse the date in YYYY-MM-DD format
-  const [year, month, day] = dateString.split('-').map(num => parseInt(num, 10));
-  const date = new Date(year, month - 1, day); // Month is 0-indexed in JavaScript Date
-  
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
-};
+// Re-export from dateUtils for backward compatibility
+export { formatDateForDisplay } from './dateUtils';
 
 // Format time for display (e.g., "2:30 PM")
 export const formatTimeForDisplay = (timeString: string): string => {
@@ -129,62 +88,30 @@ export const calculateDuration = (
 
 // Get tasks due today
 export const getTasksDueToday = (tasks: Task[]): Task[] => {
-  // Create a date for today and set time to beginning of day
-  const todayDate = new Date();
-  todayDate.setHours(0, 0, 0, 0);
-  
   return tasks.filter((task) => {
-    if (!task.dueDate || task.dueDate === '' || task.completed) return false;
-    
-    // Parse the task due date
-    const [year, month, day] = task.dueDate.split('-').map(num => parseInt(num, 10));
-    const dueDate = new Date(year, month - 1, day); // Month is 0-indexed in JS Date
-    dueDate.setHours(0, 0, 0, 0);
-    
-    // Task is due today if the dates are equal
-    return dueDate.getTime() === todayDate.getTime();
+    if (!task.dueDate || task.completed) return false;
+    return isToday(task.dueDate);
   });
 };
 
 // Get tasks due this week
 export const getTasksDueThisWeek = (tasks: Task[]): Task[] => {
-  // Create date objects for today and end of week
-  const todayDate = new Date();
-  todayDate.setHours(0, 0, 0, 0);
-  
-  const endOfWeek = new Date(todayDate);
-  endOfWeek.setDate(todayDate.getDate() + (6 - todayDate.getDay()));
-  endOfWeek.setHours(23, 59, 59, 999); // End of the day
-  
   return tasks.filter((task) => {
-    if (!task.dueDate || task.dueDate === '' || task.completed) return false;
+    if (!task.dueDate || task.completed) return false;
     
-    // Parse the task due date
-    const [year, month, day] = task.dueDate.split('-').map(num => parseInt(num, 10));
-    const dueDate = new Date(year, month - 1, day); // Month is 0-indexed in JS Date
-    dueDate.setHours(0, 0, 0, 0);
+    const daysUntilDue = getDaysBetween(formatDateString(new Date()) || '', task.dueDate);
+    if (daysUntilDue === null) return false;
     
-    // Task is due this week if it's between today and end of week (inclusive)
-    return dueDate >= todayDate && dueDate <= endOfWeek;
+    // Task is due this week if it's between today and 6 days from now
+    return daysUntilDue >= 0 && daysUntilDue <= 6;
   });
 };
 
 // Get overdue tasks
 export const getOverdueTasks = (tasks: Task[]): Task[] => {
-  // Create a date for today and set time to beginning of day
-  const todayDate = new Date();
-  todayDate.setHours(0, 0, 0, 0);
-  
   return tasks.filter((task) => {
-    if (!task.dueDate || task.dueDate === '' || task.completed) return false;
-    
-    // Parse the task due date
-    const [year, month, day] = task.dueDate.split('-').map(num => parseInt(num, 10));
-    const dueDate = new Date(year, month - 1, day); // Month is 0-indexed in JS Date
-    dueDate.setHours(0, 0, 0, 0);
-    
-    // Task is overdue if due date is strictly before today
-    return dueDate < todayDate;
+    if (!task.dueDate || task.completed) return false;
+    return isPastDate(task.dueDate);
   });
 };
 
@@ -332,6 +259,9 @@ export const createSampleData = (): void => {
       categoryIds: [categories[0].id],
       parentTaskId: null,
       subtasks: [],
+      archived: false,
+      dependsOn: [],
+      dependedOnBy: [],
       createdAt: now,
       updatedAt: now,
     },
@@ -345,6 +275,9 @@ export const createSampleData = (): void => {
       categoryIds: [categories[0].id],
       parentTaskId: parentTask1Id,
       subtasks: [],
+      archived: false,
+      dependsOn: [],
+      dependedOnBy: [],
       createdAt: now,
       updatedAt: now,
     },
@@ -358,6 +291,9 @@ export const createSampleData = (): void => {
       categoryIds: [categories[1].id],
       parentTaskId: null,
       subtasks: [],
+      archived: false,
+      dependsOn: [],
+      dependedOnBy: [],
       createdAt: now,
       updatedAt: now,
     },
@@ -371,6 +307,9 @@ export const createSampleData = (): void => {
       categoryIds: [categories[1].id, categories[2].id],
       parentTaskId: parentTask2Id,
       subtasks: [],
+      archived: false,
+      dependsOn: [],
+      dependedOnBy: [],
       createdAt: now,
       updatedAt: now,
     },
@@ -384,6 +323,9 @@ export const createSampleData = (): void => {
       categoryIds: [categories[0].id, categories[2].id],
       parentTaskId: null,
       subtasks: [],
+      archived: false,
+      dependsOn: [],
+      dependedOnBy: [],
       createdAt: now,
       updatedAt: now,
     },

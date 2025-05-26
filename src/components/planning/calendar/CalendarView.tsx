@@ -5,50 +5,42 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Calendar as CalendarIcon, 
-  GridIcon,
   List,
   Clock
 } from 'lucide-react';
-import Badge from '../../common/Badge';
 import { TaskDisplay } from '../../TaskDisplay';
 import Button from '../../common/Button';
+import { formatDateString, parseDate } from '../../utils/dateUtils';
 
 interface CalendarViewProps {
   onEditTask: (task: Task) => void;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
-  const { tasks, projects, categories, deleteTask, updateTask } = useAppContext();
+  const { tasks, deleteTask, updateTask } = useAppContext();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   
   // Helper function to safely create YYYY-MM-DD date string
   const safeFormatDate = (date: Date): string => {
-    try {
-      if (!(date instanceof Date) || isNaN(date.getTime())) {
-        console.warn('Invalid date in safeFormatDate:', date);
-        return '';
-      }
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    } catch (error) {
-      console.error('Error in safeFormatDate:', error);
-      return '';
-    }
+    return formatDateString(date) || '';
+  };
+  
+  // Helper function to check if task is due on a specific date
+  const isTaskDueOnDate = (task: Task, dateStr: string): boolean => {
+    if (!task.dueDate) return false;
+    const taskDate = parseDate(task.dueDate);
+    return taskDate ? safeFormatDate(taskDate) === dateStr : false;
   };
   
   // Helper function to safely create a key for React lists
   const safeCreateKey = (date: Date, prefix: string = 'date'): string => {
     try {
       if (!(date instanceof Date) || isNaN(date.getTime())) {
-        console.warn('Invalid date in safeCreateKey:', date);
         return `${prefix}-${Math.random()}`;
       }
       return `${prefix}-${safeFormatDate(date)}`;
     } catch (error) {
-      console.error('Error in safeCreateKey:', error);
       return `${prefix}-${Math.random()}`;
     }
   };
@@ -130,10 +122,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
   };
   
   // Get tasks for the current view
-  const getTasksForView = (): { date: Date; tasks: Task[] }[] => {
+  const getTasksForView = (): { date: Date; tasks: Task[]; isPreviousMonth?: boolean; isNextMonth?: boolean }[] => {
     if (viewMode === 'day') {
       const dateStr = safeFormatDate(currentDate);
-      const tasksForDay = tasks.filter(task => task.dueDate === dateStr);
+      const tasksForDay = tasks.filter(task => isTaskDueOnDate(task, dateStr));
       
       return [{ date: currentDate, tasks: tasksForDay }];
     }
@@ -147,7 +139,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
         date.setDate(startOfWeek.getDate() + i);
         
         const dateStr = safeFormatDate(date);
-        const tasksForDay = tasks.filter(task => task.dueDate === dateStr);
+        const tasksForDay = tasks.filter(task => isTaskDueOnDate(task, dateStr));
         
         return { date, tasks: tasksForDay };
       });
@@ -173,7 +165,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
       for (let i = firstDayOfWeek - 1; i >= 0; i--) {
         const date = new Date(year, month - 1, prevMonthLastDay - i);
         const dateStr = safeFormatDate(date);
-        const tasksForDay = tasks.filter(task => task.dueDate === dateStr);
+        const tasksForDay = tasks.filter(task => isTaskDueOnDate(task, dateStr));
         
         daysArray.push({ date, tasks: tasksForDay, isPreviousMonth: true });
       }
@@ -182,7 +174,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
       for (let i = 1; i <= lastDayOfMonth.getDate(); i++) {
         const date = new Date(year, month, i);
         const dateStr = safeFormatDate(date);
-        const tasksForDay = tasks.filter(task => task.dueDate === dateStr);
+        const tasksForDay = tasks.filter(task => isTaskDueOnDate(task, dateStr));
         
         daysArray.push({ date, tasks: tasksForDay });
       }
@@ -192,7 +184,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
       for (let i = 1; i <= remainingDays; i++) {
         const date = new Date(year, month + 1, i);
         const dateStr = safeFormatDate(date);
-        const tasksForDay = tasks.filter(task => task.dueDate === dateStr);
+        const tasksForDay = tasks.filter(task => isTaskDueOnDate(task, dateStr));
         
         daysArray.push({ date, tasks: tasksForDay, isNextMonth: true });
       }
@@ -217,7 +209,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
   const getDateShift = (date: Date): { timeRange: string, shiftType: string } | null => {
     try {
       if (!(date instanceof Date) || isNaN(date.getTime())) {
-        console.warn('Invalid date in getDateShift:', date);
         return null;
       }
       
@@ -231,7 +222,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
       
       // Make sure shift has the required properties
       if (!shift.startTime || !shift.endTime) {
-        console.warn('Shift missing required properties:', shift);
         return null;
       }
       
@@ -240,7 +230,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
       
       return { timeRange, shiftType };
     } catch (error) {
-      console.error('Error in getDateShift:', error);
       return null;
     }
   };
@@ -350,7 +339,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ onEditTask }) => {
               <TaskDisplay
               key={task.id}
               task={task}
-              onToggle={(id) => updateTask(id, { completed: !task.completed })}
+              onToggle={(id) => updateTask({ ...task, completed: !task.completed })}
               onEdit={() => onEditTask(task)}
               onDelete={() => deleteTask(task.id)}
             />

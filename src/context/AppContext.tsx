@@ -1,8 +1,9 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { Task, Project, Category, DailyPlan, WhatNowCriteria, JournalEntry, RecurringTask } from '../types';
-import { WorkSchedule, WorkShift, ShiftType, DEFAULT_SHIFTS, DEFAULT_SHIFT } from '../types/WorkSchedule';
+import { WorkSchedule, WorkShift, ShiftType, DEFAULT_SHIFTS } from '../types/WorkSchedule';
 import * as localStorage from '../utils/localStorage';
 import { generateId, createSampleData, recommendTasks as recommendTasksUtil } from '../utils/helpers';
+import { getTodayString, formatDateString } from '../utils/dateUtils';
 
 interface DeletedTask {
   task: Task;
@@ -143,43 +144,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         try {
           loadedTasks = localStorage.getTasks();
         } catch (error) {
-          console.error('Failed to load tasks:', error);
         }
         
         try {
           loadedProjects = localStorage.getProjects();
         } catch (error) {
-          console.error('Failed to load projects:', error);
         }
         
         try {
           loadedCategories = localStorage.getCategories();
         } catch (error) {
-          console.error('Failed to load categories:', error);
         }
         
         try {
           loadedDailyPlans = localStorage.getDailyPlans();
         } catch (error) {
-          console.error('Failed to load daily plans:', error);
         }
         
         try {
           loadedWorkSchedule = localStorage.getWorkSchedule();
         } catch (error) {
-          console.error('Failed to load work schedule:', error);
         }
         
         try {
           loadedJournalEntries = localStorage.getJournalEntries();
         } catch (error) {
-          console.error('Failed to load journal entries:', error);
         }
         
         try {
           loadedRecurringTasks = localStorage.getRecurringTasks();
         } catch (error) {
-          console.error('Failed to load recurring tasks:', error);
         }
         
         // Debug logging
@@ -201,7 +195,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setIsDataInitialized(hasData);
       } catch (error) {
         // Catch-all for any unhandled errors in data loading
-        console.error('Critical error loading data:', error);
         // Set default empty data structures to prevent rendering errors
         setTasks([]);
         setProjects([]);
@@ -506,7 +499,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const getDailyPlan = useCallback((date: string): DailyPlan | null => {
     try {
       if (!dailyPlans || !Array.isArray(dailyPlans)) {
-        console.error('DailyPlans is not an array:', dailyPlans);
         return null;
       }
       
@@ -519,7 +511,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       return plan || null;
     } catch (error) {
-      console.error(`Error getting daily plan for date ${date}:`, error);
       return null;
     }
   }, [dailyPlans]);
@@ -527,7 +518,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const saveDailyPlan = useCallback((plan: DailyPlan) => {
     try {
       if (!dailyPlans || !Array.isArray(dailyPlans)) {
-        console.error('DailyPlans is not an array in saveDailyPlan:', dailyPlans);
         const newPlans = [plan];
         setDailyPlans(newPlans);
         localStorage.saveDailyPlans(newPlans);
@@ -552,10 +542,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       try {
         localStorage.saveDailyPlans(updatedPlans);
       } catch (storageError) {
-        console.error('Failed to save daily plans to localStorage:', storageError);
       }
     } catch (error) {
-      console.error('Error in saveDailyPlan:', error);
       // Try a more direct approach if the complex logic fails
       try {
         const simplePlans = [plan];
@@ -567,7 +555,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         localStorage.saveDailyPlans(simplePlans);
       } catch (fallbackError) {
-        console.error('Fallback save failed:', fallbackError);
       }
     }
   }, [dailyPlans]);
@@ -593,7 +580,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
           exportedCount++;
         } catch (blockError) {
-          console.error('Error processing block in exportTimeBlocksToTasks:', blockError);
           // Continue with other blocks
         }
       });
@@ -603,7 +589,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // The calendar view already reads from the dailyPlans data structure directly
       return exportedCount;
     } catch (error) {
-      console.error(`Error in exportTimeBlocksToTasks for date ${date}:`, error);
       return 0;
     }
   }, [getDailyPlan]);
@@ -830,7 +815,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       return newEntry;
     } catch (error) {
-      console.error("Error adding journal entry:", error);
       throw error;
     }
   }, [journalEntries]);
@@ -849,7 +833,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setJournalEntries(updatedEntries);
       localStorage.saveJournalEntries(updatedEntries);
     } catch (error) {
-      console.error("Error updating journal entry:", error);
     }
   }, [journalEntries]);
   
@@ -859,7 +842,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setJournalEntries(updatedEntries);
       localStorage.saveJournalEntries(updatedEntries);
     } catch (error) {
-      console.error("Error deleting journal entry:", error);
     }
   }, [journalEntries]);
   
@@ -875,8 +857,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Bulk Operations
   const bulkDeleteTasks = useCallback((taskIds: string[]) => {
-    const timestamp = new Date().toISOString();
-    
     // Store tasks for potential undo
     const tasksToDelete = tasks.filter(t => taskIds.includes(t.id));
     tasksToDelete.forEach(task => {
@@ -1012,7 +992,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Find the parent task
     const parentTask = tasks.find(t => t.id === parentTaskId);
     if (!parentTask) {
-      console.error('Parent task not found');
       return;
     }
     

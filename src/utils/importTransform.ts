@@ -1,5 +1,4 @@
 import { Task, Project, Category } from '../types';
-import { generateId } from './helpers';
 
 interface LegacyTask {
   id: string;
@@ -86,7 +85,6 @@ export const transformImportedData = (jsonData: string): {
 
     return { tasks, categories, projects };
   } catch (error) {
-    console.error('Error transforming imported data:', error);
     return null;
   }
 };

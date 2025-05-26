@@ -70,7 +70,6 @@ export class AITaskBreakdownService {
       const data = await response.json();
       return this.parseAIResponse(data);
     } catch (error) {
-      console.error('AI breakdown error:', error);
       return this.getFallbackBreakdown(request);
     }
   }
@@ -106,7 +105,6 @@ export class AITaskBreakdownService {
       // Fallback parsing if no JSON found
       return this.parseTextResponse(content);
     } catch (error) {
-      console.error('Failed to parse AI response:', error);
       return [];
     }
   }

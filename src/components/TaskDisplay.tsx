@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder } from 'lucide-react';
 import { Task } from '../types';
 import { useAppContext } from '../context/AppContext';
+import { getDueDateStatus } from '../utils/dateUtils';
 
 interface TaskDisplayProps {
   task: Task;
@@ -22,63 +23,15 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   
   // Get actual subtask objects
-  console.log(`TaskDisplay: Processing task "${task.title}" with subtasks:`, task.subtasks);
-  
-  task.subtasks?.forEach(id => {
-    const found = tasks.find(t => t.id === id);
-    if (!found) {
-      console.warn(`Subtask ID ${id} not found in tasks array.`);
-    } else {
-      console.log(`  - Found subtask: "${found.title}" (ID: ${id})`);
-    }
-  });
-  
   const subtasks = task.subtasks ? 
     task.subtasks.map(subtaskId => tasks.find(t => t.id === subtaskId)).filter(Boolean) as Task[] : [];
   
-  console.log(`TaskDisplay: Resolved ${subtasks.length} subtasks with titles:`, 
-    subtasks.map(st => st.title));
-  
-  const getDueDateInfo = () => {
-    if (!task.dueDate || task.dueDate === '') return null;
-    
-    const dueDate = new Date(task.dueDate);
-    // Check if the date is valid
-    if (isNaN(dueDate.getTime())) return null;
-    
-    const now = new Date();
-    const diffTime = dueDate.getTime() - now.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    // Overdue
-    if (diffDays < 0) {
-      const daysOverdue = Math.abs(diffDays);
-      return {
-        text: `${daysOverdue} day${daysOverdue !== 1 ? 's' : ''} overdue`,
-        className: 'text-red-600 font-semibold',
-        icon: <AlertCircle className="w-4 h-4" />
-      };
-    }
-    
-    // Due today
-    if (diffDays === 0) {
-      return {
-        text: 'Due today',
-        className: 'text-green-600 font-semibold',
-        icon: <Calendar className="w-4 h-4" />
-      };
-    }
-    
-    // Future
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return {
-      text: `${monthNames[dueDate.getMonth()]} ${dueDate.getDate()}`,
-      className: 'text-gray-500',
-      icon: <Calendar className="w-4 h-4" />
-    };
-  };
-
-  const dueDateInfo = getDueDateInfo();
+  const dueDateStatus = getDueDateStatus(task.dueDate);
+  const dueDateInfo = dueDateStatus ? {
+    text: dueDateStatus.text,
+    className: dueDateStatus.className,
+    icon: dueDateStatus.isOverdue ? <AlertCircle className="w-4 h-4" /> : <Calendar className="w-4 h-4" />
+  } : null;
   
   return (
     <div 

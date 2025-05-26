@@ -34,7 +34,6 @@ export const getTasks = (): Task[] => {
     
     return tasksJSON ? JSON.parse(tasksJSON) : [];
   } catch (error) {
-    console.error('Error reading tasks from localStorage:', error);
     return [];
   }
 };
@@ -43,7 +42,6 @@ export const saveTasks = (tasks: Task[]): void => {
   try {
     localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
   } catch (error) {
-    console.error('Error saving tasks to localStorage:', error);
   }
 };
 
@@ -88,7 +86,6 @@ export const getProjects = (): Project[] => {
     
     return projectsJSON ? JSON.parse(projectsJSON) : [];
   } catch (error) {
-    console.error('Error reading projects from localStorage:', error);
     return [];
   }
 };
@@ -97,7 +94,6 @@ export const saveProjects = (projects: Project[]): void => {
   try {
     localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
   } catch (error) {
-    console.error('Error saving projects to localStorage:', error);
   }
 };
 
@@ -142,7 +138,6 @@ export const getCategories = (): Category[] => {
     
     return categoriesJSON ? JSON.parse(categoriesJSON) : [];
   } catch (error) {
-    console.error('Error reading categories from localStorage:', error);
     return [];
   }
 };
@@ -151,7 +146,6 @@ export const saveCategories = (categories: Category[]): void => {
   try {
     localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
   } catch (error) {
-    console.error('Error saving categories to localStorage:', error);
   }
 };
 
@@ -196,7 +190,6 @@ export const getDailyPlans = (): DailyPlan[] => {
     
     return plansJSON ? JSON.parse(plansJSON) : [];
   } catch (error) {
-    console.error('Error reading daily plans from localStorage:', error);
     return [];
   }
 };
@@ -205,7 +198,6 @@ export const saveDailyPlans = (plans: DailyPlan[]): void => {
   try {
     localStorage.setItem(DAILY_PLANS_KEY, JSON.stringify(plans));
   } catch (error) {
-    console.error('Error saving daily plans to localStorage:', error);
   }
 };
 
@@ -214,7 +206,6 @@ export const getDailyPlan = (date: string): DailyPlan | null => {
     const plans = getDailyPlans();
     return plans.find((plan) => plan.date === date) || null;
   } catch (error) {
-    console.error('Error getting daily plan for date:', date, error);
     return null;
   }
 };
@@ -232,7 +223,6 @@ export const saveDailyPlan = (plan: DailyPlan): void => {
     
     saveDailyPlans(plans);
   } catch (error) {
-    console.error('Error saving daily plan:', error);
   }
 };
 
@@ -256,7 +246,6 @@ export const getWorkSchedule = (): WorkSchedule | null => {
     
     return scheduleJSON ? JSON.parse(scheduleJSON) : null;
   } catch (error) {
-    console.error('Error reading work schedule from localStorage:', error);
     return null;
   }
 };
@@ -265,7 +254,6 @@ export const saveWorkSchedule = (schedule: WorkSchedule): void => {
   try {
     localStorage.setItem(WORK_SCHEDULE_KEY, JSON.stringify(schedule));
   } catch (error) {
-    console.error('Error saving work schedule to localStorage:', error);
   }
 };
 
@@ -274,7 +262,6 @@ export const getWorkShifts = (): WorkShift[] => {
     const schedule = getWorkSchedule();
     return schedule ? schedule.shifts : [];
   } catch (error) {
-    console.error('Error getting work shifts:', error);
     return [];
   }
 };
@@ -302,7 +289,6 @@ export const addWorkShift = (shift: WorkShift): void => {
       saveWorkSchedule(newSchedule);
     }
   } catch (error) {
-    console.error('Error adding work shift:', error);
   }
 };
 
@@ -321,7 +307,6 @@ export const updateWorkShift = (updatedShift: WorkShift): void => {
       saveWorkSchedule(updatedSchedule);
     }
   } catch (error) {
-    console.error('Error updating work shift:', error);
   }
 };
 
@@ -338,7 +323,6 @@ export const deleteWorkShift = (shiftId: string): void => {
       saveWorkSchedule(updatedSchedule);
     }
   } catch (error) {
-    console.error('Error deleting work shift:', error);
   }
 };
 
@@ -355,7 +339,6 @@ export const getShiftsForMonth = (year: number, month: number): WorkShift[] => {
       shift.date >= startDate && shift.date <= endDate
     );
   } catch (error) {
-    console.error('Error getting shifts for month:', error);
     return [];
   }
 };
@@ -395,7 +378,6 @@ export const exportData = (): string => {
     
     return JSON.stringify(data);
   } catch (error) {
-    console.error('Error exporting data:', error);
     // Return a minimal valid JSON to avoid breaking the export
     return JSON.stringify({
       tasks: [],
@@ -414,7 +396,6 @@ export const importData = (jsonData: string): boolean => {
   try {
     // Check if the input is valid JSON
     if (!jsonData || jsonData.trim() === '') {
-      console.error('Import failed: Empty JSON data provided');
       return false;
     }
 
@@ -423,7 +404,6 @@ export const importData = (jsonData: string): boolean => {
     try {
       data = JSON.parse(jsonData);
     } catch (parseError) {
-      console.error('Import failed: Invalid JSON format', parseError);
       return false;
     }
 
@@ -436,7 +416,6 @@ export const importData = (jsonData: string): boolean => {
       !data.workSchedule &&
       !data.recurringTasks
     )) {
-      console.error('Import failed: Data does not contain any valid sections');
       return false;
     }
 
@@ -494,11 +473,9 @@ export const importData = (jsonData: string): boolean => {
     if (importSuccessful) {
       return true;
     } else {
-      console.error('Import failed: No valid data sections found');
       return false;
     }
   } catch (error) {
-    console.error('Failed to import data:', error);
     return false;
   }
 };
@@ -532,7 +509,6 @@ export const getLastWeeklyReviewDate = (): string | null => {
     
     return dateString;
   } catch (error) {
-    console.error('Error getting last weekly review date:', error);
     return null;
   }
 };
@@ -541,7 +517,6 @@ export const setLastWeeklyReviewDate = (dateString: string): void => {
   try {
     localStorage.setItem(LAST_WEEKLY_REVIEW_KEY, dateString);
   } catch (error) {
-    console.error('Error saving last weekly review date:', error);
   }
 };
 
@@ -564,7 +539,6 @@ export const needsWeeklyReview = (): boolean => {
     // Return true if it's been 7 or more days
     return daysSinceReview >= 7;
   } catch (error) {
-    console.error('Error checking if weekly review is needed:', error);
     return false; // Default to not showing reminder on error
   }
 };
@@ -589,7 +563,6 @@ export const getJournalEntries = (): JournalEntry[] => {
     
     return entriesJSON ? JSON.parse(entriesJSON) : [];
   } catch (error) {
-    console.error('Error reading journal entries from localStorage:', error);
     return [];
   }
 };
@@ -598,7 +571,6 @@ export const saveJournalEntries = (entries: JournalEntry[]): void => {
   try {
     localStorage.setItem(JOURNAL_ENTRIES_KEY, JSON.stringify(entries));
   } catch (error) {
-    console.error('Error saving journal entries to localStorage:', error);
   }
 };
 
@@ -608,7 +580,6 @@ export const addJournalEntry = (entry: JournalEntry): void => {
     entries.push(entry);
     saveJournalEntries(entries);
   } catch (error) {
-    console.error('Error adding journal entry:', error);
   }
 };
 
@@ -621,10 +592,8 @@ export const updateJournalEntry = (updatedEntry: JournalEntry): void => {
       entries[index] = updatedEntry;
       saveJournalEntries(entries);
     } else {
-      console.warn(`Journal entry with ID ${updatedEntry.id} not found for update`);
     }
   } catch (error) {
-    console.error('Error updating journal entry:', error);
   }
 };
 
@@ -634,7 +603,6 @@ export const deleteJournalEntry = (entryId: string): void => {
     const updatedEntries = entries.filter(entry => entry.id !== entryId);
     saveJournalEntries(updatedEntries);
   } catch (error) {
-    console.error('Error deleting journal entry:', error);
   }
 };
 
@@ -644,7 +612,6 @@ export const getJournalEntryById = (entryId: string): JournalEntry | null => {
     const entries = getJournalEntries();
     return entries.find(entry => entry.id === entryId) || null;
   } catch (error) {
-    console.error('Error getting journal entry by ID:', error);
     return null;
   }
 };
@@ -657,7 +624,6 @@ export const getJournalEntriesForWeek = (weekNumber: number, weekYear: number): 
       entry.weekNumber === weekNumber && entry.weekYear === weekYear
     );
   } catch (error) {
-    console.error('Error getting journal entries for week:', error);
     return [];
   }
 };
@@ -668,7 +634,6 @@ export const getRecurringTasks = (): RecurringTask[] => {
     const recurringTasksJSON = localStorage.getItem(RECURRING_TASKS_KEY);
     return recurringTasksJSON ? JSON.parse(recurringTasksJSON) : [];
   } catch (error) {
-    console.error('Error reading recurring tasks from localStorage:', error);
     return [];
   }
 };
@@ -677,7 +642,6 @@ export const saveRecurringTasks = (recurringTasks: RecurringTask[]): void => {
   try {
     localStorage.setItem(RECURRING_TASKS_KEY, JSON.stringify(recurringTasks));
   } catch (error) {
-    console.error('Error saving recurring tasks to localStorage:', error);
   }
 };
 
@@ -731,7 +695,6 @@ export const getDeletedTasks = (): DeletedTask[] => {
     
     return recentDeletedTasks;
   } catch (error) {
-    console.error('Error reading deleted tasks from localStorage:', error);
     return [];
   }
 };
@@ -740,7 +703,6 @@ export const saveDeletedTasks = (deletedTasks: DeletedTask[]): void => {
   try {
     localStorage.setItem(DELETED_TASKS_KEY, JSON.stringify(deletedTasks));
   } catch (error) {
-    console.error('Error saving deleted tasks to localStorage:', error);
   }
 };
 
@@ -755,7 +717,6 @@ export const addDeletedTask = (task: Task, deletedBy?: string): void => {
     deletedTasks.push(deletedTask);
     saveDeletedTasks(deletedTasks);
   } catch (error) {
-    console.error('Error adding deleted task:', error);
   }
 };
 
@@ -779,7 +740,6 @@ export const restoreDeletedTask = (taskId: string): Task | null => {
     
     return restoredTask;
   } catch (error) {
-    console.error('Error restoring deleted task:', error);
     return null;
   }
 };
@@ -790,7 +750,6 @@ export const permanentlyDeleteTask = (taskId: string): void => {
     const filteredTasks = deletedTasks.filter(dt => dt.task.id !== taskId);
     saveDeletedTasks(filteredTasks);
   } catch (error) {
-    console.error('Error permanently deleting task:', error);
   }
 };
 
@@ -798,6 +757,5 @@ export const clearAllDeletedTasks = (): void => {
   try {
     saveDeletedTasks([]);
   } catch (error) {
-    console.error('Error clearing deleted tasks:', error);
   }
 };
