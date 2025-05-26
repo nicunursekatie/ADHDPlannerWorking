@@ -48,13 +48,13 @@ export const GuidedTaskWalkthrough: React.FC<GuidedTaskWalkthroughProps> = ({
   const handleStepComplete = useCallback(() => {
     if (!currentStep) return;
 
-    updateTask(currentStep.id, { ...currentStep, completed: true });
+    updateTask({ ...currentStep, completed: true });
     setCompletedSteps(prev => new Set([...prev, currentStep.id]));
 
     if (currentStepIndex < subtasks.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
-    } else if (onComplete) {
-      updateTask(taskId, { ...parentTask, completed: true });
+    } else if (onComplete && parentTask) {
+      updateTask({ ...parentTask, completed: true });
       onComplete();
     }
   }, [currentStep, currentStepIndex, subtasks.length, updateTask, taskId, onComplete]);
@@ -104,7 +104,10 @@ export const GuidedTaskWalkthrough: React.FC<GuidedTaskWalkthroughProps> = ({
   const { stepTime, totalTime } = getTimeSpent();
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div 
+      className="max-w-3xl mx-auto space-y-4"
+      onClick={(e) => e.stopPropagation()}
+    >
       {showEncouragement && (
         <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center animate-pulse">
           <Trophy className="inline-block w-6 h-6 text-green-600 dark:text-green-400 mr-2" />

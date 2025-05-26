@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal } from '../common/Modal';
+import { createPortal } from 'react-dom';
+import Modal from '../common/Modal';
 import { GuidedTaskWalkthrough } from './GuidedTaskWalkthrough';
 
 interface GuidedWalkthroughModalProps {
@@ -18,20 +19,26 @@ export const GuidedWalkthroughModal: React.FC<GuidedWalkthroughModalProps> = ({
     onClose();
   };
 
-  return (
+  if (!isOpen) return null;
+
+  return createPortal(
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title=""
-      maxWidth="max-w-4xl"
+      title="Guided Task Walkthrough"
+      size="full"
     >
-      <div className="-m-6">
+      <div 
+        className="-m-6"
+        onClick={(e) => e.stopPropagation()}
+      >
         <GuidedTaskWalkthrough
           taskId={taskId}
           onComplete={handleComplete}
           onExit={onClose}
         />
       </div>
-    </Modal>
+    </Modal>,
+    document.body
   );
 };
