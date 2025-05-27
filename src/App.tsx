@@ -50,7 +50,7 @@ function App() {
           </Routes>
         </Layout>
       </Router>
-    </AppProvider>
+      </AppProvider>
     </ThemeProvider>
   );
 }
