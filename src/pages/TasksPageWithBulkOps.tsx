@@ -85,7 +85,7 @@ const TasksPageWithBulkOps: React.FC = () => {
   // Get initial tab from URL query params
   const searchParams = new URLSearchParams(location.search);
   const tabParam = searchParams.get('tab') as 'today' | 'tomorrow' | 'week' | 'overdue' | 'all' | null;
-  const initialTab = tabParam || 'today';
+  const initialTab = tabParam || 'all';
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -452,7 +452,9 @@ const TasksPageWithBulkOps: React.FC = () => {
         const allTasks = [...overdueTasksUnsorted, ...todayTasksUnsorted, ...tomorrowTasksUnsorted, ...thisWeekTasksUnsorted, ...otherTasksUnsorted];
         return sortTasks(allTasks);
       default:
-        return todayTasks;
+        // Default to all tasks view
+        const allTasksDefault = [...overdueTasksUnsorted, ...todayTasksUnsorted, ...tomorrowTasksUnsorted, ...thisWeekTasksUnsorted, ...otherTasksUnsorted];
+        return sortTasks(allTasksDefault);
     }
   };
   
