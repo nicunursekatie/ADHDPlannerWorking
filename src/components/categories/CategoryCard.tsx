@@ -1,5 +1,6 @@
 import React from 'react';
 import { Edit, Trash } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Category } from '../../types';
 
 interface CategoryCardProps {
@@ -15,9 +16,16 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const navigate = useNavigate();
+  
+  const handleCategoryClick = () => {
+    // Navigate to tasks page with category filter
+    navigate(`/tasks?categoryId=${category.id}`);
+  };
   return (
     <div 
-      className="flex items-center justify-between p-4 rounded-xl shadow-sm border border-amber-200 bg-amber-50 hover:shadow-md hover:border-amber-300 transition-all"
+      className="flex items-center justify-between p-4 rounded-xl shadow-sm border border-amber-200 bg-amber-50 hover:shadow-md hover:border-amber-300 transition-all cursor-pointer"
+      onClick={handleCategoryClick}
     >
       <div className="flex items-center">
         <div 
@@ -34,13 +42,19 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
         
         <div className="flex gap-2">
           <button
-            onClick={() => onEdit(category)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(category);
+            }}
             className="p-2 text-amber-700 hover:text-amber-800 hover:bg-amber-100 rounded-lg transition-colors"
           >
             <Edit size={16} />
           </button>
           <button
-            onClick={() => onDelete(category.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(category.id);
+            }}
             className="p-2 text-amber-700 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
           >
             <Trash size={16} />

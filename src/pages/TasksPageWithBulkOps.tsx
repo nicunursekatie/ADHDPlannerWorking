@@ -14,7 +14,7 @@ import {
   Plus, Filter, X, Undo2, Archive, 
   AlertTriangle, CalendarDays, Calendar, Layers, 
   Trash2, CheckCircle2, Folder, FileArchive,
-  ArrowUpDown, Clock, Star, Hash, FolderOpen
+  ArrowUpDown, Clock, Star, Hash, FolderOpen, Tag
 } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek } from '../utils/helpers';
 import { DeletedTask, getDeletedTasks, restoreDeletedTask, permanentlyDeleteTask } from '../utils/localStorage';
@@ -79,12 +79,14 @@ const TasksPageWithBulkOps: React.FC = () => {
     bulkMoveTasks,
     bulkArchiveTasks,
     bulkAddTasks,
-    bulkConvertToSubtasks
+    bulkConvertToSubtasks,
+    bulkAssignCategories
   } = useAppContext();
   
   // Get initial tab from URL query params
   const searchParams = new URLSearchParams(location.search);
   const tabParam = searchParams.get('tab') as 'today' | 'tomorrow' | 'week' | 'overdue' | 'all' | null;
+  const categoryIdParam = searchParams.get('categoryId');
   const initialTab = tabParam || 'all';
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -99,13 +101,15 @@ const TasksPageWithBulkOps: React.FC = () => {
   const [showConvertToSubtasksModal, setShowConvertToSubtasksModal] = useState(false);
   const [selectedParentTaskId, setSelectedParentTaskId] = useState<string | null>(null);
   const [deletedTasks, setDeletedTasks] = useState<DeletedTask[]>([]);
+  const [showBulkCategoryModal, setShowBulkCategoryModal] = useState(false);
+  const [selectedCategoryIdsForBulk, setSelectedCategoryIdsForBulk] = useState<string[]>([]);
+  const [categoryAssignMode, setCategoryAssignMode] = useState<'add' | 'replace'>('add');
   
   // Filter state
   const [showCompleted, setShowCompleted] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
-  const [showSubtasks, setShowSubtasks] = useState(false);
   const [filterProjectId, setFilterProjectId] = useState<string | null>(null);
-  const [filterCategoryId, setFilterCategoryId] = useState<string | null>(null);
+  const [filterCategoryId, setFilterCategoryId] = useState<string | null>(categoryIdParam);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   // View state
@@ -318,6 +322,20 @@ const TasksPageWithBulkOps: React.FC = () => {
       setSelectedTasks(new Set());
       setShowConvertToSubtasksModal(false);
       setSelectedParentTaskId(null);
+    }
+  };
+  
+  const handleBulkCategoryAssign = () => {
+    setShowBulkCategoryModal(true);
+  };
+  
+  const executeBulkCategoryAssign = () => {
+    if (selectedTasks.size > 0 && selectedCategoryIdsForBulk.length > 0) {
+      bulkAssignCategories(Array.from(selectedTasks), selectedCategoryIdsForBulk, categoryAssignMode);
+      setSelectedTasks(new Set());
+      setShowBulkCategoryModal(false);
+      setSelectedCategoryIdsForBulk([]);
+      setCategoryAssignMode('add');
     }
   };
   
@@ -692,6 +710,15 @@ const TasksPageWithBulkOps: React.FC = () => {
                 disabled={selectedTasks.size === 0}
               >
                 Move
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<Tag size={14} />}
+                onClick={handleBulkCategoryAssign}
+                disabled={selectedTasks.size === 0}
+              >
+                Categories
               </Button>
               <Button
                 size="sm"
@@ -1203,6 +1230,116 @@ const TasksPageWithBulkOps: React.FC = () => {
               disabled={!selectedParentTaskId}
             >
               Convert to Subtasks
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      
+      {/* Bulk Category Assignment Modal */}
+      <Modal
+        isOpen={showBulkCategoryModal}
+        onClose={() => {
+          setShowBulkCategoryModal(false);
+          setSelectedCategoryIdsForBulk([]);
+          setCategoryAssignMode('add');
+        }}
+        title="Assign Categories"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Assign categories to {selectedTasks.size} selected task{selectedTasks.size !== 1 ? 's' : ''}:
+          </p>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Assignment Mode
+            </label>
+            <div className="space-y-2">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="assignMode"
+                  value="add"
+                  checked={categoryAssignMode === 'add'}
+                  onChange={() => setCategoryAssignMode('add')}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                />
+                <span className="ml-2 text-sm text-gray-700">
+                  Add to existing categories
+                </span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="assignMode"
+                  value="replace"
+                  checked={categoryAssignMode === 'replace'}
+                  onChange={() => setCategoryAssignMode('replace')}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                />
+                <span className="ml-2 text-sm text-gray-700">
+                  Replace all existing categories
+                </span>
+              </label>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Select Categories
+            </label>
+            <div className="max-h-64 overflow-y-auto space-y-2 border rounded-md p-3">
+              {categories.map(category => (
+                <label
+                  key={category.id}
+                  className="flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    value={category.id}
+                    checked={selectedCategoryIdsForBulk.includes(category.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedCategoryIdsForBulk([...selectedCategoryIdsForBulk, category.id]);
+                      } else {
+                        setSelectedCategoryIdsForBulk(
+                          selectedCategoryIdsForBulk.filter(id => id !== category.id)
+                        );
+                      }
+                    }}
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  />
+                  <div className="ml-3 flex items-center">
+                    <div
+                      className="h-4 w-4 rounded mr-2"
+                      style={{ backgroundColor: category.color }}
+                    />
+                    <span className="text-sm text-gray-900">{category.name}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowBulkCategoryModal(false);
+                setSelectedCategoryIdsForBulk([]);
+                setCategoryAssignMode('add');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              icon={<Tag size={16} />}
+              onClick={executeBulkCategoryAssign}
+              disabled={selectedCategoryIdsForBulk.length === 0}
+            >
+              Assign Categories
             </Button>
           </div>
         </div>

@@ -30,6 +30,7 @@ interface AppContextType {
   bulkMoveTasks: (taskIds: string[], projectId: string | null) => void;
   bulkArchiveTasks: (taskIds: string[]) => void;
   bulkConvertToSubtasks: (taskIds: string[], parentTaskId: string) => void;
+  bulkAssignCategories: (taskIds: string[], categoryIds: string[], mode: 'add' | 'replace') => void;
   
   // Dependencies
   addTaskDependency: (taskId: string, dependsOnId: string) => void;
@@ -1047,6 +1048,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setTasks(updatedTasks);
     localStorage.saveTasks(updatedTasks);
   }, [tasks]);
+  
+  const bulkAssignCategories = useCallback((taskIds: string[], categoryIds: string[], mode: 'add' | 'replace') => {
+    const timestamp = new Date().toISOString();
+    
+    const updatedTasks = tasks.map(task => {
+      if (taskIds.includes(task.id)) {
+        let newCategoryIds: string[];
+        
+        if (mode === 'replace') {
+          // Replace all existing categories
+          newCategoryIds = categoryIds;
+        } else {
+          // Add to existing categories (avoiding duplicates)
+          const existingIds = task.categoryIds || [];
+          const uniqueNewIds = categoryIds.filter(id => !existingIds.includes(id));
+          newCategoryIds = [...existingIds, ...uniqueNewIds];
+        }
+        
+        return {
+          ...task,
+          categoryIds: newCategoryIds,
+          updatedAt: timestamp
+        };
+      }
+      return task;
+    });
+    
+    setTasks(updatedTasks);
+    localStorage.saveTasks(updatedTasks);
+  }, [tasks]);
 
   // Dependency management functions
   const addTaskDependency = useCallback((taskId: string, dependsOnId: string) => {
@@ -1270,6 +1301,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     bulkMoveTasks,
     bulkArchiveTasks,
     bulkConvertToSubtasks,
+    bulkAssignCategories,
     
     // Dependencies
     addTaskDependency,
