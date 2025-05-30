@@ -2,6 +2,7 @@ import React from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { SettingsProvider } from './components/common/SettingsProvider';
 import Layout from './components/layout/Layout';
 
 // Pages
@@ -27,9 +28,10 @@ function App() {
   return (
     <ThemeProvider>
       <AppProvider>
-        <Router>
-          <Layout>
-            <Routes>
+        <SettingsProvider>
+          <Router>
+            <Layout>
+              <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/tasks" element={<TasksPageWithBulkOps />} />
             <Route path="/projects" element={<ProjectsPage />} />
@@ -50,6 +52,7 @@ function App() {
           </Routes>
         </Layout>
       </Router>
+        </SettingsProvider>
     </AppProvider>
     </ThemeProvider>
   );

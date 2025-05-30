@@ -13,7 +13,8 @@ import {
   RefreshCw,
   ListChecks,
   AlertTriangle,
-  Repeat
+  Repeat,
+  Sparkles
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import Card from '../components/common/Card';
@@ -28,6 +29,8 @@ import {
   getOverdueTasks 
 } from '../utils/helpers';
 import { Task } from '../types';
+import { getIncompleteTasks } from '../utils/taskCompleteness';
+import { TaskDetailWizard } from '../components/tasks/TaskDetailWizard';
 
 const Dashboard: React.FC = () => {
   const {
@@ -48,11 +51,30 @@ const Dashboard: React.FC = () => {
   
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [showIncompleteWizard, setShowIncompleteWizard] = useState(false);
+  const [currentIncompleteTaskId, setCurrentIncompleteTaskId] = useState<string | null>(null);
+  const [recentlyReviewedTaskIds, setRecentlyReviewedTaskIds] = useState<Set<string>>(new Set());
   
   // Check if weekly review is needed
   useEffect(() => {
     setShowWeeklyReviewReminder(needsWeeklyReview());
   }, [needsWeeklyReview]);
+
+  // Calculate task data (always run these hooks before early returns)
+  const tasksDueToday = React.useMemo(() => getTasksDueToday(tasks), [tasks]);
+  const tasksDueThisWeek = React.useMemo(() => getTasksDueThisWeek(tasks), [tasks]);
+  const overdueTasks = React.useMemo(() => getOverdueTasks(tasks), [tasks]);
+  const completedTasks = React.useMemo(() => tasks.filter(task => task.completed && !task.parentTaskId), [tasks]);
+  const incompleteTasks = React.useMemo(() => tasks.filter(task => !task.completed && !task.parentTaskId), [tasks]);
+  
+  // Use useMemo to recalculate incomplete tasks when tasks change, excluding recently reviewed ones
+  const tasksWithMissingDetails = React.useMemo(() => {
+    return getIncompleteTasks(tasks).filter(task => !recentlyReviewedTaskIds.has(task.id));
+  }, [tasks, recentlyReviewedTaskIds]);
+
+  const completionRate = React.useMemo(() => {
+    return tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
+  }, [tasks.length, completedTasks.length]);
   
   if (isLoading) {
     return (
@@ -92,12 +114,6 @@ const Dashboard: React.FC = () => {
     );
   }
   
-  const tasksDueToday = getTasksDueToday(tasks);
-  const tasksDueThisWeek = getTasksDueThisWeek(tasks);
-  const overdueTasks = getOverdueTasks(tasks);
-  const completedTasks = tasks.filter(task => task.completed);
-  const incompleteTasks = tasks.filter(task => !task.completed);
-  
   const handleOpenTaskModal = (task?: Task) => {
     if (task) {
       setEditingTask(task);
@@ -111,10 +127,6 @@ const Dashboard: React.FC = () => {
     setIsTaskModalOpen(false);
     setEditingTask(null);
   };
-  
-  const completionRate = tasks.length > 0 
-    ? Math.round((completedTasks.length / tasks.length) * 100)
-    : 0;
   
   return (
     <div className="space-y-4">
@@ -178,13 +190,15 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* Weekly Review Reminder */}
-      {showWeeklyReviewReminder && (
-        <Card className="mb-6 bg-amber-900/30 border-2 border-amber-700">
-          <div className="p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-amber-400" aria-hidden="true" />
+      {/* Alerts Section */}
+      <div className="space-y-4">
+        {/* Weekly Review Reminder */}
+        {showWeeklyReviewReminder && (
+          <Card className="mb-6 bg-amber-900/30 border-2 border-amber-700">
+            <div className="p-4">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-amber-400" aria-hidden="true" />
               </div>
               <div className="ml-3">
                 <h3 className="text-lg font-bold text-amber-900">Time for your weekly review!</h3>
@@ -207,6 +221,43 @@ const Dashboard: React.FC = () => {
           </div>
         </Card>
       )}
+      
+      {/* Incomplete Tasks Indicator */}
+      {tasksWithMissingDetails.length > 0 && (
+        <Card className="mb-6 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-700">
+          <div className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <Sparkles className="h-5 w-5 text-blue-500" aria-hidden="true" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-bold text-blue-900 dark:text-blue-100">
+                    {tasksWithMissingDetails.length} tasks need more details
+                  </h3>
+                  <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                    Add missing information to help you complete tasks more easily
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  console.log('Tasks with missing details:', tasksWithMissingDetails.length);
+                  console.log('First task:', tasksWithMissingDetails[0]?.title);
+                  if (tasksWithMissingDetails.length > 0) {
+                    setCurrentIncompleteTaskId(tasksWithMissingDetails[0].id);
+                    setShowIncompleteWizard(true);
+                  }
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                Review Tasks
+              </button>
+            </div>
+          </div>
+        </Card>
+      )}
+      </div>
       
       {/* Memory Tools Section */}
       <div className="mb-6">
@@ -300,7 +351,6 @@ const Dashboard: React.FC = () => {
                   placeholder="Add something you just remembered..."
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                      const value = e.currentTarget.value;
                       handleOpenTaskModal();
                       e.currentTarget.value = '';
                     }
@@ -642,6 +692,40 @@ const Dashboard: React.FC = () => {
           isEdit={!!editingTask}
         />
       </Modal>
+      
+      {/* Task Detail Wizard for Incomplete Tasks */}
+      {showIncompleteWizard && currentIncompleteTaskId && (
+        <TaskDetailWizard
+          task={tasks.find(t => t.id === currentIncompleteTaskId) || tasksWithMissingDetails[0]}
+          isOpen={showIncompleteWizard}
+          onClose={() => {
+            setShowIncompleteWizard(false);
+            setCurrentIncompleteTaskId(null);
+          }}
+          onComplete={(updatedTask) => {
+            updateTask(updatedTask);
+            
+            // Mark this task as recently reviewed
+            setRecentlyReviewedTaskIds(prev => new Set([...prev, updatedTask.id]));
+            
+            // Get fresh list of incomplete tasks excluding reviewed ones
+            const remainingIncompleteTasks = getIncompleteTasks(tasks)
+              .filter(t => t.id !== updatedTask.id && !recentlyReviewedTaskIds.has(t.id));
+            
+            if (remainingIncompleteTasks.length > 0) {
+              // Move to the next incomplete task
+              setCurrentIncompleteTaskId(remainingIncompleteTasks[0].id);
+              // Force re-render by closing and reopening
+              setShowIncompleteWizard(false);
+              setTimeout(() => setShowIncompleteWizard(true), 50);
+            } else {
+              // No more incomplete tasks
+              setShowIncompleteWizard(false);
+              setCurrentIncompleteTaskId(null);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -1,9 +1,9 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { Task, Project, Category, DailyPlan, WhatNowCriteria, JournalEntry, RecurringTask } from '../types';
+import { Task, Project, Category, DailyPlan, WhatNowCriteria, JournalEntry, RecurringTask, AppSettings } from '../types';
 import { WorkSchedule, WorkShift, ShiftType, DEFAULT_SHIFTS } from '../types/WorkSchedule';
 import * as localStorage from '../utils/localStorage';
 import { generateId, createSampleData, recommendTasks as recommendTasksUtil } from '../utils/helpers';
-import { getTodayString, formatDateString } from '../utils/dateUtils';
+import { getTodayString, formatDateString, extractDateFromText } from '../utils/dateUtils';
 
 interface DeletedTask {
   task: Task;
@@ -88,6 +88,10 @@ interface AppContextType {
   // What Now Wizard
   recommendTasks: (criteria: WhatNowCriteria) => Task[];
   
+  // Settings
+  settings: AppSettings;
+  updateSettings: (settings: Partial<AppSettings>) => void;
+  
   // Data Management
   exportData: () => string;
   importData: (jsonData: string) => boolean;
@@ -103,6 +107,27 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const UNDO_WINDOW = 5000; // 5 seconds window for undo
 
+const DEFAULT_SETTINGS: AppSettings = {
+  timeManagement: {
+    defaultBufferTime: 15,
+    timeBlindnessAlerts: false,
+    timeBlindnessInterval: 60,
+    autoAdjustEstimates: false,
+    gettingReadyTime: 30
+  },
+  visual: {
+    fontSize: 'medium',
+    layoutDensity: 'comfortable',
+    reduceAnimations: false,
+    highContrast: false,
+    customPriorityColors: {
+      high: '#ef4444',
+      medium: '#f59e0b',
+      low: '#10b981'
+    }
+  }
+};
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -114,6 +139,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [isLoading, setIsLoading] = useState(true);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
   const [deletedTasks, setDeletedTasks] = useState<DeletedTask[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   
   // Clean up old deleted tasks
   useEffect(() => {
@@ -140,6 +166,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         let loadedWorkSchedule = null;
         let loadedJournalEntries = [];
         let loadedRecurringTasks = [];
+        let loadedSettings = null;
         
         try {
           loadedTasks = localStorage.getTasks();
@@ -176,6 +203,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         } catch (error) {
         }
         
+        try {
+          loadedSettings = localStorage.getSettings();
+        } catch (error) {
+        }
+        
         // Debug logging
         
         setTasks(loadedTasks);
@@ -185,6 +217,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setWorkSchedule(loadedWorkSchedule);
         setJournalEntries(loadedJournalEntries);
         setRecurringTasks(loadedRecurringTasks);
+        if (loadedSettings) {
+          setSettings(loadedSettings);
+        }
         
         // Check if data exists
         const hasData = 
@@ -745,25 +780,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     let priority: 'low' | 'medium' | 'high' = 'medium';
     let categoryIds: string[] = [];
     
-    // Extract date patterns
-    if (processedTitle.includes('!today')) {
-      const today = new Date();
-      dueDate = today.toISOString().split('T')[0];
-      processedTitle = processedTitle.replace('!today', '').trim();
-    } else if (processedTitle.includes('!tomorrow')) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      dueDate = tomorrow.toISOString().split('T')[0];
-      processedTitle = processedTitle.replace('!tomorrow', '').trim();
-    } else if (processedTitle.match(/!(\d+)d/)) {
-      const match = processedTitle.match(/!(\d+)d/);
-      if (match && match[1]) {
-        const days = parseInt(match[1], 10);
-        const date = new Date();
-        date.setDate(date.getDate() + days);
-        dueDate = date.toISOString().split('T')[0];
-        processedTitle = processedTitle.replace(/!(\d+)d/, '').trim();
-      }
+    // First extract natural language dates
+    const { cleanedText, date } = extractDateFromText(processedTitle);
+    if (date) {
+      processedTitle = cleanedText;
+      dueDate = formatDateString(date);
     }
     
     // Extract priority
@@ -773,7 +794,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } else if (processedTitle.includes('!low')) {
       priority = 'low';
       processedTitle = processedTitle.replace('!low', '').trim();
+    } else if (processedTitle.includes('!medium')) {
+      priority = 'medium';
+      processedTitle = processedTitle.replace('!medium', '').trim();
     }
+    
+    // Clean up any double spaces
+    processedTitle = processedTitle.replace(/\s+/g, ' ').trim();
     
     // Create and return the task
     return addTask({
@@ -1203,6 +1230,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
   }, [recurringTasks]);
 
+  const updateSettings = useCallback((newSettings: Partial<AppSettings>) => {
+    const updated = {
+      ...settings,
+      ...newSettings,
+      timeManagement: {
+        ...settings.timeManagement,
+        ...(newSettings.timeManagement || {})
+      },
+      visual: {
+        ...settings.visual,
+        ...(newSettings.visual || {}),
+        customPriorityColors: {
+          ...settings.visual.customPriorityColors,
+          ...(newSettings.visual?.customPriorityColors || {})
+        }
+      }
+    };
+    setSettings(updated);
+    localStorage.saveSettings(updated);
+  }, [settings]);
+
   const contextValue: AppContextType = {
     tasks,
     addTask,
@@ -1271,6 +1319,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     generateTaskFromRecurring,
     
     recommendTasks,
+    
+    settings,
+    updateSettings,
     
     exportData,
     importData,

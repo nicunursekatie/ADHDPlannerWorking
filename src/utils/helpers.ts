@@ -86,18 +86,18 @@ export const calculateDuration = (
   }
 };
 
-// Get tasks due today
+// Get tasks due today (excluding subtasks)
 export const getTasksDueToday = (tasks: Task[]): Task[] => {
   return tasks.filter((task) => {
-    if (!task.dueDate || task.completed) return false;
+    if (!task.dueDate || task.completed || task.parentTaskId) return false;
     return isToday(task.dueDate);
   });
 };
 
-// Get tasks due this week
+// Get tasks due this week (excluding subtasks)
 export const getTasksDueThisWeek = (tasks: Task[]): Task[] => {
   return tasks.filter((task) => {
-    if (!task.dueDate || task.completed) return false;
+    if (!task.dueDate || task.completed || task.parentTaskId) return false;
     
     const daysUntilDue = getDaysBetween(formatDateString(new Date()) || '', task.dueDate);
     if (daysUntilDue === null) return false;
@@ -107,10 +107,10 @@ export const getTasksDueThisWeek = (tasks: Task[]): Task[] => {
   });
 };
 
-// Get overdue tasks
+// Get overdue tasks (excluding subtasks)
 export const getOverdueTasks = (tasks: Task[]): Task[] => {
   return tasks.filter((task) => {
-    if (!task.dueDate || task.completed) return false;
+    if (!task.dueDate || task.completed || task.parentTaskId) return false;
     return isPastDate(task.dueDate);
   });
 };

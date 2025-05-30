@@ -1,4 +1,4 @@
-import { Task, Project, Category, DailyPlan, JournalEntry, RecurringTask } from '../types';
+import { Task, Project, Category, DailyPlan, JournalEntry, RecurringTask, AppSettings } from '../types';
 import { WorkSchedule, WorkShift } from '../types/WorkSchedule';
 import { transformImportedData } from './importTransform';
 
@@ -13,6 +13,7 @@ const JOURNAL_ENTRIES_KEY = `${KEY_PREFIX}journalEntries`;
 const LAST_WEEKLY_REVIEW_KEY = `${KEY_PREFIX}lastWeeklyReview`;
 const RECURRING_TASKS_KEY = `${KEY_PREFIX}recurringTasks`;
 const DELETED_TASKS_KEY = `${KEY_PREFIX}deletedTasks`;
+const SETTINGS_KEY = `${KEY_PREFIX}settings`;
 
 // Tasks
 export const getTasks = (): Task[] => {
@@ -756,6 +757,23 @@ export const permanentlyDeleteTask = (taskId: string): void => {
 export const clearAllDeletedTasks = (): void => {
   try {
     saveDeletedTasks([]);
+  } catch (error) {
+  }
+};
+
+// Settings
+export const getSettings = (): AppSettings | null => {
+  try {
+    const settingsJSON = localStorage.getItem(SETTINGS_KEY);
+    return settingsJSON ? JSON.parse(settingsJSON) : null;
+  } catch (error) {
+    return null;
+  }
+};
+
+export const saveSettings = (settings: AppSettings): void => {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch (error) {
   }
 };

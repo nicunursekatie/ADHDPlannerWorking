@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle } from 'lucide-react';
+import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle, Sparkles } from 'lucide-react';
 import { Task } from '../types';
 import { useAppContext } from '../context/AppContext';
 import { getDueDateStatus } from '../utils/dateUtils';
 import { GuidedWalkthroughModal } from './tasks/GuidedWalkthroughModal';
+import { QuickDueDateEditor } from './tasks/QuickDueDateEditor';
+import { TaskDetailWizard } from './tasks/TaskDetailWizard';
+import { analyzeTaskCompleteness } from '../utils/taskCompleteness';
 
 interface TaskDisplayProps {
   task: Task;
@@ -20,13 +23,29 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   onDelete,
   onBreakdown 
 }) => {
-  const { tasks, projects } = useAppContext();
+  const { tasks, projects, updateTask } = useAppContext();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const [showDateEditor, setShowDateEditor] = useState(false);
+  const [showDetailWizard, setShowDetailWizard] = useState(false);
   
   // Get actual subtask objects
   const subtasks = task.subtasks ? 
     task.subtasks.map(subtaskId => tasks.find(t => t.id === subtaskId)).filter(Boolean) as Task[] : [];
+  
+  // Debug: Check for missing subtasks (only for specific task)
+  if (task.title.toLowerCase().includes('hamper')) {
+    console.group(`🔍 Subtask Analysis for "${task.title}"`);
+    console.log('Task object:', task);
+    console.log('Task.subtasks array:', task.subtasks);
+    console.log('Task.subtasks length:', task.subtasks?.length || 0);
+    console.log('Found subtask objects:', subtasks);
+    console.log('Found subtasks length:', subtasks.length);
+    console.log('Missing subtask IDs:', task.subtasks?.filter(id => !tasks.find(t => t.id === id)) || []);
+    console.log('All tasks with parentTaskId matching this task:', tasks.filter(t => t.parentTaskId === task.id));
+    console.log('Mismatch?', (task.subtasks?.length || 0) !== subtasks.length);
+    console.groupEnd();
+  }
   
   const dueDateStatus = getDueDateStatus(task.dueDate);
   const dueDateInfo = dueDateStatus ? {
@@ -34,8 +53,13 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     className: dueDateStatus.className,
     icon: dueDateStatus.isOverdue ? <AlertCircle className="w-4 h-4" /> : <Calendar className="w-4 h-4" />
   } : null;
+
+  
+  const taskCompleteness = analyzeTaskCompleteness(task);
+  const showIncompleteIndicator = !task.completed && !taskCompleteness.isComplete;
   
   return (
+    <>
     <div 
       className={`
         group flex items-start gap-3 p-4 rounded-xl border cursor-pointer
@@ -63,30 +87,95 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
-            <h3 className={`
-              text-base font-medium tracking-tight
-              ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}
-            `}>
-              {task.title}
-            </h3>
-            {/* Project info */}
-            {task.projectId && (
-              <div className="flex items-center gap-1 mt-0.5">
-                <Folder className="w-3 h-3 text-gray-400" />
-                <span className="text-xs text-gray-500">
-                  {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <h3 className={`
+                text-base font-medium tracking-tight
+                ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}
+              `}>
+                {task.title}
+              </h3>
+              {showIncompleteIndicator && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDetailWizard(true);
+                  }}
+                  className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full hover:bg-amber-200 transition-colors"
+                  title={`Missing ${taskCompleteness.missingFields.length} details - Click to complete`}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>Add details</span>
+                </button>
+              )}
+            </div>
+            {/* Project info and Priority */}
+            <div className="flex items-center gap-3 mt-0.5">
+              {task.projectId && (
+                <div className="flex items-center gap-1">
+                  <Folder className="w-3 h-3 text-gray-400" />
+                  <span className="text-xs text-gray-500">
+                    {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
+                  </span>
+                </div>
+              )}
+              {task.priority && (
+                <div className="flex items-center gap-1">
+                  <div className={`w-2 h-2 rounded-full ${
+                    task.priority === 'high' ? 'bg-priority-high' :
+                    task.priority === 'medium' ? 'bg-priority-medium' :
+                    'bg-priority-low'
+                  }`} />
+                  <span className={`text-xs font-medium capitalize ${
+                    task.priority === 'high' ? 'priority-high' :
+                    task.priority === 'medium' ? 'priority-medium' :
+                    'priority-low'
+                  }`}>
+                    {task.priority}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
           
           {/* Due Date */}
-          {dueDateInfo && (
-            <div className={`flex items-center gap-1.5 text-sm ${dueDateInfo.className}`}>
-              {dueDateInfo.icon}
-              <span>{dueDateInfo.text}</span>
-            </div>
-          )}
+          <div className="relative">
+            {dueDateInfo ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDateEditor(!showDateEditor);
+                }}
+                className={`flex items-center gap-1.5 text-sm ${dueDateInfo.className} hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded-md transition-colors`}
+                title="Click to change due date"
+              >
+                {dueDateInfo.icon}
+                <span>{dueDateInfo.text}</span>
+              </button>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDateEditor(!showDateEditor);
+                }}
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded-md transition-colors"
+                title="Add due date"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Add date</span>
+              </button>
+            )}
+            
+            {showDateEditor && (
+              <QuickDueDateEditor
+                currentDate={task.dueDate}
+                onDateChange={(newDate) => {
+                  updateTask({ ...task, dueDate: newDate });
+                  setShowDateEditor(false);
+                }}
+                onClose={() => setShowDateEditor(false)}
+              />
+            )}
+          </div>
         </div>
         
         {/* Subtasks */}
@@ -102,7 +191,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
               >
                 {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                 <span>
-                  {subtasks.filter(st => !st.completed).length} of {subtasks.length} subtasks
+                  {subtasks.filter(st => st.completed).length} of {subtasks.length} subtasks completed
                 </span>
               </button>
               
@@ -202,14 +291,27 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
         </button>
       </div>
       
-      {/* Guided Walkthrough Modal */}
-      {showWalkthrough && (
-        <GuidedWalkthroughModal
-          isOpen={showWalkthrough}
-          onClose={() => setShowWalkthrough(false)}
-          taskId={task.id}
-        />
-      )}
     </div>
+      
+    {/* Modals rendered outside the clickable div */}
+    {showWalkthrough && (
+      <GuidedWalkthroughModal
+        isOpen={showWalkthrough}
+        onClose={() => setShowWalkthrough(false)}
+        taskId={task.id}
+      />
+    )}
+    
+    {/* Task Detail Wizard */}
+    <TaskDetailWizard
+      task={task}
+      isOpen={showDetailWizard}
+      onClose={() => setShowDetailWizard(false)}
+      onComplete={(updatedTask) => {
+        updateTask(updatedTask);
+        setShowDetailWizard(false);
+      }}
+    />
+    </>
   );
 };

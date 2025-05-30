@@ -135,5 +135,30 @@ export type RecurringTaskSource = {
   metadata?: Record<string, any>; // Extra data specific to the source type
 };
 
+// Settings types
+export interface AppSettings {
+  // Time Management Settings
+  timeManagement: {
+    defaultBufferTime: number; // minutes between tasks
+    timeBlindnessAlerts: boolean;
+    timeBlindnessInterval: number; // minutes between alerts
+    autoAdjustEstimates: boolean;
+    gettingReadyTime: number; // minutes to add before appointments
+  };
+  
+  // Visual Preferences
+  visual: {
+    fontSize: 'small' | 'medium' | 'large';
+    layoutDensity: 'compact' | 'comfortable' | 'spacious';
+    reduceAnimations: boolean;
+    highContrast: boolean;
+    customPriorityColors: {
+      high: string;
+      medium: string;
+      low: string;
+    };
+  };
+}
+
 // Re-export WorkSchedule types
 export * from './WorkSchedule';

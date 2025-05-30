@@ -310,3 +310,119 @@
     color: rgb(var(--text-muted));
   }
 }
+
+/* Settings-based styles */
+:root {
+  /* Default priority colors (can be overridden by settings) */
+  --color-priority-high: #ef4444;
+  --color-priority-medium: #f59e0b;
+  --color-priority-low: #10b981;
+}
+
+/* Font size classes */
+.text-sm {
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+.text-sm h1 { font-size: 1.5rem !important; }
+.text-sm h2 { font-size: 1.25rem !important; }
+.text-sm h3 { font-size: 1.125rem !important; }
+
+.text-base {
+  font-size: 1rem !important;
+  line-height: 1.5rem !important;
+}
+
+.text-base h1 { font-size: 1.875rem !important; }
+.text-base h2 { font-size: 1.5rem !important; }
+.text-base h3 { font-size: 1.25rem !important; }
+
+.text-lg {
+  font-size: 1.125rem !important;
+  line-height: 1.75rem !important;
+}
+
+.text-lg h1 { font-size: 2.25rem !important; }
+.text-lg h2 { font-size: 1.875rem !important; }
+.text-lg h3 { font-size: 1.5rem !important; }
+
+/* Layout density classes */
+.space-compact .p-4 { padding: 0.75rem !important; }
+.space-compact .p-6 { padding: 1rem !important; }
+.space-compact .space-y-4 > * + * { margin-top: 0.75rem !important; }
+.space-compact .space-y-6 > * + * { margin-top: 1rem !important; }
+.space-compact .gap-4 { gap: 0.75rem !important; }
+.space-compact .gap-6 { gap: 1rem !important; }
+
+.space-spacious .p-4 { padding: 1.5rem !important; }
+.space-spacious .p-6 { padding: 2rem !important; }
+.space-spacious .space-y-4 > * + * { margin-top: 1.5rem !important; }
+.space-spacious .space-y-6 > * + * { margin-top: 2rem !important; }
+.space-spacious .gap-4 { gap: 1.5rem !important; }
+.space-spacious .gap-6 { gap: 2rem !important; }
+
+/* Reduce animations */
+.reduce-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* High contrast mode */
+.high-contrast {
+  filter: contrast(1.2);
+}
+
+.high-contrast .text-gray-500 {
+  color: rgb(55 65 81) !important;
+}
+
+.high-contrast .text-gray-600 {
+  color: rgb(31 41 55) !important;
+}
+
+.high-contrast .border-gray-200 {
+  border-color: rgb(156 163 175) !important;
+}
+
+.high-contrast .bg-gray-50 {
+  background-color: rgb(243 244 246) !important;
+}
+
+/* Priority color variables usage */
+.priority-high {
+  color: var(--color-priority-high) !important;
+}
+
+.bg-priority-high {
+  background-color: var(--color-priority-high) !important;
+}
+
+.border-priority-high {
+  border-color: var(--color-priority-high) !important;
+}
+
+.priority-medium {
+  color: var(--color-priority-medium) !important;
+}
+
+.bg-priority-medium {
+  background-color: var(--color-priority-medium) !important;
+}
+
+.border-priority-medium {
+  border-color: var(--color-priority-medium) !important;
+}
+
+.priority-low {
+  color: var(--color-priority-low) !important;
+}
+
+.bg-priority-low {
+  background-color: var(--color-priority-low) !important;
+}
+
+.border-priority-low {
+  border-color: var(--color-priority-low) !important;
+}

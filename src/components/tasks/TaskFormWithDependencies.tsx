@@ -6,6 +6,7 @@ import Button from '../common/Button';
 import Badge from '../common/Badge';
 import SubtaskList from './SubtaskList';
 import { formatDateForHtml } from '../../utils/helpers';
+import { getTodayString, getTomorrowString, formatDateString } from '../../utils/dateUtils';
 import { 
   Clock,
   Calendar,
@@ -226,6 +227,51 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
               onChange={(e) => setDueDate(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
+            <div className="flex space-x-2 mt-2">
+              <button
+                type="button"
+                onClick={() => setDueDate(getTodayString())}
+                className={`px-2 py-1 rounded text-xs font-medium ${
+                  dueDate === getTodayString()
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
+                }`}
+              >
+                Today
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setDueDate(getTomorrowString())}
+                className={`px-2 py-1 rounded text-xs font-medium ${
+                  dueDate === getTomorrowString()
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
+                }`}
+              >
+                Tomorrow
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  const nextWeek = new Date();
+                  nextWeek.setDate(nextWeek.getDate() + 7);
+                  setDueDate(formatDateString(nextWeek));
+                }}
+                className="px-2 py-1 rounded text-xs font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200"
+              >
+                Next Week
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setDueDate('')}
+                className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200"
+              >
+                No Date
+              </button>
+            </div>
           </div>
           
           <div>

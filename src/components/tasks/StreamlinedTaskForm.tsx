@@ -77,11 +77,7 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
     
     // Special handling for date inputs
     if (name === 'dueDate') {
-      if (!value) {
-        setFormData(prev => ({ ...prev, dueDate: null }));
-      } else {
-        setFormData(prev => ({ ...prev, dueDate: value }));
-      }
+      setFormData(prev => ({ ...prev, dueDate: value || null }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -276,6 +272,8 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
               type="button"
               onClick={() => {
                 const formattedDate = getTomorrowString();
+                console.log('Tomorrow date:', formattedDate);
+                console.log('Current date:', getTodayString());
                 setFormData(prev => ({ ...prev, dueDate: formattedDate }));
               }}
               className={`px-2 py-1 rounded text-xs font-medium ${
@@ -301,10 +299,7 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
             <button
               type="button"
               onClick={() => {
-                setFormData(prev => {
-                  const newData = { ...prev, dueDate: null };
-                  return newData;
-                });
+                setFormData(prev => ({ ...prev, dueDate: '' }));
               }}
               className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200"
             >

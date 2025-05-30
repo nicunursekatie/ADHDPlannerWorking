@@ -1,4 +1,4 @@
-import { format, parse, isValid, startOfDay } from 'date-fns';
+import { format, parse, isValid, startOfDay, addDays, addWeeks, addMonths, nextDay, lastDayOfMonth } from 'date-fns';
 
 /**
  * Standard date format used throughout the app (YYYY-MM-DD)
@@ -6,14 +6,24 @@ import { format, parse, isValid, startOfDay } from 'date-fns';
 export const DATE_FORMAT = 'yyyy-MM-dd';
 
 /**
- * Parse a date string in YYYY-MM-DD format to a Date object
+ * Parse a date string in YYYY-MM-DD format or ISO format to a Date object
  * Ensures consistent timezone handling by parsing as local date
  */
 export function parseDate(dateString: string | null | undefined): Date | null {
   if (!dateString) return null;
   
   try {
-    // Parse the date string as a local date (not UTC)
+    // Handle ISO date strings (e.g., "2025-05-22T23:22:57.975Z")
+    if (dateString.includes('T') || dateString.includes('Z')) {
+      const isoDate = new Date(dateString);
+      if (!isValid(isoDate)) {
+        console.warn(`Invalid ISO date string: ${dateString}`);
+        return null;
+      }
+      return isoDate;
+    }
+    
+    // Handle YYYY-MM-DD format strings
     const parsed = parse(dateString, DATE_FORMAT, new Date());
     
     // Validate the parsed date
@@ -52,18 +62,33 @@ export function formatDateString(date: Date | null | undefined): string | null {
 
 /**
  * Create a date string for today in YYYY-MM-DD format
+ * Uses local timezone to ensure consistency with user's perception of "today"
  */
 export function getTodayString(): string {
-  return formatDateString(new Date()) || '';
+  const today = new Date();
+  
+  // Force local timezone by using local date components
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
 }
 
 /**
  * Create a date string for tomorrow in YYYY-MM-DD format
+ * Uses local timezone to ensure consistency with user's perception of "tomorrow"
  */
 export function getTomorrowString(): string {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  return formatDateString(tomorrow) || '';
+  
+  // Force local timezone by using local date components
+  const year = tomorrow.getFullYear();
+  const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+  const day = String(tomorrow.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -220,4 +245,221 @@ export function sortDateStrings(dates: (string | null | undefined)[]): (string |
     
     return dateA.getTime() - dateB.getTime();
   });
+}
+
+/**
+ * Parse natural language date expressions and return a Date object
+ * Examples:
+ * - "tomorrow", "today", "yesterday"
+ * - "next monday", "next friday"
+ * - "in 3 days", "in 2 weeks", "in 1 month"
+ * - "3d", "2w", "1m" (shorthand)
+ * - "jan 15", "december 25", "oct 31"
+ * - "by july" -> last day of July
+ * - "end of month" -> last day of current month
+ */
+export function parseNaturalDate(input: string): Date | null {
+  const normalizedInput = input.toLowerCase().trim();
+  const today = startOfDay(new Date());
+  
+  // Handle relative day keywords
+  if (normalizedInput === 'today') return today;
+  if (normalizedInput === 'tomorrow') return addDays(today, 1);
+  if (normalizedInput === 'yesterday') return addDays(today, -1);
+  
+  // Handle "next [weekday]"
+  const nextDayMatch = normalizedInput.match(/^next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/);
+  if (nextDayMatch) {
+    const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const targetDay = weekdays.indexOf(nextDayMatch[1]);
+    return nextDay(today, targetDay as 0 | 1 | 2 | 3 | 4 | 5 | 6);
+  }
+  
+  // Handle "in X days/weeks/months"
+  const inTimeMatch = normalizedInput.match(/^in\s+(\d+)\s+(days?|weeks?|months?)$/);
+  if (inTimeMatch) {
+    const amount = parseInt(inTimeMatch[1]);
+    const unit = inTimeMatch[2];
+    
+    if (unit.startsWith('day')) return addDays(today, amount);
+    if (unit.startsWith('week')) return addWeeks(today, amount);
+    if (unit.startsWith('month')) return addMonths(today, amount);
+  }
+  
+  // Handle shorthand (3d, 2w, 1m)
+  const shorthandMatch = normalizedInput.match(/^(\d+)([dwm])$/);
+  if (shorthandMatch) {
+    const amount = parseInt(shorthandMatch[1]);
+    const unit = shorthandMatch[2];
+    
+    if (unit === 'd') return addDays(today, amount);
+    if (unit === 'w') return addWeeks(today, amount);
+    if (unit === 'm') return addMonths(today, amount);
+  }
+  
+  // Handle "by [month] [day]" (e.g., "by july 1")
+  const byMonthDayMatch = normalizedInput.match(/^by\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+(\d{1,2})$/);
+  if (byMonthDayMatch) {
+    const monthMap: { [key: string]: number } = {
+      'january': 0, 'jan': 0,
+      'february': 1, 'feb': 1,
+      'march': 2, 'mar': 2,
+      'april': 3, 'apr': 3,
+      'may': 4,
+      'june': 5, 'jun': 5,
+      'july': 6, 'jul': 6,
+      'august': 7, 'aug': 7,
+      'september': 8, 'sep': 8,
+      'october': 9, 'oct': 9,
+      'november': 10, 'nov': 10,
+      'december': 11, 'dec': 11
+    };
+    
+    const targetMonth = monthMap[byMonthDayMatch[1]];
+    const targetDay = parseInt(byMonthDayMatch[2]);
+    
+    let targetDate = new Date(today.getFullYear(), targetMonth, targetDay);
+    
+    // If the date is in the past, use next year
+    if (targetDate < today) {
+      targetDate = new Date(today.getFullYear() + 1, targetMonth, targetDay);
+    }
+    
+    // Validate the date
+    if (isValid(targetDate) && targetDate.getDate() === targetDay) {
+      return startOfDay(targetDate);
+    }
+  }
+  
+  // Handle "by [month]" -> last day of that month
+  const byMonthMatch = normalizedInput.match(/^by\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)$/);
+  if (byMonthMatch) {
+    const monthMap: { [key: string]: number } = {
+      'january': 0, 'jan': 0,
+      'february': 1, 'feb': 1,
+      'march': 2, 'mar': 2,
+      'april': 3, 'apr': 3,
+      'may': 4,
+      'june': 5, 'jun': 5,
+      'july': 6, 'jul': 6,
+      'august': 7, 'aug': 7,
+      'september': 8, 'sep': 8,
+      'october': 9, 'oct': 9,
+      'november': 10, 'nov': 10,
+      'december': 11, 'dec': 11
+    };
+    
+    const targetMonth = monthMap[byMonthMatch[1]];
+    let targetDate = new Date(today.getFullYear(), targetMonth, 1);
+    
+    // If the target month is before the current month, use next year
+    if (targetMonth < today.getMonth()) {
+      targetDate = new Date(today.getFullYear() + 1, targetMonth, 1);
+    }
+    
+    return lastDayOfMonth(targetDate);
+  }
+  
+  // Handle "end of month"
+  if (normalizedInput === 'end of month' || normalizedInput === 'eom') {
+    return lastDayOfMonth(today);
+  }
+  
+  // Handle month + day (e.g., "jan 15", "december 25")
+  const monthDayMatch = normalizedInput.match(/^(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+(\d{1,2})$/);
+  if (monthDayMatch) {
+    const monthMap: { [key: string]: number } = {
+      'january': 0, 'jan': 0,
+      'february': 1, 'feb': 1,
+      'march': 2, 'mar': 2,
+      'april': 3, 'apr': 3,
+      'may': 4,
+      'june': 5, 'jun': 5,
+      'july': 6, 'jul': 6,
+      'august': 7, 'aug': 7,
+      'september': 8, 'sep': 8,
+      'october': 9, 'oct': 9,
+      'november': 10, 'nov': 10,
+      'december': 11, 'dec': 11
+    };
+    
+    const targetMonth = monthMap[monthDayMatch[1]];
+    const targetDay = parseInt(monthDayMatch[2]);
+    
+    let targetDate = new Date(today.getFullYear(), targetMonth, targetDay);
+    
+    // If the date is in the past, use next year
+    if (targetDate < today) {
+      targetDate = new Date(today.getFullYear() + 1, targetMonth, targetDay);
+    }
+    
+    // Validate the date
+    if (isValid(targetDate) && targetDate.getDate() === targetDay) {
+      return startOfDay(targetDate);
+    }
+  }
+  
+  // Handle numeric date formats (MM/DD or MM-DD)
+  const numericDateMatch = normalizedInput.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
+  if (numericDateMatch) {
+    const month = parseInt(numericDateMatch[1]) - 1; // 0-indexed
+    const day = parseInt(numericDateMatch[2]);
+    
+    let targetDate = new Date(today.getFullYear(), month, day);
+    
+    // If the date is in the past, use next year
+    if (targetDate < today) {
+      targetDate = new Date(today.getFullYear() + 1, month, day);
+    }
+    
+    // Validate the date
+    if (isValid(targetDate) && targetDate.getMonth() === month && targetDate.getDate() === day) {
+      return startOfDay(targetDate);
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Extract date from text and return both the cleaned text and the date
+ * This function looks for date patterns anywhere in the text
+ */
+export function extractDateFromText(text: string): { cleanedText: string; date: Date | null } {
+  // Common patterns to check (order matters - more specific patterns first)
+  const patterns = [
+    /\b(today|tomorrow|yesterday)\b/i,
+    /\bnext\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+    /\bin\s+\d+\s+(days?|weeks?|months?)\b/i,
+    /\b\d+[dwm]\b/i,
+    /\bby\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{1,2}\b/i, // "by july 1" - more specific, check first
+    /\bby\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i, // "by july" - less specific, check second
+    /\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{1,2}\b/i,
+    /\b\d{1,2}[\/\-]\d{1,2}\b/,
+    /\bend\s+of\s+month\b/i,
+    /\beom\b/i
+  ];
+  
+  let cleanedText = text;
+  let foundDate: Date | null = null;
+  
+  // Check each pattern
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      const dateStr = match[0];
+      const parsedDate = parseNaturalDate(dateStr);
+      
+      if (parsedDate) {
+        foundDate = parsedDate;
+        // Remove the date pattern from the text
+        cleanedText = text.replace(pattern, '').trim();
+        // Clean up any double spaces
+        cleanedText = cleanedText.replace(/\s+/g, ' ').trim();
+        break;
+      }
+    }
+  }
+  
+  return { cleanedText, date: foundDate };
 }

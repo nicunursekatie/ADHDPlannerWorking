@@ -19,6 +19,7 @@ import { Task, Project, Category } from '../../types';
 import Badge from '../common/Badge';
 import { formatDateForDisplay } from '../../utils/helpers';
 import { useAppContext } from '../../context/AppContext';
+import { QuickDueDateEditor } from './QuickDueDateEditor';
 
 interface ImprovedTaskCardProps {
   task: Task;
@@ -39,7 +40,8 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [showActions, setShowActions] = useState(false);
-  const { completeTask, tasks, addTask } = useAppContext();
+  const [showDateEditor, setShowDateEditor] = useState(false);
+  const { completeTask, tasks, addTask, updateTask } = useAppContext();
   
   const project = task.projectId 
     ? projects.find(p => p.id === task.projectId) 
@@ -130,33 +132,56 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
   
   // Format due date with color based on urgency
   const renderDueDate = () => {
-    if (!task.dueDate) return null;
-    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Parse the task due date from YYYY-MM-DD format
-    const [year, month, day] = task.dueDate.split('-').map(num => parseInt(num, 10));
-    const dueDate = new Date(year, month - 1, day); // Month is 0-indexed in JS Date
-    dueDate.setHours(0, 0, 0, 0);
-    
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
     let textColor = 'text-gray-500';
+    let dateText = 'Add date';
     
-    if (dueDate < today) {
-      textColor = 'text-red-600 font-medium';
-    } else if (dueDate.getTime() === today.getTime()) {
-      textColor = 'text-green-600 font-medium'; // Changed to green for today's tasks
-    } else if (dueDate.getTime() === tomorrow.getTime()) {
-      textColor = 'text-orange-500';
+    if (task.dueDate) {
+      // Parse the task due date from YYYY-MM-DD format
+      const [year, month, day] = task.dueDate.split('-').map(num => parseInt(num, 10));
+      const dueDate = new Date(year, month - 1, day); // Month is 0-indexed in JS Date
+      dueDate.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      if (dueDate < today) {
+        textColor = 'text-red-600 font-medium';
+      } else if (dueDate.getTime() === today.getTime()) {
+        textColor = 'text-green-600 font-medium'; // Changed to green for today's tasks
+      } else if (dueDate.getTime() === tomorrow.getTime()) {
+        textColor = 'text-orange-500';
+      }
+      
+      dateText = formatDateForDisplay(task.dueDate);
     }
     
     return (
-      <div className={`flex items-center text-xs ${textColor.replace('gray-500', 'gray-400').replace('red-600', 'red-400').replace('green-600', 'green-400').replace('orange-500', 'orange-400')}`}>
-        <Calendar size={14} className="mr-1" />
-        {formatDateForDisplay(task.dueDate)}
+      <div className="relative">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDateEditor(!showDateEditor);
+          }}
+          className={`flex items-center text-xs ${textColor.replace('gray-500', 'gray-400').replace('red-600', 'red-400').replace('green-600', 'green-400').replace('orange-500', 'orange-400')} hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded-md transition-colors`}
+          title={task.dueDate ? "Click to change due date" : "Click to add due date"}
+        >
+          <Calendar size={14} className="mr-1" />
+          {dateText}
+        </button>
+        
+        {showDateEditor && (
+          <QuickDueDateEditor
+            currentDate={task.dueDate}
+            onDateChange={(newDate) => {
+              updateTask({ ...task, dueDate: newDate });
+              setShowDateEditor(false);
+            }}
+            onClose={() => setShowDateEditor(false)}
+          />
+        )}
       </div>
     );
   };
