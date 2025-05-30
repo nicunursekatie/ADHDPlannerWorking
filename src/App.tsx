@@ -52,7 +52,7 @@ function App() {
           </Routes>
         </Layout>
       </Router>
-        </SettingsProvider>
+          </SettingsProvider>
     </AppProvider>
     </ThemeProvider>
   );
