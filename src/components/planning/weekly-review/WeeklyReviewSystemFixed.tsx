@@ -160,38 +160,43 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
       hasJournal: true,
       multipleChoiceOptions: {
         0: {
-          question: 'How would you rate this week overall?',
+          question: 'How did this week feel overall?',
           options: [
-            { value: 'excellent', label: 'Excellent week!', emoji: '🌟' },
-            { value: 'good', label: 'Pretty good', emoji: '😊' },
-            { value: 'okay', label: 'It was okay', emoji: '😐' },
-            { value: 'challenging', label: 'Challenging', emoji: '😅' },
-            { value: 'difficult', label: 'Really tough', emoji: '😔' }
+            { value: 'on-top', label: 'On top of things', emoji: '🔥' },
+            { value: 'steady', label: 'Surprisingly steady', emoji: '😊' },
+            { value: 'mixed', label: 'Mixed bag', emoji: '🤷' },
+            { value: 'low-capacity', label: 'Disjointed, low-capacity', emoji: '😣' },
+            { value: 'system-failure', label: 'Total system failure', emoji: '🧨' }
           ]
         },
         1: {
-          question: 'What areas saw the most progress?',
+          question: 'What areas actually moved forward (even slightly)?',
           options: [
-            { value: 'work', label: 'Work/Career', emoji: '💼' },
-            { value: 'personal', label: 'Personal Projects', emoji: '🎯' },
-            { value: 'health', label: 'Health & Fitness', emoji: '💪' },
-            { value: 'relationships', label: 'Relationships', emoji: '❤️' },
-            { value: 'learning', label: 'Learning & Growth', emoji: '📚' },
-            { value: 'home', label: 'Home & Organization', emoji: '🏠' }
+            { value: 'nicu-work', label: 'NICU work / Professional identity', emoji: '💼' },
+            { value: 'mental-clarity', label: 'Mental clarity / Insight', emoji: '🧠' },
+            { value: 'household', label: 'Household logistics', emoji: '🏡' },
+            { value: 'parenting', label: 'Parenting wins', emoji: '👨‍👩‍👧‍👦' },
+            { value: 'home-search', label: 'Home search progress', emoji: '📦' },
+            { value: 'health-tracking', label: 'Health tracking / meds / food', emoji: '🧪' },
+            { value: 'boundaries', label: 'Emotional boundaries', emoji: '🪪' }
           ],
           allowMultiple: true
         },
         2: {
-          question: 'What got in the way this week?',
+          question: 'What derailed or drained you this week?',
           options: [
-            { value: 'distractions', label: 'Too many distractions', emoji: '📱' },
-            { value: 'overcommitted', label: 'Overcommitted myself', emoji: '😵' },
-            { value: 'energy', label: 'Low energy/motivation', emoji: '🔋' },
-            { value: 'unclear', label: 'Unclear priorities', emoji: '🤷' },
-            { value: 'unexpected', label: 'Unexpected events', emoji: '🎲' },
-            { value: 'procrastination', label: 'Procrastination', emoji: '⏰' }
+            { value: 'family-dynamics', label: 'Family dynamics / guilt scripts', emoji: '💣' },
+            { value: 'adhd-paralysis', label: 'ADHD paralysis / divergent thinking', emoji: '🧠' },
+            { value: 'low-dopamine', label: 'Low dopamine or physical energy', emoji: '🪫' },
+            { value: 'invisible-labor', label: 'Too much invisible labor', emoji: '🧼' },
+            { value: 'glucose-meds', label: 'Glucose swings or med side effects', emoji: '📉' },
+            { value: 'unstructured-time', label: 'Unstructured time without feedback', emoji: '🌀' }
           ],
           allowMultiple: true
+        },
+        3: {
+          question: 'Anything you want to remember from this week?',
+          options: [] // This will be free text only
         }
       }
     },
@@ -226,25 +231,29 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
       hasJournal: true,
       multipleChoiceOptions: {
         0: {
-          question: 'How full is your calendar looking?',
+          question: "How's your upcoming week looking from your seat?",
           options: [
-            { value: 'light', label: 'Pretty light', emoji: '🍃' },
-            { value: 'balanced', label: 'Well balanced', emoji: '⚖️' },
-            { value: 'busy', label: 'Quite busy', emoji: '📅' },
-            { value: 'packed', label: 'Completely packed', emoji: '🚨' }
+            { value: 'minimal', label: 'Minimal friction (ha!)', emoji: '🧘' },
+            { value: 'manageable', label: 'Manageable if I pace myself', emoji: '🚶‍♀️' },
+            { value: 'tight', label: 'Tight and tiring', emoji: '🏃‍♀️' },
+            { value: 'high-stakes', label: 'High-stakes juggling', emoji: '🚑' }
           ]
         },
-        3: {
-          question: 'What challenges might come up?',
+        1: {
+          question: "What might sabotage next week's plans?",
           options: [
-            { value: 'time', label: 'Time constraints', emoji: '⏱️' },
-            { value: 'energy', label: 'Energy management', emoji: '🔋' },
-            { value: 'focus', label: 'Staying focused', emoji: '🎯' },
-            { value: 'meetings', label: 'Too many meetings', emoji: '🗣️' },
-            { value: 'deadlines', label: 'Competing deadlines', emoji: '📆' },
-            { value: 'unexpected', label: 'Unexpected requests', emoji: '🔔' }
+            { value: 'too-many-dependencies', label: 'Too many things depending on me', emoji: '💀' },
+            { value: 'unstable-energy', label: 'Unstable energy or sleep', emoji: '🧷' },
+            { value: 'glucose-appetite', label: 'Glucose drops or appetite issues', emoji: '🪫' },
+            { value: 'tech-breakdowns', label: 'Tech or task breakdowns', emoji: '📵' },
+            { value: 'perfectionist', label: 'Perfectionist traps', emoji: '🪪' },
+            { value: 'emotional-whiplash', label: 'Emotional whiplash from others', emoji: '😶' }
           ],
           allowMultiple: true
+        },
+        2: {
+          question: 'What do you actually want to get out of next week?',
+          options: [] // This will be free text only
         }
       }
     },
@@ -279,34 +288,38 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
       hasJournal: true,
       multipleChoiceOptions: {
         0: {
-          question: 'How was your work-life balance?',
+          question: 'How well did your reality match your priorities?',
           options: [
-            { value: 'great', label: 'Well balanced', emoji: '⚖️' },
-            { value: 'work-heavy', label: 'Too much work', emoji: '💼' },
-            { value: 'personal-heavy', label: 'Neglected work', emoji: '🏠' },
-            { value: 'chaotic', label: 'All over the place', emoji: '🎪' }
+            { value: 'aligned', label: 'Pretty aligned', emoji: '🎯' },
+            { value: 'good-intentions', label: 'Good intentions, little follow-through', emoji: '📉' },
+            { value: 'reactive', label: 'Constant reactive mode', emoji: '🔄' },
+            { value: 'scrambled', label: 'Totally scrambled', emoji: '🪢' }
+          ]
+        },
+        1: {
+          question: 'How were your energy patterns?',
+          options: [
+            { value: 'predictable', label: 'Predictable and manageable', emoji: '📈' },
+            { value: 'all-over', label: 'All over the place', emoji: '🎢' },
+            { value: 'hard-to-track', label: 'Hard to even notice or track', emoji: '🌫️' }
           ]
         },
         2: {
-          question: 'How were your energy levels?',
+          question: 'Which areas are flagging and need some love next week?',
           options: [
-            { value: 'high', label: 'High energy', emoji: '⚡' },
-            { value: 'good', label: 'Pretty good', emoji: '👍' },
-            { value: 'variable', label: 'Up and down', emoji: '🎢' },
-            { value: 'low', label: 'Low energy', emoji: '🔋' }
-          ]
-        },
-        3: {
-          question: 'Which areas need more attention?',
-          options: [
-            { value: 'exercise', label: 'Exercise', emoji: '🏃' },
-            { value: 'sleep', label: 'Sleep', emoji: '😴' },
-            { value: 'nutrition', label: 'Nutrition', emoji: '🥗' },
-            { value: 'social', label: 'Social time', emoji: '👥' },
-            { value: 'hobbies', label: 'Hobbies', emoji: '🎨' },
-            { value: 'rest', label: 'Rest & relaxation', emoji: '🧘' }
+            { value: 'movement', label: 'Movement (even low-impact)', emoji: '🚶‍♀️' },
+            { value: 'rest', label: 'Reliable rest or sleep', emoji: '😴' },
+            { value: 'food-stability', label: 'Food stability / protein intake', emoji: '🧃' },
+            { value: 'breaks', label: 'Breaks from overstimulation', emoji: '📵' },
+            { value: 'connection', label: 'Real connection with people', emoji: '🎭' },
+            { value: 'intellectual', label: 'Intellectual engagement or creativity', emoji: '🧠' },
+            { value: 'grounding', label: 'Grounding practices (e.g., micro-routines, check-ins)', emoji: '🪨' }
           ],
           allowMultiple: true
+        },
+        3: {
+          question: 'What might help you not self-erase next week?',
+          options: [] // This will be free text only
         }
       }
     },
@@ -1046,6 +1059,37 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                   Review Overdue Tasks ({overdueTasks.length})
                 </Button>
                 <Button
+                  variant="secondary"
+                  onClick={() => {
+                    // Mark all overdue tasks as "cold" - add a tag
+                    overdueTasks.forEach(task => {
+                      updateTask({
+                        ...task,
+                        tags: [...(task.tags || []), 'cold'],
+                        dueDate: null // Remove due date to stop them being overdue
+                      });
+                    });
+                    // Mark section complete and move to next
+                    setReviewSections(prev => 
+                      prev.map(section => 
+                        section.id === 'overdue'
+                          ? { ...section, complete: true }
+                          : section
+                      )
+                    );
+                    if (currentSectionIndex < reviewSections.length - 1) {
+                      setCurrentSectionIndex(currentSectionIndex + 1);
+                    } else {
+                      setShowSmoothFlow(false);
+                      handleCompleteReview();
+                    }
+                  }}
+                  className="w-full"
+                  icon={<span>🧊</span>}
+                >
+                  "Mark Cold" - not committing to these right now
+                </Button>
+                <Button
                   variant="outline"
                   onClick={() => {
                     // Mark section complete and move to next
@@ -1155,7 +1199,9 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                 {/* Free text area for additional thoughts */}
                 <div>
                   <label className="block font-medium text-gray-900 mb-2">
-                    Any additional thoughts? (optional)
+                    {reviewSections[currentSectionIndex].multipleChoiceOptions && 
+                     Object.values(reviewSections[currentSectionIndex].multipleChoiceOptions!).find(opt => opt.options.length === 0)?.question ||
+                     'Any additional thoughts? (optional)'}
                   </label>
                   <textarea
                     value={additionalNotes[reviewSections[currentSectionIndex].id] || ''}
@@ -1167,6 +1213,11 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                     rows={3}
                     placeholder="Share any other reflections..."
                   />
+                  {!additionalNotes[reviewSections[currentSectionIndex].id] && (
+                    <p className="text-xs text-gray-500 mt-1 italic">
+                      Want to skip this? Totally fine
+                    </p>
+                  )}
                 </div>
                 
                 {/* Navigation */}
