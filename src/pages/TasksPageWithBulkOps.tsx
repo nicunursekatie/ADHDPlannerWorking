@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { Task } from '../types';
@@ -13,7 +13,8 @@ import { QuickCapture } from '../components/tasks/QuickCapture';
 import { 
   Plus, Filter, X, Undo2, Archive, 
   AlertTriangle, CalendarDays, Calendar, Layers, 
-  Trash2, CheckCircle2, Folder, FileArchive, RotateCcw
+  Trash2, CheckCircle2, Folder, FileArchive,
+  ArrowUpDown, Clock, Star, Hash, FolderOpen
 } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek } from '../utils/helpers';
 import { DeletedTask, getDeletedTasks, restoreDeletedTask, permanentlyDeleteTask } from '../utils/localStorage';
@@ -110,6 +111,14 @@ const TasksPageWithBulkOps: React.FC = () => {
   // View state
   const [activeTab, setActiveTab] = useState<'today' | 'tomorrow' | 'week' | 'overdue' | 'all' | 'deleted'>(initialTab);
   
+  // Sort state
+  type SortOption = 'dueDate' | 'priority' | 'createdAt' | 'title' | 'estimatedMinutes' | 'project';
+  type SortDirection = 'asc' | 'desc';
+  const [sortBy, setSortBy] = useState<SortOption>('dueDate');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
+  
   // Show undo notification when a task is deleted
   useEffect(() => {
     if (hasRecentlyDeleted) {
@@ -127,6 +136,23 @@ const TasksPageWithBulkOps: React.FC = () => {
       loadDeletedTasks();
     }
   }, [activeTab]);
+  
+  // Close sort menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
+        setShowSortMenu(false);
+      }
+    };
+    
+    if (showSortMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSortMenu]);
   
   const loadDeletedTasks = () => {
     const deleted = getDeletedTasks();
@@ -312,6 +338,53 @@ const TasksPageWithBulkOps: React.FC = () => {
     );
   };
   
+  // Sort function
+  const sortTasks = (tasks: Task[]): Task[] => {
+    const sorted = [...tasks].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'dueDate':
+          // Tasks without due dates go to the end
+          if (!a.dueDate && !b.dueDate) comparison = 0;
+          else if (!a.dueDate) comparison = 1;
+          else if (!b.dueDate) comparison = -1;
+          else comparison = a.dueDate.localeCompare(b.dueDate);
+          break;
+          
+        case 'priority':
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          comparison = (priorityOrder[b.priority || 'medium'] || 2) - (priorityOrder[a.priority || 'medium'] || 2);
+          break;
+          
+        case 'createdAt':
+          comparison = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          break;
+          
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
+          break;
+          
+        case 'estimatedMinutes':
+          const aMinutes = a.estimatedMinutes || 0;
+          const bMinutes = b.estimatedMinutes || 0;
+          comparison = bMinutes - aMinutes;
+          break;
+          
+        case 'project':
+          const aProject = projects.find(p => p.id === a.projectId)?.name || '';
+          const bProject = projects.find(p => p.id === b.projectId)?.name || '';
+          comparison = aProject.localeCompare(bProject);
+          break;
+      }
+      
+      // Apply sort direction
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    
+    return sorted;
+  };
+  
   // Filter tasks based on global filters (project, category)
   const applyBaseFilter = (task: Task): boolean => {
     if (filterProjectId && task.projectId !== filterProjectId) {
@@ -325,19 +398,19 @@ const TasksPageWithBulkOps: React.FC = () => {
     return true;
   };
   
-  // Get tasks for each section
-  const overdueTasks = getOverdueTasks(tasks)
+  // Get tasks for each section (unsorted)
+  const overdueTasksUnsorted = getOverdueTasks(tasks)
     .filter(task => !task.archived)
     .filter(applyBaseFilter);
     
-  const todayTasks = getTasksDueToday(tasks)
+  const todayTasksUnsorted = getTasksDueToday(tasks)
     .filter(task => !task.archived)
     .filter(applyBaseFilter);
     
-  const tomorrowTasks = getTasksDueTomorrow(tasks)
+  const tomorrowTasksUnsorted = getTasksDueTomorrow(tasks)
     .filter(applyBaseFilter);
     
-  const thisWeekTasks = getTasksDueThisWeek(tasks)
+  const thisWeekTasksUnsorted = getTasksDueThisWeek(tasks)
     .filter(task => 
       task.dueDate !== formatDate(new Date()) && 
       task.dueDate !== getTomorrowDate()
@@ -345,16 +418,23 @@ const TasksPageWithBulkOps: React.FC = () => {
     .filter(task => !task.archived)
     .filter(applyBaseFilter);
     
-  const otherTasks = tasks.filter(task => 
+  const otherTasksUnsorted = tasks.filter(task => 
     (showCompleted || !task.completed) &&
     (showArchived || !task.archived) &&
     (!task.dueDate || 
-      (!overdueTasks.some(t => t.id === task.id) && 
-       !todayTasks.some(t => t.id === task.id) && 
-       !tomorrowTasks.some(t => t.id === task.id) && 
-       !thisWeekTasks.some(t => t.id === task.id))
+      (!overdueTasksUnsorted.some(t => t.id === task.id) && 
+       !todayTasksUnsorted.some(t => t.id === task.id) && 
+       !tomorrowTasksUnsorted.some(t => t.id === task.id) && 
+       !thisWeekTasksUnsorted.some(t => t.id === task.id))
     )
   ).filter(applyBaseFilter);
+  
+  // Apply sorting to each section
+  const overdueTasks = sortTasks(overdueTasksUnsorted);
+  const todayTasks = sortTasks(todayTasksUnsorted);
+  const tomorrowTasks = sortTasks(tomorrowTasksUnsorted);
+  const thisWeekTasks = sortTasks(thisWeekTasksUnsorted);
+  const otherTasks = sortTasks(otherTasksUnsorted);
   
   // Get currently active task list based on the selected tab
   const getActiveTaskList = (): Task[] => {
@@ -368,7 +448,9 @@ const TasksPageWithBulkOps: React.FC = () => {
       case 'overdue':
         return overdueTasks;
       case 'all':
-        return [...overdueTasks, ...todayTasks, ...tomorrowTasks, ...thisWeekTasks, ...otherTasks];
+        // For 'all' view, we need to sort the entire combined list
+        const allTasks = [...overdueTasksUnsorted, ...todayTasksUnsorted, ...tomorrowTasksUnsorted, ...thisWeekTasksUnsorted, ...otherTasksUnsorted];
+        return sortTasks(allTasks);
       default:
         return todayTasks;
     }
@@ -387,6 +469,7 @@ const TasksPageWithBulkOps: React.FC = () => {
             {activeTaskList.length} task{activeTaskList.length !== 1 ? 's' : ''}
             {(filterProjectId || filterCategoryId) && ' (filtered)'}
             {selectedTasks.size > 0 && ` • ${selectedTasks.size} selected`}
+            {sortBy !== 'dueDate' && ` • Sorted by ${sortBy === 'createdAt' ? 'created date' : sortBy === 'estimatedMinutes' ? 'time estimate' : sortBy}`}
           </p>
         </div>
         <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
@@ -403,6 +486,152 @@ const TasksPageWithBulkOps: React.FC = () => {
           >
             Archive Completed
           </Button>
+          <div className="relative" ref={sortMenuRef}>
+            <Button
+              variant="secondary"
+              icon={<ArrowUpDown size={16} />}
+              onClick={() => setShowSortMenu(!showSortMenu)}
+            >
+              Sort
+            </Button>
+            {showSortMenu && (
+              <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                <div className="py-1" role="menu">
+                  <button
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
+                      sortBy === 'dueDate' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    }`}
+                    onClick={() => {
+                      if (sortBy === 'dueDate') {
+                        setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('dueDate');
+                        setSortDirection('asc');
+                      }
+                    }}
+                  >
+                    <span className="flex items-center">
+                      <Calendar size={16} className="mr-2" />
+                      Due Date
+                    </span>
+                    {sortBy === 'dueDate' && (
+                      <span className="text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </button>
+                  
+                  <button
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
+                      sortBy === 'priority' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    }`}
+                    onClick={() => {
+                      if (sortBy === 'priority') {
+                        setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('priority');
+                        setSortDirection('desc');
+                      }
+                    }}
+                  >
+                    <span className="flex items-center">
+                      <Star size={16} className="mr-2" />
+                      Priority
+                    </span>
+                    {sortBy === 'priority' && (
+                      <span className="text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </button>
+                  
+                  <button
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
+                      sortBy === 'createdAt' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    }`}
+                    onClick={() => {
+                      if (sortBy === 'createdAt') {
+                        setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('createdAt');
+                        setSortDirection('desc');
+                      }
+                    }}
+                  >
+                    <span className="flex items-center">
+                      <Plus size={16} className="mr-2" />
+                      Created Date
+                    </span>
+                    {sortBy === 'createdAt' && (
+                      <span className="text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </button>
+                  
+                  <button
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
+                      sortBy === 'title' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    }`}
+                    onClick={() => {
+                      if (sortBy === 'title') {
+                        setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('title');
+                        setSortDirection('asc');
+                      }
+                    }}
+                  >
+                    <span className="flex items-center">
+                      <Hash size={16} className="mr-2" />
+                      Title
+                    </span>
+                    {sortBy === 'title' && (
+                      <span className="text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </button>
+                  
+                  <button
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
+                      sortBy === 'estimatedMinutes' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    }`}
+                    onClick={() => {
+                      if (sortBy === 'estimatedMinutes') {
+                        setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('estimatedMinutes');
+                        setSortDirection('desc');
+                      }
+                    }}
+                  >
+                    <span className="flex items-center">
+                      <Clock size={16} className="mr-2" />
+                      Time Estimate
+                    </span>
+                    {sortBy === 'estimatedMinutes' && (
+                      <span className="text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </button>
+                  
+                  <button
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
+                      sortBy === 'project' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    }`}
+                    onClick={() => {
+                      if (sortBy === 'project') {
+                        setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortBy('project');
+                        setSortDirection('asc');
+                      }
+                    }}
+                  >
+                    <span className="flex items-center">
+                      <FolderOpen size={16} className="mr-2" />
+                      Project
+                    </span>
+                    {sortBy === 'project' && (
+                      <span className="text-xs">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <Button
             variant="secondary"
             icon={<Filter size={16} />}
@@ -731,171 +960,26 @@ const TasksPageWithBulkOps: React.FC = () => {
           {parentTasks.length > 0 ? (
             <div>
               {activeTab === 'all' ? (
-                <div className="space-y-6">
-                  {overdueTasks.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-medium text-red-600 mb-3 flex items-center">
-                        <AlertTriangle size={16} className="mr-2" />
-                        Overdue
-                      </h3>
-                      <div className="space-y-2">
-                        {overdueTasks
-                          .filter(task => !task.parentTaskId)
-                          .map(task => (
-                            <BulkTaskCard
-                              key={task.id}
-                              task={task}
-                              isSelected={selectedTasks.has(task.id)}
-                              onSelectChange={(selected) => {
-                                if (selected) {
-                                  toggleTaskSelection(task.id);
-                                } else {
-                                  const newSelection = new Set(selectedTasks);
-                                  newSelection.delete(task.id);
-                                  setSelectedTasks(newSelection);
-                                }
-                              }}
-                              onEdit={handleOpenModal}
-                              onDelete={handleDeleteTask}
-                              onBreakdown={handleBreakdown}
-                            />
-                          ))
+                <div className="space-y-2">
+                  {parentTasks.map(task => (
+                    <BulkTaskCard
+                      key={task.id}
+                      task={task}
+                      isSelected={selectedTasks.has(task.id)}
+                      onSelectChange={(selected) => {
+                        if (selected) {
+                          toggleTaskSelection(task.id);
+                        } else {
+                          const newSelection = new Set(selectedTasks);
+                          newSelection.delete(task.id);
+                          setSelectedTasks(newSelection);
                         }
-                      </div>
-                    </div>
-                  )}
-                  
-                  {todayTasks.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-medium text-indigo-600 mb-3 flex items-center">
-                        <Calendar size={16} className="mr-2" />
-                        Today
-                      </h3>
-                      <div className="space-y-2">
-                        {todayTasks
-                          .filter(task => !task.parentTaskId)
-                          .map(task => (
-                            <BulkTaskCard
-                              key={task.id}
-                              task={task}
-                              isSelected={selectedTasks.has(task.id)}
-                              onSelectChange={(selected) => {
-                                if (selected) {
-                                  toggleTaskSelection(task.id);
-                                } else {
-                                  const newSelection = new Set(selectedTasks);
-                                  newSelection.delete(task.id);
-                                  setSelectedTasks(newSelection);
-                                }
-                              }}
-                              onEdit={handleOpenModal}
-                              onDelete={handleDeleteTask}
-                              onBreakdown={handleBreakdown}
-                            />
-                          ))
-                        }
-                      </div>
-                    </div>
-                  )}
-                  
-                  {tomorrowTasks.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-medium text-indigo-600 mb-3 flex items-center">
-                        <CalendarDays size={16} className="mr-2" />
-                        Tomorrow
-                      </h3>
-                      <div className="space-y-2">
-                        {tomorrowTasks
-                          .filter(task => !task.parentTaskId)
-                          .map(task => (
-                            <BulkTaskCard
-                              key={task.id}
-                              task={task}
-                              isSelected={selectedTasks.has(task.id)}
-                              onSelectChange={(selected) => {
-                                if (selected) {
-                                  toggleTaskSelection(task.id);
-                                } else {
-                                  const newSelection = new Set(selectedTasks);
-                                  newSelection.delete(task.id);
-                                  setSelectedTasks(newSelection);
-                                }
-                              }}
-                              onEdit={handleOpenModal}
-                              onDelete={handleDeleteTask}
-                              onBreakdown={handleBreakdown}
-                            />
-                          ))
-                        }
-                      </div>
-                    </div>
-                  )}
-                  
-                  {thisWeekTasks.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-medium text-indigo-600 mb-3 flex items-center">
-                        <CalendarDays size={16} className="mr-2" />
-                        This Week
-                      </h3>
-                      <div className="space-y-2">
-                        {thisWeekTasks
-                          .filter(task => !task.parentTaskId)
-                          .map(task => (
-                            <BulkTaskCard
-                              key={task.id}
-                              task={task}
-                              isSelected={selectedTasks.has(task.id)}
-                              onSelectChange={(selected) => {
-                                if (selected) {
-                                  toggleTaskSelection(task.id);
-                                } else {
-                                  const newSelection = new Set(selectedTasks);
-                                  newSelection.delete(task.id);
-                                  setSelectedTasks(newSelection);
-                                }
-                              }}
-                              onEdit={handleOpenModal}
-                              onDelete={handleDeleteTask}
-                              onBreakdown={handleBreakdown}
-                            />
-                          ))
-                        }
-                      </div>
-                    </div>
-                  )}
-                  
-                  {otherTasks.filter(t => !t.parentTaskId).length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-700 mb-3 flex items-center">
-                        <Layers size={16} className="mr-2" />
-                        Other Tasks
-                      </h3>
-                      <div className="space-y-2">
-                        {otherTasks
-                          .filter(task => !task.parentTaskId)
-                          .map(task => (
-                            <BulkTaskCard
-                              key={task.id}
-                              task={task}
-                              isSelected={selectedTasks.has(task.id)}
-                              onSelectChange={(selected) => {
-                                if (selected) {
-                                  toggleTaskSelection(task.id);
-                                } else {
-                                  const newSelection = new Set(selectedTasks);
-                                  newSelection.delete(task.id);
-                                  setSelectedTasks(newSelection);
-                                }
-                              }}
-                              onEdit={handleOpenModal}
-                              onDelete={handleDeleteTask}
-                              onBreakdown={handleBreakdown}
-                            />
-                          ))
-                        }
-                      </div>
-                    </div>
-                  )}
+                      }}
+                      onEdit={handleOpenModal}
+                      onDelete={handleDeleteTask}
+                      onBreakdown={handleBreakdown}
+                    />
+                  ))}
                 </div>
               ) : (
                 <div className="space-y-2">
