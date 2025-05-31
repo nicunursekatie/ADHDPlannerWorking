@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContextSupabase';
 import { Category } from '../types';
 import CategoryCard from '../components/categories/CategoryCard';
 import CategoryForm from '../components/categories/CategoryForm';
