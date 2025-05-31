@@ -20,6 +20,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     setSuccess(null);
     setLoading(true);
 
+    // Add a small delay to prevent rapid consecutive requests
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     try {
       if (isSignUp) {
         const result = await DatabaseService.signUp(email, password);
@@ -38,7 +41,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
       
       // Handle specific Supabase errors
       if (err.status === 429) {
-        setError('Too many attempts. Please wait a moment and try again.');
+        setError('Too many attempts. Please wait a few minutes and try again.');
       } else if (err.message?.includes('Invalid login credentials')) {
         setError('Invalid email or password. Please check and try again.');
       } else if (err.message?.includes('User already registered')) {

@@ -196,7 +196,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         journalEntriesData,
         recurringTasksData,
         settingsData
-      ] = await Promise.all([
+      ] = await Promise.allSettled([
         DatabaseService.getTasks(userId),
         DatabaseService.getProjects(userId),
         DatabaseService.getCategories(userId),
@@ -205,7 +205,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         DatabaseService.getJournalEntries(userId),
         DatabaseService.getRecurringTasks(userId),
         DatabaseService.getSettings(userId)
-      ]);
+      ]).then(results => results.map(result => 
+        result.status === 'fulfilled' ? result.value : []
+      ));
 
       setTasks(tasksData);
       setProjects(projectsData);

@@ -5,7 +5,8 @@ import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import AISettings from '../components/settings/AISettings';
 import { DataMigration } from '../components/settings/DataMigration';
-import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Database } from 'lucide-react';
+import { DuplicateCleanup } from '../components/settings/DuplicateCleanup';
+import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Database, Users } from 'lucide-react';
 import { Category } from '../types';
 
 const SettingsPageWithMigration: React.FC = () => {
@@ -26,6 +27,7 @@ const SettingsPageWithMigration: React.FC = () => {
   const [showTimeManagement, setShowTimeManagement] = useState(false);
   const [showVisualPreferences, setShowVisualPreferences] = useState(false);
   const [showDataMigration, setShowDataMigration] = useState(false);
+  const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   
   const handleExportData = () => {
     const data = exportData();
@@ -189,6 +191,35 @@ const SettingsPageWithMigration: React.FC = () => {
         {showDataMigration && (
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <DataMigration />
+          </div>
+        )}
+      </Card>
+      
+      {/* Duplicate Cleanup */}
+      <Card>
+        <div 
+          className="cursor-pointer"
+          onClick={() => setShowDuplicateCleanup(!showDuplicateCleanup)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Users className="w-5 h-5 text-amber-600 mr-2" />
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white">Duplicate Cleanup</h2>
+            </div>
+            {showDuplicateCleanup ? (
+              <ChevronUp className="w-5 h-5 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-400" />
+            )}
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Find and remove duplicate tasks from your database
+          </p>
+        </div>
+        
+        {showDuplicateCleanup && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <DuplicateCleanup />
           </div>
         )}
       </Card>

@@ -17,7 +17,7 @@ import {
   Timer
 } from 'lucide-react';
 import { Task, Project, Category } from '../../types';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import { format, addDays, startOfToday } from 'date-fns';
 
 interface TaskDetailWizardProps {

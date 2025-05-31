@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle, Sparkles } from 'lucide-react';
 import { Task } from '../types';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContextSupabase';
 import { getDueDateStatus } from '../utils/dateUtils';
 import { GuidedWalkthroughModal } from './tasks/GuidedWalkthroughModal';
 import { QuickDueDateEditor } from './tasks/QuickDueDateEditor';
@@ -29,23 +29,13 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const [showDateEditor, setShowDateEditor] = useState(false);
   const [showDetailWizard, setShowDetailWizard] = useState(false);
   
-  // Get actual subtask objects
+  // Get actual subtask objects, filtering out null/undefined IDs
   const subtasks = task.subtasks ? 
-    task.subtasks.map(subtaskId => tasks.find(t => t.id === subtaskId)).filter(Boolean) as Task[] : [];
+    task.subtasks
+      .filter(subtaskId => subtaskId != null) // Filter out null/undefined IDs
+      .map(subtaskId => tasks.find(t => t.id === subtaskId))
+      .filter(Boolean) as Task[] : [];
   
-  // Debug: Check for missing subtasks (only for specific task)
-  if (task.title.toLowerCase().includes('hamper')) {
-    console.group(`🔍 Subtask Analysis for "${task.title}"`);
-    console.log('Task object:', task);
-    console.log('Task.subtasks array:', task.subtasks);
-    console.log('Task.subtasks length:', task.subtasks?.length || 0);
-    console.log('Found subtask objects:', subtasks);
-    console.log('Found subtasks length:', subtasks.length);
-    console.log('Missing subtask IDs:', task.subtasks?.filter(id => !tasks.find(t => t.id === id)) || []);
-    console.log('All tasks with parentTaskId matching this task:', tasks.filter(t => t.parentTaskId === task.id));
-    console.log('Mismatch?', (task.subtasks?.length || 0) !== subtasks.length);
-    console.groupEnd();
-  }
   
   const dueDateStatus = getDueDateStatus(task.dueDate);
   const dueDateInfo = dueDateStatus ? {

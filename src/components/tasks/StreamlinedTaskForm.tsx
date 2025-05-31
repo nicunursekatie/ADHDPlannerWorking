@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Task, Project, Category } from '../../types';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import Button from '../common/Button';
 import { getTodayString, getTomorrowString, formatDateString } from '../../utils/dateUtils';
 import { 

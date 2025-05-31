@@ -505,14 +505,27 @@ export class DatabaseService {
 
   // Settings
   static async getSettings(userId: string): Promise<AppSettings | null> {
-    const { data, error } = await supabase
-      .from('app_settings')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    if (error && error.code !== 'PGRST116') throw error;
-    return data ? data.settings : null; // Extract settings from the JSONB field
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        // PGRST116 means no rows returned, which is fine for settings
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        console.warn('Error fetching settings:', error);
+        return null; // Return null instead of throwing for other errors
+      }
+      
+      return data ? data.settings : null; // Extract settings from the JSONB field
+    } catch (error) {
+      console.warn('Error in getSettings:', error);
+      return null; // Gracefully handle any other errors
+    }
   }
 
   static async saveSettings(settings: AppSettings, userId: string): Promise<AppSettings> {
@@ -545,7 +558,14 @@ export class DatabaseService {
       password,
     });
     
-    if (error) throw error;
+    if (error) {
+      if (error.status === 429) {
+        const customError = new Error('Too many login attempts. Please wait a moment and try again.');
+        (customError as any).status = 429;
+        throw customError;
+      }
+      throw error;
+    }
     return data;
   }
 
@@ -555,7 +575,14 @@ export class DatabaseService {
       password,
     });
     
-    if (error) throw error;
+    if (error) {
+      if (error.status === 429) {
+        const customError = new Error('Too many signup attempts. Please wait a moment and try again.');
+        (customError as any).status = 429;
+        throw customError;
+      }
+      throw error;
+    }
     return data;
   }
 
