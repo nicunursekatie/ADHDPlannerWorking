@@ -100,7 +100,7 @@ const TasksPageWithBulkOps: React.FC = () => {
   const [breakdownTask, setBreakdownTask] = useState<Task | null>(null);
   const [showConvertToSubtasksModal, setShowConvertToSubtasksModal] = useState(false);
   const [selectedParentTaskId, setSelectedParentTaskId] = useState<string | null>(null);
-  const [deletedTasks, setDeletedTasks] = useState<DeletedTask[]>([]);
+  const [, setDeletedTasks] = useState<DeletedTask[]>([]);
   const [showBulkCategoryModal, setShowBulkCategoryModal] = useState(false);
   const [selectedCategoryIdsForBulk, setSelectedCategoryIdsForBulk] = useState<string[]>([]);
   const [categoryAssignMode, setCategoryAssignMode] = useState<'add' | 'replace'>('add');
@@ -165,18 +165,18 @@ const TasksPageWithBulkOps: React.FC = () => {
     ));
   };
   
-  const handleRestoreTask = (taskId: string) => {
-    const restoredTask = restoreDeletedTask(taskId);
-    if (restoredTask) {
-      loadDeletedTasks();
-      // The context will automatically update with the restored task
-    }
-  };
+  // const handleRestoreTask = (taskId: string) => {
+  //   const restoredTask = restoreDeletedTask(taskId);
+  //   if (restoredTask) {
+  //     loadDeletedTasks();
+  //     // The context will automatically update with the restored task
+  //   }
+  // };
   
-  const handlePermanentlyDeleteTask = (taskId: string) => {
-    permanentlyDeleteTask(taskId);
-    loadDeletedTasks();
-  };
+  // const handlePermanentlyDeleteTask = (taskId: string) => {
+  //   permanentlyDeleteTask(taskId);
+  //   loadDeletedTasks();
+  // };
   
   const handleOpenModal = (task?: Task) => {
     if (task) {
@@ -452,7 +452,7 @@ const TasksPageWithBulkOps: React.FC = () => {
   const todayTasks = sortTasks(todayTasksUnsorted);
   const tomorrowTasks = sortTasks(tomorrowTasksUnsorted);
   const thisWeekTasks = sortTasks(thisWeekTasksUnsorted);
-  const otherTasks = sortTasks(otherTasksUnsorted);
+  // const otherTasks = sortTasks(otherTasksUnsorted);
   
   // Get currently active task list based on the selected tab
   const getActiveTaskList = (): Task[] => {
