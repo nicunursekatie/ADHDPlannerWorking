@@ -183,7 +183,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, []);
 
   // Load user data from Supabase
-  const loadUserData = async (userId: string) => {
+  const loadUserData = useCallback(async (userId: string) => {
     try {
       setIsLoading(true);
       
@@ -209,7 +209,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         result.status === 'fulfilled' ? result.value : []
       ));
 
-      setTasks(tasksData);
+      // Compute subtasks for each task based on parent-child relationships
+      const tasksWithSubtasks = computeSubtasks(tasksData);
+      setTasks(tasksWithSubtasks);
       setProjects(projectsData);
       setCategories(categoriesData);
       setDailyPlans(dailyPlansData);
@@ -227,7 +229,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Helper function to compute subtasks for all tasks
+  const computeSubtasks = useCallback((tasksList: Task[]): Task[] => {
+    return tasksList.map(task => {
+      const subtaskIds = tasksList
+        .filter(t => t.parentTaskId === task.id)
+        .map(t => t.id);
+      
+      // Log parent tasks that have subtasks
+      if (subtaskIds.length > 0) {
+        console.log(`Parent task "${task.title}" (${task.id}) has ${subtaskIds.length} subtasks:`, subtaskIds);
+      }
+      
+      return {
+        ...task,
+        subtasks: subtaskIds
+      };
+    });
+  }, []);
 
   // Clean up old deleted tasks
   useEffect(() => {
@@ -260,51 +281,55 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       projectId: null,
       categoryIds: [],
       parentTaskId: null,
-      subtasks: [],
-      dependsOn: [],
-      dependedOnBy: [],
       createdAt: timestamp,
       updatedAt: timestamp,
       ...taskData,
     };
     
     const createdTask = await DatabaseService.createTask(newTask, user.id);
-    setTasks(prev => [...prev, createdTask]);
     
-    // Update parent task if this is a subtask
-    if (createdTask.parentTaskId) {
-      const parentTask = tasks.find(t => t.id === createdTask.parentTaskId);
-      if (parentTask) {
-        const updatedParent = {
-          ...parentTask,
-          subtasks: [...parentTask.subtasks, createdTask.id],
-          updatedAt: timestamp,
-        };
-        
-        await DatabaseService.updateTask(updatedParent.id, updatedParent, user.id);
-        setTasks(prev => prev.map(t => 
-          t.id === updatedParent.id ? updatedParent : t
-        ));
-      }
-    }
+    // Add the new task and recompute all subtasks
+    setTasks(prev => {
+      const updatedTasks = [...prev, createdTask];
+      return computeSubtasks(updatedTasks);
+    });
+    
+    // No need to update parent task - subtasks are computed dynamically
     
     return createdTask;
-  }, [user, tasks]);
+  }, [user, tasks, computeSubtasks]);
 
   const updateTask = useCallback(async (updatedTask: Task) => {
     if (!user) throw new Error('User not authenticated');
     
-    const timestamp = new Date().toISOString();
-    const taskWithTimestamp = {
-      ...updatedTask,
-      updatedAt: timestamp,
-    };
-    
-    await DatabaseService.updateTask(updatedTask.id, taskWithTimestamp, user.id);
-    setTasks(prev => prev.map(task => 
-      task.id === updatedTask.id ? taskWithTimestamp : task
-    ));
-  }, [user]);
+    try {
+      console.log('AppContext.updateTask called with:', updatedTask);
+      console.log('Parent task ID in update:', updatedTask.parentTaskId);
+      
+      const timestamp = new Date().toISOString();
+      const taskWithTimestamp = {
+        ...updatedTask,
+        updatedAt: timestamp,
+      };
+      
+      console.log('Task with timestamp:', taskWithTimestamp);
+      
+      const dbResult = await DatabaseService.updateTask(updatedTask.id, taskWithTimestamp, user.id);
+      console.log('DB update result:', dbResult);
+      
+      setTasks(prev => {
+        const updatedTasks = prev.map(task => 
+          task.id === updatedTask.id ? taskWithTimestamp : task
+        );
+        const tasksWithSubtasks = computeSubtasks(updatedTasks);
+        console.log('Tasks after compute subtasks:', tasksWithSubtasks.find(t => t.id === updatedTask.id));
+        return tasksWithSubtasks;
+      });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      throw error;
+    }
+  }, [user, computeSubtasks]);
 
   const deleteTask = useCallback(async (taskId: string) => {
     if (!user) throw new Error('User not authenticated');
@@ -318,22 +343,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }]);
     }
     
-    // Remove task from parent's subtasks if it's a subtask
-    if (taskToDelete?.parentTaskId) {
-      const parentTask = tasks.find(t => t.id === taskToDelete.parentTaskId);
-      if (parentTask) {
-        const updatedParent = {
-          ...parentTask,
-          subtasks: parentTask.subtasks.filter(id => id !== taskId),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        await DatabaseService.updateTask(updatedParent.id, updatedParent, user.id);
-        setTasks(prev => prev.map(t => 
-          t.id === updatedParent.id ? updatedParent : t
-        ));
-      }
-    }
+    // No need to update parent task - subtasks are computed dynamically
     
     // Delete all subtasks recursively
     const deleteSubtasksRecursively = async (parentId: string) => {
@@ -351,8 +361,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     // Delete the task itself
     await DatabaseService.deleteTask(taskId, user.id);
-    setTasks(prev => prev.filter(task => task.id !== taskId));
-  }, [user, tasks]);
+    setTasks(prev => {
+      const updatedTasks = prev.filter(task => task.id !== taskId);
+      return computeSubtasks(updatedTasks);
+    });
+  }, [user, tasks, computeSubtasks]);
 
   const undoDelete = useCallback(async () => {
     if (!user || deletedTasks.length === 0) return;
@@ -360,9 +373,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const lastDeleted = deletedTasks[deletedTasks.length - 1];
     const restoredTask = await DatabaseService.createTask(lastDeleted.task, user.id);
     
-    setTasks(prev => [...prev, restoredTask]);
+    setTasks(prev => {
+      const updatedTasks = [...prev, restoredTask];
+      return computeSubtasks(updatedTasks);
+    });
     setDeletedTasks(prev => prev.slice(0, -1));
-  }, [user, deletedTasks]);
+  }, [user, deletedTasks, computeSubtasks]);
 
   const hasRecentlyDeleted = deletedTasks.length > 0;
 
@@ -382,10 +398,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
     
     await DatabaseService.updateTask(taskId, updatedTask, user.id);
-    setTasks(prev => prev.map(task => 
-      task.id === taskId ? updatedTask : task
-    ));
-  }, [user, tasks]);
+    setTasks(prev => {
+      const updatedTasks = prev.map(task => 
+        task.id === taskId ? updatedTask : task
+      );
+      return computeSubtasks(updatedTasks);
+    });
+  }, [user, tasks, computeSubtasks]);
 
   const archiveCompletedTasks = useCallback(async () => {
     if (!user) throw new Error('User not authenticated');
@@ -404,17 +423,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await DatabaseService.updateTask(task.id, updatedTask, user.id);
     }
     
-    setTasks(prev => prev.map(task => {
-      if (task.completed && !task.archived) {
-        return {
-          ...task,
-          archived: true,
-          updatedAt: timestamp,
-        };
-      }
-      return task;
-    }));
-  }, [user, tasks]);
+    setTasks(prev => {
+      const updatedTasks = prev.map(task => {
+        if (task.completed && !task.archived) {
+          return {
+            ...task,
+            archived: true,
+            updatedAt: timestamp,
+          };
+        }
+        return task;
+      });
+      return computeSubtasks(updatedTasks);
+    });
+  }, [user, tasks, computeSubtasks]);
 
   // Projects
   const addProject = useCallback(async (projectData: Partial<Project>): Promise<Project> => {
@@ -466,21 +488,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await DatabaseService.updateTask(task.id, updatedTask, user.id);
     }
     
-    setTasks(prev => prev.map(task => {
-      if (task.projectId === projectId) {
-        return {
-          ...task,
-          projectId: null,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return task;
-    }));
+    setTasks(prev => {
+      const updatedTasks = prev.map(task => {
+        if (task.projectId === projectId) {
+          return {
+            ...task,
+            projectId: null,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return task;
+      });
+      return computeSubtasks(updatedTasks);
+    });
     
     // Delete project
     await DatabaseService.deleteProject(projectId, user.id);
     setProjects(prev => prev.filter(project => project.id !== projectId));
-  }, [user, tasks]);
+  }, [user, tasks, computeSubtasks]);
 
   // Categories
   const addCategory = useCallback(async (categoryData: Partial<Category>): Promise<Category> => {
@@ -531,21 +556,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await DatabaseService.updateTask(task.id, updatedTask, user.id);
     }
     
-    setTasks(prev => prev.map(task => {
-      if (task.categoryIds?.includes(categoryId)) {
-        return {
-          ...task,
-          categoryIds: task.categoryIds.filter(id => id !== categoryId),
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return task;
-    }));
+    setTasks(prev => {
+      const updatedTasks = prev.map(task => {
+        if (task.categoryIds?.includes(categoryId)) {
+          return {
+            ...task,
+            categoryIds: task.categoryIds.filter(id => id !== categoryId),
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return task;
+      });
+      return computeSubtasks(updatedTasks);
+    });
     
     // Delete category
     await DatabaseService.deleteCategory(categoryId, user.id);
     setCategories(prev => prev.filter(category => category.id !== categoryId));
-  }, [user, tasks]);
+  }, [user, tasks, computeSubtasks]);
 
   // Daily Plans
   const getDailyPlan = useCallback((date: string): DailyPlan | null => {
@@ -974,14 +1002,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const bulkConvertToSubtasks = useCallback(async (taskIds: string[], parentTaskId: string) => {
     if (!user) throw new Error('User not authenticated');
     
+    console.log('bulkConvertToSubtasks called with:', { taskIds, parentTaskId });
+    
     const parentTask = tasks.find(t => t.id === parentTaskId);
-    if (!parentTask) return;
+    if (!parentTask) {
+      console.error('Parent task not found:', parentTaskId);
+      return;
+    }
     
     const timestamp = new Date().toISOString();
     
     for (const taskId of taskIds) {
       const task = tasks.find(t => t.id === taskId);
       if (task) {
+        console.log(`Converting task ${task.title} to subtask of ${parentTask.title}`);
         await updateTask({
           ...task,
           parentTaskId: parentTaskId,
@@ -991,12 +1025,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     }
     
-    // Update parent task
-    await updateTask({
-      ...parentTask,
-      subtasks: [...parentTask.subtasks, ...taskIds.filter(id => !parentTask.subtasks.includes(id))],
-      updatedAt: timestamp
-    });
+    // No need to update parent task - subtasks are computed dynamically
+    console.log('Bulk conversion completed');
   }, [user, tasks, updateTask]);
 
   const bulkAssignCategories = useCallback(async (taskIds: string[], categoryIds: string[], mode: 'add' | 'replace') => {
@@ -1111,16 +1141,252 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!user) throw new Error('User not authenticated');
     
     try {
-      const data = JSON.parse(jsonData);
+      let data = JSON.parse(jsonData);
+      console.log('Import data parsed:', data);
       
-      // TODO: Implement bulk import to Supabase
-      // For now, return false to indicate not implemented
-      return false;
+      // Check if this is legacy format data
+      if (data.version && !data.tasks?.[0]?.createdAt) {
+        console.log('Detected legacy format, transforming...');
+        // Transform legacy data
+        const { transformImportedData } = await import('../utils/importTransform');
+        const transformed = transformImportedData(jsonData);
+        if (!transformed) {
+          throw new Error('Failed to transform legacy data');
+        }
+        data = transformed;
+        console.log('Transformed data:', data);
+      }
+      
+      // Create ID mappings for all entities
+      const categoryIdMap = new Map<string, string>();
+      const projectIdMap = new Map<string, string>();
+      const taskIdMap = new Map<string, string>();
+      
+      // Import categories first (no dependencies)
+      if (data.categories && Array.isArray(data.categories)) {
+        console.log(`Importing ${data.categories.length} categories...`);
+        
+        for (const category of data.categories) {
+          // Generate new UUID for the category
+          const newId = crypto.randomUUID();
+          categoryIdMap.set(category.id, newId);
+          
+          const { data: result, error } = await supabase
+            .from('categories')
+            .insert({
+              id: newId,
+              name: category.name,
+              color: category.color,
+              user_id: user.id,
+              created_at: category.createdAt || category.created_at || new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          if (error) {
+            console.error('Error importing category:', error, category);
+          } else {
+            console.log('Category imported:', result);
+          }
+        }
+      }
+      
+      // Import projects (no dependencies)
+      if (data.projects && Array.isArray(data.projects)) {
+        console.log(`Importing ${data.projects.length} projects...`);
+        for (const project of data.projects) {
+          const newId = crypto.randomUUID();
+          projectIdMap.set(project.id, newId);
+          
+          const { data: result, error } = await supabase
+            .from('projects')
+            .insert({
+              id: newId,
+              name: project.name,
+              description: project.description,
+              color: project.color,
+              user_id: user.id,
+              created_at: project.createdAt || project.created_at || new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          if (error) {
+            console.error('Error importing project:', error, project);
+          } else {
+            console.log('Project imported:', result);
+          }
+        }
+      }
+      
+      // Import tasks (may have project/category dependencies)
+      if (data.tasks && Array.isArray(data.tasks)) {
+        console.log(`Importing ${data.tasks.length} tasks...`);
+        // First, create ID mappings for all tasks
+        for (const task of data.tasks) {
+          taskIdMap.set(task.id, crypto.randomUUID());
+        }
+        
+        // First pass: Import parent tasks
+        const parentTasks = data.tasks.filter((t: Task) => !t.parentTaskId);
+        console.log(`Importing ${parentTasks.length} parent tasks...`);
+        for (const task of parentTasks) {
+          const newTaskId = taskIdMap.get(task.id)!;
+          
+          // Map category IDs
+          const mappedCategoryIds = (task.categoryIds || []).map(id => categoryIdMap.get(id) || id).filter(id => id);
+          
+          // Map subtask IDs
+          const mappedSubtasks = (task.subtasks || []).map(id => taskIdMap.get(id) || id).filter(id => id);
+          
+          const taskData = {
+            id: newTaskId,
+            title: task.title,
+            description: task.description || '',
+            completed: task.completed || false,
+            archived: task.archived || false,
+            due_date: task.dueDate || null,
+            project_id: task.projectId ? projectIdMap.get(task.projectId) || null : null,
+            category_ids: mappedCategoryIds,
+            parent_task_id: null,
+            subtasks: mappedSubtasks,
+            priority: task.priority || null,
+            energy_level: task.energyLevel || null,
+            estimated_minutes: task.estimatedMinutes || null,
+            tags: task.tags || [],
+            depends_on: [],
+            depended_on_by: [],
+            user_id: user.id,
+            created_at: task.createdAt || task.created_at || new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          const { data: result, error } = await supabase
+            .from('tasks')
+            .insert(taskData);
+          if (error) {
+            console.error('Error importing task:', error, taskData);
+          } else {
+            console.log('Task imported:', result);
+          }
+        }
+        
+        // Second pass: Import subtasks
+        const subtasks = data.tasks.filter((t: Task) => t.parentTaskId);
+        console.log(`Importing ${subtasks.length} subtasks...`);
+        for (const task of subtasks) {
+          const newTaskId = taskIdMap.get(task.id)!;
+          const newParentId = taskIdMap.get(task.parentTaskId!) || null;
+          
+          // Map category IDs
+          const mappedCategoryIds = (task.categoryIds || []).map(id => categoryIdMap.get(id) || id).filter(id => id);
+          
+          // Map subtask IDs
+          const mappedSubtasks = (task.subtasks || []).map(id => taskIdMap.get(id) || id).filter(id => id);
+          
+          const taskData = {
+            id: newTaskId,
+            title: task.title,
+            description: task.description || '',
+            completed: task.completed || false,
+            archived: task.archived || false,
+            due_date: task.dueDate || null,
+            project_id: task.projectId ? projectIdMap.get(task.projectId) || null : null,
+            category_ids: mappedCategoryIds,
+            parent_task_id: newParentId,
+            subtasks: mappedSubtasks,
+            priority: task.priority || null,
+            energy_level: task.energyLevel || null,
+            estimated_minutes: task.estimatedMinutes || null,
+            tags: task.tags || [],
+            depends_on: [],
+            depended_on_by: [],
+            user_id: user.id,
+            created_at: task.createdAt || task.created_at || new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          const { data: result, error } = await supabase
+            .from('tasks')
+            .insert(taskData);
+          if (error) {
+            console.error('Error importing subtask:', error, taskData);
+          } else {
+            console.log('Subtask imported:', result);
+          }
+        }
+      }
+      
+      // Import other data types
+      if (data.dailyPlans && Array.isArray(data.dailyPlans)) {
+        for (const plan of data.dailyPlans) {
+          const { error } = await supabase
+            .from('daily_plans')
+            .upsert({
+              ...plan,
+              user_id: user.id,
+              updated_at: new Date().toISOString()
+            });
+          if (error) console.error('Error importing daily plan:', error);
+        }
+      }
+      
+      if (data.workShifts && Array.isArray(data.workShifts)) {
+        for (const shift of data.workShifts) {
+          const { error } = await supabase
+            .from('work_shifts')
+            .upsert({
+              ...shift,
+              user_id: user.id,
+              updated_at: new Date().toISOString()
+            });
+          if (error) console.error('Error importing work shift:', error);
+        }
+      }
+      
+      if (data.journalEntries && Array.isArray(data.journalEntries)) {
+        for (const entry of data.journalEntries) {
+          const { error } = await supabase
+            .from('journal_entries')
+            .upsert({
+              ...entry,
+              user_id: user.id,
+              updated_at: new Date().toISOString()
+            });
+          if (error) console.error('Error importing journal entry:', error);
+        }
+      }
+      
+      if (data.recurringTasks && Array.isArray(data.recurringTasks)) {
+        for (const recurring of data.recurringTasks) {
+          const { error } = await supabase
+            .from('recurring_tasks')
+            .upsert({
+              ...recurring,
+              user_id: user.id,
+              updated_at: new Date().toISOString()
+            });
+          if (error) console.error('Error importing recurring task:', error);
+        }
+      }
+      
+      // Import settings
+      if (data.settings) {
+        const { error } = await supabase
+          .from('user_settings')
+          .upsert({
+            user_id: user.id,
+            settings: data.settings,
+            updated_at: new Date().toISOString()
+          });
+        if (error) console.error('Error importing settings:', error);
+      }
+      
+      // Refresh data after import
+      console.log('Import complete, refreshing data...');
+      await loadUserData(user.id);
+      
+      console.log('Import successful!');
+      return true;
     } catch (error) {
       console.error('Error importing data:', error);
       return false;
     }
-  }, [user]);
+  }, [user, supabase, loadUserData]);
 
   const resetData = useCallback(async () => {
     if (!user) throw new Error('User not authenticated');

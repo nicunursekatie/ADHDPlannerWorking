@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent } from '@dnd-kit/core';
 import { Task, TimeBlock } from '../../../types';
-import { useAppContext } from '../../../context/AppContext';
+import { useAppContext } from '../../../context/AppContextSupabase';
 import { Plus, Clock, Edit, Info } from 'lucide-react';
 import Button from '../../common/Button';
 import { TaskDisplay } from '../../TaskDisplay';

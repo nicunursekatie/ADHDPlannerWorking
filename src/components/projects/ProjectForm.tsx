@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Project } from '../../types';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import Button from '../common/Button';
 
 interface ProjectFormProps {

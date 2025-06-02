@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '../../../context/AppContext';
+import { useAppContext } from '../../../context/AppContextSupabase';
 import { Task } from '../../../types';
 import Card from '../../common/Card';
 import Button from '../../common/Button';
@@ -94,6 +94,42 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
   const PROMPTS_PER_CHUNK = 2;
   const [promptChunkIndex, setPromptChunkIndex] = useState(0);
 
+  // Load draft on mount
+  useEffect(() => {
+    const draft = localStorage.getItem('weeklyReviewDraft');
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft);
+        // Check if draft is less than 24 hours old
+        const draftAge = Date.now() - new Date(parsed.timestamp).getTime();
+        if (draftAge < 24 * 60 * 60 * 1000) {
+          setJournalResponses(parsed.responses || {});
+          // You can add a notification here if you want
+        } else {
+          // Clear old draft
+          localStorage.removeItem('weeklyReviewDraft');
+        }
+      } catch (e) {
+        console.error('Failed to load draft:', e);
+      }
+    }
+  }, []);
+
+  // Auto-save responses every 10 seconds
+  useEffect(() => {
+    const saveInterval = setInterval(() => {
+      if (Object.keys(journalResponses).length > 0) {
+        localStorage.setItem('weeklyReviewDraft', JSON.stringify({
+          responses: journalResponses,
+          section: activeSectionId,
+          timestamp: new Date().toISOString()
+        }));
+      }
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(saveInterval);
+  }, [journalResponses, activeSectionId]);
+
   
   const breakdownOptions = [
     { value: 'reschedule', label: 'Reschedule it', icon: <Calendar size={18} /> },
@@ -149,54 +185,52 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
       title: 'Reflect on Your Week',
       icon: <NotebookPen size={18} />,
       description: "Review what went well and what you'd like to improve",
-      prompts: [
-        'What went well this week?',
-        'What were your biggest accomplishments?',
-        "What didn't go as planned?",
-        'What would make next week better?',
-        "Any patterns you're noticing in your productivity?",
-      ],
+      prompts: [],
       complete: weeklyJournalEntries.filter((entry) => entry.section === 'reflect').length > 0,
       hasJournal: true,
       multipleChoiceOptions: {
         0: {
-          question: 'How did this week feel overall?',
+          question: 'Pick 2-3 things you\'re genuinely glad you did',
           options: [
-            { value: 'on-top', label: 'On top of things', emoji: '🔥' },
-            { value: 'steady', label: 'Surprisingly steady', emoji: '😊' },
-            { value: 'mixed', label: 'Mixed bag', emoji: '🤷' },
-            { value: 'low-capacity', label: 'Disjointed, low-capacity', emoji: '😣' },
-            { value: 'system-failure', label: 'Total system failure', emoji: '🧨' }
-          ]
+            { value: 'completed-hard', label: 'Completed something hard', emoji: '💪' },
+            { value: 'good-energy', label: 'Had good energy', emoji: '⚡' },
+            { value: 'helped-someone', label: 'Helped someone', emoji: '🤝' },
+            { value: 'learned-something', label: 'Learned something', emoji: '🧠' }
+          ],
+          allowMultiple: true
         },
         1: {
-          question: 'What areas actually moved forward (even slightly)?',
+          question: 'What got derailed?',
           options: [
-            { value: 'nicu-work', label: 'NICU work / Professional identity', emoji: '💼' },
-            { value: 'mental-clarity', label: 'Mental clarity / Insight', emoji: '🧠' },
-            { value: 'household', label: 'Household logistics', emoji: '🏡' },
-            { value: 'parenting', label: 'Parenting wins', emoji: '👨‍👩‍👧‍👦' },
-            { value: 'home-search', label: 'Home search progress', emoji: '📦' },
-            { value: 'health-tracking', label: 'Health tracking / meds / food', emoji: '🧪' },
-            { value: 'boundaries', label: 'Emotional boundaries', emoji: '🪪' }
+            { value: 'energy-crash', label: 'Energy crash', emoji: '🪫' },
+            { value: 'unexpected-stuff', label: 'Unexpected stuff came up', emoji: '🌊' },
+            { value: 'lost-interest', label: 'Lost interest', emoji: '😴' },
+            { value: 'got-overwhelmed', label: 'Got overwhelmed', emoji: '🌀' }
           ],
           allowMultiple: true
         },
         2: {
-          question: 'What derailed or drained you this week?',
+          question: 'When did you feel most focused?',
           options: [
-            { value: 'family-dynamics', label: 'Family dynamics / guilt scripts', emoji: '💣' },
-            { value: 'adhd-paralysis', label: 'ADHD paralysis / divergent thinking', emoji: '🧠' },
-            { value: 'low-dopamine', label: 'Low dopamine or physical energy', emoji: '🪫' },
-            { value: 'invisible-labor', label: 'Too much invisible labor', emoji: '🧼' },
-            { value: 'glucose-meds', label: 'Glucose swings or med side effects', emoji: '📉' },
-            { value: 'unstructured-time', label: 'Unstructured time without feedback', emoji: '🌀' }
+            { value: 'early-morning', label: 'Early morning (before 9am)', emoji: '🌅' },
+            { value: 'late-morning', label: 'Late morning (9am-12pm)', emoji: '☕' },
+            { value: 'afternoon', label: 'Afternoon (12pm-5pm)', emoji: '☀️' },
+            { value: 'evening', label: 'Evening (5pm-9pm)', emoji: '🌆' },
+            { value: 'late-night', label: 'Late night (after 9pm)', emoji: '🌙' },
+            { value: 'random', label: 'Random bursts', emoji: '⚡' }
           ],
           allowMultiple: true
         },
         3: {
-          question: 'Anything you want to remember from this week?',
-          options: [] // This will be free text only
+          question: 'What time felt impossible?',
+          options: [
+            { value: 'wake-up', label: 'Right after waking up', emoji: '😴' },
+            { value: 'mid-morning', label: 'Mid-morning crash', emoji: '🥱' },
+            { value: 'post-lunch', label: 'After lunch (2-4pm)', emoji: '🍽️' },
+            { value: 'end-of-day', label: 'End of workday', emoji: '🏃' },
+            { value: 'bedtime', label: 'Bedtime wind-down', emoji: '🛏️' }
+          ],
+          allowMultiple: true
         }
       }
     },
@@ -205,13 +239,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
       title: 'Review Overdue Tasks',
       icon: <Clock size={18} />,
       description: `You have ${overdueTasks.length} overdue tasks to review`,
-      prompts: [
-        'Do these tasks still need to be done?',
-        'What prevented you from completing these?',
-        'Can any of these be broken down into smaller steps?',
-        'Should any of these be delegated or dropped?',
-        'Which ones are actually urgent vs. just feeling urgent?',
-      ],
+      prompts: [],
       complete: overdueTaskReviews.length === overdueTasks.length,
       hasJournal: true,
     },
@@ -220,33 +248,30 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
       title: 'Plan for the Week Ahead',
       icon: <Calendar size={18} />,
       description: 'Set yourself up for success next week',
-      prompts: [
-        'What are your top 3 priorities for next week?',
-        'Any important deadlines or events coming up?',
-        'Are there preparations you need to make?',
-        'Any potential obstacles you should plan for?',
-        'Is your calendar aligned with your priorities?',
-      ],
+      prompts: [],
       complete: weeklyJournalEntries.filter((entry) => entry.section === 'upcoming').length > 0,
       hasJournal: true,
       multipleChoiceOptions: {
         0: {
-          question: "How's your upcoming week looking from your seat?",
+          question: "Pick your top 3 priorities for next week",
           options: [
-            { value: 'minimal', label: 'Minimal friction (ha!)', emoji: '🧘' },
-            { value: 'manageable', label: 'Manageable if I pace myself', emoji: '🚶‍♀️' },
-            { value: 'tight', label: 'Tight and tiring', emoji: '🏃‍♀️' },
-            { value: 'high-stakes', label: 'High-stakes juggling', emoji: '🚑' }
-          ]
+            { value: 'urgent-deadline', label: 'Urgent deadline', emoji: '🚨' },
+            { value: 'important-project', label: 'Important project', emoji: '🎯' },
+            { value: 'self-care', label: 'Self-care/health', emoji: '💚' },
+            { value: 'social-connection', label: 'Social connection', emoji: '🤝' },
+            { value: 'home-tasks', label: 'Home/life admin', emoji: '🏠' },
+            { value: 'creative-work', label: 'Creative work', emoji: '🎨' }
+          ],
+          allowMultiple: true
         },
         1: {
-          question: "What might sabotage next week's plans?",
+          question: "What support do you need?",
           options: [
-            { value: 'too-many-dependencies', label: 'Too many things depending on me', emoji: '💀' },
-            { value: 'unstable-energy', label: 'Unstable energy or sleep', emoji: '🧷' },
-            { value: 'glucose-appetite', label: 'Glucose drops or appetite issues', emoji: '🪫' },
-            { value: 'tech-breakdowns', label: 'Tech or task breakdowns', emoji: '📵' },
-            { value: 'perfectionist', label: 'Perfectionist traps', emoji: '🪪' },
+            { value: 'time-blocks', label: 'Protected time blocks', emoji: '⏰' },
+            { value: 'body-doubling', label: 'Body doubling/accountability', emoji: '👥' },
+            { value: 'breaks', label: 'More breaks built in', emoji: '🌿' },
+            { value: 'lower-bar', label: 'Lower the bar for success', emoji: '📉' },
+            { value: 'prep-work', label: 'Prep work done in advance', emoji: '📋' },
             { value: 'emotional-whiplash', label: 'Emotional whiplash from others', emoji: '😶' }
           ],
           allowMultiple: true
@@ -344,34 +369,38 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
   const handleSaveJournalEntries = () => {
     if (!activeSectionId) return;
     
-    // Save each journal response as a separate entry
     const activeSection = reviewSections.find(s => s.id === activeSectionId);
     if (!activeSection) return;
     
-    const savedEntries: string[] = [];
-    
-    activeSection.prompts.forEach((prompt, index) => {
-      const key = `${activeSectionId}-${index}`;
-      const response = journalResponses[key];
-      
-      if (response && response.trim()) {
-        const entryData = {
-          title: prompt,
-          content: response,
-          date: new Date().toISOString(),
-          section: activeSectionId as 'projects' | 'reflect' | 'overdue' | 'upcoming' | 'life-areas',
-          prompt: prompt,
-          promptIndex: index,
-          weekNumber,
-          weekYear,
-          mood: currentMood,
-          tags: ['weekly-review', activeSectionId]
-        };
-        
-        const entry = addJournalEntry(entryData);
-        savedEntries.push(entry.id);
-      }
-    });
+    // Save multiple choice responses
+    if (activeSection.multipleChoiceOptions) {
+      Object.entries(multipleChoiceAnswers).forEach(([key, values]) => {
+        if (key.startsWith(`${activeSectionId}-mc-`) && values.length > 0) {
+          const questionIndex = key.split('-').pop();
+          const questionData = activeSection.multipleChoiceOptions?.[questionIndex as string];
+          if (questionData) {
+            const selectedLabels = values.map(value => 
+              questionData.options.find(opt => opt.value === value)?.label || value
+            );
+            
+            const entryData = {
+              title: questionData.question,
+              content: selectedLabels.join(', '),
+              date: new Date().toISOString(),
+              section: activeSectionId as 'projects' | 'reflect' | 'overdue' | 'upcoming' | 'life-areas',
+              prompt: questionData.question,
+              promptIndex: parseInt(questionIndex as string),
+              weekNumber,
+              weekYear,
+              mood: currentMood,
+              tags: ['weekly-review', activeSectionId, 'multiple-choice']
+            };
+            
+            addJournalEntry(entryData);
+          }
+        }
+      });
+    }
     
     // Mark section as complete
     setReviewSections(prev => 
@@ -384,6 +413,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
     
     // Reset form and close section
     setActiveSectionId(null);
+    setPromptChunkIndex(0);
   };
 
   const handleCompleteReview = () => {
@@ -670,47 +700,99 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
           size="lg"
         >
           <div className="space-y-6">
+            {/* Progress indicator */}
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <p className="text-sm text-amber-800 flex items-start gap-2">
-                <span className="text-amber-600">💡</span>
-                {activeSection.description}
-              </p>
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-sm text-amber-800 flex items-start gap-2">
+                  <span className="text-amber-600">💡</span>
+                  {activeSection.description}
+                </p>
+                <span className="text-xs text-amber-700">
+                  {promptChunkIndex + 1} of {Math.ceil((activeSection.multipleChoiceOptions ? Object.keys(activeSection.multipleChoiceOptions).length : 0) / PROMPTS_PER_CHUNK)} • ~{Math.ceil(((activeSection.multipleChoiceOptions ? Object.keys(activeSection.multipleChoiceOptions).length : 0) - promptChunkIndex * PROMPTS_PER_CHUNK) * 0.5)} min left
+                </span>
+              </div>
+              <div className="text-center text-sm font-medium text-amber-800">
+                {promptChunkIndex < Math.ceil((activeSection.multipleChoiceOptions ? Object.keys(activeSection.multipleChoiceOptions).length : 0) / PROMPTS_PER_CHUNK) - 1 
+                  ? "You're doing great! 🎯" 
+                  : "Almost done! 🎉"}
+              </div>
             </div>
             
-            {/* Prompts in chunks */}
+            {/* Multiple choice questions */}
             <div className="space-y-6">
-              {activeSection.prompts
+              {activeSection.multipleChoiceOptions && Object.entries(activeSection.multipleChoiceOptions)
                 .slice(promptChunkIndex * PROMPTS_PER_CHUNK, (promptChunkIndex + 1) * PROMPTS_PER_CHUNK)
-                .map((prompt, index) => {
-                  const globalIndex = promptChunkIndex * PROMPTS_PER_CHUNK + index;
+                .map(([index, questionData]) => {
+                  const questionKey = `${activeSectionId}-mc-${index}`;
+                  const selectedValues = multipleChoiceAnswers[questionKey] || [];
+                  
                   return (
-                    <div key={`${activeSectionId}-${globalIndex}`} className="space-y-2">
-                      <label className="block font-medium text-gray-900">
-                        {prompt}
-                      </label>
-                      <textarea
-                        value={journalResponses[`${activeSectionId}-${globalIndex}`] || ''}
-                        onChange={(e) => handleJournalChange(globalIndex, e.target.value)}
-                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-gray-900"
-                        rows={4}
-                        placeholder="Share your thoughts..."
-                      />
+                    <div key={questionKey} className="space-y-3">
+                      <h4 className="font-medium text-gray-900">{questionData.question}</h4>
+                      <div className="grid grid-cols-1 gap-2">
+                        {questionData.options.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => {
+                              if (questionData.allowMultiple) {
+                                setMultipleChoiceAnswers(prev => ({
+                                  ...prev,
+                                  [questionKey]: selectedValues.includes(option.value)
+                                    ? selectedValues.filter(v => v !== option.value)
+                                    : [...selectedValues, option.value]
+                                }));
+                              } else {
+                                setMultipleChoiceAnswers(prev => ({
+                                  ...prev,
+                                  [questionKey]: [option.value]
+                                }));
+                              }
+                            }}
+                            className={`p-3 rounded-lg border-2 transition-all text-left flex items-center gap-3 ${
+                              selectedValues.includes(option.value)
+                                ? 'border-amber-500 bg-amber-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <span className="text-xl">{option.emoji}</span>
+                            <span className="font-medium">{option.label}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   );
                 })}
             </div>
             {/* Navigation for prompt chunks */}
             <div className="flex justify-between pt-3 border-t border-amber-200">
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  if (promptChunkIndex > 0) setPromptChunkIndex(promptChunkIndex - 1);
-                  else setActiveSectionId(null);
-                }}
-              >
-                {promptChunkIndex > 0 ? 'Back' : 'Back to Review'}
-              </Button>
-              {((promptChunkIndex + 1) * PROMPTS_PER_CHUNK) < activeSection.prompts.length ? (
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    if (promptChunkIndex > 0) setPromptChunkIndex(promptChunkIndex - 1);
+                    else setActiveSectionId(null);
+                  }}
+                >
+                  {promptChunkIndex > 0 ? 'Back' : 'Back to Review'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    // Skip current prompts
+                    const totalQuestions = activeSection.multipleChoiceOptions ? Object.keys(activeSection.multipleChoiceOptions).length : 0;
+                    if (((promptChunkIndex + 1) * PROMPTS_PER_CHUNK) < totalQuestions) {
+                      setPromptChunkIndex(promptChunkIndex + 1);
+                    } else {
+                      handleSaveJournalEntries();
+                      setPromptChunkIndex(0);
+                    }
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  Skip these questions
+                </Button>
+              </div>
+              {activeSection.multipleChoiceOptions && ((promptChunkIndex + 1) * PROMPTS_PER_CHUNK) < Object.keys(activeSection.multipleChoiceOptions).length ? (
                 <Button 
                   onClick={() => setPromptChunkIndex(promptChunkIndex + 1)}
                   variant="primary"
@@ -718,15 +800,31 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                   Next
                 </Button>
               ) : (
-                <Button 
-                  onClick={() => {
-                    handleSaveJournalEntries();
-                    setPromptChunkIndex(0);
-                  }}
-                  variant="primary"
-                >
-                  Save All Responses & Continue
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      // Save as draft
+                      localStorage.setItem('weeklyReviewDraft', JSON.stringify({
+                        responses: journalResponses,
+                        section: activeSectionId,
+                        timestamp: new Date().toISOString()
+                      }));
+                      setActiveSectionId(null);
+                    }}
+                  >
+                    Save draft & finish later
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      handleSaveJournalEntries();
+                      setPromptChunkIndex(0);
+                    }}
+                    variant="primary"
+                  >
+                    Save & Continue
+                  </Button>
+                </div>
               )}
             </div>
             
@@ -830,30 +928,30 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
       <Modal
         isOpen={showOverdueModal}
         onClose={() => setShowOverdueModal(false)}
-        title="Review Overdue Task"
+        title="Review Overdue Tasks"
         size="lg"
       >
         {currentOverdueTask && (
           <div className="space-y-6">
-            <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-300 rounded-lg p-4">
+            {/* Progress indicator for overdue tasks */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-blue-800">
+                  Task {currentOverdueTaskIndex + 1} of {overdueTasks.length}
+                </span>
+                <span className="text-xs text-blue-600">
+                  {overdueTasks.length - currentOverdueTaskIndex - 1} more to review
+                </span>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-orange-100 rounded-full">
-                  <AlertTriangle className="text-orange-600" size={24} />
-                </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg text-gray-900">{currentOverdueTask.title}</h3>
-                  {currentOverdueTask.description && (
-                    <p className="text-sm text-gray-600 mt-1">{currentOverdueTask.description}</p>
-                  )}
-                  <div className="flex items-center gap-4 mt-3 text-sm">
-                    <span className="text-orange-700 font-medium">
-                      Due: {formatDateForDisplay(currentOverdueTask.dueDate!)}
-                    </span>
-                    {currentOverdueTask.projectId && projects.find(p => p.id === currentOverdueTask.projectId) && (
-                      <span className="text-gray-600">
-                        Project: {projects.find(p => p.id === currentOverdueTask.projectId)?.name}
-                      </span>
-                    )}
+                  <div className="flex items-center gap-2 mt-2 text-sm text-orange-700">
+                    <Calendar size={16} />
+                    <span>Was due: {formatDateForDisplay(currentOverdueTask.dueDate!)}</span>
                   </div>
                 </div>
               </div>

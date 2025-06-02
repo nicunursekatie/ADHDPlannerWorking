@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import { Task } from '../../types';
 import Card from '../common/Card';
 import Button from '../common/Button';
@@ -39,6 +39,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   const [showCompleted, setShowCompleted] = useState(false);
   const [completionRate, setCompletionRate] = useState(0);
   const [lastUpdatedTask, setLastUpdatedTask] = useState<string | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   // Common reasons for not completing tasks - streamlined list
   const [commonReasons, setCommonReasons] = useState<Reason[]>([
@@ -105,7 +106,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     setCompletionRate(rate);
     
     // Initialize tasks with reasons only once
-    if (tasksWithReasons.length === 0 && tasksNeedingAttention.length > 0) {
+    if (!hasInitialized && tasksNeedingAttention.length > 0) {
       const initializedTasks = tasksNeedingAttention.map(task => ({
         task,
         selectedReason: null,
@@ -114,8 +115,9 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
         rescheduleDate: undefined
       }));
       setTasksWithReasons(initializedTasks);
+      setHasInitialized(true);
     }
-  }, [tasks, lastWeek, lastWeekStr, today]); // Fixed dependencies
+  }, [tasks, lastWeek, lastWeekStr, today, hasInitialized, tasksNeedingAttention]); // Fixed dependencies
 
   // Update tasksWithReasons when the underlying task data changes
   useEffect(() => {

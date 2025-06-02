@@ -10,8 +10,15 @@ import LayoutWithAuth from './components/layout/LayoutWithAuth';
 import SettingsPageWithMigration from './pages/SettingsPageWithMigration';
 import TasksPageSupabase from './pages/TasksPageSupabase';
 import ProjectsPage from './pages/ProjectsPage';
+import ProjectDetailPage from './pages/ProjectDetailPage';
 import CategoriesPage from './pages/CategoriesPage';
 import Dashboard from './pages/Dashboard';
+import CalendarPage from './pages/CalendarPage';
+import PlannerPage from './pages/PlannerPage';
+import RecurringTasksPage from './pages/RecurringTasksPage';
+import WeeklyReviewPage from './pages/WeeklyReviewPage';
+import AccountabilityPage from './pages/AccountabilityPage';
+import BrainDumpPage from './pages/BrainDumpPage';
 
 // Create wrapper components for pages that use localStorage context
 // These will be replaced with proper Supabase-compatible versions later
@@ -52,19 +59,19 @@ const AppContent: React.FC = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="/tasks" element={<TasksPageSupabase />} />
             <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/projects/:projectId" element={<PlaceholderPage name="Project Details" />} />
+            <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/what-now" element={<PlaceholderPage name="What Now?" />} />
-            <Route path="/calendar" element={<PlaceholderPage name="Calendar" />} />
-            <Route path="/planner" element={<PlaceholderPage name="Daily Planner" />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/planner" element={<PlannerPage />} />
             <Route path="/planning" element={<PlaceholderPage name="Planning" />} />
             <Route path="/settings" element={<SettingsPageWithMigration />} />
             
             {/* Memory Tools Routes */}
-            <Route path="/brain-dump" element={<PlaceholderPage name="Brain Dump" />} />
-            <Route path="/weekly-review" element={<PlaceholderPage name="Weekly Review" />} />
-            <Route path="/accountability" element={<PlaceholderPage name="Accountability" />} />
-            <Route path="/recurring-tasks" element={<PlaceholderPage name="Recurring Tasks" />} />
+            <Route path="/brain-dump" element={<BrainDumpPage />} />
+            <Route path="/weekly-review" element={<WeeklyReviewPage />} />
+            <Route path="/accountability" element={<AccountabilityPage />} />
+            <Route path="/recurring-tasks" element={<RecurringTasksPage />} />
             <Route path="/deleted-tasks" element={<PlaceholderPage name="Deleted Tasks" />} />
           </Routes>
         </LayoutWithAuth>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContextSupabase';
 import { Task } from '../types';
 import { TaskDisplay } from "../components/TaskDisplay";
 import TaskForm from '../components/tasks/TaskForm';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import AppSupabase from './App.supabase';
+import AppSupabase from './AppSupabase';
 import App from './App';
 
 function AppWithAuth() {

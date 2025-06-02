@@ -702,8 +702,8 @@ const Dashboard: React.FC = () => {
             setShowIncompleteWizard(false);
             setCurrentIncompleteTaskId(null);
           }}
-          onComplete={(updatedTask) => {
-            updateTask(updatedTask);
+          onComplete={async (updatedTask) => {
+            await updateTask(updatedTask);
             
             // Mark this task as recently reviewed
             setRecentlyReviewedTaskIds(prev => new Set([...prev, updatedTask.id]));

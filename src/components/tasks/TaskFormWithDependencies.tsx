@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Task, Project, Category } from '../../types';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import Badge from '../common/Badge';

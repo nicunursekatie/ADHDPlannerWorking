@@ -1,7 +1,7 @@
 import React from 'react';
 import { Edit, Trash, ArrowRight } from 'lucide-react';
 import { Project } from '../../types';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import Button from '../common/Button';
 import { Link } from 'react-router-dom';
 

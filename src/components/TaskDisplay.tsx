@@ -297,9 +297,14 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       task={task}
       isOpen={showDetailWizard}
       onClose={() => setShowDetailWizard(false)}
-      onComplete={(updatedTask) => {
-        updateTask(updatedTask);
-        setShowDetailWizard(false);
+      onComplete={async (updatedTask) => {
+        try {
+          await updateTask(updatedTask);
+          setShowDetailWizard(false);
+        } catch (error) {
+          console.error('Failed to update task:', error);
+          alert('Failed to update task. Please try again.');
+        }
       }}
     />
     </>

@@ -25,6 +25,7 @@ interface BulkTaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onBreakdown?: (task: Task) => void;
+  showCheckbox: boolean;
 }
 
 const BulkTaskCard: React.FC<BulkTaskCardProps> = ({ 
@@ -33,24 +34,27 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
   onSelectChange,
   onEdit,
   onDelete,
-  onBreakdown
+  onBreakdown,
+  showCheckbox
 }) => {
   const { updateTask } = useAppContext();
   
   return (
     <div className="relative">
       {/* Selection checkbox for bulk operations */}
-      <div className="absolute left-2 top-4 z-10">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={(e) => onSelectChange(e.target.checked)}
-          className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-        />
-      </div>
+      {showCheckbox && (
+        <div className="absolute left-2 top-4 z-10">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => onSelectChange(e.target.checked)}
+            className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+          />
+        </div>
+      )}
       
       {/* Task Card - offset to make room for checkbox */}
-      <div className="ml-6">
+      <div className={showCheckbox ? "ml-6" : ""}>
         <TaskDisplay
           task={task}
           onEdit={onEdit}
@@ -71,6 +75,8 @@ export const TasksPageSupabase: React.FC = () => {
     addTask, 
     updateTask, 
     deleteTask,
+    archiveCompletedTasks,
+    bulkConvertToSubtasks,
     isLoading 
   } = useAppContext();
 
@@ -88,6 +94,9 @@ export const TasksPageSupabase: React.FC = () => {
   // Bulk operations state
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [bulkActionsEnabled, setBulkActionsEnabled] = useState(false);
+  const [showConvertToSubtasksModal, setShowConvertToSubtasksModal] = useState(false);
+  const [selectedParentTaskId, setSelectedParentTaskId] = useState<string | null>(null);
 
   // Auto-focus for quick capture
   const quickCaptureRef = useRef<HTMLInputElement>(null);
@@ -113,6 +122,9 @@ export const TasksPageSupabase: React.FC = () => {
 
   // Filter and sort tasks
   let filteredTasks = tasks.filter(task => {
+    // Exclude subtasks (tasks with a parentTaskId) from the main list
+    if (task.parentTaskId) return false;
+    
     if (filterBy === 'all') return !task.archived && !task.deletedAt;
     if (filterBy === 'completed') return task.completed && !task.archived && !task.deletedAt;
     if (filterBy === 'active') return !task.completed && !task.archived && !task.deletedAt;
@@ -246,9 +258,18 @@ export const TasksPageSupabase: React.FC = () => {
   const handleBulkComplete = async () => {
     try {
       await Promise.all(
-        Array.from(selectedTasks).map(taskId =>
-          updateTask(taskId, { completed: true, updatedAt: new Date().toISOString() })
-        )
+        Array.from(selectedTasks).map(taskId => {
+          const task = tasks.find(t => t.id === taskId);
+          if (task) {
+            return updateTask({
+              ...task,
+              completed: true,
+              completedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+          }
+          return Promise.resolve();
+        })
       );
       setSelectedTasks(new Set());
       setShowBulkActions(false);
@@ -260,9 +281,17 @@ export const TasksPageSupabase: React.FC = () => {
   const handleBulkArchive = async () => {
     try {
       await Promise.all(
-        Array.from(selectedTasks).map(taskId =>
-          updateTask(taskId, { archived: true, updatedAt: new Date().toISOString() })
-        )
+        Array.from(selectedTasks).map(taskId => {
+          const task = tasks.find(t => t.id === taskId);
+          if (task) {
+            return updateTask({
+              ...task,
+              archived: true,
+              updatedAt: new Date().toISOString()
+            });
+          }
+          return Promise.resolve();
+        })
       );
       setSelectedTasks(new Set());
       setShowBulkActions(false);
@@ -307,11 +336,93 @@ export const TasksPageSupabase: React.FC = () => {
     }
   };
 
+  const handleBulkMove = async (projectId: string | null) => {
+    try {
+      await Promise.all(
+        Array.from(selectedTasks).map(taskId => {
+          const task = tasks.find(t => t.id === taskId);
+          if (task) {
+            return updateTask({
+              ...task,
+              projectId,
+              updatedAt: new Date().toISOString()
+            });
+          }
+          return Promise.resolve();
+        })
+      );
+      setSelectedTasks(new Set());
+      setShowBulkActions(false);
+    } catch (error) {
+      console.error('Error bulk moving tasks:', error);
+    }
+  };
+
+  const handleBulkConvertToSubtasks = async () => {
+    if (!selectedParentTaskId || selectedTasks.size === 0) return;
+    
+    try {
+      console.log('Converting tasks to subtasks...');
+      console.log('Parent task ID:', selectedParentTaskId);
+      console.log('Selected tasks:', Array.from(selectedTasks));
+      
+      // Use the bulkConvertToSubtasks function from context
+      await bulkConvertToSubtasks(Array.from(selectedTasks), selectedParentTaskId);
+      
+      console.log('Conversion completed');
+      
+      // Verify the updates
+      const verifyTasks = tasks.filter(t => selectedTasks.has(t.id));
+      console.log('Verification - tasks after update:', verifyTasks);
+      
+      // Also log the parent task to check its subtasks array
+      const parentTask = tasks.find(t => t.id === selectedParentTaskId);
+      console.log('Parent task after conversion:', parentTask);
+      console.log('Parent task subtasks array:', parentTask?.subtasks);
+      
+      // Check again after a short delay to see if it updates
+      setTimeout(() => {
+        const updatedParentTask = tasks.find(t => t.id === selectedParentTaskId);
+        console.log('Parent task after delay:', updatedParentTask);
+        console.log('Parent task subtasks array after delay:', updatedParentTask?.subtasks);
+      }, 100);
+      
+      setSelectedTasks(new Set());
+      setShowBulkActions(false);
+      setShowConvertToSubtasksModal(false);
+      setSelectedParentTaskId(null);
+    } catch (error) {
+      console.error('Error converting tasks to subtasks:', error);
+      alert(`Failed to convert tasks to subtasks: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleArchiveCompleted = async () => {
+    try {
+      await archiveCompletedTasks();
+    } catch (error) {
+      console.error('Error archiving completed tasks:', error);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Tasks</h1>
         <div className="flex gap-2">
+          <Button
+            onClick={() => {
+              setBulkActionsEnabled(!bulkActionsEnabled);
+              if (bulkActionsEnabled) {
+                setSelectedTasks(new Set());
+                setShowBulkActions(false);
+              }
+            }}
+            variant={bulkActionsEnabled ? "secondary" : "outline"}
+            size="sm"
+          >
+            {bulkActionsEnabled ? 'Exit Bulk Mode' : 'Bulk Actions'}
+          </Button>
           <Button
             onClick={() => setShowQuickCapture(!showQuickCapture)}
             variant="outline"
@@ -319,6 +430,14 @@ export const TasksPageSupabase: React.FC = () => {
           >
             <Plus className="w-4 h-4 mr-2" />
             Quick Add
+          </Button>
+          <Button
+            onClick={handleArchiveCompleted}
+            variant="outline"
+            size="sm"
+          >
+            <Archive className="w-4 h-4 mr-2" />
+            Archive Completed
           </Button>
           <Button
             onClick={() => setShowTaskForm(true)}
@@ -392,7 +511,7 @@ export const TasksPageSupabase: React.FC = () => {
             </button>
           </div>
 
-          {filteredTasks.length > 0 && (
+          {filteredTasks.length > 0 && bulkActionsEnabled && (
             <div className="flex gap-2">
               <Button onClick={handleSelectAll} variant="outline" size="sm">
                 Select All
@@ -414,15 +533,33 @@ export const TasksPageSupabase: React.FC = () => {
             <span className="text-sm font-medium">
               {selectedTasks.size} task{selectedTasks.size !== 1 ? 's' : ''} selected
             </span>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button onClick={handleBulkComplete} variant="outline" size="sm">
                 <CheckCircle2 className="w-4 h-4 mr-1" />
                 Complete
               </Button>
               <Button onClick={handleBulkArchive} variant="outline" size="sm">
-                <Archive className="w-4 h-4 mr-1" />
+                <FileArchive className="w-4 h-4 mr-1" />
                 Archive
               </Button>
+              <select
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value !== '') {
+                    handleBulkMove(value === 'none' ? null : value);
+                    e.target.value = '';
+                  }
+                }}
+                className="px-2 py-1 border rounded text-sm"
+              >
+                <option value="">Move to Project</option>
+                <option value="none">No Project</option>
+                {projects.map(project => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
               <select
                 onChange={(e) => e.target.value && handleBulkCategoryAssign(e.target.value)}
                 className="px-2 py-1 border rounded text-sm"
@@ -434,6 +571,14 @@ export const TasksPageSupabase: React.FC = () => {
                   </option>
                 ))}
               </select>
+              <Button 
+                onClick={() => setShowConvertToSubtasksModal(true)} 
+                variant="outline" 
+                size="sm"
+              >
+                <Layers className="w-4 h-4 mr-1" />
+                Make Subtasks
+              </Button>
               <Button onClick={handleBulkDelete} variant="outline" size="sm" className="text-red-600 hover:bg-red-50">
                 <Trash2 className="w-4 h-4 mr-1" />
                 Delete
@@ -464,6 +609,7 @@ export const TasksPageSupabase: React.FC = () => {
               }}
               onDelete={handleDeleteTask}
               onBreakdown={handleAIBreakdown}
+              showCheckbox={bulkActionsEnabled}
             />
           ))
         )}
@@ -510,6 +656,84 @@ export const TasksPageSupabase: React.FC = () => {
               setAiBreakdownTask(null);
             }}
           />
+        </Modal>
+      )}
+
+      {/* Convert to Subtasks Modal */}
+      {showConvertToSubtasksModal && (
+        <Modal
+          isOpen={showConvertToSubtasksModal}
+          title="Convert to Subtasks"
+          onClose={() => {
+            setShowConvertToSubtasksModal(false);
+            setSelectedParentTaskId(null);
+          }}
+        >
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Convert {selectedTasks.size} selected task{selectedTasks.size !== 1 ? 's' : ''} into subtasks of:
+            </p>
+            
+            <div className="max-h-96 overflow-y-auto space-y-2 border rounded-md p-3">
+              {filteredTasks
+                .filter(task => 
+                  !task.completed && 
+                  !task.archived && 
+                  !selectedTasks.has(task.id) // Can't make a task a subtask of itself
+                )
+                .map(task => (
+                  <label
+                    key={task.id}
+                    className={`flex items-start p-3 rounded-lg cursor-pointer transition-colors ${
+                      selectedParentTaskId === task.id 
+                        ? 'bg-indigo-50 border-2 border-indigo-500' 
+                        : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="parentTask"
+                      value={task.id}
+                      checked={selectedParentTaskId === task.id}
+                      onChange={() => setSelectedParentTaskId(task.id)}
+                      className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                    />
+                    <div className="ml-3 flex-1">
+                      <div className="font-medium text-gray-900">{task.title}</div>
+                      {task.description && (
+                        <div className="text-sm text-gray-500 mt-1">{task.description}</div>
+                      )}
+                      {task.projectId && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Project: {projects.find(p => p.id === task.projectId)?.name}
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                ))
+              }
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowConvertToSubtasksModal(false);
+                  setSelectedParentTaskId(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleBulkConvertToSubtasks}
+                disabled={!selectedParentTaskId}
+              >
+                <Layers className="w-4 h-4 mr-2" />
+                Convert to Subtasks
+              </Button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>

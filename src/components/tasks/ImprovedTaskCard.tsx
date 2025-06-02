@@ -18,7 +18,7 @@ import {
 import { Task, Project, Category } from '../../types';
 import Badge from '../common/Badge';
 import { formatDateForDisplay } from '../../utils/helpers';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import { QuickDueDateEditor } from './QuickDueDateEditor';
 
 interface ImprovedTaskCardProps {

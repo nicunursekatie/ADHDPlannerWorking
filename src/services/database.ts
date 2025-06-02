@@ -30,9 +30,10 @@ export class DatabaseService {
       size: dbTask.size,
       estimatedMinutes: dbTask.estimated_minutes,
       parentTaskId: dbTask.parent_task_id,
-      subtasks: dbTask.subtasks || [],
-      dependsOn: dbTask.depends_on || [],
-      dependedOnBy: dbTask.depended_on_by || [],
+      // These fields will be computed at runtime, not stored in DB
+      // subtasks: dbTask.subtasks || [],
+      // dependsOn: dbTask.depends_on || [],
+      // dependedOnBy: dbTask.depended_on_by || [],
       isRecurring: dbTask.is_recurring,
       recurrencePattern: dbTask.recurrence_pattern,
       recurrenceInterval: dbTask.recurrence_interval,
@@ -67,9 +68,10 @@ export class DatabaseService {
     if (task.size !== undefined) dbTask.size = task.size;
     if (task.estimatedMinutes !== undefined) dbTask.estimated_minutes = task.estimatedMinutes;
     if (task.parentTaskId !== undefined) dbTask.parent_task_id = task.parentTaskId;
-    if (task.subtasks !== undefined) dbTask.subtasks = task.subtasks;
-    if (task.dependsOn !== undefined) dbTask.depends_on = task.dependsOn;
-    if (task.dependedOnBy !== undefined) dbTask.depended_on_by = task.dependedOnBy;
+    // Don't map these fields as they're not stored in DB anymore
+    // if (task.subtasks !== undefined) dbTask.subtasks = task.subtasks;
+    // if (task.dependsOn !== undefined) dbTask.depends_on = task.dependsOn;
+    // if (task.dependedOnBy !== undefined) dbTask.depended_on_by = task.dependedOnBy;
     if (task.isRecurring !== undefined) dbTask.is_recurring = task.isRecurring;
     if (task.recurrencePattern !== undefined) dbTask.recurrence_pattern = task.recurrencePattern;
     if (task.recurrenceInterval !== undefined) dbTask.recurrence_interval = task.recurrenceInterval;
@@ -115,9 +117,10 @@ export class DatabaseService {
       size: task.size,
       estimated_minutes: task.estimatedMinutes,
       parent_task_id: task.parentTaskId,
-      subtasks: task.subtasks,
-      depends_on: task.dependsOn,
-      depended_on_by: task.dependedOnBy,
+      // Don't store these - they're computed at runtime
+      // subtasks: task.subtasks,
+      // depends_on: task.dependsOn,
+      // depended_on_by: task.dependedOnBy,
       is_recurring: task.isRecurring,
       recurrence_pattern: task.recurrencePattern,
       recurrence_interval: task.recurrenceInterval,
@@ -146,6 +149,11 @@ export class DatabaseService {
   static async updateTask(id: string, updates: Partial<Task>, userId: string): Promise<Task> {
     const dbUpdates = this.mapTaskToDb(updates);
     
+    console.log('DatabaseService.updateTask called with:');
+    console.log('Task ID:', id);
+    console.log('Updates received:', updates);
+    console.log('Mapped DB updates:', dbUpdates);
+    
     const { data, error } = await supabase
       .from('tasks')
       .update(dbUpdates)
@@ -154,8 +162,16 @@ export class DatabaseService {
       .select()
       .single();
     
-    if (error) throw error;
-    return this.mapTaskFromDb(data);
+    if (error) {
+      console.error('Supabase update error:', error);
+      throw error;
+    }
+    
+    console.log('Supabase response data:', data);
+    const mappedTask = this.mapTaskFromDb(data);
+    console.log('Mapped task from DB:', mappedTask);
+    
+    return mappedTask;
   }
 
   static async deleteTask(id: string, userId: string): Promise<void> {
@@ -166,6 +182,61 @@ export class DatabaseService {
       .eq('user_id', userId);
     
     if (error) throw error;
+  }
+
+  // Get subtasks for a specific task
+  static async getSubtasks(parentTaskId: string, userId: string): Promise<Task[]> {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('parent_task_id', parentTaskId)
+      .eq('user_id', userId)
+      .is('deleted_at', null);
+    
+    if (error) throw error;
+    return (data || []).map(task => this.mapTaskFromDb(task));
+  }
+
+  // Task Dependencies
+  static async addTaskDependency(taskId: string, dependsOnTaskId: string): Promise<void> {
+    const { error } = await supabase
+      .from('task_dependencies')
+      .insert({
+        task_id: taskId,
+        depends_on_task_id: dependsOnTaskId
+      });
+    
+    if (error) throw error;
+  }
+
+  static async removeTaskDependency(taskId: string, dependsOnTaskId: string): Promise<void> {
+    const { error } = await supabase
+      .from('task_dependencies')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('depends_on_task_id', dependsOnTaskId);
+    
+    if (error) throw error;
+  }
+
+  static async getTaskDependencies(taskId: string): Promise<string[]> {
+    const { data, error } = await supabase
+      .from('task_dependencies')
+      .select('depends_on_task_id')
+      .eq('task_id', taskId);
+    
+    if (error) throw error;
+    return (data || []).map(dep => dep.depends_on_task_id);
+  }
+
+  static async getTaskDependents(taskId: string): Promise<string[]> {
+    const { data, error } = await supabase
+      .from('task_dependencies')
+      .select('task_id')
+      .eq('depends_on_task_id', taskId);
+    
+    if (error) throw error;
+    return (data || []).map(dep => dep.task_id);
   }
 
   // Projects

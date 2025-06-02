@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContextSupabase';
 import { RecurringTask, RecurrencePattern } from '../types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';

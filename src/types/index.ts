@@ -8,9 +8,6 @@ export interface Task {
   projectId: string | null;
   categoryIds: string[];
   parentTaskId: string | null;
-  subtasks: string[]; // IDs of subtasks
-  dependsOn: string[]; // IDs of tasks this task depends on
-  dependedOnBy: string[]; // IDs of tasks that depend on this task
   priority?: 'low' | 'medium' | 'high';
   energyLevel?: 'low' | 'medium' | 'high';
   size?: 'small' | 'medium' | 'large';
@@ -24,6 +21,10 @@ export interface Task {
   isRecurring?: boolean;
   recurrencePattern?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
   recurrenceInterval?: number; // For custom recurrence, e.g., every X days
+  // Runtime computed fields (not stored in DB)
+  subtasks?: string[]; // IDs of subtasks - computed from parent-child relationships
+  dependsOn?: string[]; // IDs of tasks this task depends on - computed from dependencies table
+  dependedOnBy?: string[]; // IDs of tasks that depend on this task - computed from dependencies table
 }
 
 export interface Project {
