@@ -4,9 +4,8 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import AISettings from '../components/settings/AISettings';
-import { DataMigration } from '../components/settings/DataMigration';
 import { DuplicateCleanup } from '../components/settings/DuplicateCleanup';
-import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Database, Users } from 'lucide-react';
+import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Users } from 'lucide-react';
 import { Category } from '../types';
 
 const SettingsPageWithMigration: React.FC = () => {
@@ -26,7 +25,6 @@ const SettingsPageWithMigration: React.FC = () => {
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
   const [showTimeManagement, setShowTimeManagement] = useState(false);
   const [showVisualPreferences, setShowVisualPreferences] = useState(false);
-  const [showDataMigration, setShowDataMigration] = useState(false);
   const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   
   const handleExportData = () => {
@@ -179,35 +177,6 @@ const SettingsPageWithMigration: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400">Manage your data and preferences</p>
         </div>
       </div>
-      
-      {/* Data Migration */}
-      <Card>
-        <div 
-          className="cursor-pointer"
-          onClick={() => setShowDataMigration(!showDataMigration)}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Database className="w-5 h-5 text-green-600 mr-2" />
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white">Data Migration</h2>
-            </div>
-            {showDataMigration ? (
-              <ChevronUp className="w-5 h-5 text-gray-400" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-gray-400" />
-            )}
-          </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Migrate your local data to the cloud
-          </p>
-        </div>
-        
-        {showDataMigration && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <DataMigration />
-          </div>
-        )}
-      </Card>
       
       {/* Duplicate Cleanup */}
       <Card>

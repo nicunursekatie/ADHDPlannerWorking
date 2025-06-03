@@ -4,6 +4,7 @@ import Card from '../common/Card';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 import { getProvider } from '../../utils/aiProviders';
+import { generateId } from '../../utils/helpers';
 import { 
   Brain,
   CheckCircle,
@@ -301,7 +302,7 @@ Return JSON array only.`
 
   const addCustomStep = () => {
     const newStep: BreakdownOption = {
-      id: Date.now().toString(),
+      id: generateId(),
       title: 'New step',
       duration: '10 mins',
       description: 'Describe this step',
@@ -328,7 +329,7 @@ Return JSON array only.`
       }
       
       return {
-        id: `${task.id}-sub-${index + 1}-${Date.now()}`,
+        id: generateId(),
         title: opt.title,
         description: opt.description,
         parentTaskId: task.id,

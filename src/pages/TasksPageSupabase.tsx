@@ -57,6 +57,7 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
       <div className={showCheckbox ? "ml-6" : ""}>
         <TaskDisplay
           task={task}
+          onToggle={(taskId) => updateTask({ ...task, completed: !task.completed })}
           onEdit={onEdit}
           onDelete={onDelete}
           onBreakdown={onBreakdown}
@@ -174,30 +175,8 @@ export const TasksPageSupabase: React.FC = () => {
   });
 
   const handleAddTask = async (task: Partial<Task>) => {
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title: task.title || '',
-      description: task.description || '',
-      completed: false,
-      archived: false,
-      dueDate: task.dueDate || null,
-      projectId: task.projectId || null,
-      categoryIds: task.categoryIds || [],
-      parentTaskId: task.parentTaskId || null,
-      subtasks: [],
-      dependsOn: [],
-      dependedOnBy: [],
-      priority: task.priority,
-      energyLevel: task.energyLevel,
-      size: task.size,
-      estimatedMinutes: task.estimatedMinutes,
-      tags: task.tags || [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
     try {
-      await addTask(newTask);
+      await addTask(task);
       setShowTaskForm(false);
       setShowQuickCapture(false);
     } catch (error) {
@@ -209,7 +188,8 @@ export const TasksPageSupabase: React.FC = () => {
     if (!editingTask) return;
     
     try {
-      await updateTask(editingTask.id, {
+      await updateTask({
+        ...editingTask,
         ...updates,
         updatedAt: new Date().toISOString(),
       });
@@ -618,6 +598,7 @@ export const TasksPageSupabase: React.FC = () => {
       {/* Task Form Modal */}
       {showTaskForm && (
         <Modal
+          isOpen={showTaskForm}
           title={editingTask ? 'Edit Task' : 'Add New Task'}
           onClose={() => {
             setShowTaskForm(false);
@@ -637,26 +618,25 @@ export const TasksPageSupabase: React.FC = () => {
 
       {/* AI Breakdown Modal */}
       {showAIBreakdown && aiBreakdownTask && (
-        <Modal
-          title={`AI Task Breakdown: ${aiBreakdownTask.title}`}
+        <AITaskBreakdown
+          task={aiBreakdownTask}
+          onAccept={async (subtasks) => {
+            // Add all subtasks
+            for (const subtask of subtasks) {
+              await handleAddTask({
+                ...subtask,
+                parentTaskId: aiBreakdownTask.id
+              });
+            }
+            
+            setShowAIBreakdown(false);
+            setAiBreakdownTask(null);
+          }}
           onClose={() => {
             setShowAIBreakdown(false);
             setAiBreakdownTask(null);
           }}
-        >
-          <AITaskBreakdown
-            task={aiBreakdownTask}
-            onTasksGenerated={(generatedTasks) => {
-              generatedTasks.forEach(task => handleAddTask(task));
-              setShowAIBreakdown(false);
-              setAiBreakdownTask(null);
-            }}
-            onCancel={() => {
-              setShowAIBreakdown(false);
-              setAiBreakdownTask(null);
-            }}
-          />
-        </Modal>
+        />
       )}
 
       {/* Convert to Subtasks Modal */}

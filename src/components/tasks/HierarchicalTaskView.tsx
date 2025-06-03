@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Task, Project, Category } from '../../types';
-import { ChevronDown, ChevronRight, Plus, Circle, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Circle, CheckCircle2, Calendar } from 'lucide-react';
 import Badge from '../common/Badge';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import { formatDateForDisplay } from '../../utils/helpers';
 
 interface HierarchicalTaskViewProps {

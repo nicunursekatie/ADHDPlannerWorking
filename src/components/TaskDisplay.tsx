@@ -168,6 +168,23 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
           </div>
         </div>
         
+        {/* AI Breakdown button for tasks without subtasks */}
+        {onBreakdown && !task.completed && subtasks.length === 0 && (
+          <div className="mt-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onBreakdown(task);
+              }}
+              className="flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-2 py-1 rounded-md transition-colors"
+              title="Use AI to break down this task"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>AI Breakdown</span>
+            </button>
+          </div>
+        )}
+        
         {/* Subtasks */}
         {subtasks.length > 0 && (
           <div className="mt-2">
@@ -241,7 +258,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
         )}
       </div>
       
-      {/* Actions - Only visible on hover */}
+      {/* Actions */}
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {onBreakdown && !task.completed && (
           <button
@@ -249,12 +266,10 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
               e.stopPropagation();
               onBreakdown(task);
             }}
-            className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-gray-100"
-            title="Break down into subtasks"
+            className="p-1.5 text-purple-500 hover:text-purple-700 rounded-lg hover:bg-purple-50 transition-colors"
+            title="AI Breakdown - Break down into subtasks"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
+            <Sparkles className="w-4 h-4" />
           </button>
         )}
         <button

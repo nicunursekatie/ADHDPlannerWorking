@@ -189,10 +189,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         .filter(t => t.parentTaskId === task.id)
         .map(t => t.id);
       
-      // Log parent tasks that have subtasks
-      if (subtaskIds.length > 0) {
-        console.log(`Parent task "${task.title}" (${task.id}) has ${subtaskIds.length} subtasks:`, subtaskIds);
-      }
       
       return {
         ...task,
