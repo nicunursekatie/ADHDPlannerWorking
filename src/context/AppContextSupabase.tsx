@@ -211,7 +211,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       // Compute subtasks for each task based on parent-child relationships
       const tasksWithSubtasks = computeSubtasks(tasksData);
-      setTasks(tasksWithSubtasks);
+      
+      // Compute dependencies for all tasks
+      let tasksWithDependencies = tasksWithSubtasks;
+      try {
+        const { data: allDependencies, error } = await supabase
+          .from('task_dependencies')
+          .select('task_id, depends_on_task_id')
+          .eq('user_id', userId);
+        
+        if (!error && allDependencies) {
+          const dependsOnMap = new Map<string, string[]>();
+          const dependedOnByMap = new Map<string, string[]>();
+          
+          allDependencies.forEach(dep => {
+            if (!dependsOnMap.has(dep.task_id)) {
+              dependsOnMap.set(dep.task_id, []);
+            }
+            dependsOnMap.get(dep.task_id)!.push(dep.depends_on_task_id);
+            
+            if (!dependedOnByMap.has(dep.depends_on_task_id)) {
+              dependedOnByMap.set(dep.depends_on_task_id, []);
+            }
+            dependedOnByMap.get(dep.depends_on_task_id)!.push(dep.task_id);
+          });
+          
+          tasksWithDependencies = tasksWithSubtasks.map(task => ({
+            ...task,
+            dependsOn: dependsOnMap.get(task.id) || [],
+            dependedOnBy: dependedOnByMap.get(task.id) || []
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching task dependencies:', error);
+      }
+      
+      setTasks(tasksWithDependencies);
       setProjects(projectsData);
       setCategories(categoriesData);
       setDailyPlans(dailyPlansData);
@@ -229,7 +264,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [computeSubtasks, supabase]);
 
   // Helper function to compute subtasks for all tasks
   const computeSubtasks = useCallback((tasksList: Task[]): Task[] => {
@@ -249,6 +284,52 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
     });
   }, []);
+
+  // Helper function to compute dependencies for all tasks
+  const computeDependencies = useCallback(async (tasksList: Task[], userId: string): Promise<Task[]> => {
+    if (!userId || tasksList.length === 0) return tasksList;
+    
+    try {
+      // Fetch all dependencies for the user
+      const { data: allDependencies, error } = await supabase
+        .from('task_dependencies')
+        .select('task_id, depends_on_task_id')
+        .eq('user_id', userId);
+      
+      if (error) {
+        console.error('Error fetching task dependencies:', error);
+        return tasksList;
+      }
+      
+      // Build dependency maps
+      const dependsOnMap = new Map<string, string[]>();
+      const dependedOnByMap = new Map<string, string[]>();
+      
+      allDependencies?.forEach(dep => {
+        // Build dependsOn map
+        if (!dependsOnMap.has(dep.task_id)) {
+          dependsOnMap.set(dep.task_id, []);
+        }
+        dependsOnMap.get(dep.task_id)!.push(dep.depends_on_task_id);
+        
+        // Build dependedOnBy map
+        if (!dependedOnByMap.has(dep.depends_on_task_id)) {
+          dependedOnByMap.set(dep.depends_on_task_id, []);
+        }
+        dependedOnByMap.get(dep.depends_on_task_id)!.push(dep.task_id);
+      });
+      
+      // Add dependency arrays to tasks
+      return tasksList.map(task => ({
+        ...task,
+        dependsOn: dependsOnMap.get(task.id) || [],
+        dependedOnBy: dependedOnByMap.get(task.id) || []
+      }));
+    } catch (error) {
+      console.error('Error computing task dependencies:', error);
+      return tasksList;
+    }
+  }, [supabase]);
 
   // Clean up old deleted tasks
   useEffect(() => {
@@ -1060,48 +1141,58 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addTaskDependency = useCallback(async (taskId: string, dependsOnId: string) => {
     if (!user) throw new Error('User not authenticated');
     
-    const timestamp = new Date().toISOString();
-    
-    const task = tasks.find(t => t.id === taskId);
-    const dependsOnTask = tasks.find(t => t.id === dependsOnId);
-    
-    if (task && dependsOnTask) {
-      await updateTask({
-        ...task,
-        dependsOn: task.dependsOn ? [...task.dependsOn, dependsOnId] : [dependsOnId],
-        updatedAt: timestamp
-      });
+    try {
+      // Add dependency to the database
+      await DatabaseService.addTaskDependency(taskId, dependsOnId, user.id);
       
-      await updateTask({
-        ...dependsOnTask,
-        dependedOnBy: dependsOnTask.dependedOnBy ? [...dependsOnTask.dependedOnBy, taskId] : [taskId],
-        updatedAt: timestamp
-      });
+      // Update local state
+      setTasks(prev => prev.map(task => {
+        if (task.id === taskId) {
+          return {
+            ...task,
+            dependsOn: [...(task.dependsOn || []), dependsOnId]
+          };
+        } else if (task.id === dependsOnId) {
+          return {
+            ...task,
+            dependedOnBy: [...(task.dependedOnBy || []), taskId]
+          };
+        }
+        return task;
+      }));
+    } catch (error) {
+      console.error('Error adding task dependency:', error);
+      throw error;
     }
-  }, [user, tasks, updateTask]);
+  }, [user]);
 
   const removeTaskDependency = useCallback(async (taskId: string, dependsOnId: string) => {
     if (!user) throw new Error('User not authenticated');
     
-    const timestamp = new Date().toISOString();
-    
-    const task = tasks.find(t => t.id === taskId);
-    const dependsOnTask = tasks.find(t => t.id === dependsOnId);
-    
-    if (task && dependsOnTask) {
-      await updateTask({
-        ...task,
-        dependsOn: task.dependsOn?.filter(id => id !== dependsOnId) || [],
-        updatedAt: timestamp
-      });
+    try {
+      // Remove dependency from the database
+      await DatabaseService.removeTaskDependency(taskId, dependsOnId, user.id);
       
-      await updateTask({
-        ...dependsOnTask,
-        dependedOnBy: dependsOnTask.dependedOnBy?.filter(id => id !== taskId) || [],
-        updatedAt: timestamp
-      });
+      // Update local state
+      setTasks(prev => prev.map(task => {
+        if (task.id === taskId) {
+          return {
+            ...task,
+            dependsOn: (task.dependsOn || []).filter(id => id !== dependsOnId)
+          };
+        } else if (task.id === dependsOnId) {
+          return {
+            ...task,
+            dependedOnBy: (task.dependedOnBy || []).filter(id => id !== taskId)
+          };
+        }
+        return task;
+      }));
+    } catch (error) {
+      console.error('Error removing task dependency:', error);
+      throw error;
     }
-  }, [user, tasks, updateTask]);
+  }, [user]);
 
   const getTaskDependencies = useCallback((taskId: string): Task[] => {
     const task = tasks.find(t => t.id === taskId);
@@ -1232,9 +1323,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           // Map category IDs
           const mappedCategoryIds = (task.categoryIds || []).map(id => categoryIdMap.get(id) || id).filter(id => id);
           
-          // Map subtask IDs
-          const mappedSubtasks = (task.subtasks || []).map(id => taskIdMap.get(id) || id).filter(id => id);
-          
           const taskData = {
             id: newTaskId,
             title: task.title,
@@ -1245,13 +1333,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             project_id: task.projectId ? projectIdMap.get(task.projectId) || null : null,
             category_ids: mappedCategoryIds,
             parent_task_id: null,
-            subtasks: mappedSubtasks,
             priority: task.priority || null,
             energy_level: task.energyLevel || null,
             estimated_minutes: task.estimatedMinutes || null,
             tags: task.tags || [],
-            depends_on: [],
-            depended_on_by: [],
             user_id: user.id,
             created_at: task.createdAt || task.created_at || new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -1276,9 +1361,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           // Map category IDs
           const mappedCategoryIds = (task.categoryIds || []).map(id => categoryIdMap.get(id) || id).filter(id => id);
           
-          // Map subtask IDs
-          const mappedSubtasks = (task.subtasks || []).map(id => taskIdMap.get(id) || id).filter(id => id);
-          
           const taskData = {
             id: newTaskId,
             title: task.title,
@@ -1289,13 +1371,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             project_id: task.projectId ? projectIdMap.get(task.projectId) || null : null,
             category_ids: mappedCategoryIds,
             parent_task_id: newParentId,
-            subtasks: mappedSubtasks,
             priority: task.priority || null,
             energy_level: task.energyLevel || null,
             estimated_minutes: task.estimatedMinutes || null,
             tags: task.tags || [],
-            depends_on: [],
-            depended_on_by: [],
             user_id: user.id,
             created_at: task.createdAt || task.created_at || new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -1307,6 +1386,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             console.error('Error importing subtask:', error, taskData);
           } else {
             console.log('Subtask imported:', result);
+          }
+        }
+        
+        // Third pass: Import task dependencies if they exist
+        console.log('Checking for task dependencies to import...');
+        for (const task of data.tasks) {
+          if (task.dependsOn && task.dependsOn.length > 0) {
+            const taskId = taskIdMap.get(task.id);
+            if (taskId) {
+              for (const dependencyId of task.dependsOn) {
+                const mappedDependencyId = taskIdMap.get(dependencyId);
+                if (mappedDependencyId) {
+                  const { error } = await supabase
+                    .from('task_dependencies')
+                    .insert({
+                      task_id: taskId,
+                      depends_on_task_id: mappedDependencyId,
+                      user_id: user.id
+                    });
+                  if (error) {
+                    console.error('Error importing task dependency:', error);
+                  }
+                }
+              }
+            }
           }
         }
       }

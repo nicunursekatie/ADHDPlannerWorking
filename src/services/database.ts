@@ -198,23 +198,25 @@ export class DatabaseService {
   }
 
   // Task Dependencies
-  static async addTaskDependency(taskId: string, dependsOnTaskId: string): Promise<void> {
+  static async addTaskDependency(taskId: string, dependsOnTaskId: string, userId: string): Promise<void> {
     const { error } = await supabase
       .from('task_dependencies')
       .insert({
         task_id: taskId,
-        depends_on_task_id: dependsOnTaskId
+        depends_on_task_id: dependsOnTaskId,
+        user_id: userId
       });
     
     if (error) throw error;
   }
 
-  static async removeTaskDependency(taskId: string, dependsOnTaskId: string): Promise<void> {
+  static async removeTaskDependency(taskId: string, dependsOnTaskId: string, userId: string): Promise<void> {
     const { error } = await supabase
       .from('task_dependencies')
       .delete()
       .eq('task_id', taskId)
-      .eq('depends_on_task_id', dependsOnTaskId);
+      .eq('depends_on_task_id', dependsOnTaskId)
+      .eq('user_id', userId);
     
     if (error) throw error;
   }
