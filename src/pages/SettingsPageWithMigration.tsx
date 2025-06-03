@@ -53,24 +53,36 @@ const SettingsPageWithMigration: React.FC = () => {
   };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File input changed');
+    console.log('Files:', e.target.files);
     if (e.target.files && e.target.files[0]) {
-      setImportFile(e.target.files[0]);
+      const file = e.target.files[0];
+      console.log('Selected file:', file.name, 'Size:', file.size, 'Type:', file.type);
+      setImportFile(file);
       setImportError(null);
     }
   };
   
   const handleImportData = async () => {
+    console.log('Import button clicked');
+    console.log('Import file:', importFile);
+    
     if (!importFile) {
       setImportError('Please select a file to import');
       return;
     }
     
+    console.log('Starting file read...');
     const reader = new FileReader();
     
     reader.onload = async (e) => {
+      console.log('File loaded, processing...');
       try {
         const content = e.target?.result as string;
+        console.log('File content length:', content?.length);
+        console.log('Calling importData...');
         const result = await importData(content);
+        console.log('Import result:', result);
         
         if (result) {
           setImportSuccess(true);
@@ -88,10 +100,12 @@ const SettingsPageWithMigration: React.FC = () => {
       }
     };
     
-    reader.onerror = () => {
+    reader.onerror = (error) => {
+      console.error('FileReader error:', error);
       setImportError('Error reading the file');
     };
     
+    console.log('Starting to read file as text...');
     reader.readAsText(importFile);
   };
   

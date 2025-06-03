@@ -203,8 +203,7 @@ export class DatabaseService {
       .from('task_dependencies')
       .insert({
         task_id: taskId,
-        depends_on_task_id: dependsOnTaskId,
-        user_id: userId
+        depends_on_task_id: dependsOnTaskId
       });
     
     if (error) throw error;
@@ -215,8 +214,7 @@ export class DatabaseService {
       .from('task_dependencies')
       .delete()
       .eq('task_id', taskId)
-      .eq('depends_on_task_id', dependsOnTaskId)
-      .eq('user_id', userId);
+      .eq('depends_on_task_id', dependsOnTaskId);
     
     if (error) throw error;
   }

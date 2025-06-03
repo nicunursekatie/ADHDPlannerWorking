@@ -626,11 +626,11 @@ export const TasksPageSupabase: React.FC = () => {
         >
           <TaskFormWithDependencies
             task={editingTask}
-            onSubmit={editingTask ? handleEditTask : handleAddTask}
-            onCancel={() => {
+            onClose={() => {
               setShowTaskForm(false);
               setEditingTask(null);
             }}
+            isEdit={!!editingTask}
           />
         </Modal>
       )}

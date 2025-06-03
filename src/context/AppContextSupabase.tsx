@@ -182,6 +182,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return () => subscription.unsubscribe();
   }, []);
 
+  // Helper function to compute subtasks for all tasks
+  const computeSubtasks = useCallback((tasksList: Task[]): Task[] => {
+    return tasksList.map(task => {
+      const subtaskIds = tasksList
+        .filter(t => t.parentTaskId === task.id)
+        .map(t => t.id);
+      
+      // Log parent tasks that have subtasks
+      if (subtaskIds.length > 0) {
+        console.log(`Parent task "${task.title}" (${task.id}) has ${subtaskIds.length} subtasks:`, subtaskIds);
+      }
+      
+      return {
+        ...task,
+        subtasks: subtaskIds
+      };
+    });
+  }, []);
+
   // Load user data from Supabase
   const loadUserData = useCallback(async (userId: string) => {
     try {
@@ -215,12 +234,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Compute dependencies for all tasks
       let tasksWithDependencies = tasksWithSubtasks;
       try {
+        // Get all task dependencies for user's tasks
+        const userTaskIds = tasksWithSubtasks.map(t => t.id);
         const { data: allDependencies, error } = await supabase
           .from('task_dependencies')
           .select('task_id, depends_on_task_id')
-          .eq('user_id', userId);
+          .or(`task_id.in.(${userTaskIds.join(',')}),depends_on_task_id.in.(${userTaskIds.join(',')})`);
         
-        if (!error && allDependencies) {
+        // Only process if we have tasks
+        if (userTaskIds.length === 0) {
+          tasksWithDependencies = tasksWithSubtasks;
+        } else if (!error && allDependencies) {
           const dependsOnMap = new Map<string, string[]>();
           const dependedOnByMap = new Map<string, string[]>();
           
@@ -265,25 +289,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setIsLoading(false);
     }
   }, [computeSubtasks, supabase]);
-
-  // Helper function to compute subtasks for all tasks
-  const computeSubtasks = useCallback((tasksList: Task[]): Task[] => {
-    return tasksList.map(task => {
-      const subtaskIds = tasksList
-        .filter(t => t.parentTaskId === task.id)
-        .map(t => t.id);
-      
-      // Log parent tasks that have subtasks
-      if (subtaskIds.length > 0) {
-        console.log(`Parent task "${task.title}" (${task.id}) has ${subtaskIds.length} subtasks:`, subtaskIds);
-      }
-      
-      return {
-        ...task,
-        subtasks: subtaskIds
-      };
-    });
-  }, []);
 
   // Helper function to compute dependencies for all tasks
   const computeDependencies = useCallback(async (tasksList: Task[], userId: string): Promise<Task[]> => {
@@ -1271,7 +1276,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               user_id: user.id,
               created_at: category.createdAt || category.created_at || new Date().toISOString(),
               updated_at: new Date().toISOString()
-            });
+            })
+            .select();
           if (error) {
             console.error('Error importing category:', error, category);
           } else {
@@ -1297,7 +1303,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               user_id: user.id,
               created_at: project.createdAt || project.created_at || new Date().toISOString(),
               updated_at: new Date().toISOString()
-            });
+            })
+            .select();
           if (error) {
             console.error('Error importing project:', error, project);
           } else {
@@ -1343,7 +1350,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           };
           const { data: result, error } = await supabase
             .from('tasks')
-            .insert(taskData);
+            .insert(taskData)
+            .select();
           if (error) {
             console.error('Error importing task:', error, taskData);
           } else {
@@ -1381,7 +1389,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           };
           const { data: result, error } = await supabase
             .from('tasks')
-            .insert(taskData);
+            .insert(taskData)
+            .select();
           if (error) {
             console.error('Error importing subtask:', error, taskData);
           } else {
@@ -1402,8 +1411,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     .from('task_dependencies')
                     .insert({
                       task_id: taskId,
-                      depends_on_task_id: mappedDependencyId,
-                      user_id: user.id
+                      depends_on_task_id: mappedDependencyId
                     });
                   if (error) {
                     console.error('Error importing task dependency:', error);
@@ -1469,16 +1477,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       
       // Import settings
-      if (data.settings) {
-        const { error } = await supabase
-          .from('user_settings')
-          .upsert({
-            user_id: user.id,
-            settings: data.settings,
-            updated_at: new Date().toISOString()
-          });
-        if (error) console.error('Error importing settings:', error);
-      }
+      // TODO: Enable when user_settings table is created
+      // if (data.settings) {
+      //   const { error } = await supabase
+      //     .from('user_settings')
+      //     .upsert({
+      //       user_id: user.id,
+      //       settings: data.settings,
+      //       updated_at: new Date().toISOString()
+      //     });
+      //   if (error) console.error('Error importing settings:', error);
+      // }
       
       // Refresh data after import
       console.log('Import complete, refreshing data...');

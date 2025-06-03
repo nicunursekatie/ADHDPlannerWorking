@@ -3,9 +3,7 @@ import { Task, Project, Category } from '../../types';
 import { useAppContext } from '../../context/AppContextSupabase';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
-import Badge from '../common/Badge';
 import SubtaskList from './SubtaskList';
-import { formatDateForHtml } from '../../utils/helpers';
 import { getTodayString, getTomorrowString, formatDateString } from '../../utils/dateUtils';
 import { 
   Clock,
@@ -44,7 +42,6 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
     updateTask, 
     addTaskDependency,
     removeTaskDependency,
-    getTaskDependencies,
     addCategory 
   } = useAppContext();
   
@@ -89,7 +86,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   
   const availableTasksForDependency = getAvailableTasksForDependency();
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim()) return;
@@ -112,40 +109,56 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
       subtasks,
     };
     
-    if (isEdit && task) {
-      updateTask({
-        ...task,
-        ...taskData,
-      });
+    try {
+      if (isEdit && task) {
+        await updateTask({
+          ...task,
+          ...taskData,
+        });
+        
+        // Update dependencies
+        const oldDependencies = task.dependsOn || [];
+        const toRemove = oldDependencies.filter(id => !selectedDependencies.includes(id));
+        const toAdd = selectedDependencies.filter(id => !oldDependencies.includes(id));
+        
+        await Promise.all([
+          ...toRemove.map(depId => removeTaskDependency(task.id, depId)),
+          ...toAdd.map(depId => addTaskDependency(task.id, depId))
+        ]);
+      } else {
+        const newTask = await addTask(taskData);
+        
+        // Add dependencies to the new task
+        if (selectedDependencies.length > 0) {
+          await Promise.all(
+            selectedDependencies.map(depId => addTaskDependency(newTask.id, depId))
+          );
+        }
+      }
       
-      // Update dependencies
-      const oldDependencies = task.dependsOn || [];
-      const toRemove = oldDependencies.filter(id => !selectedDependencies.includes(id));
-      const toAdd = selectedDependencies.filter(id => !oldDependencies.includes(id));
-      
-      toRemove.forEach(depId => removeTaskDependency(task.id, depId));
-      toAdd.forEach(depId => addTaskDependency(task.id, depId));
-    } else {
-      const newTask = addTask(taskData);
-      
-      // Add dependencies to the new task
-      selectedDependencies.forEach(depId => addTaskDependency(newTask.id, depId));
+      onClose();
+    } catch (error) {
+      console.error('Error saving task:', error);
+      // You might want to show an error message to the user here
     }
-    
-    onClose();
   };
   
-  const handleCreateCategory = () => {
+  const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
     
-    const category = addCategory({
-      name: newCategoryName.trim(),
-      color: newCategoryColor,
-    });
-    
-    setSelectedCategoryIds([...selectedCategoryIds, category.id]);
-    setNewCategoryName('');
-    setShowNewCategoryModal(false);
+    try {
+      const category = await addCategory({
+        name: newCategoryName.trim(),
+        color: newCategoryColor,
+      });
+      
+      setSelectedCategoryIds([...selectedCategoryIds, category.id]);
+      setNewCategoryName('');
+      setShowNewCategoryModal(false);
+    } catch (error) {
+      console.error('Error creating category:', error);
+      // You might want to show an error message to the user here
+    }
   };
   
   const toggleCategorySelection = (categoryId: string) => {
@@ -257,7 +270,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                 onClick={() => {
                   const nextWeek = new Date();
                   nextWeek.setDate(nextWeek.getDate() + 7);
-                  setDueDate(formatDateString(nextWeek));
+                  setDueDate(formatDateString(nextWeek) || '');
                 }}
                 className="px-2 py-1 rounded text-xs font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200"
               >
@@ -378,13 +391,19 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                   const depTask = tasks.find(t => t.id === depId);
                   if (!depTask) return null;
                   return (
-                    <Badge
+                    <span
                       key={depId}
-                      text={depTask.title}
-                      bgColor="#E0E7FF"
-                      textColor="#4F46E5"
-                      onRemove={() => toggleDependency(depId)}
-                    />
+                      className="inline-flex items-center px-2 py-1 rounded text-sm bg-indigo-100 text-indigo-800"
+                    >
+                      {depTask.title}
+                      <button
+                        type="button"
+                        onClick={() => toggleDependency(depId)}
+                        className="ml-1 text-indigo-600 hover:text-indigo-800 focus:outline-none"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
                   );
                 })}
               </div>
@@ -489,13 +508,19 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {tags.map(tag => (
-                  <Badge
+                  <span
                     key={tag}
-                    text={tag}
-                    bgColor="#F3F4F6"
-                    textColor="#374151"
-                    onRemove={() => removeTag(tag)}
-                  />
+                    className="inline-flex items-center px-2 py-1 rounded text-sm bg-gray-100 text-gray-700"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    >
+                      <X size={14} />
+                    </button>
+                  </span>
                 ))}
               </div>
             )}
@@ -504,7 +529,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                 type="text"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                onKeyPress={(e) => {
+                onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
                     addTag();

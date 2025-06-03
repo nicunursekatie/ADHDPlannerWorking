@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   ChevronRight, 
@@ -422,7 +423,9 @@ export const TaskDetailWizard: React.FC<TaskDetailWizardProps> = ({
     }
   };
 
-  return (
+  if (!isOpen) return null;
+
+  return createPortal(
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       onClick={(e) => {
@@ -553,6 +556,7 @@ export const TaskDetailWizard: React.FC<TaskDetailWizardProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
