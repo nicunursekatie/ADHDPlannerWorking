@@ -40,7 +40,7 @@ const RecurringTasksPage: React.FC = () => {
     estimatedMinutes: 30,
     categoryIds: [] as string[],
     source: {
-      type: 'manual' as 'manual' | 'medication' | 'bill' | 'chore' | 'appointment' | 'routine',
+      type: 'routine' as 'manual' | 'medication' | 'bill' | 'chore' | 'appointment' | 'routine',
     },
     startDate: formatDate(new Date()), // Default to today
   });
@@ -58,7 +58,7 @@ const RecurringTasksPage: React.FC = () => {
       estimatedMinutes: 30,
       categoryIds: [],
       source: {
-        type: 'manual',
+        type: 'routine',
       },
       startDate: formatDate(new Date()), // Reset to today
     });
@@ -581,6 +581,27 @@ const RecurringTasksPage: React.FC = () => {
                 <span className="text-sm text-gray-600">minutes</span>
               </div>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Task Type
+            </label>
+            <select
+              value={formData.source.type}
+              onChange={(e) => setFormData({ 
+                ...formData, 
+                source: { type: e.target.value as 'manual' | 'medication' | 'bill' | 'chore' | 'appointment' | 'routine' }
+              })}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            >
+              <option value="routine">Daily Routine</option>
+              <option value="chore">Chore</option>
+              <option value="appointment">Appointment</option>
+              <option value="medication">Medication</option>
+              <option value="bill">Bill Payment</option>
+              <option value="manual">Other</option>
+            </select>
           </div>
 
           <div>
