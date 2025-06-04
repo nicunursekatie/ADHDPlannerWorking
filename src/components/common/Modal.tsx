@@ -8,6 +8,8 @@ interface ModalProps {
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   footer?: ReactNode;
+  closeOnOverlayClick?: boolean;
+  showCloseButton?: boolean;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -17,8 +19,11 @@ const Modal: React.FC<ModalProps> = ({
   children,
   size = 'md',
   footer,
+  closeOnOverlayClick = true,
+  showCloseButton = true,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const firstFocusableRef = useRef<HTMLElement>(null);
   
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -28,7 +33,7 @@ const Modal: React.FC<ModalProps> = ({
     };
     
     const handleClickOutside = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      if (closeOnOverlayClick && modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
@@ -37,6 +42,14 @@ const Modal: React.FC<ModalProps> = ({
       document.addEventListener('keydown', handleEscape);
       document.addEventListener('mousedown', handleClickOutside);
       document.body.style.overflow = 'hidden';
+      
+      // Focus management for accessibility
+      setTimeout(() => {
+        const focusable = modalRef.current?.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])') as HTMLElement;
+        if (focusable) {
+          focusable.focus();
+        }
+      }, 100);
     }
     
     return () => {
@@ -44,7 +57,7 @@ const Modal: React.FC<ModalProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
       document.body.style.overflow = 'auto';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, closeOnOverlayClick]);
   
   if (!isOpen) return null;
   
@@ -57,44 +70,49 @@ const Modal: React.FC<ModalProps> = ({
   };
   
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div className="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
         {/* Backdrop */}
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out"
+          className="modal-backdrop animate-fadeIn"
           aria-hidden="true"
         />
         
         {/* Modal panel */}
         <div
           ref={modalRef}
-          className={`inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all duration-300 ease-out sm:my-8 sm:align-middle ${sizeClasses[size]} w-full border border-amber-200`}
+          className={`modal-panel animate-scaleIn inline-block align-bottom text-left overflow-hidden sm:my-8 sm:align-middle ${sizeClasses[size]} w-full`}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-amber-200">
+          <div className="px-6 py-4 border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-amber-900 tracking-tight">
+              <h3 
+                id="modal-title"
+                className="text-lg font-semibold text-surface-900 dark:text-surface-100 tracking-tight"
+              >
                 {title}
               </h3>
-              <button
-                type="button"
-                className="rounded-lg p-2 text-amber-500 hover:text-amber-700 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all duration-200"
-                onClick={onClose}
-              >
-                <span className="sr-only">Close</span>
-                <X size={20} />
-              </button>
+              {showCloseButton && (
+                <button
+                  type="button"
+                  className="rounded-xl p-2 text-surface-500 hover:text-surface-700 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-surface-200 dark:hover:bg-surface-700 focus:outline-none focus:ring-2 focus:ring-focus-500 transition-all duration-200"
+                  onClick={onClose}
+                  aria-label="Close modal"
+                >
+                  <X size={20} />
+                </button>
+              )}
             </div>
           </div>
           
           {/* Content */}
-          <div className="px-6 py-4 text-amber-900">
+          <div className="px-6 py-6 text-surface-700 dark:text-surface-300 max-h-96 overflow-y-auto">
             {children}
           </div>
           
           {/* Footer */}
           {footer && (
-            <div className="px-6 py-4 border-t border-amber-200 bg-amber-50">
+            <div className="px-6 py-4 border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">
               {footer}
             </div>
           )}

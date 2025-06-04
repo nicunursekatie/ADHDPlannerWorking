@@ -1,28 +1,50 @@
 import React from 'react';
 
 interface BadgeProps {
-  text: string;
-  color?: string;
-  bgColor?: string;
+  children: React.ReactNode;
+  variant?: 'success' | 'warning' | 'danger' | 'info' | 'neutral';
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
+  icon?: React.ReactNode;
+  pulse?: boolean;
 }
 
 const Badge: React.FC<BadgeProps> = ({ 
-  text, 
-  color = '#f59e0b', // amber-500 (goldenrod)
-  bgColor = '#fef3c7', // amber-100 (pale gold)
+  children,
+  variant = 'neutral',
+  size = 'md',
   className = '',
+  icon,
+  pulse = false,
 }) => {
+  const baseClasses = 'badge-base';
+  
+  const variantClasses = {
+    success: 'badge-success',
+    warning: 'badge-warning',
+    danger: 'badge-danger',
+    info: 'badge-info',
+    neutral: 'badge-neutral',
+  };
+  
+  const sizeClasses = {
+    sm: 'px-2 py-0.5 text-xs',
+    md: 'px-3 py-1 text-sm',
+    lg: 'px-4 py-1.5 text-base',
+  };
+  
+  const pulseClass = pulse ? 'animate-pulse-gentle' : '';
+  
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${className}`}
-      style={{ 
-        backgroundColor: `${bgColor}`,
-        color: color,
-        borderColor: color
-      }}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${pulseClass} ${className}`}
     >
-      {text}
+      {icon && (
+        <span className="mr-1.5 flex-shrink-0">
+          {icon}
+        </span>
+      )}
+      {children}
     </span>
   );
 };

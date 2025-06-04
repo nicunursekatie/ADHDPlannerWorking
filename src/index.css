@@ -1,17 +1,115 @@
+/* Import fonts for better ADHD-friendly reading */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* System UI font stack for maximum compatibility */
+/* ADHD-Friendly Design System */
 @layer base {
+  /* Root variables for dynamic theming */
+  :root {
+    /* Light theme colors */
+    --color-bg-primary: 248 250 252;
+    --color-bg-secondary: 241 245 249;
+    --color-bg-tertiary: 255 255 255;
+    --color-bg-accent: 239 246 255;
+    
+    --color-text-primary: 15 23 42;
+    --color-text-secondary: 51 65 85;
+    --color-text-muted: 100 116 139;
+    
+    --color-border-light: 226 232 240;
+    --color-border-medium: 203 213 225;
+    --color-border-strong: 148 163 184;
+    
+    --color-focus: 59 130 246;
+    --color-success: 34 197 94;
+    --color-warning: 245 158 11;
+    --color-danger: 239 68 68;
+    
+    /* ADHD-specific spacing and timing */
+    --spacing-focus: 1.5rem;
+    --timing-fast: 150ms;
+    --timing-medium: 250ms;
+    --timing-slow: 350ms;
+    
+    /* Enhanced shadows for depth perception */
+    --shadow-soft: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-strong: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-focus: 0 0 0 3px rgb(59 130 246 / 0.3);
+  }
+  
+  /* Dark theme overrides */
+  .dark {
+    --color-bg-primary: 2 6 23;
+    --color-bg-secondary: 15 23 42;
+    --color-bg-tertiary: 30 41 59;
+    --color-bg-accent: 30 58 138;
+    
+    --color-text-primary: 248 250 252;
+    --color-text-secondary: 203 213 225;
+    --color-text-muted: 148 163 184;
+    
+    --color-border-light: 51 65 85;
+    --color-border-medium: 71 85 105;
+    --color-border-strong: 100 116 139;
+    
+    --shadow-soft: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+    --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-strong: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  }
+
+  /* Enhanced body styling for ADHD users */
   body {
-    @apply antialiased text-gray-900 dark:text-gray-100;
-    font-family: 'Work Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    @apply antialiased;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-size: 16px;
     line-height: 1.6;
+    letter-spacing: 0.01em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: theme('colors.gray.50');
+    background-color: rgb(var(--color-bg-primary));
+    color: rgb(var(--color-text-primary));
+    transition: background-color var(--timing-medium) ease-in-out;
+  }
+  
+  /* Enhanced typography for better readability */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    color: rgb(var(--color-text-primary));
+    margin-bottom: 0.5em;
+  }
+  
+  h1 { @apply text-3xl md:text-4xl; }
+  h2 { @apply text-2xl md:text-3xl; }
+  h3 { @apply text-xl md:text-2xl; }
+  h4 { @apply text-lg md:text-xl; }
+  h5 { @apply text-base md:text-lg; }
+  h6 { @apply text-sm md:text-base; }
+  
+  /* Paragraph styling for better scanning */
+  p {
+    @apply leading-relaxed;
+    color: rgb(var(--color-text-secondary));
+    margin-bottom: 1em;
+  }
+  
+  /* Enhanced link styling */
+  a {
+    @apply text-focus-600 hover:text-focus-700 dark:text-focus-400 dark:hover:text-focus-300;
+    text-decoration: none;
+    transition: color var(--timing-fast) ease-in-out;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
   }
   
   /* Light mode color tokens */
@@ -172,84 +270,234 @@
 }
 
 @layer components {
-  /* Enhanced card styles */
-  .card {
-    @apply bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700
-           shadow-sm dark:shadow-none transition-all duration-200;
+  /* ADHD-Friendly Form Elements */
+  input, textarea, select {
+    @apply w-full px-4 py-3 text-base;
+    background-color: rgb(var(--color-bg-tertiary));
+    border: 2px solid rgb(var(--color-border-light));
+    border-radius: 12px;
+    color: rgb(var(--color-text-primary));
+    font-family: 'Inter', sans-serif;
+    transition: all var(--timing-medium) ease-in-out;
+    line-height: 1.5;
   }
   
-  .card-elevated {
-    @apply bg-white dark:bg-gray-800/40 border border-slate-200 dark:border-gray-700/50 shadow-md dark:shadow-none;
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: rgb(var(--color-focus));
+    box-shadow: var(--shadow-focus);
+    background-color: rgb(var(--color-bg-accent));
   }
   
-  /* Card hover animation */
-  .card-hover {
-    @apply hover:shadow-md dark:hover:shadow-none hover:border-amber-400 dark:hover:border-amber-500
-           hover:-translate-y-0.5;
-  }
-  
-  /* Button disabled state */
-  button:disabled {
-    @apply opacity-50 cursor-not-allowed;
-  }
-  
-  /* Loading spinner */
-  .spinner {
-    @apply animate-spin h-5 w-5 text-indigo-600 dark:text-indigo-400;
-  }
-  
-  /* Task completion animation */
-  @keyframes checkComplete {
-    0% { transform: scale(0.8); opacity: 0; }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  
-  .task-complete {
-    animation: checkComplete 0.3s ease-in-out;
-  }
-  
-  /* Task hover effect */
-  .task-hover {
-    @apply transition-all duration-150 hover:translate-x-1;
-  }
-  
-  /* Enhanced focus states */
-  .focus-primary {
-    @apply focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-primary-400 dark:focus:ring-offset-gray-900;
+  input::placeholder, textarea::placeholder {
+    color: rgb(var(--color-text-muted));
+    font-weight: 400;
   }
 
-  /* Button styles */
-  .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium
-           transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  /* Enhanced Button System */
+  .btn-base {
+    @apply inline-flex items-center justify-center font-medium rounded-xl;
+    @apply transition-all duration-200 ease-out;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.01em;
+    min-height: 44px; /* ADHD-friendly tap target */
+  }
+  
+  .btn-sm {
+    @apply btn-base px-4 py-2 text-sm;
+    min-height: 36px;
+  }
+  
+  .btn-md {
+    @apply btn-base px-6 py-3 text-base;
+  }
+  
+  .btn-lg {
+    @apply btn-base px-8 py-4 text-lg;
+    min-height: 52px;
   }
   
   .btn-primary {
-    @apply btn bg-amber-500 text-white hover:bg-amber-600 
-           focus:ring-amber-500 dark:focus:ring-amber-400;
+    @apply bg-focus-600 text-white hover:bg-focus-700;
+    @apply focus:ring-focus-500 active:bg-focus-800;
+    @apply shadow-md hover:shadow-lg;
+    @apply transform hover:scale-105 active:scale-95;
   }
   
   .btn-secondary {
-    @apply btn bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-gray-700 
-           dark:text-gray-100 dark:hover:bg-gray-600 focus:ring-gray-500;
+    @apply bg-surface-100 text-surface-700 hover:bg-surface-200;
+    @apply dark:bg-surface-800 dark:text-surface-200 dark:hover:bg-surface-700;
+    @apply focus:ring-surface-500 border-2 border-surface-200;
+    @apply dark:border-surface-600;
   }
   
-  /* Badge styles */
-  .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  .btn-success {
+    @apply bg-success-600 text-white hover:bg-success-700;
+    @apply focus:ring-success-500 shadow-md hover:shadow-lg;
+    @apply transform hover:scale-105 active:scale-95;
+  }
+  
+  .btn-warning {
+    @apply bg-warning-500 text-white hover:bg-warning-600;
+    @apply focus:ring-warning-500 shadow-md hover:shadow-lg;
+    @apply transform hover:scale-105 active:scale-95;
+  }
+  
+  .btn-danger {
+    @apply bg-danger-600 text-white hover:bg-danger-700;
+    @apply focus:ring-danger-500 shadow-md hover:shadow-lg;
+    @apply transform hover:scale-105 active:scale-95;
+  }
+  
+  .btn-ghost {
+    @apply bg-transparent text-surface-600 hover:bg-surface-100;
+    @apply dark:text-surface-400 dark:hover:bg-surface-800;
+    @apply focus:ring-surface-500;
+  }
+
+  /* Enhanced Card System */
+  .card-base {
+    background-color: rgb(var(--color-bg-tertiary));
+    border: 1px solid rgb(var(--color-border-light));
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft);
+    transition: all var(--timing-medium) ease-out;
+    overflow: hidden;
+  }
+  
+  .card-hover {
+    @apply card-base cursor-pointer;
+    @apply hover:shadow-md hover:border-focus-300;
+    @apply transform hover:scale-[1.02] hover:-translate-y-1;
+  }
+  
+  .card-interactive {
+    @apply card-hover focus-within:ring-2 focus-within:ring-focus-500;
+    @apply focus-within:ring-offset-2;
+  }
+  
+  .card-elevated {
+    @apply card-base;
+    box-shadow: var(--shadow-medium);
+  }
+  
+  .card-floating {
+    @apply card-base;
+    box-shadow: var(--shadow-strong);
+  }
+
+  /* Badge System for Status Indicators */
+  .badge-base {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+    @apply ring-1 ring-inset;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.02em;
   }
   
   .badge-success {
-    @apply badge bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200;
+    @apply badge-base bg-success-100 text-success-800 ring-success-600/20;
+    @apply dark:bg-success-400/10 dark:text-success-400 dark:ring-success-400/20;
   }
   
   .badge-warning {
-    @apply badge bg-amber-200 text-amber-900 dark:bg-amber-800 dark:text-amber-100;
+    @apply badge-base bg-warning-100 text-warning-800 ring-warning-600/20;
+    @apply dark:bg-warning-400/10 dark:text-warning-400 dark:ring-warning-400/20;
   }
   
   .badge-danger {
-    @apply badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+    @apply badge-base bg-danger-100 text-danger-800 ring-danger-600/20;
+    @apply dark:bg-danger-400/10 dark:text-danger-400 dark:ring-danger-400/20;
+  }
+  
+  .badge-info {
+    @apply badge-base bg-focus-100 text-focus-800 ring-focus-600/20;
+    @apply dark:bg-focus-400/10 dark:text-focus-400 dark:ring-focus-400/20;
+  }
+  
+  .badge-neutral {
+    @apply badge-base bg-surface-100 text-surface-800 ring-surface-600/20;
+    @apply dark:bg-surface-400/10 dark:text-surface-400 dark:ring-surface-400/20;
+  }
+
+  /* Modal and Overlay Enhancements */
+  .modal-backdrop {
+    @apply fixed inset-0 bg-neutral-900/60 backdrop-blur-sm;
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .modal-panel {
+    @apply bg-white dark:bg-surface-900 rounded-2xl shadow-2xl;
+    @apply border border-surface-200 dark:border-surface-700;
+    @apply transform transition-all duration-300 ease-out;
+  }
+
+  /* Loading and State Indicators */
+  .loading-spinner {
+    @apply animate-spin rounded-full border-2 border-surface-200;
+    border-top-color: rgb(var(--color-focus));
+    @apply h-6 w-6;
+  }
+  
+  .loading-dots {
+    @apply flex space-x-1;
+  }
+  
+  .loading-dot {
+    @apply w-2 h-2 bg-focus-600 rounded-full animate-pulse;
+    animation-delay: var(--delay, 0ms);
+  }
+
+  /* Task-specific Components */
+  .task-card {
+    @apply card-interactive p-4 space-y-3;
+    @apply border-l-4 border-transparent;
+  }
+  
+  .task-card.priority-high {
+    @apply border-l-danger-500 bg-danger-50/50 dark:bg-danger-900/10;
+  }
+  
+  .task-card.priority-medium {
+    @apply border-l-warning-500 bg-warning-50/50 dark:bg-warning-900/10;
+  }
+  
+  .task-card.priority-low {
+    @apply border-l-success-500 bg-success-50/50 dark:bg-success-900/10;
+  }
+  
+  .task-card.completed {
+    @apply opacity-75 bg-surface-50 dark:bg-surface-800/50;
+  }
+
+  /* Focus Management for ADHD */
+  .focus-zone {
+    @apply ring-2 ring-focus-500/20 ring-offset-4 ring-offset-surface-50;
+    @apply dark:ring-offset-surface-900;
+    border-radius: 20px;
+    background: linear-gradient(145deg, rgb(var(--color-bg-accent)), rgb(var(--color-bg-tertiary)));
+  }
+  
+  .focus-highlight {
+    @apply bg-focus-100 dark:bg-focus-900/30 border-2 border-focus-300;
+    @apply dark:border-focus-600 rounded-xl;
+    animation: pulseGentle 2s ease-in-out infinite;
+  }
+
+  /* Accessibility Enhancements */
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  
+  /* Skip link for keyboard navigation */
+  .skip-link {
+    @apply absolute left-4 top-4 z-100 px-4 py-2 bg-focus-600 text-white;
+    @apply rounded-lg font-medium -translate-y-20 focus:translate-y-0;
+    @apply transition-transform duration-200;
   }
 }
 
