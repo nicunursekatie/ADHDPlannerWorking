@@ -24,6 +24,7 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const firstFocusableRef = useRef<HTMLElement>(null);
+  const hasSetInitialFocus = useRef(false);
   
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -43,13 +44,35 @@ const Modal: React.FC<ModalProps> = ({
       document.addEventListener('mousedown', handleClickOutside);
       document.body.style.overflow = 'hidden';
       
-      // Focus management for accessibility
-      setTimeout(() => {
-        const focusable = modalRef.current?.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])') as HTMLElement;
-        if (focusable) {
-          focusable.focus();
-        }
-      }, 100);
+      // Focus management for accessibility - only set initial focus once
+      if (!hasSetInitialFocus.current) {
+        hasSetInitialFocus.current = true;
+        setTimeout(() => {
+          // First check for any input or textarea that should have focus
+          const inputElement = modalRef.current?.querySelector('input:not([type="hidden"]), textarea') as HTMLElement;
+          if (inputElement) {
+            inputElement.focus();
+          } else {
+            // If no input/textarea, find first focusable element that's not the close button
+            const focusables = modalRef.current?.querySelectorAll('button, [href], select, [tabindex]:not([tabindex="-1"])');
+            if (focusables && focusables.length > 0) {
+              // Skip the first button if it's the close button (has X icon)
+              for (const element of focusables) {
+                const htmlElement = element as HTMLElement;
+                // Check if this is the close button by looking for the X icon
+                const hasCloseIcon = htmlElement.querySelector('[data-lucide="x"]') || htmlElement.getAttribute('aria-label') === 'Close modal';
+                if (!hasCloseIcon) {
+                  htmlElement.focus();
+                  break;
+                }
+              }
+            }
+          }
+        }, 100);
+      }
+    } else {
+      // Reset the flag when modal closes
+      hasSetInitialFocus.current = false;
     }
     
     return () => {

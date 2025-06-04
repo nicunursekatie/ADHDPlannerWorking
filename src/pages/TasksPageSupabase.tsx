@@ -596,25 +596,24 @@ export const TasksPageSupabase: React.FC = () => {
       </div>
 
       {/* Task Form Modal */}
-      {showTaskForm && (
-        <Modal
-          isOpen={showTaskForm}
-          title={editingTask ? 'Edit Task' : 'Add New Task'}
+      <Modal
+        key={editingTask?.id || 'new-task'}
+        isOpen={showTaskForm}
+        title={editingTask ? 'Edit Task' : 'Add New Task'}
+        onClose={() => {
+          setShowTaskForm(false);
+          setEditingTask(null);
+        }}
+      >
+        <TaskFormWithDependencies
+          task={editingTask}
           onClose={() => {
             setShowTaskForm(false);
             setEditingTask(null);
           }}
-        >
-          <TaskFormWithDependencies
-            task={editingTask}
-            onClose={() => {
-              setShowTaskForm(false);
-              setEditingTask(null);
-            }}
-            isEdit={!!editingTask}
-          />
-        </Modal>
-      )}
+          isEdit={!!editingTask}
+        />
+      </Modal>
 
       {/* AI Breakdown Modal */}
       {showAIBreakdown && aiBreakdownTask && (

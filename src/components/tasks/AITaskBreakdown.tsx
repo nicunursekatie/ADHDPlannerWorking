@@ -343,11 +343,6 @@ Return JSON array only.`
     });
     
     onAccept(subtasks);
-    
-    // Reset the component state for next use
-    setHasGenerated(false);
-    setShowContextForm(localStorage.getItem('ai_always_ask_context') !== 'false');
-    setBreakdownOptions([]);
   };
 
   const handleDragStart = (e: React.DragEvent, itemId: string) => {
@@ -408,12 +403,18 @@ Return JSON array only.`
     }
   }, [showContextForm, hasGenerated]);
   
-  // Reset state when component mounts/unmounts
+  // Reset state when component unmounts only
   React.useEffect(() => {
     return () => {
       setHasGenerated(false);
       setBreakdownOptions([]);
       setError(null);
+      setContextData({
+        currentState: '',
+        blockers: '',
+        specificGoal: '',
+        environment: ''
+      });
     };
   }, []);
 
@@ -593,7 +594,7 @@ Return JSON array only.`
 
               <div className="flex justify-between mt-6">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => {
                     setShowContextForm(false);
                     setHasGenerated(false); // Allow regeneration
@@ -624,16 +625,16 @@ Return JSON array only.`
           <>
             <div className="space-y-4 max-w-2xl mx-auto">
               {breakdownOptions.map(option => (
-                <Card 
+                <div 
                   key={option.id} 
                   className={`p-5 flex flex-row items-start gap-4 transition-all cursor-move shadow-sm border-2 border-amber-200 bg-white rounded-xl ${
                     dragOverItem === option.id ? 'ring-2 ring-blue-400' : ''
                   } ${draggedItem === option.id ? 'opacity-50' : ''}`}
                   draggable={true}
-                  onDragStart={(e) => handleDragStart(e, option.id)}
-                  onDragOver={(e) => handleDragOver(e, option.id)}
+                  onDragStart={(e: React.DragEvent) => handleDragStart(e, option.id)}
+                  onDragOver={(e: React.DragEvent) => handleDragOver(e, option.id)}
                   onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, option.id)}
+                  onDrop={(e: React.DragEvent) => handleDrop(e, option.id)}
                   onDragEnd={handleDragEnd}
                 >
                   <div className="flex flex-col items-center mr-2 pt-2">
@@ -676,7 +677,7 @@ Return JSON array only.`
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant="secondary"
                             onClick={() => deleteOption(option.id)}
                             icon={<Trash2 size={14} />}
                           >
@@ -721,13 +722,13 @@ Return JSON array only.`
                       </>
                     )}
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
 
             <div className="flex justify-start">
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={addCustomStep}
                 icon={<Plus size={14} />}
@@ -739,12 +740,12 @@ Return JSON array only.`
         )}
 
         <div className="flex justify-end space-x-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           {!showContextForm && breakdownOptions.length > 0 && (
             <Button
-              variant="outline"
+              variant="secondary"
               onClick={() => {
                 setShowContextForm(true);
                 setHasGenerated(false); // Reset so it will regenerate
