@@ -12,7 +12,6 @@ import {
   Repeat, 
   Trash2, 
   Edit2, 
-  CheckCircle,
   Pill,
   DollarSign,
   Home,
@@ -24,7 +23,7 @@ import {
 import { generateId, formatDate } from '../utils/helpers';
 
 const RecurringTasksPage: React.FC = () => {
-  const { recurringTasks, addRecurringTask, updateRecurringTask, deleteRecurringTask, addTask, generateTaskFromRecurring, categories } = useAppContext();
+  const { recurringTasks, addRecurringTask, updateRecurringTask, deleteRecurringTask, categories } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<RecurringTask | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -130,20 +129,6 @@ const RecurringTasksPage: React.FC = () => {
     }
   };
 
-  const handleGenerateTask = (recurringTask: RecurringTask) => {
-    const newTask = generateTaskFromRecurring(recurringTask.id);
-    if (newTask) {
-      addTask(newTask);
-      
-      // Update the recurring task's next due date
-      const nextDue = calculateNextDue(recurringTask.pattern);
-      updateRecurringTask({
-        ...recurringTask,
-        nextDue: nextDue.toISOString().split('T')[0],
-        lastGenerated: new Date().toISOString(),
-      });
-    }
-  };
 
   const handleEdit = (task: RecurringTask) => {
     setEditingTask(task);
@@ -357,20 +342,11 @@ const RecurringTasksPage: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        className="flex-1"
-                        onClick={() => handleGenerateTask(task)}
-                        icon={<CheckCircle size={16} />}
-                      >
-                        Generate Now
-                      </Button>
-                      {!task.active && (
+                    {!task.active && (
+                      <div className="flex justify-end">
                         <Badge text="Inactive" color="red" className="text-sm" />
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   {showDeleteConfirm === task.id && (
