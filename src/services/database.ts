@@ -86,6 +86,53 @@ export class DatabaseService {
     
     return dbTask;
   }
+  
+  // Helper to map database recurring task to TypeScript format
+  private static mapRecurringTaskFromDb(dbTask: any): RecurringTask {
+    return {
+      id: dbTask.id,
+      title: dbTask.title,
+      description: dbTask.description,
+      pattern: dbTask.pattern,
+      source: { type: dbTask.source_type }, // Convert string to object
+      projectId: dbTask.project_id,
+      categoryIds: dbTask.category_ids || [],
+      tags: dbTask.tags || [],
+      priority: dbTask.priority,
+      energyLevel: dbTask.energy_level,
+      estimatedMinutes: dbTask.estimated_minutes,
+      active: dbTask.is_active,
+      nextDue: dbTask.next_due,
+      lastGenerated: dbTask.last_generated,
+      createdAt: dbTask.created_at,
+      updatedAt: dbTask.updated_at
+    };
+  }
+  
+  // Helper to map TypeScript recurring task to database format
+  private static mapRecurringTaskToDb(task: Partial<RecurringTask>): any {
+    const dbTask: any = {};
+    
+    if (task.id !== undefined) dbTask.id = task.id;
+    if (task.title !== undefined) dbTask.title = task.title;
+    if (task.description !== undefined) dbTask.description = task.description;
+    if (task.pattern !== undefined) dbTask.pattern = task.pattern;
+    if (task.source !== undefined) dbTask.source_type = task.source.type;
+    if (task.projectId !== undefined) dbTask.project_id = task.projectId;
+    if (task.categoryIds !== undefined) dbTask.category_ids = task.categoryIds;
+    if (task.tags !== undefined) dbTask.tags = task.tags;
+    if (task.priority !== undefined) dbTask.priority = task.priority;
+    if (task.energyLevel !== undefined) dbTask.energy_level = task.energyLevel;
+    if (task.estimatedMinutes !== undefined) dbTask.estimated_minutes = task.estimatedMinutes;
+    if (task.active !== undefined) dbTask.is_active = task.active;
+    if (task.nextDue !== undefined) dbTask.next_due = task.nextDue;
+    if (task.lastGenerated !== undefined) dbTask.last_generated = task.lastGenerated;
+    if (task.createdAt !== undefined) dbTask.created_at = task.createdAt;
+    if (task.updatedAt !== undefined) dbTask.updated_at = task.updatedAt;
+    
+    return dbTask;
+  }
+  
   // Tasks
   static async getTasks(userId: string): Promise<Task[]> {
     const { data, error } = await supabase
@@ -356,29 +403,16 @@ export class DatabaseService {
       .eq('user_id', userId);
     
     if (error) throw error;
-    return data || [];
+    
+    // Map database format to application format
+    return (data || []).map(task => this.mapRecurringTaskFromDb(task));
   }
 
   static async createRecurringTask(task: RecurringTask, userId: string): Promise<RecurringTask> {
     // Map camelCase to snake_case
     const dbTask = {
-      id: task.id,
-      user_id: userId,
-      title: task.title,
-      description: task.description,
-      pattern: task.pattern,
-      source_type: task.source,
-      project_id: task.projectId,
-      category_ids: task.categoryIds,
-      tags: task.tags,
-      priority: task.priority,
-      energy_level: task.energyLevel,
-      estimated_minutes: task.estimatedMinutes,
-      is_active: task.active,
-      next_due: task.nextDue,
-      last_generated: task.lastGenerated,
-      created_at: task.createdAt,
-      updated_at: task.updatedAt
+      ...this.mapRecurringTaskToDb(task),
+      user_id: userId
     };
     
     const { data, error } = await supabase
@@ -390,37 +424,25 @@ export class DatabaseService {
     if (error) throw error;
     
     // Map back to camelCase
-    return {
-      id: data.id,
-      title: data.title,
-      description: data.description,
-      pattern: data.pattern,
-      source: data.source_type,
-      projectId: data.project_id,
-      categoryIds: data.category_ids || [],
-      tags: data.tags || [],
-      priority: data.priority,
-      energyLevel: data.energy_level,
-      estimatedMinutes: data.estimated_minutes,
-      active: data.is_active,
-      nextDue: data.next_due,
-      lastGenerated: data.last_generated,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    };
+    return this.mapRecurringTaskFromDb(data);
   }
 
   static async updateRecurringTask(id: string, updates: Partial<RecurringTask>, userId: string): Promise<RecurringTask> {
+    // Map updates to database format
+    const dbUpdates = this.mapRecurringTaskToDb(updates);
+    
     const { data, error } = await supabase
       .from('recurring_tasks')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', id)
       .eq('user_id', userId)
       .select()
       .single();
     
     if (error) throw error;
-    return data;
+    
+    // Map back to application format
+    return this.mapRecurringTaskFromDb(data);
   }
 
   static async deleteRecurringTask(id: string, userId: string): Promise<void> {
