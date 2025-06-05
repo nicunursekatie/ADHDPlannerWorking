@@ -1,0 +1,19 @@
+
+> task-manager-app@0.0.0 dev
+> vite
+
+Port 5173 is in use, trying another one...
+Port 5174 is in use, trying another one...
+
+  VITE v4.5.14  ready in 1026 ms
+
+  ➜  Local:   http://localhost:5175/ADHDPlannerWorking/
+  ➜  Network: use --host to expose
+9:23:02 PM [vite] page reload dist/404.html
+9:23:02 PM [vite] page reload dist/index-template.html
+9:23:07 PM [vite] page reload dist/404.html
+9:23:07 PM [vite] page reload dist/index.html
+9:29:38 PM [vite] page reload dist/index-template.html
+9:29:38 PM [vite] page reload dist/404.html
+9:29:43 PM [vite] page reload dist/404.html
+9:29:43 PM [vite] page reload dist/index.html
