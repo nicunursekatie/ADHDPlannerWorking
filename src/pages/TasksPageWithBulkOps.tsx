@@ -485,10 +485,10 @@ const TasksPageWithBulkOps: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center bg-white rounded-lg shadow-sm p-4">
+      <div className="flex flex-col md:flex-row justify-between md:items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tasks</h1>
+          <p className="text-gray-600 dark:text-gray-400">
             {activeTaskList.length} task{activeTaskList.length !== 1 ? 's' : ''}
             {(filterProjectId || filterCategoryId) && ' (filtered)'}
             {selectedTasks.size > 0 && ` • ${selectedTasks.size} selected`}
@@ -518,11 +518,11 @@ const TasksPageWithBulkOps: React.FC = () => {
               Sort
             </Button>
             {showSortMenu && (
-              <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+              <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 z-10">
                 <div className="py-1" role="menu">
                   <button
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
-                      sortBy === 'dueDate' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between ${
+                      sortBy === 'dueDate' ? 'bg-indigo-50 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'
                     }`}
                     onClick={() => {
                       if (sortBy === 'dueDate') {
@@ -543,8 +543,8 @@ const TasksPageWithBulkOps: React.FC = () => {
                   </button>
                   
                   <button
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
-                      sortBy === 'priority' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between ${
+                      sortBy === 'priority' ? 'bg-indigo-50 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'
                     }`}
                     onClick={() => {
                       if (sortBy === 'priority') {
@@ -565,8 +565,8 @@ const TasksPageWithBulkOps: React.FC = () => {
                   </button>
                   
                   <button
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
-                      sortBy === 'createdAt' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between ${
+                      sortBy === 'createdAt' ? 'bg-indigo-50 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'
                     }`}
                     onClick={() => {
                       if (sortBy === 'createdAt') {
@@ -587,8 +587,8 @@ const TasksPageWithBulkOps: React.FC = () => {
                   </button>
                   
                   <button
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
-                      sortBy === 'title' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between ${
+                      sortBy === 'title' ? 'bg-indigo-50 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'
                     }`}
                     onClick={() => {
                       if (sortBy === 'title') {
@@ -609,8 +609,8 @@ const TasksPageWithBulkOps: React.FC = () => {
                   </button>
                   
                   <button
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
-                      sortBy === 'estimatedMinutes' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between ${
+                      sortBy === 'estimatedMinutes' ? 'bg-indigo-50 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'
                     }`}
                     onClick={() => {
                       if (sortBy === 'estimatedMinutes') {
@@ -631,8 +631,8 @@ const TasksPageWithBulkOps: React.FC = () => {
                   </button>
                   
                   <button
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
-                      sortBy === 'project' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between ${
+                      sortBy === 'project' ? 'bg-indigo-50 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'
                     }`}
                     onClick={() => {
                       if (sortBy === 'project') {
@@ -987,7 +987,7 @@ const TasksPageWithBulkOps: React.FC = () => {
       )}
       
       {/* Task list */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
         <div className="space-y-4">
           {parentTasks.length > 0 ? (
             <div>

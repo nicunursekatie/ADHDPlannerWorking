@@ -53,7 +53,9 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     <div 
       className={`
         group flex items-start gap-3 p-4 rounded-xl border cursor-pointer
-        ${task.completed ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-300 hover:border-gray-400 hover:shadow-sm'}
+        ${task.completed 
+          ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700' 
+          : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-sm dark:hover:shadow-none'}
         transition-all duration-200
       `}
       onClick={() => onEdit(task)}
@@ -80,7 +82,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             <div className="flex items-center gap-2">
               <h3 className={`
                 text-base font-medium tracking-tight
-                ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}
+                ${task.completed ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-900 dark:text-gray-100'}
               `}>
                 {task.title}
               </h3>
@@ -103,7 +105,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
               {task.projectId && (
                 <div className="flex items-center gap-1">
                   <Folder className="w-3 h-3 text-gray-400" />
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
                   </span>
                 </div>
@@ -194,7 +196,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                   e.stopPropagation();
                   setIsExpanded(!isExpanded);
                 }}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
                 {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                 <span>
@@ -224,7 +226,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                   <div 
                     key={subtask.id}
                     className={`flex items-start gap-2 p-2 rounded-lg ${
-                      subtask.completed ? 'bg-gray-50' : 'bg-gray-100'
+                      subtask.completed ? 'bg-gray-50 dark:bg-gray-700' : 'bg-gray-100 dark:bg-gray-700'
                     }`}
                   >
                     <button
@@ -242,12 +244,12 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                     </button>
                     <div className="flex-1">
                       <h4 className={`text-sm ${
-                        subtask.completed ? 'text-gray-500 line-through' : 'text-gray-700'
+                        subtask.completed ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'
                       }`}>
                         {subtask.title}
                       </h4>
                       {subtask.description && (
-                        <p className="text-xs text-gray-500 mt-1">{subtask.description}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtask.description}</p>
                       )}
                     </div>
                   </div>
@@ -277,7 +279,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             e.stopPropagation();
             onEdit(task);
           }}
-          className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+          className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -288,7 +290,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             e.stopPropagation();
             onDelete(task.id);
           }}
-          className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100"
+          className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
