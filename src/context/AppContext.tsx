@@ -1366,10 +1366,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   // Check for recurring tasks that need to be generated after everything is initialized
   useEffect(() => {
-    if (!isLoading && recurringTasks.length > 0 && checkAndGenerateRecurringTasks) {
-      checkAndGenerateRecurringTasks();
-    }
-  }, [isLoading, recurringTasks.length]);
+  if (!isLoading && recurringTasks.length > 0) {
+    checkAndGenerateRecurringTasks();
+  }
+}, [isLoading]);
   
   return (
     <AppContext.Provider value={contextValue}>

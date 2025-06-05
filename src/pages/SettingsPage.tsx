@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContextSupabase';
+import { useAppContext } from '../context/AppContext';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import AISettings from '../components/settings/AISettings';
-import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye } from 'lucide-react';
+import { DuplicateCleanupLocal } from '../components/settings/DuplicateCleanupLocal';
+import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Users } from 'lucide-react';
 import { Category } from '../types';
 
 const SettingsPage: React.FC = () => {
@@ -24,6 +25,7 @@ const SettingsPage: React.FC = () => {
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
   const [showTimeManagement, setShowTimeManagement] = useState(false);
   const [showVisualPreferences, setShowVisualPreferences] = useState(false);
+  const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   
   const handleExportData = () => {
     const data = exportData();
@@ -332,6 +334,35 @@ const SettingsPage: React.FC = () => {
                 Add Category
               </Button>
             </div>
+          </div>
+        )}
+      </Card>
+      
+      {/* Duplicate Cleanup */}
+      <Card>
+        <div 
+          className="cursor-pointer"
+          onClick={() => setShowDuplicateCleanup(!showDuplicateCleanup)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Users className="w-5 h-5 text-amber-600 mr-2" />
+              <h2 className="text-lg font-medium text-gray-900">Duplicate Cleanup</h2>
+            </div>
+            {showDuplicateCleanup ? (
+              <ChevronUp className="w-5 h-5 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-400" />
+            )}
+          </div>
+          <p className="text-sm text-gray-600 mt-1">
+            Find and remove duplicate tasks, projects, and categories
+          </p>
+        </div>
+        
+        {showDuplicateCleanup && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <DuplicateCleanupLocal />
           </div>
         )}
       </Card>
