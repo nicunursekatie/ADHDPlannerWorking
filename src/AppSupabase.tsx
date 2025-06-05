@@ -15,7 +15,6 @@ import CategoriesPage from './pages/CategoriesPage';
 import Dashboard from './pages/Dashboard';
 import CalendarPage from './pages/CalendarPage';
 import PlannerPage from './pages/PlannerPage';
-import RecurringTasksPage from './pages/RecurringTasksPage';
 import WeeklyReviewPage from './pages/WeeklyReviewPage';
 import AccountabilityPage from './pages/AccountabilityPage';
 import BrainDumpPage from './pages/BrainDumpPage';
@@ -71,7 +70,6 @@ const AppContent: React.FC = () => {
             <Route path="/brain-dump" element={<BrainDumpPage />} />
             <Route path="/weekly-review" element={<WeeklyReviewPage />} />
             <Route path="/accountability" element={<AccountabilityPage />} />
-            <Route path="/recurring-tasks" element={<RecurringTasksPage />} />
             <Route path="/deleted-tasks" element={<PlaceholderPage name="Deleted Tasks" />} />
           </Routes>
         </LayoutWithAuth>
