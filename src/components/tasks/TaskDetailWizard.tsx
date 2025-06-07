@@ -25,7 +25,7 @@ interface TaskDetailWizardProps {
   task: Task;
   isOpen: boolean;
   onClose: () => void;
-  onComplete: (updatedTask: Task) => void;
+  onComplete: (updatedTask: Task) => Promise<void>;
 }
 
 interface WizardStep {
@@ -101,6 +101,18 @@ export const TaskDetailWizard: React.FC<TaskDetailWizardProps> = ({
   const [updatedTask, setUpdatedTask] = useState<Task>(task);
   const [showSuccess, setShowSuccess] = useState(false);
   const [visitedSteps, setVisitedSteps] = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Reset state when task changes or modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setUpdatedTask(task);
+      setCurrentStepIndex(0);
+      setVisitedSteps(new Set());
+      setShowSuccess(false);
+      setIsSaving(false);
+    }
+  }, [isOpen, task]);
 
   if (!isOpen) return null;
 
@@ -128,12 +140,27 @@ export const TaskDetailWizard: React.FC<TaskDetailWizardProps> = ({
     }
   };
 
-  const handleComplete = () => {
-    setShowSuccess(true);
-    setTimeout(() => {
-      onComplete(updatedTask);
-      onClose();
-    }, 1500);
+  const handleComplete = async () => {
+    try {
+      setIsSaving(true);
+      // Call onComplete and wait for it to finish
+      await onComplete(updatedTask);
+      // Show success state
+      setShowSuccess(true);
+      // Only close after successful update
+      setTimeout(() => {
+        onClose();
+        // Reset states after closing
+        setShowSuccess(false);
+        setIsSaving(false);
+      }, 1500);
+    } catch (error) {
+      console.error('Failed to save task details:', error);
+      setShowSuccess(false);
+      setIsSaving(false);
+      // Show error message to user
+      alert('Failed to save task details. Please try again.');
+    }
   };
 
   const handleSkip = () => {
@@ -434,19 +461,24 @@ export const TaskDetailWizard: React.FC<TaskDetailWizardProps> = ({
       }}
     >
       <div 
-        className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+        className="bg-white rounded-xl shadow-xl max-w-2xl w-full flex flex-col"
+        style={{ maxHeight: '90vh' }}
         onClick={(e) => {
           // Prevent clicks within the modal from bubbling up to parent components
           e.stopPropagation();
         }}
       >
         {/* Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl font-semibold text-gray-900">Complete Your Task</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              disabled={isSaving}
+              className={`p-2 rounded-lg transition-colors ${
+                isSaving ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-100'
+              }`}
+              title={isSaving ? 'Please wait while saving...' : 'Close'}
             >
               <X className="w-5 h-5" />
             </button>
@@ -473,7 +505,7 @@ export const TaskDetailWizard: React.FC<TaskDetailWizardProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 250px)' }}>
+        <div className="p-6 flex-1 overflow-y-auto min-h-0">
           {showSuccess ? (
             <div className="flex flex-col items-center justify-center py-12">
               <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
@@ -514,13 +546,13 @@ export const TaskDetailWizard: React.FC<TaskDetailWizardProps> = ({
 
         {/* Footer */}
         {!showSuccess && (
-          <div className="p-6 border-t border-gray-200 bg-gray-50">
+          <div className="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
             <div className="flex items-center justify-between">
               <button
                 onClick={handlePrevious}
-                disabled={currentStepIndex === 0}
+                disabled={currentStepIndex === 0 || isSaving}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  currentStepIndex === 0
+                  currentStepIndex === 0 || isSaving
                     ? 'text-gray-400 cursor-not-allowed'
                     : 'text-gray-700 hover:bg-gray-200'
                 }`}
@@ -530,9 +562,10 @@ export const TaskDetailWizard: React.FC<TaskDetailWizardProps> = ({
               </button>
 
               <div className="flex items-center gap-3">
-                {!currentStep.isComplete(updatedTask) && !currentStep.isCritical && (
+                {!currentStep.isComplete(updatedTask) && !currentStep.isCritical && !isSaving && (
                   <button
                     onClick={handleSkip}
+                    disabled={isSaving}
                     className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                   >
                     Skip for now
@@ -541,15 +574,27 @@ export const TaskDetailWizard: React.FC<TaskDetailWizardProps> = ({
                 
                 <button
                   onClick={handleNext}
-                  disabled={currentStep.isCritical && !currentStep.isComplete(updatedTask)}
+                  disabled={(currentStep.isCritical && !currentStep.isComplete(updatedTask)) || isSaving}
                   className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors ${
-                    currentStep.isCritical && !currentStep.isComplete(updatedTask)
+                    (currentStep.isCritical && !currentStep.isComplete(updatedTask)) || isSaving
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                 >
-                  {currentStepIndex === WIZARD_STEPS.length - 1 ? 'Complete' : 'Next'}
-                  <ChevronRight className="w-4 h-4" />
+                  {isSaving ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      {currentStepIndex === WIZARD_STEPS.length - 1 ? 'Complete' : 'Next'}
+                      <ChevronRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
