@@ -596,11 +596,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const timestamp = new Date().toISOString();
     const updatedProjects = projects.map(project => {
       const newOrder = projectIds.indexOf(project.id);
-      return {
-        ...project,
-        order: newOrder >= 0 ? newOrder : (project.order ?? 999),
-        updatedAt: timestamp,
-      };
+      const oldOrder = project.order ?? 999;
+      
+      // Only update timestamp if the order actually changed
+      if (newOrder >= 0 && newOrder !== oldOrder) {
+        return {
+          ...project,
+          order: newOrder,
+          updatedAt: timestamp,
+        };
+      } else if (newOrder >= 0) {
+        // Project is in the reorder list but position didn't change
+        return {
+          ...project,
+          order: newOrder,
+        };
+      } else {
+        // Project not in the reorder list, keep as is
+        return project;
+      }
     });
 
     // Update projects in local state immediately for responsive UI
@@ -610,7 +624,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       for (const project of updatedProjects) {
         if (projectIds.includes(project.id)) {
-          await DatabaseService.updateProject(project.id, project, user.id);
+          const originalProject = projects.find(p => p.id === project.id);
+          // Only update in database if order actually changed
+          if (originalProject && originalProject.order !== project.order) {
+            await DatabaseService.updateProject(project.id, project, user.id);
+          }
         }
       }
     } catch (error) {

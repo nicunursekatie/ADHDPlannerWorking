@@ -128,57 +128,42 @@ const ProjectsPage: React.FC = () => {
         break;
     }
     
-    // Apply sorting
-    switch (sortMode) {
-      case 'updated':
-        filtered.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-        break;
-      case 'progress':
-        filtered.sort((a, b) => getProjectStats(b.id).progress - getProjectStats(a.id).progress);
-        break;
-      case 'priority':
-        // Sort by number of overdue tasks
-        filtered.sort((a, b) => getProjectStats(b.id).overdueTasks - getProjectStats(a.id).overdueTasks);
-        break;
-      case 'due-date':
-        filtered.sort((a, b) => {
-          const aDate = getProjectStats(a.id).estimatedCompletionDate;
-          const bDate = getProjectStats(b.id).estimatedCompletionDate;
-          if (!aDate) return 1;
-          if (!bDate) return -1;
-          return aDate.getTime() - bDate.getTime();
-        });
-        break;
-    }
-    
-    // Apply custom order sorting as primary for "updated" mode (drag-and-drop order)
-    filtered.sort((a, b) => {
-      // First by custom order if both have order set
-      const aOrder = a.order ?? 999;
-      const bOrder = b.order ?? 999;
-      
-      if (aOrder !== bOrder) {
-        return aOrder - bOrder;
-      }
-      
-      // Fallback to other sorting modes if orders are equal
+    // Apply sorting based on mode
+    if (sortMode === 'updated') {
+      // For 'updated' mode, sort by custom order first, then by update time
+      filtered.sort((a, b) => {
+        // First by custom order if both have order set
+        const aOrder = a.order ?? 999;
+        const bOrder = b.order ?? 999;
+        
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        
+        // Then by update time
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
+    } else {
+      // For other sort modes, apply the specific sorting
       switch (sortMode) {
-        case 'updated':
-          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
         case 'progress':
-          return getProjectStats(b.id).progress - getProjectStats(a.id).progress;
+          filtered.sort((a, b) => getProjectStats(b.id).progress - getProjectStats(a.id).progress);
+          break;
         case 'priority':
-          return getProjectStats(b.id).overdueTasks - getProjectStats(a.id).overdueTasks;
+          // Sort by number of overdue tasks
+          filtered.sort((a, b) => getProjectStats(b.id).overdueTasks - getProjectStats(a.id).overdueTasks);
+          break;
         case 'due-date':
-          const aDate = getProjectStats(a.id).estimatedCompletionDate;
-          const bDate = getProjectStats(b.id).estimatedCompletionDate;
-          if (!aDate) return 1;
-          if (!bDate) return -1;
-          return aDate.getTime() - bDate.getTime();
-        default:
-          return 0;
+          filtered.sort((a, b) => {
+            const aDate = getProjectStats(a.id).estimatedCompletionDate;
+            const bDate = getProjectStats(b.id).estimatedCompletionDate;
+            if (!aDate) return 1;
+            if (!bDate) return -1;
+            return aDate.getTime() - bDate.getTime();
+          });
+          break;
       }
-    });
+    }
     
     return filtered;
   }, [projects, filterMode, sortMode, tasks]);
