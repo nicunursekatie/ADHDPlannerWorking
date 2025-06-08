@@ -421,12 +421,12 @@ Return JSON array only.`
   return (
     <Modal isOpen={true} onClose={onClose} title="AI Task Breakdown" size="lg">
       <div className="space-y-4">
-        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+        <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
           <div className="flex items-center">
-            <Brain className="w-5 h-5 text-blue-600 mr-2" />
+            <Brain className="w-5 h-5 text-purple-600 dark:text-purple-400 mr-2" />
             <div>
-              <h4 className="font-medium text-gray-900">Breaking down: {task.title}</h4>
-              <p className="text-sm text-gray-600">
+              <h4 className="font-medium text-gray-900 dark:text-gray-100">Breaking down: {task.title}</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 {showContextForm 
                   ? 'Let\'s understand this task better for a personalized breakdown' 
                   : 'AI is creating manageable steps for you'}
@@ -434,20 +434,20 @@ Return JSON array only.`
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            {isLoading && <Loader2 className="w-5 h-5 animate-spin text-blue-600" />}
+            {isLoading && <Loader2 className="w-5 h-5 animate-spin text-purple-600 dark:text-purple-400" />}
           </div>
         </div>
 
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
             <div className="flex items-start">
-              <X size={20} className="mr-3 text-red-600 flex-shrink-0 mt-0.5" />
+              <X size={20} className="mr-3 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-sm font-medium text-red-800">Unable to generate breakdown</h3>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-300">Unable to generate breakdown</h3>
+                <p className="text-sm text-red-700 dark:text-red-400 mt-1">{error}</p>
                 {error.includes('API key') && (
-                  <p className="text-sm text-red-700 mt-2">
-                    <a href="/settings" className="underline font-medium">Go to Settings</a> to configure your AI provider.
+                  <p className="text-sm text-red-700 dark:text-red-400 mt-2">
+                    <a href="/settings" className="underline font-medium hover:text-red-600 dark:hover:text-red-300">Go to Settings</a> to configure your AI provider.
                   </p>
                 )}
               </div>
@@ -457,21 +457,21 @@ Return JSON array only.`
 
         {showContextForm && !isLoading && (
           <div className="space-y-4">
-            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <h3 className="font-medium text-purple-900 mb-3">Quick questions to customize your breakdown</h3>
-              <p className="text-sm text-purple-700 mb-4">
+            <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
+              <h3 className="font-medium text-purple-900 dark:text-purple-300 mb-3">Quick questions to customize your breakdown</h3>
+              <p className="text-sm text-purple-700 dark:text-purple-400 mb-4">
                 Answer these to get steps that work around your specific challenges.
               </p>
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Have you started this task yet?
                   </label>
                   <select
                     value={contextData.currentState}
                     onChange={(e) => setContextData({...contextData, currentState: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all focus:border-purple-500 focus:ring-purple-500"
                   >
                     <option value="">Select one...</option>
                     <option value="Not started yet">Not started yet</option>
@@ -482,13 +482,13 @@ Return JSON array only.`
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     What's your biggest challenge with this task?
                   </label>
                   <select
                     value={contextData.blockers}
                     onChange={(e) => setContextData({...contextData, blockers: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all focus:border-purple-500 focus:ring-purple-500"
                   >
                     <option value="">Select one...</option>
                     <option value="Don't know where to start">Don't know where to start</option>
@@ -502,24 +502,24 @@ Return JSON array only.`
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     When this task is done, what will you have?
                   </label>
-                  <p className="text-xs text-gray-600 mb-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                     For laundry: "Clean dry clothes" NOT "Clothes put away"
                   </p>
                   <textarea
                     value={contextData.specificGoal}
                     onChange={(e) => setContextData({...contextData, specificGoal: e.target.value})}
                     placeholder="Be specific: 'Laundry washed and dried', 'Room clean', 'Report written', 'Dishes washed', etc."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all focus:border-purple-500 focus:ring-purple-500"
                     rows={2}
                   />
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Max steps
                     </label>
                     <input
@@ -528,12 +528,12 @@ Return JSON array only.`
                       max="15"
                       value={preferences.maxSteps}
                       onChange={(e) => setPreferences(prev => ({ ...prev, maxSteps: parseInt(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Max duration (mins)
                     </label>
                     <input
@@ -543,7 +543,7 @@ Return JSON array only.`
                       step="10"
                       value={preferences.maxDuration}
                       onChange={(e) => setPreferences(prev => ({ ...prev, maxDuration: parseInt(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
                   
@@ -554,7 +554,7 @@ Return JSON array only.`
                     <select
                       value={preferences.complexity}
                       onChange={(e) => setPreferences(prev => ({ ...prev, complexity: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all focus:border-purple-500 focus:ring-purple-500"
                     >
                       <option value="simple">Simple</option>
                       <option value="moderate">Moderate</option>
@@ -571,7 +571,7 @@ Return JSON array only.`
                     value={contextData.environment}
                     onChange={(e) => setContextData({...contextData, environment: e.target.value})}
                     placeholder="Time limits, specific tools needed, other constraints..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-xl text-sm transition-all focus:border-purple-500 focus:ring-purple-500"
                     rows={2}
                   />
                 </div>
@@ -708,14 +708,14 @@ Return JSON array only.`
                             {option.type}
                           </span>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                            ${option.energyRequired === 'low' ? 'bg-yellow-100 text-yellow-800' :
-                              option.energyRequired === 'medium' ? 'bg-orange-100 text-orange-800' :
-                              'bg-red-100 text-red-800'}`}>
+                            ${option.energyRequired === 'low' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+                              option.energyRequired === 'medium' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' :
+                              'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'}`}>
                             {option.energyRequired} energy
                           </span>
                         </div>
                         {option.tips && (
-                          <div className="bg-blue-50 border-l-4 border-blue-300 p-3 rounded text-xs text-blue-900 mt-2">
+                          <div className="bg-purple-50 dark:bg-purple-900/20 border-l-4 border-purple-300 dark:border-purple-700 p-3 rounded-xl text-xs text-purple-900 dark:text-purple-300 mt-2">
                             <span className="font-semibold">Tip:</span> {option.tips}
                           </div>
                         )}

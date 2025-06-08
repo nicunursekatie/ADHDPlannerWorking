@@ -19,12 +19,20 @@ const WhatNowPage: React.FC = () => {
   };
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center bg-white rounded-lg shadow-sm p-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">What Now?</h1>
-          <p className="text-gray-600">Let's find the right task for you right now</p>
+      <div className="bg-gradient-to-r from-primary-50 via-white to-primary-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-primary-100 dark:border-gray-700 p-6 mb-6">
+        <div className="text-center">
+          <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-400 dark:to-primary-500 bg-clip-text text-transparent tracking-tight mb-2">
+            What should I work on?
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">
+            Let's find the perfect task for your current situation
+          </p>
+          <div className="flex items-center justify-center gap-2 mt-4 text-sm text-primary-600 dark:text-primary-400">
+            <span className="inline-block w-2 h-2 bg-primary-500 rounded-full animate-pulse"></span>
+            <span>AI-powered recommendations</span>
+          </div>
         </div>
       </div>
       

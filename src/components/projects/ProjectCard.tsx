@@ -25,26 +25,26 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
     : 0;
     
   return (
-    <div className="bg-white rounded-lg overflow-hidden border border-amber-200 transition-all hover:bg-amber-50 hover:border-amber-300">
+    <div className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md hover:scale-[1.02]">
       <div 
         className="h-2"
         style={{ backgroundColor: project.color }}
       ></div>
       <div className="p-4">
         <div className="flex justify-between items-start">
-          <h3 className="text-base font-medium text-gray-900">
+          <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">
             {project.name}
           </h3>
           <div className="flex gap-2">
             <button
               onClick={() => onEdit(project)}
-              className="p-2 text-amber-700 hover:text-amber-800 hover:bg-amber-100 rounded-lg transition-colors"
+              className="p-2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all hover:scale-110"
             >
               <Edit size={16} />
             </button>
             <button
               onClick={() => onDelete(project.id)}
-              className="p-2 text-amber-700 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+              className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all hover:scale-110"
             >
               <Trash size={16} />
             </button>
@@ -52,7 +52,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
         
         {project.description && (
-          <p className="mt-2 text-sm text-gray-800">
+          <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
             {project.description}
           </p>
         )}
@@ -61,13 +61,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           {/* Progress bar */}
           {taskCount > 0 && (
             <div className="mb-3">
-              <div className="flex justify-between text-xs text-amber-700 mb-1">
+              <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                 <span>{completedTaskCount} of {taskCount} completed</span>
                 <span>{completionPercentage}%</span>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                 <div 
-                  className="bg-amber-500 h-2 rounded-full transition-all duration-300"
+                  className="bg-purple-500 dark:bg-purple-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${completionPercentage}%` }}
                 />
               </div>
@@ -75,11 +75,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           )}
           
           <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-800">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
               {taskCount} task{taskCount !== 1 ? 's' : ''}
             </div>
             
-            <Link to={`/projects/${project.id}`} className="text-amber-600 hover:text-amber-700">
+            <Link to={`/projects/${project.id}`} className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-all hover:scale-110">
               <ArrowRight size={20} />
             </Link>
           </div>

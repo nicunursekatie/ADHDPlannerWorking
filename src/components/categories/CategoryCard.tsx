@@ -24,7 +24,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   };
   return (
     <div 
-      className="flex items-center justify-between p-4 rounded-xl shadow-sm border border-amber-200 bg-amber-50 hover:shadow-md hover:border-amber-300 transition-all cursor-pointer"
+      className="flex items-center justify-between p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition-all cursor-pointer hover:scale-[1.02]"
       onClick={handleCategoryClick}
     >
       <div className="flex items-center">
@@ -32,11 +32,11 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
           className="h-5 w-5 rounded-lg mr-3" 
           style={{ backgroundColor: category.color }}
         ></div>
-        <span className="font-medium text-amber-900">{category.name}</span>
+        <span className="font-medium text-gray-900 dark:text-gray-100">{category.name}</span>
       </div>
       
       <div className="flex items-center gap-4">
-        <span className="text-sm text-amber-700">
+        <span className="text-sm text-gray-600 dark:text-gray-400">
           {taskCount} task{taskCount !== 1 ? 's' : ''}
         </span>
         
@@ -46,7 +46,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
               e.stopPropagation();
               onEdit(category);
             }}
-            className="p-2 text-amber-700 hover:text-amber-800 hover:bg-amber-100 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-all hover:scale-110"
           >
             <Edit size={16} />
           </button>
@@ -55,7 +55,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
               e.stopPropagation();
               onDelete(category.id);
             }}
-            className="p-2 text-amber-700 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all hover:scale-110"
           >
             <Trash size={16} />
           </button>

@@ -11,7 +11,7 @@ interface EmptyProps {
 const Empty: React.FC<EmptyProps> = ({
   title,
   description,
-  icon = <InboxIcon className="mx-auto h-12 w-12 text-gray-600" />,
+  icon = <InboxIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />,
   action,
 }) => {
   const encouragements = [
@@ -25,11 +25,11 @@ const Empty: React.FC<EmptyProps> = ({
   
   return (
     <div className="text-center py-12">
-      <div className="inline-block mb-4">{icon}</div>
-      <h3 className="text-lg font-medium text-gray-100">{title}</h3>
-      {description && <p className="mt-2 text-sm text-gray-400">{description}</p>}
-      <p className="mt-3 text-sm text-gray-500">{randomEncouragement}</p>
-      {action && <div className="mt-6">{action}</div>}
+      <div className="inline-block mb-4 animate-bounce-slow">{icon}</div>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+      {description && <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{description}</p>}
+      <p className="mt-3 text-sm text-purple-600 dark:text-purple-400 font-medium animate-fadeIn">{randomEncouragement}</p>
+      {action && <div className="mt-6 animate-slideUp">{action}</div>}
     </div>
   );
 };

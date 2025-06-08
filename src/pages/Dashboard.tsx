@@ -15,7 +15,9 @@ import {
   AlertTriangle,
   Sparkles,
   Star,
-  TrendingUp
+  TrendingUp,
+  Compass,
+  Lightbulb
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContextSupabase';
 import Card from '../components/common/Card';
@@ -32,6 +34,8 @@ import {
 import { Task } from '../types';
 import { getIncompleteTasks } from '../utils/taskCompleteness';
 import { TaskDetailWizard } from '../components/tasks/TaskDetailWizard';
+import { getTimeContext, formatTimeRemaining, formatTimeOfDay, getUrgencyColor } from '../utils/timeAwareness';
+import { focusTracker } from '../utils/focusTracker';
 
 const Dashboard: React.FC = () => {
   const {
@@ -54,11 +58,29 @@ const Dashboard: React.FC = () => {
   const [showIncompleteWizard, setShowIncompleteWizard] = useState(false);
   const [currentIncompleteTaskId, setCurrentIncompleteTaskId] = useState<string | null>(null);
   const [recentlyReviewedTaskIds, setRecentlyReviewedTaskIds] = useState<Set<string>>(new Set());
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [showHyperfocusAlert, setShowHyperfocusAlert] = useState(false);
   
   // Check if weekly review is needed
   useEffect(() => {
     setShowWeeklyReviewReminder(needsWeeklyReview());
   }, [needsWeeklyReview]);
+
+  // Update current time every minute for time awareness
+  useEffect(() => {
+    focusTracker.initialize();
+    
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+      
+      // Check for hyperfocus alert
+      if (focusTracker.shouldSuggestBreak()) {
+        setShowHyperfocusAlert(true);
+      }
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Calculate task data (always run these hooks before early returns)
   const tasksDueToday = React.useMemo(() => getTasksDueToday(tasks), [tasks]);
@@ -75,6 +97,9 @@ const Dashboard: React.FC = () => {
   const completionRate = React.useMemo(() => {
     return tasks.length > 0 ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
   }, [tasks.length, completedTasks.length]);
+
+  // Time awareness context
+  const timeContext = React.useMemo(() => getTimeContext(tasks), [tasks, currentTime]);
   
   if (isLoading) {
     return (
@@ -134,127 +159,432 @@ const Dashboard: React.FC = () => {
   };
   
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary-50 via-white to-primary-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-primary-100 dark:border-gray-700 p-6 mb-6">
-        <div className="flex flex-col md:flex-row justify-between md:items-center">
-          <div className="flex items-center gap-6">
-            <div>
-              <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-400 dark:to-primary-500 bg-clip-text text-transparent tracking-tight">
-                Your Dashboard
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">Welcome back! Let's make today productive.</p>
+    <div className="min-h-screen space-y-4 animate-fadeIn">
+      {/* Enhanced Compact Header */}
+      <div className="relative overflow-hidden">
+        <Card 
+          variant="glass-purple" 
+          padding="md" 
+          gradient
+          className="border-0 shadow-purple-lg bg-gradient-to-r from-primary-500/90 via-primary-600/90 to-accent-500/90"
+        >
+          {/* Animated background sparkles when over 50% */}
+          {completionRate >= 50 && (
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-4 left-8 w-1 h-1 bg-white/60 rounded-full animate-pulse"></div>
+              <div className="absolute top-8 right-16 w-1.5 h-1.5 bg-accent-200/80 rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
+              <div className="absolute bottom-6 left-16 w-1 h-1 bg-white/40 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+              <div className="absolute bottom-4 right-8 w-0.5 h-0.5 bg-primary-200/60 rounded-full animate-ping" style={{ animationDelay: '1.5s' }}></div>
             </div>
-            {/* Progress Ring */}
-            <div className="hidden md:flex items-center gap-4">
-              <div className="relative w-20 h-20">
-                <svg className="w-20 h-20 transform -rotate-90">
+          )}
+          
+          <div className="flex items-center justify-between gap-6 relative z-10">
+            {/* Left side: Welcome + Progress + Stats */}
+            <div className="flex items-center gap-8 flex-1">
+              <div>
+                <h1 className="text-3xl font-display font-bold text-white tracking-tight mb-1">
+                  Your Dashboard
+                </h1>
+                <p className="text-white/80 font-medium">
+                  Ready to tackle today's goals?
+                </p>
+              </div>
+              
+              {/* Beautiful Progress Ring */}
+              <div className="relative w-20 h-20 flex-shrink-0 group">
+                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-accent-300/20 rounded-full group-hover:from-white/20 group-hover:to-accent-300/30 transition-all duration-500"></div>
+                <svg className="w-20 h-20 transform -rotate-90 relative z-10">
                   <circle 
-                    cx="40" cy="40" r="36" 
+                    cx="40" cy="40" r="32" 
                     stroke="currentColor" 
-                    strokeWidth="4" 
+                    strokeWidth="6" 
                     fill="none"
-                    className="text-gray-200 dark:text-gray-700"
+                    className="text-white/20"
                   />
                   <circle 
-                    cx="40" cy="40" r="36" 
-                    stroke="currentColor" 
-                    strokeWidth="4" 
+                    cx="40" cy="40" r="32" 
+                    stroke="url(#progressGradient)" 
+                    strokeWidth="6" 
                     fill="none"
-                    strokeDasharray={`${2 * Math.PI * 36}`}
-                    strokeDashoffset={`${2 * Math.PI * 36 * (1 - completionRate / 100)}`}
-                    className="text-success-500 dark:text-success-400 transition-all duration-500"
+                    strokeDasharray={`${2 * Math.PI * 32}`}
+                    strokeDashoffset={`${2 * Math.PI * 32 * (1 - completionRate / 100)}`}
+                    className="transition-all duration-1000 ease-out"
+                    strokeLinecap="round"
                   />
                 </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{completionRate}%</span>
+                <defs>
+                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="50%" stopColor="#06b6d4" />
+                    <stop offset="100%" stopColor="#ffffff" />
+                  </linearGradient>
+                </defs>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-black text-white animate-number-ticker">{completionRate}%</span>
+                  <span className="text-xs text-white/60 font-semibold uppercase tracking-wider">Progress</span>
                 </div>
               </div>
-              <div className="text-sm">
-                <div className="font-semibold text-gray-800 dark:text-gray-200">Daily Progress</div>
-                <div className="text-gray-600 dark:text-gray-400">{completedTasks.length}/{tasks.length} tasks</div>
+
+              {/* Time Awareness + Task Stats */}
+              <div className="flex flex-col gap-2">
+                {/* Next Deadline Alert */}
+                {timeContext.nextDeadline && timeContext.nextDeadline.minutesUntil < 240 && (
+                  <div className={`px-3 py-1 rounded-full text-xs font-bold ${getUrgencyColor(timeContext.nextDeadline.urgency)} backdrop-blur-sm`}>
+                    {timeContext.nextDeadline.urgency === 'critical' ? '🚨 ' : timeContext.nextDeadline.urgency === 'urgent' ? '⚠️ ' : '⏰ '}
+                    {timeContext.nextDeadline.task.title} in {formatTimeRemaining(timeContext.nextDeadline.minutesUntil)}
+                  </div>
+                )}
+                
+                {/* Time Context */}
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-cyan-300 rounded-full shadow-sm"></div>
+                    <span className="text-white/90 font-semibold text-sm">
+                      {timeContext.productiveHoursRemaining.toFixed(1)}h productive time left
+                      {timeContext.isUsingNextDay ? 
+                        <span className="text-cyan-200 ml-1">(tomorrow)</span> : ''
+                      }
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-success-300 rounded-full shadow-sm"></div>
+                    <span className="text-white/90 font-semibold text-sm">{completedTasks.length} completed today</span>
+                  </div>
+                </div>
+                
+                {/* Day Progress Bar */}
+                <div className="w-full bg-white/20 rounded-full h-2 mt-1">
+                  <div 
+                    className="bg-gradient-to-r from-cyan-400 to-blue-400 h-2 rounded-full transition-all duration-1000"
+                    style={{ width: `${timeContext.dayProgress * 100}%` }}
+                  ></div>
+                </div>
+                <span className="text-white/70 text-xs">
+                  {formatTimeOfDay(timeContext.currentTime)} • Day {Math.round(timeContext.dayProgress * 100)}% complete
+                </span>
               </div>
             </div>
-          </div>
-          <div className="mt-4 md:mt-0 flex gap-3">
-            <Button
-              variant="primary"
-              icon={<Plus size={18} />}
-              onClick={() => handleOpenTaskModal()}
-              className="shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+
+            {/* Prominent Help Button */}
+            <Link 
+              to="/what-now" 
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3 group"
             >
-              New Task
-            </Button>
-            <Link to="/what-now">
-              <Button
-                variant="outline"
-                icon={<HelpCircle size={18} />}
-                className="hover:bg-primary-50 dark:hover:bg-primary-900/20"
-              >
-                What Now?
-              </Button>
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Compass className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+              <div>
+                <div className="text-sm font-bold">Help me choose</div>
+                <div className="text-xs text-white/70">AI recommendations</div>
+              </div>
             </Link>
           </div>
-        </div>
+        </Card>
       </div>
       
-      {/* Quick Task Input */}
-      <div className="mb-6 animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
-        <QuickCapture
-          placeholder="Quick add: Try '!today Buy groceries' or '!high Finish project report'"
-        />
-      </div>
+      {/* PRIORITY #1: Due Today */}
+      <Card
+        title={
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-danger-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Clock className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-display font-bold text-xl">Due Today</span>
+            </div>
+            
+            {/* Time Reality Warning */}
+            {(tasksDueToday.length > 0 || overdueTasks.length > 0) && (
+              <div className="text-sm text-orange-600 font-medium">
+                {(() => {
+                  const totalTasks = tasksDueToday.length + overdueTasks.length;
+                  const estimatedHours = totalTasks * 0.5; // Rough estimate
+                  const hoursLeft = timeContext.productiveHoursRemaining;
+                  
+                  if (estimatedHours > hoursLeft) {
+                    return (
+                      <div className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
+                        ⚠️ {estimatedHours.toFixed(1)}h of work, only {hoursLeft.toFixed(1)}h left
+                      </div>
+                    );
+                  } else if (estimatedHours > hoursLeft * 0.8) {
+                    return (
+                      <div className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">
+                        ⏱️ Tight schedule: {estimatedHours.toFixed(1)}h planned
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                        ✅ Manageable: {estimatedHours.toFixed(1)}h planned
+                      </div>
+                    );
+                  }
+                })()}
+              </div>
+            )}
+          </div>
+        }
+        padding="md"
+        className="shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-orange-200/60 bg-gradient-to-r from-orange-50/80 to-red-50/80 backdrop-blur-xl"
+        headerAction={
+          <Link 
+            to="/tasks"
+            className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group"
+          >
+            View All
+            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
+        }
+      >
+        <div className="space-y-3 max-h-60 overflow-y-auto overflow-x-visible pr-2 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
+          {/* Show overdue tasks first with red accent */}
+          {overdueTasks.slice(0, 2).map((task, index) => (
+            <div key={task.id} className="animate-fadeIn border-l-4 border-red-500 pl-2 bg-red-50/50 rounded-r-xl" style={{ animationDelay: `${index * 0.1}s` }}>
+              <TaskDisplay
+                task={task}
+                onToggle={() => updateTask({ ...task, completed: !task.completed })}
+                onEdit={() => handleOpenTaskModal(task)}
+                onDelete={() => deleteTask(task.id)}
+              />
+            </div>
+          ))}
+          
+          {/* Then show tasks due today */}
+          {tasksDueToday.slice(0, 3).map((task, index) => (
+            <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${(overdueTasks.length + index) * 0.1}s` }}>
+              <TaskDisplay
+                task={task}
+                onToggle={() => updateTask({ ...task, completed: !task.completed })}
+                onEdit={() => handleOpenTaskModal(task)}
+                onDelete={() => deleteTask(task.id)}
+              />
+            </div>
+          ))}
+          
+          {tasksDueToday.length === 0 && overdueTasks.length === 0 && (
+            <div className="text-center py-12 text-success-600 dark:text-success-400">
+              <div className="w-20 h-20 bg-gradient-to-r from-success-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-10 h-10 text-success-600" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Nothing due today! 🎉</h3>
+              <p className="text-success-500">You're ahead of the game. Time to relax or get ahead on tomorrow!</p>
+            </div>
+          )}
+          
+          {tasksDueToday.length === 0 && overdueTasks.length > 0 && (
+            <div className="text-center py-8 text-orange-600 dark:text-orange-400">
+              <div className="w-16 h-16 bg-gradient-to-r from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">No new tasks today, but you have overdue items above!</h3>
+              <p className="text-orange-500">Focus on catching up first, then you'll be free! 💪</p>
+            </div>
+          )}
+        </div>
+      </Card>
 
-      {/* Alerts Section */}
-      <div className="space-y-4">
-        {/* Weekly Review Reminder */}
-        {showWeeklyReviewReminder && (
-          <Card className="mb-6 bg-gradient-to-r from-warning-50 to-warning-100 dark:from-warning-900/30 dark:to-warning-800/30 border-2 border-warning-300 dark:border-warning-700 shadow-lg animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
-            <div className="p-6">
-              <div className="flex items-start">
-                <div className="flex-shrink-0 animate-pulse-gentle">
-                  <AlertTriangle className="h-6 w-6 text-warning-600 dark:text-warning-400" />
-                </div>
-                <div className="ml-4 flex-1">
-                  <h3 className="text-xl font-bold text-warning-900 dark:text-warning-100">Time for your weekly review!</h3>
-                  <p className="mt-2 text-warning-800 dark:text-warning-200">
-                    Regular reviews help you stay on track and adjust your approach. It only takes a few minutes!
-                  </p>
-                  <div className="mt-4">
-                    <Link to="/weekly-review">
-                      <Button
-                        variant="primary"
-                        className="bg-warning-600 hover:bg-warning-700 dark:bg-warning-500 dark:hover:bg-warning-600 shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-                        icon={<RefreshCw size={16} />}
-                      >
-                        Start Weekly Review
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
+      {/* PRIORITY #2: Quick Capture - Compact */}
+      <Card variant="glass" padding="sm" className="border border-white/20 shadow-md backdrop-blur-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-r from-accent-500 to-primary-500 rounded-xl flex items-center justify-center shadow-md">
+            <BrainCircuit className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex-1">
+            <QuickCapture
+              placeholder="Quick capture: '!today Buy groceries' or just 'Call mom'"
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* PRIORITY #3: Coming Up This Week */}
+      <Card
+        title={
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-accent-500 to-accent-600 rounded-xl flex items-center justify-center shadow-md">
+              <Calendar className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-display font-bold text-lg">Coming Up This Week</span>
+          </div>
+        }
+        padding="md"
+        className="shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-xl"
+        headerAction={
+          <Link 
+            to="/tasks"
+            className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group"
+          >
+            View All
+            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
+        }
+      >
+        <div className="space-y-3 max-h-60 overflow-y-auto overflow-x-visible pr-2 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
+          {tasksDueThisWeek.filter(task => !tasksDueToday.some(t => t.id === task.id)).slice(0, 3).map((task, index) => (
+            <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
+              <TaskDisplay
+                task={task}
+                onToggle={() => updateTask({ ...task, completed: !task.completed })}
+                onEdit={() => handleOpenTaskModal(task)}
+                onDelete={() => deleteTask(task.id)}
+              />
+            </div>
+          ))}
+          
+          {tasksDueThisWeek.filter(task => !tasksDueToday.some(t => t.id === task.id)).length === 0 && (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>No upcoming tasks this week</p>
+              <p className="text-sm mt-1">Time to plan ahead! 📅</p>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Hyperfocus Alert */}
+      {showHyperfocusAlert && (
+        <div className="bg-gradient-to-r from-purple-500/15 to-pink-500/15 border-2 border-purple-400/40 rounded-2xl p-4 flex items-center justify-between shadow-lg backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg animate-pulse">
+              <BrainCircuit className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-text-primary">Hyperfocus alert! Remember to eat! 🍎</h3>
+              <p className="text-sm text-text-secondary">You've been focused for 2+ hours. Time for a break!</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                focusTracker.endFocus();
+                setShowHyperfocusAlert(false);
+              }}
+              className="bg-purple-500 hover:bg-purple-600 px-4 py-2 rounded-xl text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            >
+              Take Break
+            </button>
+            <button
+              onClick={() => setShowHyperfocusAlert(false)}
+              className="bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded-xl text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            >
+              Keep Going
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* PRIORITY #4: Weekly Review Banner */}
+      {showWeeklyReviewReminder && (
+        <div className="bg-gradient-to-r from-warning-500/15 to-danger-500/15 border-2 border-warning-400/40 rounded-2xl p-4 flex items-center justify-between shadow-lg backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gradient-to-r from-warning-500 to-danger-500 rounded-xl flex items-center justify-center shadow-lg animate-pulse-gentle">
+              <AlertTriangle className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-text-primary">Weekly review due</h3>
+              <p className="text-sm text-text-secondary">Stay on track with a quick review</p>
+            </div>
+          </div>
+          <Link 
+            to="/weekly-review"
+            className="bg-gradient-to-r from-warning-500 to-danger-500 hover:from-warning-600 hover:to-danger-600 px-4 py-2 rounded-xl text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Start Review
+          </Link>
+        </div>
+      )}
+      
+      {/* Tools & Navigation */}
+      <div className="animate-slideInUp stagger-3">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h2 className="text-4xl font-display font-bold text-text-primary mb-2">Quick Tools</h2>
+            <p className="text-text-tertiary">Your ADHD-friendly productivity arsenal</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-white/80 hover:bg-white border border-gray-200 hover:border-primary-200 rounded-2xl px-6 py-3 text-text-secondary hover:text-text-primary transition-all duration-300 hover:-translate-y-1 flex items-center gap-2 shadow-sm hover:shadow-md"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="font-semibold">Refresh</span>
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          {/* Memory & Planning Tools */}
+          <Card variant="glass-purple" className="group w-full">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 bg-gradient-to-r from-primary-500 to-accent-500 rounded-3xl flex items-center justify-center">
+                <BrainCircuit className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-display font-bold text-text-primary">Memory & Planning</h3>
+                <p className="text-text-tertiary">Tools for your ADHD brain</p>
               </div>
             </div>
-          </Card>
-        )}
-        
-        {/* Incomplete Tasks Indicator */}
-        {tasksWithMissingDetails.length > 0 && (
-          <Card className="mb-6 bg-gradient-to-r from-focus-50 to-focus-100 dark:from-focus-900/30 dark:to-focus-800/30 border-2 border-focus-300 dark:border-focus-700 shadow-lg animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 animate-float">
-                    <Sparkles className="h-6 w-6 text-focus-600 dark:text-focus-400" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-xl font-bold text-focus-900 dark:text-focus-100">
-                      {tasksWithMissingDetails.length} task{tasksWithMissingDetails.length > 1 ? 's need' : ' needs'} more details
-                    </h3>
-                    <p className="mt-1 text-focus-700 dark:text-focus-300">
-                      Adding details helps your ADHD brain tackle tasks more easily
-                    </p>
+            
+            <div className="space-y-4">
+              <Link to="/brain-dump" className="block group/item">
+                <div className="bg-gradient-to-r from-warning-500/10 to-warning-600/10 border border-warning-400/20 rounded-2xl p-6 hover:bg-gradient-to-r hover:from-warning-500/20 hover:to-warning-600/20 transition-all duration-300 hover:-translate-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-warning-500/20 rounded-xl flex items-center justify-center">
+                        <BrainCircuit className="w-5 h-5 text-warning-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-text-primary text-lg">Brain Dump</h4>
+                        <p className="text-text-tertiary text-sm">Clear your mental clutter</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-warning-400 group-hover/item:translate-x-1 transition-transform duration-300" />
                   </div>
                 </div>
+              </Link>
+
+              <Link to="/weekly-review" className="block group/item">
+                <div className={`bg-gradient-to-r from-primary-500/10 to-accent-500/10 border border-primary-400/20 rounded-2xl p-6 hover:bg-gradient-to-r hover:from-primary-500/20 hover:to-accent-500/20 transition-all duration-300 hover:-translate-y-1 ${showWeeklyReviewReminder ? 'ring-2 ring-warning-400/50' : ''}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-primary-500/20 rounded-xl flex items-center justify-center">
+                        <RefreshCw className={`w-5 h-5 text-primary-400 ${showWeeklyReviewReminder ? 'animate-pulse' : ''}`} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-text-primary text-lg">Weekly Review</h4>
+                          {showWeeklyReviewReminder && (
+                            <span className="px-2 py-1 bg-warning-500 text-white text-xs rounded-full font-bold">Due</span>
+                          )}
+                        </div>
+                        <p className="text-text-tertiary text-sm">Reflect and adjust</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-primary-400 group-hover/item:translate-x-1 transition-transform duration-300" />
+                  </div>
+                </div>
+              </Link>
+
+              <Link to="/accountability" className="block group/item">
+                <div className="bg-gradient-to-r from-success-500/10 to-success-600/10 border border-success-400/20 rounded-2xl p-6 hover:bg-gradient-to-r hover:from-success-500/20 hover:to-success-600/20 transition-all duration-300 hover:-translate-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-success-500/20 rounded-xl flex items-center justify-center">
+                        <ListChecks className="w-5 h-5 text-success-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-text-primary text-lg">Accountability</h4>
+                        <p className="text-text-tertiary text-sm">Stay on track</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-success-400 group-hover/item:translate-x-1 transition-transform duration-300" />
+                  </div>
+                </div>
+              </Link>
+            </div>
+            
+            {tasksWithMissingDetails.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-white/10">
                 <button
                   onClick={() => {
                     if (tasksWithMissingDetails.length > 0) {
@@ -262,81 +592,18 @@ const Dashboard: React.FC = () => {
                       setShowIncompleteWizard(true);
                     }
                   }}
-                  className="px-5 py-2.5 bg-focus-600 hover:bg-focus-700 dark:bg-focus-500 dark:hover:bg-focus-600 text-white rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 font-medium"
+                  className="flex items-center gap-3 text-text-tertiary hover:text-text-secondary transition-colors duration-300 group/tip"
                 >
-                  Review Tasks
+                  <Sparkles className="w-4 h-4" />
+                  <span className="text-sm">Optional: Add details to {tasksWithMissingDetails.length} task{tasksWithMissingDetails.length > 1 ? 's' : ''}</span>
+                  <ArrowRight className="w-3 h-3 group-hover/tip:translate-x-0.5 transition-transform duration-300" />
                 </button>
               </div>
-            </div>
-          </Card>
-        )}
-      </div>
-      
-      {/* Memory Tools Section */}
-      <div className="mb-6 animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-display font-semibold text-gray-900 dark:text-gray-100">Quick Tools</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<RefreshCw size={16} />}
-            onClick={() => window.location.reload()}
-            className="hover:bg-primary-50 dark:hover:bg-primary-900/20"
-          >
-            Refresh
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Quick links to memory tools */}
-          <Card className="lg:col-span-1 shadow-md hover:shadow-lg transition-shadow duration-200">
-            <div className="p-5">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Memory & Planning</h3>
-              <div className="space-y-3">
-                <Link to="/brain-dump">
-                  <div className="group p-4 bg-gradient-to-r from-warning-50 to-warning-100 dark:from-warning-900/30 dark:to-warning-800/30 rounded-xl hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-between">
-                    <div className="flex items-center">
-                      <BrainCircuit className="w-5 h-5 text-warning-600 dark:text-warning-400 mr-3 group-hover:animate-wiggle" />
-                      <span className="font-medium text-warning-900 dark:text-warning-100">Brain Dump</span>
-                    </div>
-                    <ArrowRight size={16} className="text-warning-600 dark:text-warning-400 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </Link>
-
-                <Link to="/weekly-review">
-                  <div className={`group p-4 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 rounded-xl hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-between ${showWeeklyReviewReminder ? 'ring-2 ring-warning-400 dark:ring-warning-600' : ''}`}>
-                    <div className="flex items-center">
-                      <RefreshCw className={`w-5 h-5 text-primary-600 dark:text-primary-400 mr-3 ${showWeeklyReviewReminder ? 'animate-pulse' : ''}`} />
-                      <span className="font-medium text-primary-900 dark:text-primary-100">Weekly Review</span>
-                      {showWeeklyReviewReminder && (
-                        <span className="ml-2 px-2 py-0.5 bg-warning-400 dark:bg-warning-600 text-warning-900 dark:text-warning-100 text-xs rounded-full font-semibold">Due</span>
-                      )}
-                    </div>
-                    <ArrowRight size={16} className="text-primary-600 dark:text-primary-400 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </Link>
-
-                <Link to="/accountability">
-                  <div className="group p-4 bg-gradient-to-r from-success-50 to-success-100 dark:from-success-900/30 dark:to-success-800/30 rounded-xl hover:shadow-md transition-all duration-200 cursor-pointer flex items-center justify-between">
-                    <div className="flex items-center">
-                      <ListChecks className="w-5 h-5 text-success-600 dark:text-success-400 mr-3" />
-                      <span className="font-medium text-success-900 dark:text-success-100">Accountability</span>
-                    </div>
-                    <ArrowRight size={16} className="text-success-600 dark:text-success-400 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </Link>
-
-                <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl mt-3">
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                    <span className="font-medium">Pro tip:</span> Use these tools when feeling overwhelmed or stuck!
-                  </p>
-                </div>
-              </div>
-            </div>
+            )}
           </Card>
 
           {/* Mini Brain Dump Widget */}
-          <Card className="lg:col-span-2 overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200">
+          <Card className="w-full overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200">
             <div className="p-4 bg-gradient-to-r from-warning-100 to-warning-50 dark:from-warning-900/40 dark:to-warning-800/30 border-b border-warning-200 dark:border-warning-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -348,7 +615,7 @@ const Dashboard: React.FC = () => {
                   className="text-sm text-warning-600 dark:text-warning-400 hover:text-warning-700 dark:hover:text-warning-300 flex items-center group"
                 >
                   Full Brain Dump
-                  <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>
@@ -358,10 +625,10 @@ const Dashboard: React.FC = () => {
                   💭 Got something on your mind? Capture it before it disappears!
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
-                  className="flex-1 rounded-xl bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2.5"
+                  className="flex-1 w-full rounded-xl bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2.5"
                   placeholder="Type your thought and press Enter..."
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && e.currentTarget.value.trim()) {
@@ -373,7 +640,7 @@ const Dashboard: React.FC = () => {
                 <Button
                   onClick={() => handleOpenTaskModal()}
                   icon={<Plus size={18} />}
-                  className="shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                  className="w-full sm:w-auto shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                 >
                   Add Task
                 </Button>
@@ -383,160 +650,32 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Overdue Section - High Priority at Top */}
-      {overdueTasks.length > 0 && (
+      {/* Secondary task sections - below the fold */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-hidden space-y-0">
+        {/* Recently Added and Projects */}
         <Card
           title={
-            <span className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-danger-500 animate-pulse" />
-              Overdue Tasks
-            </span>
-          }
-          className="border-l-4 border-danger-500 dark:border-danger-400 mb-6 shadow-lg animate-fadeInUp"
-          style={{ animationDelay: '0.5s' }}
-          headerAction={
-            <Link 
-              to="/tasks"
-              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center group"
-            >
-              View All
-              <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          }
-        >
-          <div className="space-y-3">
-            {overdueTasks.slice(0, 2).map((task, index) => (
-              <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
-                <TaskDisplay
-                  task={task}
-                  onToggle={() => updateTask({ ...task, completed: !task.completed })}
-                  onEdit={() => handleOpenTaskModal(task)}
-                  onDelete={() => deleteTask(task.id)}
-                />
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
-            ))}
-            
-            {overdueTasks.length > 2 && (
-              <div className="pt-2">
-                <Link 
-                  to="/tasks?tab=overdue"
-                  className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center justify-center group"
-                >
-                  View all {overdueTasks.length} overdue tasks
-                  <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-            )}
-          </div>
-        </Card>
-      )}
-      
-      {/* Main task sections - more compact layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Due Today and Coming Up This Week in first row */}
-        <Card
-          title={
-            <span className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-              Due Today
-            </span>
+              <span className="font-display font-bold text-lg">Recently Added</span>
+            </div>
           }
-          className="shadow-md hover:shadow-lg transition-shadow duration-200 animate-fadeInUp"
-          style={{ animationDelay: '0.6s' }}
-          headerAction={
-            <Link 
-              to="/tasks"
-              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center group"
-            >
-              View All
-              <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          }
-        >
-          <div className="space-y-3 max-h-72 overflow-y-auto pr-2">
-            {tasksDueToday.slice(0, 3).map((task, index) => (
-              <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
-                <TaskDisplay
-                  task={task}
-                  onToggle={() => updateTask({ ...task, completed: !task.completed })}
-                  onEdit={() => handleOpenTaskModal(task)}
-                  onDelete={() => deleteTask(task.id)}
-                />
-              </div>
-            ))}
-            
-            {tasksDueToday.length === 0 && (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <Clock className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>No tasks due today</p>
-                <p className="text-sm mt-1">Enjoy your free time! 🎉</p>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        <Card
-          title={
-            <span className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-              Coming Up This Week
-            </span>
-          }
-          className="shadow-md hover:shadow-lg transition-shadow duration-200 animate-fadeInUp"
-          style={{ animationDelay: '0.7s' }}
-          headerAction={
-            <Link 
-              to="/tasks"
-              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center group"
-            >
-              View All
-              <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          }
-        >
-          <div className="space-y-3 max-h-72 overflow-y-auto pr-2">
-            {tasksDueThisWeek.filter(task => !tasksDueToday.some(t => t.id === task.id)).slice(0, 3).map((task, index) => (
-              <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
-                <TaskDisplay
-                  task={task}
-                  onToggle={() => updateTask({ ...task, completed: !task.completed })}
-                  onEdit={() => handleOpenTaskModal(task)}
-                  onDelete={() => deleteTask(task.id)}
-                />
-              </div>
-            ))}
-            
-            {tasksDueThisWeek.filter(task => !tasksDueToday.some(t => t.id === task.id)).length === 0 && (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>No upcoming tasks this week</p>
-                <p className="text-sm mt-1">Time to plan ahead! 📅</p>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Recently Added and Projects in second row */}
-        <Card
-          title={
-            <span className="flex items-center gap-2">
-              <Plus className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-              Recently Added
-            </span>
-          }
-          className="shadow-md hover:shadow-lg transition-shadow duration-200 animate-fadeInUp"
+          padding="md"
+          className="shadow-lg hover:shadow-xl transition-all duration-300 animate-fadeInUp border border-white/20 backdrop-blur-xl"
           style={{ animationDelay: '0.8s' }}
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center group"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group"
             >
               View All
-              <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           }
         >
-          <div className="space-y-3 max-h-72 overflow-y-auto pr-2">
+          <div className="space-y-3 max-h-60 overflow-y-auto overflow-x-visible pr-2 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
             {incompleteTasks
               .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
               .slice(0, 3)
@@ -564,24 +703,27 @@ const Dashboard: React.FC = () => {
         
         <Card
           title={
-            <span className="flex items-center gap-2">
-              <Folder className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-              Projects
-            </span>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+                <Folder className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-display font-bold text-lg">Projects</span>
+            </div>
           }
-          className="shadow-md hover:shadow-lg transition-shadow duration-200 animate-fadeInUp"
+          padding="md"
+          className="shadow-lg hover:shadow-xl transition-all duration-300 animate-fadeInUp border border-white/20 backdrop-blur-xl"
           style={{ animationDelay: '0.9s' }}
           headerAction={
             <Link 
               to="/projects"
-              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center group"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group"
             >
               View All
-              <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           }
         >
-          <div className="space-y-3 max-h-72 overflow-y-auto pr-2">
+          <div className="space-y-3 max-h-60 overflow-y-auto overflow-x-visible pr-2 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
             {projects.slice(0, 4).map((project, index) => {
               const projectTasks = tasks.filter(
                 task => task.projectId === project.id && !task.completed
@@ -624,7 +766,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 gap-6 animate-fadeInUp" style={{ animationDelay: '1s' }}>
+      <div className="animate-fadeInUp" style={{ animationDelay: '1s' }}>
         <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
           <div className="p-6">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
@@ -659,24 +801,26 @@ const Dashboard: React.FC = () => {
       {completedTasks.length > 0 && (
         <Card
           title={
-            <span className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-success-600 dark:text-success-400" />
-              Recently Completed
-            </span>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-success-500 to-success-600 rounded-xl flex items-center justify-center shadow-md">
+                <CheckCircle2 className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-display font-bold text-lg">Recently Completed</span>
+            </div>
           }
           className="border-l-4 border-success-500 dark:border-success-400 mt-6 shadow-md hover:shadow-lg transition-shadow duration-200 animate-fadeInUp"
           style={{ animationDelay: '1.1s' }}
           headerAction={
             <Link 
               to="/tasks"
-              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center group"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group"
             >
               View All
-              <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           }
         >
-          <div className="space-y-3 max-h-72 overflow-y-auto pr-2">
+          <div className="space-y-3 max-h-60 overflow-y-auto overflow-x-visible pr-2 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
             {completedTasks
               .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
               .slice(0, 3)

@@ -114,14 +114,14 @@ const TaskPlanningBoard: React.FC<TaskPlanningBoardProps> = ({
         <div className={`flex items-center p-2 ${color} rounded-t-lg`}>
           <div className="flex items-center">
             {icon}
-            <h3 className="font-bold text-gray-700 ml-2">{title}</h3>
+            <h3 className="font-bold text-gray-700 dark:text-gray-300 ml-2">{title}</h3>
           </div>
-          <div className="ml-2 bg-white rounded-full px-2 py-0.5 text-xs font-medium text-gray-700">
+          <div className="ml-2 bg-white dark:bg-gray-800 rounded-full px-2 py-0.5 text-xs font-medium text-gray-700 dark:text-gray-300">
             {tasks.length}
           </div>
         </div>
         
-        <div className="flex-grow bg-gray-50 rounded-b-lg p-2 overflow-y-auto space-y-2" style={{ minHeight: '300px' }}>
+        <div className="flex-grow bg-gray-50 dark:bg-gray-800 rounded-b-xl p-2 overflow-y-auto space-y-2" style={{ minHeight: '300px' }}>
           {tasks.length === 0 ? (
             <div className="h-full flex items-center justify-center text-gray-400 text-sm">
               No tasks
@@ -178,7 +178,7 @@ const TaskPlanningBoard: React.FC<TaskPlanningBoardProps> = ({
                   
                   {columnType === 'ready' && (
                     <button 
-                      className="p-1 bg-yellow-100 rounded hover:bg-yellow-200"
+                      className="p-1 bg-blue-100 dark:bg-blue-900/20 rounded-xl hover:bg-blue-200 dark:hover:bg-blue-900/40 transition-all hover:scale-105"
                       onClick={() => handleMoveTask(task, 'inProgress')}
                       title="Start Work"
                     >
@@ -264,10 +264,10 @@ const TaskPlanningBoard: React.FC<TaskPlanningBoardProps> = ({
           
           {renderTaskColumn(
             'In Progress', 
-            <Clock size={18} className="text-yellow-600" />, 
+            <Clock size={18} className="text-blue-600 dark:text-blue-400" />, 
             inProgressTasks, 
             'inProgress',
-            'bg-yellow-100'
+            'bg-blue-100 dark:bg-blue-900/20'
           )}
           
           {renderTaskColumn(
@@ -366,7 +366,7 @@ const TaskPlanningBoard: React.FC<TaskPlanningBoardProps> = ({
           
           <div className="bg-white rounded-lg shadow p-4">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-              <Clock size={18} className="text-yellow-600 mr-2" />
+              <Clock size={18} className="text-blue-600 dark:text-blue-400 mr-2" />
               In Progress
             </h3>
             <div className="space-y-2">

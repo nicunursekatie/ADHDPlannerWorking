@@ -55,10 +55,10 @@ const HeaderWithAuth: React.FC = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center group">
-              <div className="p-2 bg-amber-500 rounded-lg shadow-sm group-hover:bg-amber-600 transition-colors">
+              <div className="p-2 bg-purple-600 dark:bg-purple-700 rounded-xl shadow-sm group-hover:bg-purple-700 dark:group-hover:bg-purple-600 transition-all hover:scale-105">
                 <ClipboardList className="h-5 w-5 text-white" />
               </div>
-              <span className="ml-3 text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+              <span className="ml-3 text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                 ADHD Planner
               </span>
             </Link>
@@ -70,10 +70,10 @@ const HeaderWithAuth: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 hover:scale-105 ${
                   isActive(item.path)
-                    ? 'bg-amber-50 dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-amber-50 dark:hover:bg-gray-800/50'
+                    ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/20'
                 }`}
               >
                 {item.icon}
@@ -94,25 +94,17 @@ const HeaderWithAuth: React.FC = () => {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 shadow-sm dark:shadow-none border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50"
+              className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 hover:scale-105 shadow-sm dark:shadow-none border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50"
               aria-label="Toggle theme"
             >
               {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             </button>
             
-            {/* What Now Button */}
-            <Link
-              to="/what-now"
-              className="hidden md:inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg shadow-sm text-white bg-amber-500 hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 border border-transparent transition-all duration-200"
-            >
-              <HelpCircle size={16} className="mr-1.5" />
-              What Now?
-            </Link>
             
             {/* Sign Out Button */}
             <button
               onClick={handleSignOut}
-              className="hidden md:inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
+              className="hidden md:inline-flex items-center px-3 py-2 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 hover:scale-105"
               aria-label="Sign out"
             >
               <LogOut size={16} className="mr-1.5" />
@@ -124,7 +116,7 @@ const HeaderWithAuth: React.FC = () => {
           <div className="md:hidden">
             <button
               onClick={toggleMobileMenu}
-              className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 dark:text-gray-400 hover:text-gray-500 dark:hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-500 transition-all duration-200"
+              className="inline-flex items-center justify-center p-2 rounded-xl text-gray-400 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all duration-200 hover:scale-105"
             >
               <span className="sr-only">Open main menu</span>
               {isMobileMenuOpen ? (
@@ -157,8 +149,8 @@ const HeaderWithAuth: React.FC = () => {
               to={item.path}
               className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
                 isActive(item.path)
-                  ? 'bg-amber-50 dark:bg-gray-800 border-amber-500 text-amber-600 dark:text-amber-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-gray-800 hover:border-amber-300 dark:hover:border-amber-500 hover:text-gray-900 dark:hover:text-gray-200'
+                  ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-500 dark:border-purple-600 text-purple-600 dark:text-purple-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-500 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -169,16 +161,6 @@ const HeaderWithAuth: React.FC = () => {
             </Link>
           ))}
           
-          <Link
-            to="/what-now"
-            className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-800 hover:border-amber-300 transition-all duration-200"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            <div className="flex items-center">
-              <HelpCircle size={18} />
-              <span className="ml-2">What Now?</span>
-            </div>
-          </Link>
           
           {/* Mobile Theme Toggle */}
           <button

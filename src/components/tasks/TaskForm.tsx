@@ -138,7 +138,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Task Title <span className="text-red-500">*</span>
         </label>
         <input
@@ -147,8 +147,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
           name="title"
           value={formData.title || ''}
           onChange={handleChange}
-          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
-            errors.title ? 'border-red-500' : ''
+          className={`mt-1 block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all sm:text-sm ${
+            errors.title ? 'border-red-500 dark:border-red-400' : ''
           }`}
           placeholder="Enter task title"
           autoFocus
@@ -159,7 +159,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Description
         </label>
         <textarea
@@ -168,7 +168,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           rows={3}
           value={formData.description || ''}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all sm:text-sm"
           placeholder="Add details about this task"
         />
       </div>
@@ -176,34 +176,34 @@ const TaskForm: React.FC<TaskFormProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Due Date */}
         <div>
-          <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Due Date
           </label>
           <div className="flex items-center">
-            <Calendar size={18} className="text-gray-400 mr-2" />
+            <Calendar size={18} className="text-purple-400 dark:text-purple-500 mr-2" />
             <input
               type="date"
               id="dueDate"
               name="dueDate"
               value={formData.dueDate || ''}
               onChange={handleChange}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all sm:text-sm"
             />
           </div>
         </div>
         {/* Project */}
         <div>
-          <label htmlFor="project" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="project" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Project
           </label>
           <div className="flex items-center">
-            <Folder size={18} className="text-gray-400 mr-2" />
+            <Folder size={18} className="text-purple-400 dark:text-purple-500 mr-2" />
             <select
               id="project"
               name="project"
               value={formData.projectId || ''}
               onChange={handleProjectChange}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all sm:text-sm"
             >
               <option value="">No Project</option>
               {projects.map(project => (
@@ -218,7 +218,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
       {/* Repeat/Recurrence Button Group */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Repeat</label>
         <div className="flex space-x-2">
           {[
             { label: 'None', value: 'none' },
@@ -236,10 +236,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
                 recurrencePattern: option.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
                 recurrenceInterval: option.value === 'custom' ? 1 : undefined,
               }))}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors focus:outline-none ${
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-all hover:scale-105 focus:outline-none ${
                 (formData.recurrencePattern || 'none') === option.value
-                  ? 'bg-amber-500 text-white border-amber-500'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-amber-50'
+                  ? 'bg-purple-500 dark:bg-purple-600 text-white border-purple-500 dark:border-purple-600'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'
               }`}
             >
               {option.label}
@@ -249,11 +249,11 @@ const TaskForm: React.FC<TaskFormProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Categories
         </label>
         <div className="flex items-start">
-          <Tag size={18} className="text-gray-400 mr-2 mt-1" />
+          <Tag size={18} className="text-purple-400 dark:text-purple-500 mr-2 mt-1" />
           <div className="flex flex-wrap gap-2">
             {categories.map(category => (
               <div
@@ -262,8 +262,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
                   ${
                     (formData.categoryIds?.includes(category.id) || false)
                       ? 'bg-opacity-100 text-white'
-                      : 'bg-opacity-25 text-gray-700'
-                  }`}
+                      : 'bg-opacity-25 text-gray-700 dark:text-gray-300'
+                  } cursor-pointer transition-all hover:scale-105`}
                 style={{ 
                   backgroundColor: (formData.categoryIds?.includes(category.id) || false)
                     ? category.color 
@@ -283,12 +283,12 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
       {/* Always show subtasks section */}
       <div className="mt-4 border-t border-gray-200 pt-4">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Subtasks</h3>
-        <p className="text-sm text-gray-500 mb-3">Break this task down into smaller, more manageable steps.</p>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Subtasks</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Break this task down into smaller, more manageable steps.</p>
         
         {/* Simple subtask interface for when we don't have a task ID yet */}
         {(!isEdit || !task?.id) ? (
-          <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-md text-yellow-800 text-sm">
+          <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 p-3 rounded-xl text-purple-700 dark:text-purple-300 text-sm">
             Save this task first before adding subtasks.
           </div>
         ) : (

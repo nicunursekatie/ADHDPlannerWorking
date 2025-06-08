@@ -18,6 +18,7 @@ import PlannerPage from './pages/PlannerPage';
 import WeeklyReviewPage from './pages/WeeklyReviewPage';
 import AccountabilityPage from './pages/AccountabilityPage';
 import BrainDumpPage from './pages/BrainDumpPage';
+import WhatNowPage from './pages/WhatNowPage';
 
 // Create wrapper components for pages that use localStorage context
 // These will be replaced with proper Supabase-compatible versions later
@@ -60,7 +61,7 @@ const AppContent: React.FC = () => {
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/what-now" element={<PlaceholderPage name="What Now?" />} />
+            <Route path="/what-now" element={<WhatNowPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/planner" element={<PlannerPage />} />
             <Route path="/planning" element={<PlaceholderPage name="Planning" />} />

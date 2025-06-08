@@ -73,20 +73,20 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
   
   const renderStep1 = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">How much time do you have?</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center">How much time do you have?</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button 
-          className="w-full border-none bg-transparent p-0 text-left cursor-pointer" 
+          className="w-full border-none bg-transparent p-0 text-left cursor-pointer group" 
           onClick={() => handleTimeSelection('short')}
         >
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-lg transition-all duration-200 h-full hover:scale-105 border-2 hover:border-primary-300 dark:hover:border-primary-600">
             <div className="text-center">
-              <Clock className="w-10 h-10 text-indigo-500 mx-auto mb-2" />
-              <h3 className="text-lg font-medium text-gray-900">
+              <Clock className="w-12 h-12 text-primary-500 mx-auto mb-3 group-hover:scale-110 transition-transform duration-200" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 A little time
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Less than 30 minutes
               </p>
             </div>
@@ -94,16 +94,16 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
         </button>
         
         <button 
-          className="w-full border-none bg-transparent p-0 text-left cursor-pointer" 
+          className="w-full border-none bg-transparent p-0 text-left cursor-pointer group" 
           onClick={() => handleTimeSelection('medium')}
         >
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-lg transition-all duration-200 h-full hover:scale-105 border-2 hover:border-primary-300 dark:hover:border-primary-600">
             <div className="text-center">
-              <Clock className="w-10 h-10 text-indigo-500 mx-auto mb-2" />
-              <h3 className="text-lg font-medium text-gray-900">
+              <Clock className="w-12 h-12 text-primary-500 mx-auto mb-3 group-hover:scale-110 transition-transform duration-200" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Some time
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 30 minutes to 2 hours
               </p>
             </div>
@@ -111,16 +111,16 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
         </button>
         
         <button 
-          className="w-full border-none bg-transparent p-0 text-left cursor-pointer" 
+          className="w-full border-none bg-transparent p-0 text-left cursor-pointer group" 
           onClick={() => handleTimeSelection('long')}
         >
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-lg transition-all duration-200 h-full hover:scale-105 border-2 hover:border-primary-300 dark:hover:border-primary-600">
             <div className="text-center">
-              <Clock className="w-10 h-10 text-indigo-500 mx-auto mb-2" />
-              <h3 className="text-lg font-medium text-gray-900">
+              <Clock className="w-12 h-12 text-primary-500 mx-auto mb-3 group-hover:scale-110 transition-transform duration-200" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Lots of time
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 More than 2 hours
               </p>
             </div>
@@ -133,10 +133,10 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">How's your energy level?</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center flex-1">How's your energy level?</h2>
         <button 
           onClick={() => setStep(1)}
-          className="text-sm text-indigo-600 hover:text-indigo-800"
+          className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
         >
           Back
         </button>
@@ -144,16 +144,16 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button 
-          className="w-full border-none bg-transparent p-0 text-left cursor-pointer" 
+          className="w-full border-none bg-transparent p-0 text-left cursor-pointer group" 
           onClick={() => handleEnergySelection('low')}
         >
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-lg transition-all duration-200 h-full hover:scale-105 border-2 hover:border-danger-300 dark:hover:border-danger-600">
             <div className="text-center">
-              <Lightning className="w-10 h-10 text-orange-500 mx-auto mb-2" />
-              <h3 className="text-lg font-medium text-gray-900">
+              <Lightning className="w-12 h-12 text-danger-500 mx-auto mb-3 group-hover:scale-110 transition-transform duration-200" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Low Energy
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Tired, unfocused, or unmotivated
               </p>
             </div>
@@ -161,16 +161,16 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
         </button>
         
         <button 
-          className="w-full border-none bg-transparent p-0 text-left cursor-pointer" 
+          className="w-full border-none bg-transparent p-0 text-left cursor-pointer group" 
           onClick={() => handleEnergySelection('medium')}
         >
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-lg transition-all duration-200 h-full hover:scale-105 border-2 hover:border-warning-300 dark:hover:border-warning-600">
             <div className="text-center">
-              <Lightning className="w-10 h-10 text-yellow-500 mx-auto mb-2" />
-              <h3 className="text-lg font-medium text-gray-900">
+              <Lightning className="w-12 h-12 text-warning-500 mx-auto mb-3 group-hover:scale-110 transition-transform duration-200" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Medium Energy
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Average focus and motivation
               </p>
             </div>
@@ -178,16 +178,16 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
         </button>
         
         <button 
-          className="w-full border-none bg-transparent p-0 text-left cursor-pointer" 
+          className="w-full border-none bg-transparent p-0 text-left cursor-pointer group" 
           onClick={() => handleEnergySelection('high')}
         >
-          <Card className="hover:shadow-md transition-shadow h-full">
+          <Card className="hover:shadow-lg transition-all duration-200 h-full hover:scale-105 border-2 hover:border-success-300 dark:hover:border-success-600">
             <div className="text-center">
-              <Lightning className="w-10 h-10 text-green-500 mx-auto mb-2" />
-              <h3 className="text-lg font-medium text-gray-900">
+              <Lightning className="w-12 h-12 text-success-500 mx-auto mb-3 group-hover:scale-110 transition-transform duration-200" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 High Energy
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Focused, motivated, and ready to work
               </p>
             </div>
@@ -200,10 +200,10 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Any current blockers?</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center flex-1">Any current blockers?</h2>
         <button 
           onClick={() => setStep(2)}
-          className="text-sm text-indigo-600 hover:text-indigo-800"
+          className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
         >
           Back
         </button>
@@ -211,7 +211,7 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
       
       <Card>
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Add any current limitations (e.g., "no internet", "can't make noise", "no computer")
           </p>
           
@@ -220,7 +220,7 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
               type="text"
               value={newBlocker}
               onChange={(e) => setNewBlocker(e.target.value)}
-              className="block w-full rounded-l-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="block w-full rounded-l-xl border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Enter a blocker"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -238,16 +238,16 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
           
           {criteria.blockers.length > 0 && (
             <div className="mt-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Current blockers:</h3>
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current blockers:</h3>
               <div className="flex flex-wrap gap-2">
                 {criteria.blockers.map((blocker, index) => (
                   <div 
                     key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800"
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300"
                   >
                     <span>{blocker}</span>
                     <button
-                      className="ml-2 text-gray-500 hover:text-gray-700"
+                      className="ml-2 text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                       onClick={() => handleRemoveBlocker(index)}
                     >
                       &times;
@@ -273,23 +273,23 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
   const renderStep4 = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Recommended Tasks</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center flex-1">Perfect tasks for you right now</h2>
         <button 
           onClick={() => setStep(3)}
-          className="text-sm text-indigo-600 hover:text-indigo-800"
+          className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
         >
           Back
         </button>
       </div>
       
-      <Card className="bg-indigo-50 border border-indigo-100">
+      <Card className="bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/20 border border-primary-200 dark:border-primary-700">
         <div className="flex items-start">
-          <BrainCircuit className="w-8 h-8 text-indigo-500 mr-4 flex-shrink-0 mt-1" />
+          <BrainCircuit className="w-8 h-8 text-primary-600 dark:text-primary-400 mr-4 flex-shrink-0 mt-1" />
           <div>
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Based on your preferences
             </h3>
-            <ul className="mt-2 text-sm text-gray-600 space-y-1">
+            <ul className="mt-2 text-sm text-gray-700 dark:text-gray-300 space-y-1">
               <li>
                 <span className="font-medium">Time:</span> {criteria.availableTime === 'short' ? 'A little time' : criteria.availableTime === 'medium' ? 'Some time' : 'Lots of time'}
               </li>

@@ -97,28 +97,28 @@ const Modal: React.FC<ModalProps> = ({
       <div className="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
         {/* Backdrop */}
         <div 
-          className="modal-backdrop animate-fadeIn"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fadeIn transition-opacity"
           aria-hidden="true"
         />
         
         {/* Modal panel */}
         <div
           ref={modalRef}
-          className={`modal-panel animate-scaleIn inline-block align-bottom text-left overflow-hidden sm:my-8 sm:align-middle ${sizeClasses[size]} w-full`}
+          className={`relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl transform transition-all animate-scaleIn inline-block align-bottom text-left overflow-hidden sm:my-8 sm:align-middle ${sizeClasses[size]} w-full`}
         >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
             <div className="flex justify-between items-center">
               <h3 
                 id="modal-title"
-                className="text-lg font-semibold text-surface-900 dark:text-surface-100 tracking-tight"
+                className="text-lg font-semibold text-gray-900 dark:text-gray-100 tracking-tight"
               >
                 {title}
               </h3>
               {showCloseButton && (
                 <button
                   type="button"
-                  className="rounded-xl p-2 text-surface-500 hover:text-surface-700 hover:bg-surface-100 dark:text-surface-400 dark:hover:text-surface-200 dark:hover:bg-surface-700 focus:outline-none focus:ring-2 focus:ring-focus-500 transition-all duration-200"
+                  className="rounded-xl p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 hover:scale-105"
                   onClick={onClose}
                   aria-label="Close modal"
                 >
@@ -129,13 +129,13 @@ const Modal: React.FC<ModalProps> = ({
           </div>
           
           {/* Content */}
-          <div className="px-6 py-6 text-surface-700 dark:text-surface-300 max-h-96 overflow-y-auto">
+          <div className="px-6 py-6 text-gray-700 dark:text-gray-300 max-h-96 overflow-y-auto">
             {children}
           </div>
           
           {/* Footer */}
           {footer && (
-            <div className="px-6 py-4 border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
               {footer}
             </div>
           )}
