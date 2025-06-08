@@ -1,19 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContextSupabase';
-import { Project } from '../types';
+import { Project, Task } from '../types';
 import ProjectCard from '../components/projects/ProjectCard';
 import ProjectForm from '../components/projects/ProjectForm';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Empty from '../components/common/Empty';
-import { Plus, Folder } from 'lucide-react';
+import Card from '../components/common/Card';
+import { 
+  Plus, 
+  Folder, 
+  Grid3X3, 
+  List, 
+  Kanban, 
+  Filter,
+  SortDesc,
+  Clock,
+  TrendingUp,
+  Calendar,
+  ChevronDown,
+  Sparkles
+} from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+
+type ViewMode = 'grid' | 'list' | 'kanban';
+type FilterMode = 'all' | 'active' | 'on-hold' | 'completed';
+type SortMode = 'updated' | 'due-date' | 'progress' | 'priority';
 
 const ProjectsPage: React.FC = () => {
-  const { projects, tasks, deleteProject } = useAppContext();
+  const { projects, tasks, deleteProject, reorderProjects } = useAppContext();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [sortMode, setSortMode] = useState<SortMode>('updated');
+  const [showFilters, setShowFilters] = useState(false);
+  const [draggedProject, setDraggedProject] = useState<Project | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
   const handleOpenModal = (project?: Project) => {
     if (project) {
@@ -44,59 +69,565 @@ const ProjectsPage: React.FC = () => {
     }
   };
   
-  // Count tasks for each project
-  const getTaskCount = (projectId: string): number => {
-    return tasks.filter(task => task.projectId === projectId).length;
+  // Calculate project statistics
+  const getProjectStats = (projectId: string) => {
+    const projectTasks = tasks.filter(task => task.projectId === projectId);
+    const completedTasks = projectTasks.filter(task => task.completed);
+    const overdueTasks = projectTasks.filter(task => 
+      !task.completed && task.dueDate && new Date(task.dueDate) < new Date()
+    );
+    
+    const progress = projectTasks.length > 0 
+      ? Math.round((completedTasks.length / projectTasks.length) * 100)
+      : 0;
+    
+    // Calculate total time spent (mock data for now)
+    const totalHours = Math.round(projectTasks.length * 2.5);
+    
+    // Estimate completion date based on velocity (mock)
+    const remainingTasks = projectTasks.length - completedTasks.length;
+    const estimatedDaysToComplete = remainingTasks * 2;
+    const estimatedCompletionDate = new Date();
+    estimatedCompletionDate.setDate(estimatedCompletionDate.getDate() + estimatedDaysToComplete);
+    
+    return {
+      totalTasks: projectTasks.length,
+      completedTasks: completedTasks.length,
+      overdueTasks: overdueTasks.length,
+      progress,
+      totalHours,
+      estimatedCompletionDate: remainingTasks > 0 ? estimatedCompletionDate : null
+    };
+  };
+  
+  // Filter projects based on selected filter
+  const filteredProjects = useMemo(() => {
+    let filtered = [...projects];
+    
+    // Apply filters
+    switch (filterMode) {
+      case 'active':
+        filtered = filtered.filter(p => {
+          const stats = getProjectStats(p.id);
+          return stats.progress > 0 && stats.progress < 100;
+        });
+        break;
+      case 'on-hold':
+        // Mock on-hold status based on no recent activity
+        filtered = filtered.filter(p => {
+          const lastUpdate = new Date(p.updatedAt);
+          const daysSinceUpdate = (new Date().getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24);
+          return daysSinceUpdate > 14;
+        });
+        break;
+      case 'completed':
+        filtered = filtered.filter(p => {
+          const stats = getProjectStats(p.id);
+          return stats.progress === 100;
+        });
+        break;
+    }
+    
+    // Apply sorting
+    switch (sortMode) {
+      case 'updated':
+        filtered.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        break;
+      case 'progress':
+        filtered.sort((a, b) => getProjectStats(b.id).progress - getProjectStats(a.id).progress);
+        break;
+      case 'priority':
+        // Sort by number of overdue tasks
+        filtered.sort((a, b) => getProjectStats(b.id).overdueTasks - getProjectStats(a.id).overdueTasks);
+        break;
+      case 'due-date':
+        filtered.sort((a, b) => {
+          const aDate = getProjectStats(a.id).estimatedCompletionDate;
+          const bDate = getProjectStats(b.id).estimatedCompletionDate;
+          if (!aDate) return 1;
+          if (!bDate) return -1;
+          return aDate.getTime() - bDate.getTime();
+        });
+        break;
+    }
+    
+    // Apply custom order sorting as primary for "updated" mode (drag-and-drop order)
+    filtered.sort((a, b) => {
+      // First by custom order if both have order set
+      const aOrder = a.order ?? 999;
+      const bOrder = b.order ?? 999;
+      
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
+      }
+      
+      // Fallback to other sorting modes if orders are equal
+      switch (sortMode) {
+        case 'updated':
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        case 'progress':
+          return getProjectStats(b.id).progress - getProjectStats(a.id).progress;
+        case 'priority':
+          return getProjectStats(b.id).overdueTasks - getProjectStats(a.id).overdueTasks;
+        case 'due-date':
+          const aDate = getProjectStats(a.id).estimatedCompletionDate;
+          const bDate = getProjectStats(b.id).estimatedCompletionDate;
+          if (!aDate) return 1;
+          if (!bDate) return -1;
+          return aDate.getTime() - bDate.getTime();
+        default:
+          return 0;
+      }
+    });
+    
+    return filtered;
+  }, [projects, filterMode, sortMode, tasks]);
+  
+  const activeCount = projects.filter(p => {
+    const stats = getProjectStats(p.id);
+    return stats.progress > 0 && stats.progress < 100;
+  }).length;
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, project: Project) => {
+    setDraggedProject(project);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', ''); // For Firefox compatibility
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    
+    if (!draggedProject) return;
+
+    const currentProjects = [...filteredProjects];
+    const draggedIndex = currentProjects.findIndex(p => p.id === draggedProject.id);
+    
+    if (draggedIndex === targetIndex || draggedIndex === -1) {
+      setDraggedProject(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    // Reorder the projects array
+    const reorderedProjects = [...currentProjects];
+    const [removed] = reorderedProjects.splice(draggedIndex, 1);
+    reorderedProjects.splice(targetIndex, 0, removed);
+
+    // Update the order in the backend
+    try {
+      await reorderProjects(reorderedProjects.map(p => p.id));
+    } catch (error) {
+      console.error('Failed to reorder projects:', error);
+    }
+
+    setDraggedProject(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedProject(null);
+    setDragOverIndex(null);
   };
   
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center bg-white rounded-lg shadow-sm p-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
-          <p className="text-gray-600">
-            {projects.length} project{projects.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <div className="mt-4 md:mt-0">
-          <Button
-            variant="primary"
-            icon={<Plus size={16} />}
-            onClick={() => handleOpenModal()}
-          >
-            New Project
-          </Button>
-        </div>
-      </div>
-      
-      {/* Project grid */}
-      {projects.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map(project => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              taskCount={getTaskCount(project.id)}
-              onEdit={handleOpenModal}
-              onDelete={handleOpenDeleteConfirm}
-            />
-          ))}
-        </div>
-      ) : (
-        <Empty
-          title="No projects yet"
-          description="Create your first project to organize your tasks"
-          icon={<Folder className="mx-auto h-12 w-12 text-gray-400" />}
-          action={
+    <div className="min-h-screen space-y-6 animate-fadeIn">
+      {/* Enhanced Header */}
+      <Card 
+        variant="glass-purple" 
+        padding="md" 
+        gradient
+        className="border-0 shadow-purple-lg bg-gradient-to-r from-primary-500/90 via-primary-600/90 to-accent-500/90"
+      >
+        <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-4">
+          <div className="text-white">
+            <h1 className="text-3xl font-display font-bold tracking-tight mb-1 flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <Folder className="w-6 h-6" />
+              </div>
+              Projects
+            </h1>
+            <p className="text-white/80 font-medium">
+              {projects.length} total • {activeCount} active
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            {/* View Mode Toggle */}
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-1 flex gap-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === 'grid' 
+                    ? 'bg-white text-primary-600 shadow-md' 
+                    : 'text-white hover:bg-white/20'
+                }`}
+                title="Grid view"
+              >
+                <Grid3X3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === 'list' 
+                    ? 'bg-white text-primary-600 shadow-md' 
+                    : 'text-white hover:bg-white/20'
+                }`}
+                title="List view"
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === 'kanban' 
+                    ? 'bg-white text-primary-600 shadow-md' 
+                    : 'text-white hover:bg-white/20'
+                }`}
+                title="Kanban view"
+              >
+                <Kanban className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Filter Toggle */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 rounded-xl font-semibold transition-all flex items-center gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              Filters
+              <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {/* New Project Button */}
             <Button
-              variant="primary"
-              size="sm"
-              icon={<Plus size={16} />}
+              variant="secondary"
+              icon={<Plus size={18} />}
               onClick={() => handleOpenModal()}
+              className="bg-white text-primary-600 hover:bg-white/90 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
             >
               New Project
             </Button>
+          </div>
+        </div>
+      </Card>
+      
+      {/* Filters Bar */}
+      {showFilters && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 border border-gray-200 dark:border-gray-700 animate-slideInDown">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Filter Options */}
+            <div>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">
+                Filter by Status
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {(['all', 'active', 'on-hold', 'completed'] as FilterMode[]).map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => setFilterMode(mode)}
+                    className={`px-4 py-2 rounded-xl font-medium transition-all ${
+                      filterMode === mode
+                        ? 'bg-primary-500 text-white shadow-md'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {mode.charAt(0).toUpperCase() + mode.slice(1).replace('-', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Sort Options */}
+            <div>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">
+                Sort by
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: 'updated', label: 'Recently Updated', icon: Clock },
+                  { value: 'due-date', label: 'Due Date', icon: Calendar },
+                  { value: 'progress', label: 'Progress', icon: TrendingUp },
+                  { value: 'priority', label: 'Priority', icon: SortDesc }
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    onClick={() => setSortMode(option.value as SortMode)}
+                    className={`px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2 ${
+                      sortMode === option.value
+                        ? 'bg-primary-500 text-white shadow-md'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    <option.icon className="w-4 h-4" />
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Project Views */}
+      {filteredProjects.length > 0 ? (
+        <>
+          {/* Drag instructions */}
+          <div className="text-center py-2">
+            <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
+              <span className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+                ↕
+              </span>
+              Drag projects to reorder them
+            </p>
+          </div>
+
+          {/* Grid View */}
+          {viewMode === 'grid' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProjects.map((project, index) => {
+                const stats = getProjectStats(project.id);
+                const isDragging = draggedProject?.id === project.id;
+                const isDragOver = dragOverIndex === index;
+                
+                return (
+                  <div
+                    key={project.id}
+                    className={`animate-fadeInUp transition-all duration-200 ${
+                      isDragging ? 'opacity-50 scale-95' : ''
+                    } ${
+                      isDragOver ? 'transform scale-105' : ''
+                    }`}
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, project)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <ProjectCard
+                      project={project}
+                      taskCount={stats.totalTasks}
+                      onEdit={handleOpenModal}
+                      onDelete={handleOpenDeleteConfirm}
+                      stats={stats}
+                      isDragging={isDragging}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          
+          {/* List View */}
+          {viewMode === 'list' && (
+            <div className="space-y-4">
+              {filteredProjects.map((project, index) => {
+                const stats = getProjectStats(project.id);
+                const isDragging = draggedProject?.id === project.id;
+                const isDragOver = dragOverIndex === index;
+                
+                return (
+                  <Card
+                    key={project.id}
+                    variant="glass"
+                    className={`transition-all duration-300 animate-fadeInUp cursor-move ${
+                      isDragging 
+                        ? 'opacity-50 scale-95 rotate-1 shadow-2xl' 
+                        : 'hover:shadow-xl hover:-translate-y-1'
+                    } ${
+                      isDragOver ? 'ring-2 ring-primary-500 ring-opacity-50' : ''
+                    }`}
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, project)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <div className="flex items-center justify-between gap-6 p-6">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div
+                          className="w-4 h-4 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: project.color }}
+                        />
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            {project.name}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-4 mt-2 text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">
+                              {stats.totalTasks} tasks
+                            </span>
+                            {stats.overdueTasks > 0 && (
+                              <span className="text-red-600 font-semibold">
+                                {stats.overdueTasks} overdue
+                              </span>
+                            )}
+                            <span className="text-gray-500">
+                              Updated {(() => {
+                                try {
+                                  const date = new Date(project.updatedAt);
+                                  if (isNaN(date.getTime())) {
+                                    return 'recently';
+                                  }
+                                  return formatDistanceToNow(date) + ' ago';
+                                } catch (error) {
+                                  return 'recently';
+                                }
+                              })()}
+                            </span>
+                            <span className="text-purple-600 font-medium">
+                              {stats.totalHours}h spent
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-6">
+                        {/* Progress */}
+                        <div className="w-32">
+                          <div className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                            {stats.progress}%
+                          </div>
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-1000 flex items-center justify-center text-xs font-bold text-white ${
+                                stats.progress >= 75 ? 'bg-gradient-to-r from-green-500 to-green-600' :
+                                stats.progress >= 50 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                                'bg-gradient-to-r from-red-500 to-red-600'
+                              }`}
+                              style={{ width: `${stats.progress}%` }}
+                            >
+                              {stats.progress >= 20 && `${stats.progress}%`}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Actions */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleOpenModal(project)}
+                            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                            title="Edit project"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleOpenDeleteConfirm(project.id)}
+                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Delete project"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+          
+          {/* Kanban View */}
+          {viewMode === 'kanban' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {['Not Started', 'In Progress', 'Completed'].map(status => (
+                <div key={status} className="space-y-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-2">
+                    {status}
+                  </h3>
+                  <div className="space-y-3">
+                    {filteredProjects
+                      .filter(project => {
+                        const stats = getProjectStats(project.id);
+                        if (status === 'Not Started') return stats.progress === 0;
+                        if (status === 'In Progress') return stats.progress > 0 && stats.progress < 100;
+                        return stats.progress === 100;
+                      })
+                      .map((project, index) => {
+                        const stats = getProjectStats(project.id);
+                        return (
+                          <Card
+                            key={project.id}
+                            variant="glass"
+                            className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fadeInUp"
+                            style={{ animationDelay: `${index * 0.1}s` }}
+                            onClick={() => handleOpenModal(project)}
+                          >
+                            <div className="p-4">
+                              <div className="flex items-start justify-between mb-3">
+                                <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                  <div
+                                    className="w-3 h-3 rounded-full"
+                                    style={{ backgroundColor: project.color }}
+                                  />
+                                  {project.name}
+                                </h4>
+                              </div>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                  <span>{stats.totalTasks} tasks</span>
+                                  <span>{stats.progress}%</span>
+                                </div>
+                                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-1000 ${
+                                      stats.progress >= 75 ? 'bg-gradient-to-r from-green-500 to-green-600' :
+                                      stats.progress >= 50 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                                      'bg-gradient-to-r from-red-500 to-red-600'
+                                    }`}
+                                    style={{ width: `${stats.progress}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
+                        );
+                      })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <Empty
+          title="No projects found"
+          description={filterMode === 'all' ? "Create your first project to organize your tasks" : "No projects match your current filters"}
+          icon={<Folder className="mx-auto h-12 w-12 text-gray-400" />}
+          action={
+            filterMode === 'all' ? (
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Plus size={16} />}
+                onClick={() => handleOpenModal()}
+              >
+                New Project
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setFilterMode('all')}
+              >
+                Clear Filters
+              </Button>
+            )
           }
         />
       )}
@@ -123,7 +654,7 @@ const ProjectsPage: React.FC = () => {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Are you sure you want to delete this project? Any tasks associated with this project will remain, but will no longer be assigned to any project.
           </p>
           <div className="flex justify-end space-x-3 pt-4">

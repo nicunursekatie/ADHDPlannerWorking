@@ -50,6 +50,7 @@ interface AppContextType {
   addProject: (project: Partial<Project>) => Promise<Project>;
   updateProject: (project: Project) => Promise<void>;
   deleteProject: (projectId: string) => Promise<void>;
+  reorderProjects: (projectIds: string[]) => Promise<void>;
   
   // Categories
   categories: Category[];
@@ -588,6 +589,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     await DatabaseService.deleteProject(projectId, user.id);
     setProjects(prev => prev.filter(project => project.id !== projectId));
   }, [user, tasks, computeSubtasks]);
+
+  const reorderProjects = useCallback(async (projectIds: string[]) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    const timestamp = new Date().toISOString();
+    const updatedProjects = projects.map(project => {
+      const newOrder = projectIds.indexOf(project.id);
+      return {
+        ...project,
+        order: newOrder >= 0 ? newOrder : (project.order ?? 999),
+        updatedAt: timestamp,
+      };
+    });
+
+    // Update projects in local state immediately for responsive UI
+    setProjects(updatedProjects);
+
+    // Update in database (batch update)
+    try {
+      for (const project of updatedProjects) {
+        if (projectIds.includes(project.id)) {
+          await DatabaseService.updateProject(project.id, project, user.id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update project order:', error);
+      // Revert local state on error
+      setProjects(projects);
+      throw error;
+    }
+  }, [user, projects]);
 
   // Categories
   const addCategory = useCallback(async (categoryData: Partial<Category>): Promise<Category> => {
@@ -1543,6 +1575,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     addProject,
     updateProject,
     deleteProject,
+    reorderProjects,
     
     categories,
     addCategory,
