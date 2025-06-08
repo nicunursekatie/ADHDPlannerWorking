@@ -160,6 +160,48 @@ const Dashboard: React.FC = () => {
   
   return (
     <div className="min-h-screen space-y-4 animate-fadeIn">
+      {/* Quick Navigation Bar */}
+      <div className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700 -mx-4 px-4 py-3 mb-4">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+          <button
+            onClick={() => document.getElementById('due-today')?.scrollIntoView({ behavior: 'smooth' })}
+            className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl font-semibold text-sm hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors whitespace-nowrap"
+          >
+            🔥 Due Today
+          </button>
+          <button
+            onClick={() => document.getElementById('quick-capture')?.scrollIntoView({ behavior: 'smooth' })}
+            className="px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-xl font-semibold text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors whitespace-nowrap"
+          >
+            ⚡ Quick Capture
+          </button>
+          <button
+            onClick={() => document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' })}
+            className="px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-xl font-semibold text-sm hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors whitespace-nowrap"
+          >
+            🧠 Tools
+          </button>
+          <button
+            onClick={() => document.getElementById('weekly-tasks')?.scrollIntoView({ behavior: 'smooth' })}
+            className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl font-semibold text-sm hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors whitespace-nowrap"
+          >
+            📅 This Week
+          </button>
+          <button
+            onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
+            className="px-4 py-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl font-semibold text-sm hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors whitespace-nowrap"
+          >
+            📁 Projects
+          </button>
+          <button
+            onClick={() => document.getElementById('stats')?.scrollIntoView({ behavior: 'smooth' })}
+            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors whitespace-nowrap"
+          >
+            📊 Stats
+          </button>
+        </div>
+      </div>
+
       {/* Enhanced Compact Header */}
       <div className="relative overflow-hidden">
         <Card 
@@ -284,6 +326,7 @@ const Dashboard: React.FC = () => {
       
       {/* PRIORITY #1: Due Today */}
       <Card
+        id="due-today"
         title={
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
@@ -385,7 +428,7 @@ const Dashboard: React.FC = () => {
       </Card>
 
       {/* PRIORITY #2: Quick Capture - Compact */}
-      <Card variant="glass" padding="sm" className="border border-white/20 shadow-md backdrop-blur-xl">
+      <Card id="quick-capture" variant="glass" padding="sm" className="border border-white/20 shadow-md backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-r from-accent-500 to-primary-500 rounded-xl flex items-center justify-center shadow-md">
             <BrainCircuit className="w-4 h-4 text-white" />
@@ -400,6 +443,7 @@ const Dashboard: React.FC = () => {
 
       {/* PRIORITY #3: Coming Up This Week */}
       <Card
+        id="weekly-tasks"
         title={
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-r from-accent-500 to-accent-600 rounded-xl flex items-center justify-center shadow-md">
@@ -497,7 +541,7 @@ const Dashboard: React.FC = () => {
       )}
       
       {/* Tools & Navigation */}
-      <div className="animate-slideInUp stagger-3">
+      <div id="tools" className="animate-slideInUp stagger-3">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h2 className="text-4xl font-display font-bold text-text-primary mb-2">Quick Tools</h2>
@@ -651,7 +695,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Secondary task sections - below the fold */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-hidden space-y-0">
+      <div id="projects" className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-hidden space-y-0">
         {/* Recently Added and Projects */}
         <Card
           title={
@@ -766,7 +810,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="animate-fadeInUp" style={{ animationDelay: '1s' }}>
+      <div id="stats" className="animate-fadeInUp" style={{ animationDelay: '1s' }}>
         <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
           <div className="p-6">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">

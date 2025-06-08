@@ -210,6 +210,20 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                 <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                   <span>In focus • {Math.round(focusTracker.getCurrentSessionDuration())}min</span>
+                  {focusTracker.getCurrentSessionDuration() > 240 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        focusTracker.resetCurrentSession();
+                        setCurrentSession(null);
+                        setFocusTime(0);
+                      }}
+                      className="ml-1 text-blue-500 hover:text-blue-700"
+                      title="Clear stuck session"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               )}
               

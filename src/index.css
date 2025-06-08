@@ -24,6 +24,16 @@ body {
               #FAFBFC;
 }
 
+/* Hide scrollbar for navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
 /* Glassmorphism utilities for light theme */
 .glass {
   backdrop-filter: blur(16px);

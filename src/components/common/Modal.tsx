@@ -85,29 +85,28 @@ const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
   
   const sizeClasses = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-    full: 'max-w-full mx-4',
+    sm: 'w-full max-w-sm',
+    md: 'w-full max-w-md',
+    lg: 'w-full max-w-lg',
+    xl: 'w-full max-w-xl',
+    full: 'w-full max-w-full mx-4',
   };
   
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div className="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
-        {/* Backdrop */}
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fadeIn transition-opacity"
-          aria-hidden="true"
-        />
-        
-        {/* Modal panel */}
-        <div
-          ref={modalRef}
-          className={`relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl transform transition-all animate-scaleIn inline-block align-bottom text-left overflow-hidden sm:my-8 sm:align-middle ${sizeClasses[size]} w-full`}
-        >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fadeIn transition-opacity"
+        aria-hidden="true"
+      />
+      
+      {/* Modal panel */}
+      <div
+        ref={modalRef}
+        className={`relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl transform transition-all animate-scaleIn ${sizeClasses[size]} mx-auto max-h-[90vh] flex flex-col`}
+      >
           {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
             <div className="flex justify-between items-center">
               <h3 
                 id="modal-title"
@@ -129,19 +128,18 @@ const Modal: React.FC<ModalProps> = ({
           </div>
           
           {/* Content */}
-          <div className="px-6 py-6 text-gray-700 dark:text-gray-300 max-h-96 overflow-y-auto">
+          <div className="px-6 py-6 text-gray-700 dark:text-gray-300 overflow-y-auto flex-1">
             {children}
           </div>
           
           {/* Footer */}
           {footer && (
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
               {footer}
             </div>
           )}
         </div>
       </div>
-    </div>
   );
 };
 

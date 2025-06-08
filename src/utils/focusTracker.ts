@@ -8,11 +8,19 @@ interface FocusSession {
 class FocusTracker {
   private currentSession: FocusSession | null = null;
   private sessions: FocusSession[] = [];
+  private readonly MAX_SESSION_DURATION = 240; // 4 hours in minutes
 
   startFocus(taskId: string): void {
     // End any existing session
     if (this.currentSession) {
-      this.endFocus();
+      // Check if the existing session is stuck before ending it
+      const duration = this.getCurrentSessionDuration();
+      if (duration > this.MAX_SESSION_DURATION) {
+        console.warn(`Ending stuck focus session (${duration.toFixed(0)} minutes)`);
+        this.resetCurrentSession();
+      } else {
+        this.endFocus();
+      }
     }
 
     this.currentSession = {
@@ -33,7 +41,7 @@ class FocusTracker {
     const completedSession: FocusSession = {
       ...this.currentSession,
       endTime,
-      duration
+      duration: Math.min(duration, this.MAX_SESSION_DURATION) // Cap duration at maximum
     };
 
     this.sessions.push(completedSession);
@@ -52,7 +60,10 @@ class FocusTracker {
 
   getCurrentSessionDuration(): number {
     if (!this.currentSession) return 0;
-    return (new Date().getTime() - this.currentSession.startTime.getTime()) / (1000 * 60);
+    const duration = (new Date().getTime() - this.currentSession.startTime.getTime()) / (1000 * 60);
+    
+    // Cap duration at maximum to prevent unrealistic times
+    return Math.min(duration, this.MAX_SESSION_DURATION);
   }
 
   getTodaysSessions(): FocusSession[] {
@@ -86,6 +97,20 @@ class FocusTracker {
     return currentDuration > 120; // Suggest break after 2 hours
   }
 
+  resetCurrentSession(): void {
+    // Clear the current session without saving it
+    this.currentSession = null;
+    localStorage.removeItem('currentFocusSession');
+  }
+
+  clearAllSessions(): void {
+    // Clear all sessions including the current one
+    this.currentSession = null;
+    this.sessions = [];
+    localStorage.removeItem('currentFocusSession');
+    localStorage.removeItem('focusSessions');
+  }
+
   private saveSessions(): void {
     localStorage.setItem('focusSessions', JSON.stringify(this.sessions));
   }
@@ -103,6 +128,13 @@ class FocusTracker {
       // Convert string dates back to Date objects
       if (this.currentSession) {
         this.currentSession.startTime = new Date(this.currentSession.startTime);
+        
+        // Check if session has exceeded maximum duration
+        const duration = (new Date().getTime() - this.currentSession.startTime.getTime()) / (1000 * 60);
+        if (duration > this.MAX_SESSION_DURATION) {
+          console.warn(`Focus session exceeded maximum duration (${duration.toFixed(0)} minutes). Clearing stuck session.`);
+          this.resetCurrentSession();
+        }
       }
     }
   }
