@@ -43,6 +43,7 @@ CREATE TABLE projects (
   name TEXT NOT NULL,
   description TEXT,
   color TEXT,
+  "order" INTEGER,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

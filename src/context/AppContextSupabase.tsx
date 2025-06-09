@@ -621,21 +621,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setProjects(updatedProjects);
 
     // Update in database (batch update)
-    try {
-      for (const project of updatedProjects) {
-        if (projectIds.includes(project.id)) {
-          const originalProject = projects.find(p => p.id === project.id);
-          // Only update in database if order actually changed
-          if (originalProject && originalProject.order !== project.order) {
+    for (const project of updatedProjects) {
+      if (projectIds.includes(project.id)) {
+        const originalProject = projects.find(p => p.id === project.id);
+        // Only update in database if order actually changed
+        if (originalProject && originalProject.order !== project.order) {
+          try {
             await DatabaseService.updateProject(project.id, project, user.id);
+          } catch (updateError: any) {
+            console.warn(`Failed to update project ${project.name}:`, updateError.message);
+            // Continue with other projects instead of failing completely
+            continue;
           }
         }
       }
-    } catch (error) {
-      console.error('Failed to update project order:', error);
-      // Revert local state on error
-      setProjects(projects);
-      throw error;
     }
   }, [user, projects]);
 

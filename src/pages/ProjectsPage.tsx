@@ -22,10 +22,175 @@ import {
   Sparkles
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type ViewMode = 'grid' | 'list' | 'kanban';
 type FilterMode = 'all' | 'active' | 'on-hold' | 'completed';
 type SortMode = 'updated' | 'due-date' | 'progress' | 'priority';
+
+// Sortable wrapper component for project cards
+interface SortableProjectCardProps {
+  project: Project;
+  stats: any;
+  onEdit: (project: Project) => void;
+  onDelete: (projectId: string) => void;
+  viewMode: ViewMode;
+}
+
+const SortableProjectCard: React.FC<SortableProjectCardProps> = ({ 
+  project, 
+  stats, 
+  onEdit, 
+  onDelete,
+  viewMode 
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: project.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  if (viewMode === 'grid') {
+    return (
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <ProjectCard
+          project={project}
+          taskCount={stats.totalTasks}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          stats={stats}
+          isDragging={isDragging}
+        />
+      </div>
+    );
+  }
+
+  if (viewMode === 'list') {
+    return (
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <Card
+          variant="glass"
+          className={`cursor-move ${
+            isDragging 
+              ? 'rotate-1 shadow-2xl' 
+              : 'hover:shadow-xl hover:-translate-y-1'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-6 p-6">
+            <div className="flex items-center gap-4 flex-1">
+              <div
+                className="w-4 h-4 rounded-full flex-shrink-0"
+                style={{ backgroundColor: project.color }}
+              />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  {project.name}
+                </h3>
+                <div className="flex flex-wrap items-center gap-4 mt-2 text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {stats.totalTasks} tasks
+                  </span>
+                  {stats.overdueTasks > 0 && (
+                    <span className="text-red-600 font-semibold">
+                      {stats.overdueTasks} overdue
+                    </span>
+                  )}
+                  <span className="text-gray-500">
+                    Updated {(() => {
+                      try {
+                        const date = new Date(project.updatedAt);
+                        if (isNaN(date.getTime())) {
+                          return 'recently';
+                        }
+                        return formatDistanceToNow(date) + ' ago';
+                      } catch (error) {
+                        return 'recently';
+                      }
+                    })()}
+                  </span>
+                  <span className="text-purple-600 font-medium">
+                    {stats.totalHours}h spent
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-6">
+              {/* Progress */}
+              <div className="w-32">
+                <div className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  {stats.progress}%
+                </div>
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-1000 flex items-center justify-center text-xs font-bold text-white ${
+                      stats.progress >= 75 ? 'bg-gradient-to-r from-green-500 to-green-600' :
+                      stats.progress >= 50 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                      'bg-gradient-to-r from-red-500 to-red-600'
+                    }`}
+                    style={{ width: `${stats.progress}%` }}
+                  >
+                    {stats.progress >= 20 && `${stats.progress}%`}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Actions */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onEdit(project)}
+                  className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                  title="Edit project"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={() => onDelete(project.id)}
+                  className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                  title="Delete project"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return null;
+};
 
 const ProjectsPage: React.FC = () => {
   const { projects, tasks, deleteProject, reorderProjects } = useAppContext();
@@ -37,8 +202,19 @@ const ProjectsPage: React.FC = () => {
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [sortMode, setSortMode] = useState<SortMode>('updated');
   const [showFilters, setShowFilters] = useState(false);
-  const [draggedProject, setDraggedProject] = useState<Project | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  
+  // Setup drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   
   const handleOpenModal = (project?: Project) => {
     if (project) {
@@ -128,41 +304,66 @@ const ProjectsPage: React.FC = () => {
         break;
     }
     
-    // Apply sorting based on mode
-    if (sortMode === 'updated') {
-      // For 'updated' mode, sort by custom order first, then by update time
-      filtered.sort((a, b) => {
-        // First by custom order if both have order set
-        const aOrder = a.order ?? 999;
-        const bOrder = b.order ?? 999;
-        
-        if (aOrder !== bOrder) {
-          return aOrder - bOrder;
-        }
-        
-        // Then by update time
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-      });
-    } else {
-      // For other sort modes, apply the specific sorting
-      switch (sortMode) {
-        case 'progress':
-          filtered.sort((a, b) => getProjectStats(b.id).progress - getProjectStats(a.id).progress);
-          break;
-        case 'priority':
-          // Sort by number of overdue tasks
-          filtered.sort((a, b) => getProjectStats(b.id).overdueTasks - getProjectStats(a.id).overdueTasks);
-          break;
-        case 'due-date':
-          filtered.sort((a, b) => {
-            const aDate = getProjectStats(a.id).estimatedCompletionDate;
-            const bDate = getProjectStats(b.id).estimatedCompletionDate;
-            if (!aDate) return 1;
-            if (!bDate) return -1;
-            return aDate.getTime() - bDate.getTime();
-          });
-          break;
-      }
+    // Apply sorting based on mode - ALWAYS respect custom order first
+    switch (sortMode) {
+      case 'updated':
+        // For 'updated' mode, sort by custom order first, then by update time
+        filtered.sort((a, b) => {
+          // First by custom order if both have order set
+          const aOrder = a.order ?? 999;
+          const bOrder = b.order ?? 999;
+          
+          if (aOrder !== bOrder) {
+            return aOrder - bOrder;
+          }
+          
+          // Then by update time
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+        break;
+      case 'progress':
+        // Sort by custom order first, then by progress
+        filtered.sort((a, b) => {
+          const aOrder = a.order ?? 999;
+          const bOrder = b.order ?? 999;
+          
+          if (aOrder !== bOrder) {
+            return aOrder - bOrder;
+          }
+          
+          return getProjectStats(b.id).progress - getProjectStats(a.id).progress;
+        });
+        break;
+      case 'priority':
+        // Sort by custom order first, then by priority (overdue tasks)
+        filtered.sort((a, b) => {
+          const aOrder = a.order ?? 999;
+          const bOrder = b.order ?? 999;
+          
+          if (aOrder !== bOrder) {
+            return aOrder - bOrder;
+          }
+          
+          return getProjectStats(b.id).overdueTasks - getProjectStats(a.id).overdueTasks;
+        });
+        break;
+      case 'due-date':
+        // Sort by custom order first, then by due date
+        filtered.sort((a, b) => {
+          const aOrder = a.order ?? 999;
+          const bOrder = b.order ?? 999;
+          
+          if (aOrder !== bOrder) {
+            return aOrder - bOrder;
+          }
+          
+          const aDate = getProjectStats(a.id).estimatedCompletionDate;
+          const bDate = getProjectStats(b.id).estimatedCompletionDate;
+          if (!aDate) return 1;
+          if (!bDate) return -1;
+          return aDate.getTime() - bDate.getTime();
+        });
+        break;
     }
     
     return filtered;
@@ -174,56 +375,68 @@ const ProjectsPage: React.FC = () => {
   }).length;
 
   // Drag and drop handlers
-  const handleDragStart = (e: React.DragEvent, project: Project) => {
-    setDraggedProject(project);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', ''); // For Firefox compatibility
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
   };
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverIndex(index);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverIndex(null);
-  };
-
-  const handleDrop = async (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
     
-    if (!draggedProject) return;
-
-    const currentProjects = [...filteredProjects];
-    const draggedIndex = currentProjects.findIndex(p => p.id === draggedProject.id);
-    
-    if (draggedIndex === targetIndex || draggedIndex === -1) {
-      setDraggedProject(null);
-      setDragOverIndex(null);
+    if (!over || active.id === over.id) {
+      setActiveId(null);
       return;
     }
 
-    // Reorder the projects array
-    const reorderedProjects = [...currentProjects];
-    const [removed] = reorderedProjects.splice(draggedIndex, 1);
-    reorderedProjects.splice(targetIndex, 0, removed);
+    const oldIndex = filteredProjects.findIndex(p => p.id === active.id);
+    const newIndex = filteredProjects.findIndex(p => p.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      setActiveId(null);
+      return;
+    }
+
+    // Create a new array with the reordered projects
+    const reorderedFilteredProjects = arrayMove(filteredProjects, oldIndex, newIndex);
+
+    // Now we need to create a complete project order that includes all projects
+    // Start with all projects in their current order
+    const allProjectIds = [...projects].sort((a, b) => {
+      const aOrder = a.order ?? 999;
+      const bOrder = b.order ?? 999;
+      return aOrder - bOrder;
+    }).map(p => p.id);
+
+    // Get the IDs of the filtered projects in their new order
+    const filteredProjectIds = reorderedFilteredProjects.map(p => p.id);
+
+    // Create the final order by preserving the position of non-filtered projects
+    // and inserting the filtered projects in their new order
+    const finalProjectIds: string[] = [];
+    let filteredIndex = 0;
+
+    for (const projectId of allProjectIds) {
+      if (filteredProjectIds.includes(projectId)) {
+        // This project is in our filtered view, use its new position
+        finalProjectIds.push(filteredProjectIds[filteredIndex]);
+        filteredIndex++;
+      } else {
+        // This project is not in our filtered view, keep it in its current position
+        finalProjectIds.push(projectId);
+      }
+    }
 
     // Update the order in the backend
     try {
-      await reorderProjects(reorderedProjects.map(p => p.id));
+      await reorderProjects(finalProjectIds);
     } catch (error) {
       console.error('Failed to reorder projects:', error);
     }
 
-    setDraggedProject(null);
-    setDragOverIndex(null);
+    setActiveId(null);
   };
 
-  const handleDragEnd = () => {
-    setDraggedProject(null);
-    setDragOverIndex(null);
-  };
+  const activeProject = activeId ? projects.find(p => p.id === activeId) : null;
+  
   
   return (
     <div className="min-h-screen space-y-6 animate-fadeIn">
@@ -367,7 +580,12 @@ const ProjectsPage: React.FC = () => {
       
       {/* Project Views */}
       {filteredProjects.length > 0 ? (
-        <>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
           {/* Drag instructions */}
           <div className="text-center py-2">
             <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center gap-2">
@@ -380,151 +598,62 @@ const ProjectsPage: React.FC = () => {
 
           {/* Grid View */}
           {viewMode === 'grid' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProjects.map((project, index) => {
-                const stats = getProjectStats(project.id);
-                const isDragging = draggedProject?.id === project.id;
-                const isDragOver = dragOverIndex === index;
-                
-                return (
-                  <div
-                    key={project.id}
-                    className={`animate-fadeInUp transition-all duration-200 ${
-                      isDragging ? 'opacity-50 scale-95' : ''
-                    } ${
-                      isDragOver ? 'transform scale-105' : ''
-                    }`}
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, project)}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, index)}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <ProjectCard
-                      project={project}
-                      taskCount={stats.totalTasks}
-                      onEdit={handleOpenModal}
-                      onDelete={handleOpenDeleteConfirm}
-                      stats={stats}
-                      isDragging={isDragging}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+            <SortableContext
+              items={filteredProjects.map(p => p.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProjects.map((project, index) => {
+                  const stats = getProjectStats(project.id);
+                  
+                  return (
+                    <div
+                      key={project.id}
+                      className="animate-fadeInUp"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <SortableProjectCard
+                        project={project}
+                        stats={stats}
+                        onEdit={handleOpenModal}
+                        onDelete={handleOpenDeleteConfirm}
+                        viewMode={viewMode}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </SortableContext>
           )}
           
           {/* List View */}
           {viewMode === 'list' && (
-            <div className="space-y-4">
-              {filteredProjects.map((project, index) => {
-                const stats = getProjectStats(project.id);
-                const isDragging = draggedProject?.id === project.id;
-                const isDragOver = dragOverIndex === index;
-                
-                return (
-                  <Card
-                    key={project.id}
-                    variant="glass"
-                    className={`transition-all duration-300 animate-fadeInUp cursor-move ${
-                      isDragging 
-                        ? 'opacity-50 scale-95 rotate-1 shadow-2xl' 
-                        : 'hover:shadow-xl hover:-translate-y-1'
-                    } ${
-                      isDragOver ? 'ring-2 ring-primary-500 ring-opacity-50' : ''
-                    }`}
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, project)}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, index)}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <div className="flex items-center justify-between gap-6 p-6">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div
-                          className="w-4 h-4 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: project.color }}
-                        />
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            {project.name}
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-4 mt-2 text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              {stats.totalTasks} tasks
-                            </span>
-                            {stats.overdueTasks > 0 && (
-                              <span className="text-red-600 font-semibold">
-                                {stats.overdueTasks} overdue
-                              </span>
-                            )}
-                            <span className="text-gray-500">
-                              Updated {(() => {
-                                try {
-                                  const date = new Date(project.updatedAt);
-                                  if (isNaN(date.getTime())) {
-                                    return 'recently';
-                                  }
-                                  return formatDistanceToNow(date) + ' ago';
-                                } catch (error) {
-                                  return 'recently';
-                                }
-                              })()}
-                            </span>
-                            <span className="text-purple-600 font-medium">
-                              {stats.totalHours}h spent
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-6">
-                        {/* Progress */}
-                        <div className="w-32">
-                          <div className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                            {stats.progress}%
-                          </div>
-                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-1000 flex items-center justify-center text-xs font-bold text-white ${
-                                stats.progress >= 75 ? 'bg-gradient-to-r from-green-500 to-green-600' :
-                                stats.progress >= 50 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                                'bg-gradient-to-r from-red-500 to-red-600'
-                              }`}
-                              style={{ width: `${stats.progress}%` }}
-                            >
-                              {stats.progress >= 20 && `${stats.progress}%`}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Actions */}
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleOpenModal(project)}
-                            className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
-                            title="Edit project"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={() => handleOpenDeleteConfirm(project.id)}
-                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                            title="Delete project"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
+            <SortableContext
+              items={filteredProjects.map(p => p.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-4">
+                {filteredProjects.map((project, index) => {
+                  const stats = getProjectStats(project.id);
+                  
+                  return (
+                    <div
+                      key={project.id}
+                      className="animate-fadeInUp"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <SortableProjectCard
+                        project={project}
+                        stats={stats}
+                        onEdit={handleOpenModal}
+                        onDelete={handleOpenDeleteConfirm}
+                        viewMode={viewMode}
+                      />
                     </div>
-                  </Card>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            </SortableContext>
           )}
           
           {/* Kanban View */}
@@ -588,7 +717,35 @@ const ProjectsPage: React.FC = () => {
               ))}
             </div>
           )}
-        </>
+          
+          {/* Drag Overlay */}
+          <DragOverlay>
+            {activeProject ? (
+              <div className="opacity-90">
+                {viewMode === 'grid' ? (
+                  <ProjectCard
+                    project={activeProject}
+                    taskCount={getProjectStats(activeProject.id).totalTasks}
+                    onEdit={() => {}}
+                    onDelete={() => {}}
+                    stats={getProjectStats(activeProject.id)}
+                    isDragging={true}
+                  />
+                ) : (
+                  <Card variant="glass" className="shadow-2xl">
+                    <div className="flex items-center gap-4 p-6">
+                      <div
+                        className="w-4 h-4 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: activeProject.color }}
+                      />
+                      <h3 className="text-lg font-semibold">{activeProject.name}</h3>
+                    </div>
+                  </Card>
+                )}
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       ) : (
         <Empty
           title="No projects found"

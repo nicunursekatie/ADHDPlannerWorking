@@ -304,6 +304,7 @@ export class DatabaseService {
       name: project.name,
       description: project.description,
       color: project.color,
+      order: project.order,
       created_at: project.createdAt,
       updated_at: project.updatedAt
     };
@@ -319,9 +320,20 @@ export class DatabaseService {
   }
 
   static async updateProject(id: string, updates: Partial<Project>, userId: string): Promise<Project> {
+    // Map TypeScript camelCase to database snake_case
+    const dbUpdates: any = {};
+    
+    if (updates.id !== undefined) dbUpdates.id = updates.id;
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.color !== undefined) dbUpdates.color = updates.color;
+    if (updates.order !== undefined) dbUpdates.order = updates.order;
+    if (updates.createdAt !== undefined) dbUpdates.created_at = updates.createdAt;
+    if (updates.updatedAt !== undefined) dbUpdates.updated_at = updates.updatedAt;
+
     const { data, error } = await supabase
       .from('projects')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', id)
       .eq('user_id', userId)
       .select()
