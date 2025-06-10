@@ -137,7 +137,7 @@ const ProjectDetailPage: React.FC = () => {
             <TaskDisplay
             key={task.id}
             task={task}
-            onToggle={(id) => updateTask(id, { completed: !task.completed })}
+            onToggle={() => updateTask({ ...task, completed: !task.completed })}
             onEdit={() => handleOpenTaskModal(task)}
             onDelete={() => deleteTask(task.id)}
           />
