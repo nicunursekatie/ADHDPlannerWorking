@@ -88,9 +88,9 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
     // 3. Completed or archived tasks
     return tasks.filter(t => 
       t.id !== task.id && 
-      !t.completed && 
-      !t.archived &&
-      !(t.dependsOn && t.dependsOn.includes(task.id))
+      !t.dependsOn?.includes(task.id) &&
+      !t.completed &&
+      !t.archived
     );
   };
   
@@ -99,9 +99,11 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!title.trim()) return;
+    
     const taskData = {
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
       dueDate: dueDate || null,
       projectId: projectId || null,
       categoryIds: selectedCategoryIds,
@@ -546,7 +548,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                   </div>
                 ) : (
                   <SubtaskList
-                    parentTaskId={task!.id}
+                    parentTaskId={task.id}
                     existingSubtasks={subtasks}
                     onSubtasksChange={(newSubtasks) => setSubtasks(newSubtasks)}
                   />
@@ -595,6 +597,388 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
         </div>
       </div>
     </div>
+  );
+};
+
+export default TaskFormWithDependencies;
+            </div>
+          </label>
+          <div className="space-y-2">
+            {selectedDependencies.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {selectedDependencies.map(depId => {
+                  const depTask = tasks.find(t => t.id === depId);
+                  if (!depTask) return null;
+                  return (
+                    <span
+                      key={depId}
+                      className="inline-flex items-center px-2 py-1 rounded text-sm bg-indigo-100 text-indigo-800"
+                    >
+                      {depTask.title}
+                      <button
+                        type="button"
+                        onClick={() => toggleDependency(depId)}
+                        className="ml-1 text-indigo-600 hover:text-indigo-800 focus:outline-none"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowDependencyModal(true)}
+              className="px-3 py-1 rounded-md text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 flex items-center"
+            >
+              <Plus size={14} className="mr-1" />
+              Add Dependency
+            </button>
+          </div>
+        </div>
+        
+        {/* ADHD-Friendly Task Properties - Compact Layout */}
+        <div className="space-y-3">
+          {/* Priority and Urgency Row */}
+          <div className="grid grid-cols-1 gap-3">
+            {/* Priority */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Star size={14} className="inline mr-1" />
+                Priority
+              </label>
+              <div className="flex gap-1">
+                {[
+                  { label: '🌱', text: 'Low', value: 'low' as const },
+                  { label: '🔶', text: 'Medium', value: 'medium' as const },
+                  { label: '🔴', text: 'High', value: 'high' as const },
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setPriority(option.value)}
+                    className={`flex-1 px-2 py-2 rounded text-sm font-bold border transition-all focus:outline-none ${
+                      priority === option.value
+                        ? option.value === 'high'
+                        ? 'bg-red-500 text-white border-red-500'
+                        : option.value === 'medium'
+                        ? 'bg-yellow-500 text-white border-yellow-500'
+                        : 'bg-green-500 text-white border-green-500'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                    title={`${option.label} ${option.text}`}
+                  >
+                    <span className="text-lg">{option.label}</span>
+                    <span className="block text-sm font-bold">{option.text}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Urgency */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Flame size={14} className="inline mr-1" />
+                Urgency
+              </label>
+              <div className="grid grid-cols-2 gap-1">
+                {[
+                  { label: '🔥', text: 'Today', value: 'today' as const, color: 'red' },
+                  { label: '📅', text: 'Week', value: 'week' as const, color: 'orange' },
+                  { label: '📌', text: 'Month', value: 'month' as const, color: 'yellow' },
+                  { label: '🌊', text: 'Someday', value: 'someday' as const, color: 'blue' },
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setUrgency(option.value)}
+                    className={`px-2 py-2 rounded text-sm font-bold border transition-all focus:outline-none ${
+                      urgency === option.value
+                        ? option.color === 'red' ? 'bg-red-500 text-white border-red-500'
+                        : option.color === 'orange' ? 'bg-orange-500 text-white border-orange-500'
+                        : option.color === 'yellow' ? 'bg-yellow-500 text-white border-yellow-500'
+                        : 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                    title={`${option.label} ${option.text}`}
+                  >
+                    <span className="text-lg">{option.label}</span>
+                    <span className="block text-sm font-bold">{option.text}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {/* Energy and Emotional Weight Row */}
+          <div className="grid grid-cols-1 gap-3">
+            {/* Energy Needed */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Battery size={14} className="inline mr-1" />
+                Energy Needed
+              </label>
+              <div className="flex gap-1">
+                {[
+                  { label: '🔋', text: 'Low', value: 'low' as const },
+                  { label: '🔋🔋', text: 'Med', value: 'medium' as const },
+                  { label: '🔋🔋🔋', text: 'High', value: 'high' as const },
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setEnergyRequired(option.value)}
+                    className={`flex-1 px-2 py-2 rounded text-sm font-bold border transition-all focus:outline-none ${
+                      energyRequired === option.value
+                        ? 'bg-green-500 text-white border-green-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-green-50'
+                    }`}
+                    title={`Energy: ${option.text}`}
+                  >
+                    <span className="text-base">{option.label}</span>
+                    <span className="block text-sm font-bold">{option.text}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Emotional Weight */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Brain size={14} className="inline mr-1" />
+                Emotional Weight
+              </label>
+              <div className="grid grid-cols-2 gap-1">
+                {[
+                  { label: '😊', text: 'Easy', value: 'easy' as const, color: 'green' },
+                  { label: '😐', text: 'OK', value: 'neutral' as const, color: 'yellow' },
+                  { label: '😰', text: 'Hard', value: 'stressful' as const, color: 'orange' },
+                  { label: '😱', text: 'Dread', value: 'dreading' as const, color: 'red' },
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setEmotionalWeight(option.value)}
+                    className={`px-2 py-2 rounded text-sm font-bold border transition-all focus:outline-none ${
+                      emotionalWeight === option.value
+                        ? option.value === 'easy' ? 'bg-green-500 text-white border-green-600'
+                        : option.value === 'neutral' ? 'bg-yellow-500 text-white border-yellow-600'
+                        : option.value === 'stressful' ? 'bg-orange-500 text-white border-orange-600'
+                        : 'bg-red-500 text-white border-red-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                    }`}
+                    title={`${option.label} ${option.text}`}
+                  >
+                    <span className="text-lg">{option.label}</span>
+                    <span className="block text-sm font-bold">{option.text}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Estimated Time */}
+        <div>
+          <label htmlFor="estimatedMinutes" className="block text-sm font-medium text-gray-700">
+            <div className="flex items-center">
+              <Clock size={16} className="mr-1" />
+              Estimated Time (minutes)
+            </div>
+          </label>
+          <input
+            type="number"
+            id="estimatedMinutes"
+            name="estimatedMinutes"
+            value={estimatedMinutes}
+            onChange={(e) => setEstimatedMinutes(parseInt(e.target.value) || 0)}
+            min="0"
+            step="15"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+        
+        {/* Tags */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="flex items-center">
+              <Hash size={16} className="mr-1" />
+              Tags
+            </div>
+          </label>
+          <div className="space-y-2">
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {tags.map(tag => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center px-2 py-1 rounded text-sm bg-gray-100 text-gray-700"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    >
+                      <X size={14} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex">
+              <input
+                type="text"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
+                placeholder="Add a tag..."
+                className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+              <button
+                type="button"
+                onClick={addTag}
+                className="px-3 py-2 rounded-r-md bg-gray-200 text-gray-700 hover:bg-gray-300"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Subtasks */}
+        {isEdit && task && (
+          <div className="pt-4">
+            <SubtaskList
+              parentTaskId={task.id}
+              existingSubtasks={subtasks}
+              onSubtasksChange={setSubtasks}
+            />
+          </div>
+        )}
+        
+        {/* Form Actions */}
+        <div className="flex justify-end space-x-3 pt-4">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+          >
+            {isEdit ? 'Update Task' : 'Create Task'}
+          </Button>
+        </div>
+      </form>
+      
+      {/* New Category Modal */}
+      <Modal
+        isOpen={showNewCategoryModal}
+        onClose={() => setShowNewCategoryModal(false)}
+        title="Create New Category"
+      >
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700">
+              Category Name
+            </label>
+            <input
+              type="text"
+              id="categoryName"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="categoryColor" className="block text-sm font-medium text-gray-700">
+              Color
+            </label>
+            <input
+              type="color"
+              id="categoryColor"
+              value={newCategoryColor}
+              onChange={(e) => setNewCategoryColor(e.target.value)}
+              className="mt-1 block w-full h-10 rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+          <div className="flex justify-end space-x-3">
+            <Button
+              variant="secondary"
+              onClick={() => setShowNewCategoryModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleCreateCategory}
+            >
+              Create
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      
+      {/* Dependency Selection Modal */}
+      <Modal
+        isOpen={showDependencyModal}
+        onClose={() => setShowDependencyModal(false)}
+        title="Select Dependencies"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Select tasks that must be completed before this task can be started.
+          </p>
+          <div className="max-h-96 overflow-y-auto">
+            {availableTasksForDependency.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No available tasks for dependencies</p>
+            ) : (
+              <div className="space-y-2">
+                {availableTasksForDependency.map(depTask => (
+                  <label
+                    key={depTask.id}
+                    className="flex items-start p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedDependencies.includes(depTask.id)}
+                      onChange={() => toggleDependency(depTask.id)}
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mt-1"
+                    />
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-gray-900">{depTask.title}</p>
+                      {depTask.projectId && (
+                        <p className="text-xs text-gray-500">
+                          {projects.find(p => p.id === depTask.projectId)?.name}
+                        </p>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button
+              variant="primary"
+              onClick={() => setShowDependencyModal(false)}
+            >
+              Done
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 };
 

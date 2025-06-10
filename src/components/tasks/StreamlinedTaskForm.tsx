@@ -17,7 +17,10 @@ import {
   GitBranch,
   ListChecks,
   Plus,
-  X
+  X,
+  Flame,
+  Star,
+  Brain
 } from 'lucide-react';
 
 interface StreamlinedTaskFormProps {
@@ -47,8 +50,9 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
     categoryIds: [],
     parentTaskId: parentTask?.id || null,
     priority: 'medium',
-    energyLevel: 'medium',
-    size: 'medium',
+    urgency: 'week',
+    emotionalWeight: 'neutral',
+    energyRequired: 'medium',
     estimatedMinutes: 30,
     subtasks: [],
     ...task,
@@ -62,7 +66,7 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
     if (task) {
       setFormData({ ...task });
       // Show advanced options if they have values
-      if (task.energyLevel || task.size || task.estimatedMinutes || task.description) {
+      if (task.energyRequired || task.urgency || task.emotionalWeight || task.estimatedMinutes || task.description) {
         setShowAdvanced(true);
       }
     } else {
@@ -96,33 +100,21 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
     }));
   }, []);
 
-  const handleCategoryChange = useCallback((categoryId: string) => {
-    setFormData(prev => {
-      const categoryIds = prev.categoryIds || [];
-      if (categoryIds.includes(categoryId)) {
-        return {
-          ...prev,
-          categoryIds: categoryIds.filter(id => id !== categoryId),
-        };
-      } else {
-        return {
-          ...prev,
-          categoryIds: [...categoryIds, categoryId],
-        };
-      }
-    });
-  }, []);
   
   const handlePriorityChange = useCallback((priority: 'low' | 'medium' | 'high') => {
     setFormData(prev => ({ ...prev, priority }));
   }, []);
   
-  const handleEnergyLevelChange = useCallback((energyLevel: 'low' | 'medium' | 'high') => {
-    setFormData(prev => ({ ...prev, energyLevel }));
+  const handleEnergyRequiredChange = useCallback((energyRequired: 'low' | 'medium' | 'high') => {
+    setFormData(prev => ({ ...prev, energyRequired }));
   }, []);
   
-  const handleSizeChange = useCallback((size: 'small' | 'medium' | 'large') => {
-    setFormData(prev => ({ ...prev, size }));
+  const handleUrgencyChange = useCallback((urgency: 'today' | 'week' | 'month' | 'someday') => {
+    setFormData(prev => ({ ...prev, urgency }));
+  }, []);
+  
+  const handleEmotionalWeightChange = useCallback((emotionalWeight: 'easy' | 'neutral' | 'stressful' | 'dreading') => {
+    setFormData(prev => ({ ...prev, emotionalWeight }));
   }, []);
   
   // For subtasks management
@@ -405,35 +397,36 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
         </button>
       </div>
       
-      {/* Categories - simplified visual selection */}
-      {categories.length > 0 && (
-        <div>
-          <div className="flex items-center mb-2">
-            <Tag size={16} className="text-gray-400 mr-1" />
-            <span className="text-sm text-gray-500">Categories:</span>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {categories.map(category => (
-              <div
-                key={category.id}
-                className={`inline-flex items-center px-2 py-1 rounded-full text-xs cursor-pointer transition-colors ${
-                  (formData.categoryIds?.includes(category.id) || false)
-                    ? 'text-white shadow-sm'
-                    : 'text-gray-700 bg-opacity-20'
-                }`}
-                style={{ 
-                  backgroundColor: (formData.categoryIds?.includes(category.id) || false)
-                    ? category.color 
-                    : `${category.color}30`
-                }}
-                onClick={() => handleCategoryChange(category.id)}
-              >
-                <span>{category.name}</span>
-              </div>
-            ))}
-          </div>
+      {/* Categories - dropdown selection */}
+      <div>
+        <div className="flex items-center mb-1">
+          <Tag size={14} className="text-gray-400 mr-1" />
+          <label htmlFor="categories" className="text-sm text-gray-500">
+            Categories
+          </label>
         </div>
-      )}
+        <select
+          id="categories"
+          name="categories"
+          multiple
+          value={formData.categoryIds || []}
+          onChange={(e) => {
+            const values = Array.from(e.target.selectedOptions, option => option.value);
+            setFormData(prev => ({ ...prev, categoryIds: values }));
+          }}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          size={Math.min(categories.length + 1, 3)}
+        >
+          {categories.map(category => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+        {categories.length > 0 && (
+          <p className="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple</p>
+        )}
+      </div>
       
       {/* Toggle for advanced options */}
       <button
@@ -645,92 +638,167 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
             />
           </div>
           
-          {/* Energy level */}
+          {/* Urgency */}
           <div>
             <div className="flex items-center mb-2">
-              <Battery size={14} className="text-gray-400 mr-1" />
-              <span className="text-sm text-gray-500">Energy Required:</span>
+              <Flame size={14} className="text-gray-400 mr-1" />
+              <span className="text-sm text-gray-500">Urgency:</span>
             </div>
-            <div className="flex space-x-2">
+            <div className="grid grid-cols-2 gap-1">
               <button
                 type="button"
-                onClick={() => handleEnergyLevelChange('low')}
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  formData.energyLevel === 'low' 
-                    ? 'bg-purple-500 text-white' 
-                    : 'bg-purple-100 text-purple-800'
+                onClick={() => handleUrgencyChange('today')}
+                className={`px-2 py-1 rounded text-xs font-medium ${
+                  formData.urgency === 'today' 
+                    ? 'bg-red-500 text-white' 
+                    : 'bg-red-100 text-red-800'
                 }`}
               >
-                Low
+                🔥 Today
               </button>
-              
               <button
                 type="button"
-                onClick={() => handleEnergyLevelChange('medium')}
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  formData.energyLevel === 'medium' 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-blue-100 text-blue-800'
+                onClick={() => handleUrgencyChange('week')}
+                className={`px-2 py-1 rounded text-xs font-medium ${
+                  formData.urgency === 'week' 
+                    ? 'bg-orange-500 text-white' 
+                    : 'bg-orange-100 text-orange-800'
                 }`}
               >
-                Medium
+                📅 Week
               </button>
-              
               <button
                 type="button"
-                onClick={() => handleEnergyLevelChange('high')}
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  formData.energyLevel === 'high' 
+                onClick={() => handleUrgencyChange('month')}
+                className={`px-2 py-1 rounded text-xs font-medium ${
+                  formData.urgency === 'month' 
                     ? 'bg-yellow-500 text-white' 
                     : 'bg-yellow-100 text-yellow-800'
                 }`}
               >
-                High
+                📌 Month
               </button>
-            </div>
-          </div>
-          
-          {/* Task size */}
-          <div>
-            <div className="flex items-center mb-2">
-              <MoreHorizontal size={14} className="text-gray-400 mr-1" />
-              <span className="text-sm text-gray-500">Task Size:</span>
-            </div>
-            <div className="flex space-x-2">
               <button
                 type="button"
-                onClick={() => handleSizeChange('small')}
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  formData.size === 'small' 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-green-100 text-green-800'
-                }`}
-              >
-                Small
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => handleSizeChange('medium')}
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  formData.size === 'medium' 
+                onClick={() => handleUrgencyChange('someday')}
+                className={`px-2 py-1 rounded text-xs font-medium ${
+                  formData.urgency === 'someday' 
                     ? 'bg-blue-500 text-white' 
                     : 'bg-blue-100 text-blue-800'
                 }`}
               >
-                Medium
+                🌊 Someday
               </button>
-              
+            </div>
+          </div>
+
+          {/* Energy Required - Enhanced */}
+          <div>
+            <div className="flex items-center mb-3">
+              <Battery size={18} className="text-yellow-500 mr-2" />
+              <span className="text-lg font-semibold text-gray-900">Energy Level Needed</span>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"
-                onClick={() => handleSizeChange('large')}
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  formData.size === 'large' 
-                    ? 'bg-purple-500 text-white' 
-                    : 'bg-purple-100 text-purple-800'
+                onClick={() => handleEnergyRequiredChange('low')}
+                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                  formData.energyRequired === 'low' 
+                    ? 'border-green-400 bg-green-50 dark:bg-green-900/30 shadow-lg scale-105'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-green-300'
                 }`}
               >
-                Large
+                <div className="text-2xl mb-2">🔋</div>
+                <div className="font-bold text-sm">Low Energy</div>
+                <div className="text-xs text-gray-500">Easy, relaxed</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEnergyRequiredChange('medium')}
+                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                  formData.energyRequired === 'medium' 
+                    ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 shadow-lg scale-105'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-yellow-300'
+                }`}
+              >
+                <div className="text-2xl mb-2">⚡</div>
+                <div className="font-bold text-sm">Medium Energy</div>
+                <div className="text-xs text-gray-500">Normal focus</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEnergyRequiredChange('high')}
+                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                  formData.energyRequired === 'high' 
+                    ? 'border-red-400 bg-red-50 dark:bg-red-900/30 shadow-lg scale-105'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-red-300'
+                }`}
+              >
+                <div className="text-2xl mb-2">🚀</div>
+                <div className="font-bold text-sm">High Energy</div>
+                <div className="text-xs text-gray-500">Full focus</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Emotional Weight - Enhanced */}
+          <div>
+            <div className="flex items-center mb-4">
+              <Brain size={18} className="text-purple-500 mr-2" />
+              <span className="text-lg font-semibold text-gray-900">How do you feel about this?</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleEmotionalWeightChange('easy')}
+                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                  formData.emotionalWeight === 'easy' 
+                    ? 'border-green-400 bg-green-50 dark:bg-green-900/30 shadow-lg scale-105'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-green-300'
+                }`}
+              >
+                <div className="text-2xl mb-2">😊</div>
+                <div className="font-bold text-sm">Easy/Fun</div>
+                <div className="text-xs text-gray-500">Love doing this</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEmotionalWeightChange('neutral')}
+                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                  formData.emotionalWeight === 'neutral' 
+                    ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 shadow-lg scale-105'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-yellow-300'
+                }`}
+              >
+                <div className="text-2xl mb-2">😐</div>
+                <div className="font-bold text-sm">Neutral</div>
+                <div className="text-xs text-gray-500">Just another task</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEmotionalWeightChange('stressful')}
+                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                  formData.emotionalWeight === 'stressful' 
+                    ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/30 shadow-lg scale-105'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-orange-300'
+                }`}
+              >
+                <div className="text-2xl mb-2">😰</div>
+                <div className="font-bold text-sm">Stressful</div>
+                <div className="text-xs text-gray-500">Not feeling it</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEmotionalWeightChange('dreading')}
+                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                  formData.emotionalWeight === 'dreading' 
+                    ? 'border-red-400 bg-red-50 dark:bg-red-900/30 shadow-lg scale-105'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-red-300'
+                }`}
+              >
+                <div className="text-2xl mb-2">😱</div>
+                <div className="font-bold text-sm">Dreading</div>
+                <div className="text-xs text-gray-500">Really don't want to</div>
               </button>
             </div>
           </div>

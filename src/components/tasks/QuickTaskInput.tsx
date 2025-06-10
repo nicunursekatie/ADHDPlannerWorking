@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Task } from '../../types';
 import { useAppContext } from '../../context/AppContextSupabase';
-import { Plus, Circle, Calendar, Folder, Tag } from 'lucide-react';
+import { Plus, Circle, Calendar, Folder, Tag, Flame, Star, Brain, Battery } from 'lucide-react';
 import { getTodayString, getTomorrowString, formatDateString, extractDateFromText } from '../../utils/dateUtils';
 
 interface QuickTaskInputProps {
@@ -22,6 +22,9 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
   const [projectId, setProjectId] = useState<string | null>(defaultProjectId);
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [urgency, setUrgency] = useState<'today' | 'week' | 'month' | 'someday'>('week');
+  const [emotionalWeight, setEmotionalWeight] = useState<'easy' | 'neutral' | 'stressful' | 'dreading'>('neutral');
+  const [energyRequired, setEnergyRequired] = useState<'low' | 'medium' | 'high'>('medium');
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   
@@ -47,6 +50,10 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
       dueDate,
       projectId,
       categoryIds,
+      priority,
+      urgency,
+      emotionalWeight,
+      energyRequired,
       completed: false,
       archived: false,
     };
@@ -59,6 +66,9 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
     if (!defaultProjectId) setProjectId(null);
     setCategoryIds([]);
     setPriority('medium');
+    setUrgency('week');
+    setEmotionalWeight('neutral');
+    setEnergyRequired('medium');
     
     if (onTaskAdded) {
       onTaskAdded();
@@ -152,6 +162,49 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
         return 'text-orange-500';
       case 'low':
         return 'text-green-500';
+      default:
+        return 'text-gray-400';
+    }
+  };
+
+  const getUrgencyColor = () => {
+    switch (urgency) {
+      case 'today':
+        return 'text-red-600 bg-red-50 px-2 py-1 rounded-full';
+      case 'week':
+        return 'text-orange-600 bg-orange-50 px-2 py-1 rounded-full';
+      case 'month':
+        return 'text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full';
+      case 'someday':
+        return 'text-blue-600 bg-blue-50 px-2 py-1 rounded-full';
+      default:
+        return 'text-gray-400';
+    }
+  };
+
+  const getEnergyColor = () => {
+    switch (energyRequired) {
+      case 'low':
+        return 'text-green-600 bg-green-50 px-2 py-1 rounded-full';
+      case 'medium':
+        return 'text-green-600 bg-green-50 px-2 py-1 rounded-full';
+      case 'high':
+        return 'text-green-600 bg-green-50 px-2 py-1 rounded-full';
+      default:
+        return 'text-gray-400';
+    }
+  };
+
+  const getEmotionalColor = () => {
+    switch (emotionalWeight) {
+      case 'easy':
+        return 'text-green-600 bg-green-50 px-2 py-1 rounded-full';
+      case 'neutral':
+        return 'text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full';
+      case 'stressful':
+        return 'text-orange-600 bg-orange-50 px-2 py-1 rounded-full';
+      case 'dreading':
+        return 'text-red-600 bg-red-50 px-2 py-1 rounded-full';
       default:
         return 'text-gray-400';
     }
@@ -282,6 +335,54 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
                   </div>
                 )}
               </div>
+              
+              {/* Enhanced ADHD-friendly fields */}
+              <button
+                type="button"
+                className={`flex items-center font-medium transition-all hover:scale-105 ${getUrgencyColor()}`}
+                onClick={() => {
+                  if (urgency === 'week') setUrgency('today');
+                  else if (urgency === 'today') setUrgency('month');
+                  else if (urgency === 'month') setUrgency('someday');
+                  else setUrgency('week');
+                }}
+              >
+                <Flame size={18} className="mr-2" />
+                <span className="text-base">
+                  {urgency === 'today' ? '🔥 Today' : urgency === 'week' ? '📅 Week' : urgency === 'month' ? '📌 Month' : '🌊 Someday'}
+                </span>
+              </button>
+              
+              <button
+                type="button"
+                className={`flex items-center font-medium transition-all hover:scale-105 ${getEnergyColor()}`}
+                onClick={() => {
+                  if (energyRequired === 'medium') setEnergyRequired('low');
+                  else if (energyRequired === 'low') setEnergyRequired('high');
+                  else setEnergyRequired('medium');
+                }}
+              >
+                <Battery size={18} className="mr-2" />
+                <span className="text-base">
+                  {energyRequired === 'low' ? '🔋 Low' : energyRequired === 'medium' ? '⚡ Med' : '🚀 High'}
+                </span>
+              </button>
+              
+              <button
+                type="button"
+                className={`flex items-center font-medium transition-all hover:scale-105 ${getEmotionalColor()}`}
+                onClick={() => {
+                  if (emotionalWeight === 'neutral') setEmotionalWeight('easy');
+                  else if (emotionalWeight === 'easy') setEmotionalWeight('stressful');
+                  else if (emotionalWeight === 'stressful') setEmotionalWeight('dreading');
+                  else setEmotionalWeight('neutral');
+                }}
+              >
+                <Brain size={18} className="mr-2" />
+                <span className="text-base">
+                  {emotionalWeight === 'easy' ? '😊 Love it' : emotionalWeight === 'neutral' ? '😐 Neutral' : emotionalWeight === 'stressful' ? '😩 Ugh' : '😰 Dread'}
+                </span>
+              </button>
             </div>
           </div>
         )}
