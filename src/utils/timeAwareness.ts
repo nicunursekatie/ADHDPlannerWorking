@@ -65,8 +65,7 @@ export const getTimeContext = (tasks: Task[]): TimeContext => {
       ? effectiveHoursRemaining // Already accounted for breaks in next day calculation
       : Math.max(0, effectiveHoursRemaining * 0.7); // Use 70% of remaining time if less than 3 hours left
   
-  // Debug logging
-  console.log(`Time context: ${now.toLocaleTimeString()}, Hours remaining: ${hoursRemaining.toFixed(2)}, Productive: ${productiveHoursRemaining.toFixed(2)}${isUsingNextDay ? ' (next day)' : ''}`);
+  // Debug logging removed for performance
   
   // Find next deadline
   const upcomingTasks = tasks
@@ -153,10 +152,7 @@ export const getTaskTimeEstimate = (
   if (percentOfDayRemaining > 0.8) urgency = 'urgent';
   else if (percentOfDayRemaining > 0.5) urgency = 'warning';
   
-  // Debug logging (remove in production)
-  if (percentOfDayRemaining > 0.9) {
-    console.log(`Task: ${task.title}, Est: ${estimatedMinutes}min (${estimatedHours.toFixed(2)}h), Remaining: ${timeContext.productiveHoursRemaining.toFixed(2)}h, Percent: ${(percentOfDayRemaining * 100).toFixed(1)}%`);
-  }
+  // Debug logging removed for performance
   
   return {
     taskId: task.id,

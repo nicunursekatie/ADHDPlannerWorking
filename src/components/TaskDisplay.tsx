@@ -43,7 +43,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       setCurrentTime(new Date());
       setFocusTime(focusTracker.getTaskFocusTime(task.id));
       setCurrentSession(focusTracker.getCurrentSession());
-    }, 60000);
+    }, 60000); // Update every minute instead of every second
     
     return () => clearInterval(timer);
   }, [task.id]);
@@ -95,8 +95,8 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const taskCompleteness = analyzeTaskCompleteness(task);
   const showIncompleteIndicator = !task.completed && !taskCompleteness.isComplete;
   
-  // Time awareness calculations
-  const timeContext = React.useMemo(() => getTimeContext(tasks), [tasks, currentTime]);
+  // Time awareness calculations - only recalculate when tasks change, not every minute
+  const timeContext = React.useMemo(() => getTimeContext(tasks), [tasks]);
   const timeEstimate = React.useMemo(() => getTaskTimeEstimate(task, timeContext), [task, timeContext]);
   
   return (
