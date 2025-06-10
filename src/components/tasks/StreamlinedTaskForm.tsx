@@ -59,28 +59,7 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
   };
   
   const [formData, setFormData] = useState<Partial<Task>>(initialState);
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      if (isEdit && task?.id) {
-        await updateTask({ ...task, ...formData });
-      } else {
-        await addTask(formData);
-      }
-      onClose();
-    } catch (err) {
-      console.error("Error saving task:", err);
-    }
-  };
-
-
-const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   
   useEffect(() => {
     // Reset form data when the task prop changes
@@ -190,6 +169,23 @@ const [errors, setErrors] = useState<{ [key: string]: string }>({});
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData.title]);
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    if (isEdit && task) {
+      const updatedTask = { ...task, ...formData };
+      updateTask(updatedTask as Task);
+    } else {
+      addTask(formData);
+    }
+    
+    onClose();
+  }, [validateForm, isEdit, task, formData, updateTask, addTask, onClose]);
   
   // Get color based on priority
   const getPriorityColor = useCallback((priority: string | undefined): string => {
@@ -212,8 +208,7 @@ const [errors, setErrors] = useState<{ [key: string]: string }>({});
   }, []);
 
   return (
-    <div className="w-full max-w-2xl mx-auto px-4">
-<form onSubmit={handleSubmit} onSubmit={handleSubmit} className="space-y-4">
+    <form className="flex flex-col gap-6 pb-8" onSubmit={handleSubmit} className="space-y-4">
       {/* Task title - always visible and focused */}
       <div>
         <input
@@ -840,6 +835,5 @@ const [errors, setErrors] = useState<{ [key: string]: string }>({});
         </div>
       </div>
     </form>
-</div>
   );
 };
