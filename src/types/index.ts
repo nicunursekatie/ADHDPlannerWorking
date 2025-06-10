@@ -14,8 +14,19 @@ export interface Task {
   estimatedMinutes?: number;
   phase?: string; // Project phase this task belongs to
   tags?: string[]; // Tags associated with the task, including phase name
+  
+  // Multi-dimensional prioritization fields
+  urgency?: 'today' | 'week' | 'month' | 'someday'; // Time sensitivity
+  importance?: number; // 1-5: How critical to goals (5 = life-changing, 1 = nice-to-have)
+  emotionalWeight?: 'easy' | 'neutral' | 'stressful' | 'dreading'; // Emotional difficulty
+  energyRequired?: 'low' | 'medium' | 'high'; // Physical/mental effort needed
+  smartPriorityScore?: number; // Calculated composite score
+  
   createdAt: string;
   updatedAt: string;
+  completedAt?: string | null;
+  recurringTaskId?: string | null;
+  
   // Runtime computed fields (not stored in DB)
   subtasks?: string[]; // IDs of subtasks - computed from parent-child relationships
   dependsOn?: string[]; // IDs of tasks this task depends on - computed from dependencies table
@@ -63,6 +74,15 @@ export interface WhatNowCriteria {
 }
 
 export type ViewMode = 'day' | 'week' | 'month';
+
+export type TaskSortMode = 
+  | 'whatnow' // Matches current energy to task requirements
+  | 'eatthefrog' // High emotional weight tasks when energy is high
+  | 'quickwins' // Low time + low emotional weight for momentum
+  | 'deadline' // Pure urgency-based
+  | 'energymatch' // Only shows tasks matching current energy level
+  | 'priority' // Traditional priority sorting
+  | 'smart'; // Smart priority score based
 
 // Project breakdown structures
 export interface ProjectPhase {

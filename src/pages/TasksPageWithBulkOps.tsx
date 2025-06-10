@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContextSupabase';
-import { Task } from '../types';
+import { Task, TaskSortMode, WhatNowCriteria } from '../types';
 import { TaskDisplay } from '../components/TaskDisplay';
 import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
 import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
@@ -14,10 +14,12 @@ import {
   Plus, Filter, X, Undo2, Archive, 
   AlertTriangle, CalendarDays, Calendar, Layers, 
   Trash2, CheckCircle2, Folder, FileArchive,
-  ArrowUpDown, Clock, Star, Hash, FolderOpen, Tag
+  ArrowUpDown, Clock, Star, Hash, FolderOpen, Tag,
+  Zap, Brain, Timer, Battery
 } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek } from '../utils/helpers';
 import { DeletedTask, getDeletedTasks, restoreDeletedTask, permanentlyDeleteTask } from '../utils/localStorage';
+import { sortTasks as smartSortTasks, SortMode, EnergyLevel, getFilteredCounts, getSortModeInfo } from '../utils/taskPrioritization';
 
 interface BulkTaskCardProps {
   task: Task;
@@ -122,6 +124,11 @@ const TasksPageWithBulkOps: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const sortMenuRef = useRef<HTMLDivElement>(null);
+  
+  // Smart sorting state
+  const [smartSortMode, setSmartSortMode] = useState<SortMode>('smart');
+  const [currentEnergy, setCurrentEnergy] = useState<EnergyLevel>('medium');
+  const [showSmartSort, setShowSmartSort] = useState(false);
   
   // Show undo notification when a task is deleted
   useEffect(() => {
@@ -361,6 +368,12 @@ const TasksPageWithBulkOps: React.FC = () => {
   
   // Sort function
   const sortTasks = (tasks: Task[]): Task[] => {
+    // If using smart sort, delegate to the smart sorting utility
+    if (showSmartSort) {
+      return smartSortTasks(tasks, smartSortMode, currentEnergy);
+    }
+    
+    // Otherwise use traditional sorting
     const sorted = [...tasks].sort((a, b) => {
       let comparison = 0;
       
@@ -509,13 +522,20 @@ const TasksPageWithBulkOps: React.FC = () => {
           >
             Archive Completed
           </Button>
+          <Button
+            variant={showSmartSort ? "primary" : "secondary"}
+            icon={<Brain size={16} />}
+            onClick={() => setShowSmartSort(!showSmartSort)}
+          >
+            Smart Sort
+          </Button>
           <div className="relative" ref={sortMenuRef}>
             <Button
               variant="secondary"
               icon={<ArrowUpDown size={16} />}
               onClick={() => setShowSortMenu(!showSortMenu)}
             >
-              Sort
+              {showSmartSort ? 'Legacy Sort' : 'Sort'}
             </Button>
             {showSortMenu && (
               <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black dark:ring-gray-600 ring-opacity-5 z-10">
@@ -981,6 +1001,150 @@ const TasksPageWithBulkOps: React.FC = () => {
               >
                 Clear Filters
               </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+      
+      {/* Smart Sort Controls */}
+      {showSmartSort && (
+        <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-purple-200 dark:border-purple-800">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+                <Brain size={20} className="mr-2 text-purple-600 dark:text-purple-400" />
+                Smart Task Prioritization
+              </h3>
+              <button
+                className="text-gray-400 hover:text-gray-500"
+                onClick={() => setShowSmartSort(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            {/* Current Energy Level */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <Battery size={16} className="inline mr-1" />
+                Your Current Energy Level
+              </label>
+              <div className="flex gap-2">
+                {(['low', 'medium', 'high'] as const).map(level => (
+                  <button
+                    key={level}
+                    onClick={() => setCurrentEnergy(level)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                      currentEnergy === level
+                        ? 'bg-purple-600 text-white shadow-lg scale-105'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                    }`}
+                  >
+                    {level === 'low' && '🔋 Low'}
+                    {level === 'medium' && '🔋🔋 Medium'}
+                    {level === 'high' && '🔋🔋🔋 High'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Sorting Mode */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <Zap size={16} className="inline mr-1" />
+                Prioritization Strategy
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {[
+                  { mode: 'smart' as const, label: '🧠 Smart Sort', desc: 'AI-optimized task ordering' },
+                  { mode: 'energymatch' as const, label: '🔋 Energy Match', desc: 'Only matching tasks' },
+                  { mode: 'quickwins' as const, label: '⚡ Quick Wins', desc: 'Build momentum' },
+                  { mode: 'eatthefrog' as const, label: '🐸 Eat the Frog', desc: 'Hard tasks first' },
+                  { mode: 'deadline' as const, label: '⏰ Deadline Focus', desc: 'Due date priority' },
+                  { mode: 'priority' as const, label: '⭐ Priority', desc: 'Traditional priority' },
+                ].map(({ mode, label, desc }) => (
+                  <button
+                    key={mode}
+                    onClick={() => setSmartSortMode(mode)}
+                    className={`p-3 rounded-lg text-left transition-all ${
+                      smartSortMode === mode
+                        ? 'bg-purple-600 text-white shadow-lg'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-gray-200 dark:border-gray-700'
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{label}</div>
+                    <div className={`text-xs mt-1 ${smartSortMode === mode ? 'text-purple-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {desc}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Filter Chips */}
+            {(() => {
+              const filteredCounts = getFilteredCounts(tasks, currentEnergy);
+              const activeTasks = tasks.filter(t => !t.completed && !t.archived);
+              return (
+                <div className="flex flex-wrap gap-2">
+                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 w-full">
+                    Quick Filters ({activeTasks.length} active tasks):
+                  </div>
+                  <button
+                    onClick={() => setSmartSortMode('quickwins')}
+                    className={`px-3 py-1 rounded-full text-sm transition-all ${
+                      smartSortMode === 'quickwins'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/30'
+                    }`}
+                  >
+                    ⚡ Quick Wins ({filteredCounts.quickWins})
+                  </button>
+                  
+                  <button
+                    onClick={() => setSmartSortMode('deadline')}
+                    className={`px-3 py-1 rounded-full text-sm transition-all ${
+                      smartSortMode === 'deadline'
+                        ? 'bg-red-500 text-white'
+                        : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/30'
+                    }`}
+                  >
+                    🔥 Due Today ({filteredCounts.dueToday})
+                  </button>
+                  
+                  <button
+                    onClick={() => setSmartSortMode('eatthefrog')}
+                    className={`px-3 py-1 rounded-full text-sm transition-all ${
+                      smartSortMode === 'eatthefrog'
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/30'
+                    }`}
+                  >
+                    💪 High Energy ({filteredCounts.highEnergy})
+                  </button>
+                  
+                  {filteredCounts.energyMatch > 0 && (
+                    <button
+                      onClick={() => setSmartSortMode('energymatch')}
+                      className={`px-3 py-1 rounded-full text-sm transition-all ${
+                        smartSortMode === 'energymatch'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/30'
+                      }`}
+                    >
+                      🔋 Energy Match ({filteredCounts.energyMatch})
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
+            
+            {/* Smart Sort Info */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 text-sm text-gray-600 dark:text-gray-400">
+              <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Current Strategy: {getSortModeInfo(smartSortMode).name}
+              </p>
+              <p>{getSortModeInfo(smartSortMode).description}</p>
             </div>
           </div>
         </Card>

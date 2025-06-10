@@ -10,6 +10,7 @@ import { analyzeTaskCompleteness } from '../utils/taskCompleteness';
 import { triggerCelebration, addCelebrationPulse, showToastCelebration } from '../utils/celebrations';
 import { getTimeContext, getTaskTimeEstimate, formatTimeRemaining, formatTimeOfDay, getUrgencyColor } from '../utils/timeAwareness';
 import { focusTracker } from '../utils/focusTracker';
+import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji } from '../utils/taskPrioritization';
 
 interface TaskDisplayProps {
   task: Task;
@@ -31,7 +32,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showDateEditor, setShowDateEditor] = useState(false);
   const [showDetailWizard, setShowDetailWizard] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [, setCurrentTime] = useState(new Date());
   const [focusTime, setFocusTime] = useState(0);
   const [currentSession, setCurrentSession] = useState(focusTracker.getCurrentSession());
 
@@ -103,10 +104,18 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     <>
     <div 
       className={`
-        group flex items-start gap-3 p-3 rounded-xl border cursor-pointer overflow-hidden backdrop-blur-sm
+        group flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer overflow-hidden backdrop-blur-sm
         ${task.completed 
           ? 'bg-gray-50/90 border-gray-200/70 shadow-sm' 
-          : 'bg-white/90 border-gray-200/70 hover:border-primary-300/80 hover:shadow-lg hover:bg-white/95 hover:backdrop-blur-md'}
+          : task.emotionalWeight === 'easy' 
+            ? 'bg-white/90 border-green-200/70 hover:border-green-300/80 hover:shadow-lg hover:bg-green-50/50'
+            : task.emotionalWeight === 'neutral'
+            ? 'bg-white/90 border-yellow-200/70 hover:border-yellow-300/80 hover:shadow-lg hover:bg-yellow-50/50'
+            : task.emotionalWeight === 'stressful'
+            ? 'bg-white/90 border-orange-200/70 hover:border-orange-300/80 hover:shadow-lg hover:bg-orange-50/50'
+            : task.emotionalWeight === 'dreading'
+            ? 'bg-white/90 border-red-200/70 hover:border-red-300/80 hover:shadow-lg hover:bg-red-50/50'
+            : 'bg-white/90 border-gray-200/70 hover:border-primary-300/80 hover:shadow-lg hover:bg-white/95 hover:backdrop-blur-md'}
         transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5
       `}
       onClick={handleTaskClick}
@@ -159,8 +168,52 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                 </button>
               )}
             </div>
-            {/* Project info, Priority, and Time Estimate */}
-            <div className="flex items-center gap-3 mt-1">
+            {/* ADHD-Friendly Priority Indicators */}
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {/* Urgency */}
+              {task.urgency && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium">
+                  <span className="text-sm" title={`Urgency: ${task.urgency}`}>
+                    {getUrgencyEmoji(task.urgency)}
+                  </span>
+                  <span className="text-gray-600 dark:text-gray-400 capitalize">
+                    {task.urgency === 'today' ? 'Today' : 
+                     task.urgency === 'week' ? 'This Week' : 
+                     task.urgency === 'month' ? 'This Month' : 'Someday'}
+                  </span>
+                </div>
+              )}
+              
+              {/* Emotional Weight */}
+              {task.emotionalWeight && (
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                  task.emotionalWeight === 'easy' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300' :
+                  task.emotionalWeight === 'neutral' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' :
+                  task.emotionalWeight === 'stressful' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300' :
+                  'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                }`}>
+                  <span className="text-sm" title={`Emotional Weight: ${task.emotionalWeight}`}>
+                    {getEmotionalWeightEmoji(task.emotionalWeight)}
+                  </span>
+                  <span className="capitalize">
+                    {task.emotionalWeight === 'easy' ? 'Easy' : 
+                     task.emotionalWeight === 'neutral' ? 'Neutral' : 
+                     task.emotionalWeight === 'stressful' ? 'Stressful' : 'Dreading'}
+                  </span>
+                </div>
+              )}
+              
+              {/* Energy Required */}
+              {task.energyRequired && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-medium">
+                  <span className="text-sm" title={`Energy Required: ${task.energyRequired}`}>
+                    {getEnergyRequiredEmoji(task.energyRequired)}
+                  </span>
+                  <span className="capitalize">{task.energyRequired}</span>
+                </div>
+              )}
+              
+              {/* Project info */}
               {task.projectId && (
                 <div className="flex items-center gap-1">
                   <Folder className="w-3 h-3 text-purple-400 dark:text-purple-500" />
@@ -169,18 +222,16 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                   </span>
                 </div>
               )}
+              
+              {/* Traditional Priority (smaller, less prominent) */}
               {task.priority && (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <div className={`w-2 h-2 rounded-full ${
-                    task.priority === 'high' ? 'bg-priority-high' :
-                    task.priority === 'medium' ? 'bg-priority-medium' :
-                    'bg-priority-low'
+                    task.priority === 'high' ? 'bg-red-500' :
+                    task.priority === 'medium' ? 'bg-yellow-500' :
+                    'bg-green-500'
                   }`} />
-                  <span className={`text-xs font-medium capitalize ${
-                    task.priority === 'high' ? 'priority-high' :
-                    task.priority === 'medium' ? 'priority-medium' :
-                    'priority-low'
-                  }`}>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                     {task.priority}
                   </span>
                 </div>

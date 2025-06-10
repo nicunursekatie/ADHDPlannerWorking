@@ -13,13 +13,18 @@ import {
   ArrowRight,
   Copy,
   Flag,
-  MoreHorizontal
+  MoreHorizontal,
+  Battery,
+  Brain,
+  Flame,
+  Star
 } from 'lucide-react';
 import { Task, Project, Category } from '../../types';
 import Badge from '../common/Badge';
 import { formatDateForDisplay } from '../../utils/helpers';
 import { useAppContext } from '../../context/AppContextSupabase';
 import { QuickDueDateEditor } from './QuickDueDateEditor';
+import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji, calculateSmartPriorityScore } from '../../utils/taskPrioritization';
 
 interface ImprovedTaskCardProps {
   task: Task;
@@ -200,9 +205,15 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
     return dueDate.getTime() === today.getTime();
   };
   
-  // Determine task background color based on status
+  // Determine task background color based on status and emotional weight
   const getTaskBackground = () => {
     if (task.completed) return 'bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 opacity-75';
+    
+    // Color by emotional weight if high
+    if (task.emotionalWeight && task.emotionalWeight >= 4) {
+      return 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-orange-300 dark:border-orange-800';
+    }
+    
     if (!task.dueDate) return 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800';
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -260,6 +271,50 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
       </div>
       
       <div className="mt-3 flex flex-wrap gap-2 items-center">
+        {/* Priority indicators */}
+        <div className="flex items-center gap-1">
+          {/* Urgency indicator */}
+          {task.urgency && (
+            <span className="text-sm" title={`Urgency: ${task.urgency}/5`}>
+              {getUrgencyEmoji(task.urgency)}
+            </span>
+          )}
+          
+          {/* Importance indicator */}
+          {task.importance && task.importance >= 4 && (
+            <Star size={14} className="text-yellow-500" title={`Importance: ${task.importance}/5`} />
+          )}
+          
+          {/* Emotional weight indicator */}
+          {task.emotionalWeight && (
+            <span className="text-sm" title={`Emotional weight: ${task.emotionalWeight}/5`}>
+              {getEmotionalWeightEmoji(task.emotionalWeight)}
+            </span>
+          )}
+          
+          {/* Energy required indicator */}
+          {task.energyRequired && (
+            <span className="text-sm" title={`Energy required: ${task.energyRequired}`}>
+              {getEnergyRequiredEmoji(task.energyRequired)}
+            </span>
+          )}
+          
+          {/* Smart priority score badge */}
+          {(task.urgency || task.importance) && (
+            <span 
+              className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+              title="Smart priority score"
+            >
+              {calculateSmartPriorityScore(task).toFixed(1)}
+            </span>
+          )}
+        </div>
+        
+        {/* Separator if we have priority indicators */}
+        {(task.urgency || task.importance || task.emotionalWeight || task.energyRequired) && (
+          <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
+        )}
+        
         {task.dueDate && (
           <div className="flex items-center text-xs text-text-tertiary">
             <Calendar size={14} className="mr-1" />
@@ -284,6 +339,14 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
                 bgColor={category.color}
               />
             ))}
+          </div>
+        )}
+        
+        {/* Time estimate */}
+        {task.estimatedMinutes && (
+          <div className="flex items-center text-xs text-text-tertiary">
+            <Clock size={14} className="mr-1" />
+            {task.estimatedMinutes} min
           </div>
         )}
       </div>

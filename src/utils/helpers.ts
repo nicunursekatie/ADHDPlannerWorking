@@ -1,6 +1,7 @@
 import { Task, Project, Category, WhatNowCriteria } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { formatDateString, isToday, isPastDate, getDaysBetween } from './dateUtils';
+import { sortTasks as sortTasksByMode } from './taskPrioritization';
 
 // Generate a unique ID
 export const generateId = (): string => {
@@ -161,35 +162,21 @@ export const recommendTasks = (
   tasks: Task[],
   criteria: WhatNowCriteria
 ): Task[] => {
-  // Filter to incomplete tasks
-  let filteredTasks = tasks.filter((task) => !task.completed);
+  // Filter tasks by available time and energy, then use smart sorting
+  let filteredTasks = [...tasks].filter(t => !t.completed && !t.archived);
   
   // Filter by available time
   if (criteria.availableTime === 'short') {
-    // Prioritize tasks without subtasks, assuming they're quicker
-    filteredTasks = filteredTasks.filter((task) => task.subtasks.length === 0);
+    filteredTasks = filteredTasks.filter(t => !t.estimatedMinutes || t.estimatedMinutes <= 30);
+  } else if (criteria.availableTime === 'medium') {
+    filteredTasks = filteredTasks.filter(t => !t.estimatedMinutes || t.estimatedMinutes <= 120);
   }
   
-  // Sort by energy level
-  filteredTasks.sort((a, b) => {
-    // For low energy, prioritize simpler tasks (those without subtasks)
-    if (criteria.energyLevel === 'low') {
-      return (a.subtasks.length - b.subtasks.length);
-    }
-    
-    // For high energy, prioritize complex tasks (those with subtasks)
-    if (criteria.energyLevel === 'high') {
-      return (b.subtasks.length - a.subtasks.length);
-    }
-    
-    // For medium energy, prioritize by due date
-    return a.dueDate && b.dueDate 
-      ? a.dueDate.localeCompare(b.dueDate)
-      : (a.dueDate ? -1 : (b.dueDate ? 1 : 0));
-  });
+  // Use smart sorting with energy level
+  const sortedTasks = sortTasksByMode(filteredTasks, 'smart', criteria.energyLevel);
   
   // Return top 5 recommendations
-  return filteredTasks.slice(0, 5);
+  return sortedTasks.slice(0, 5);
 };
 
 // Create sample data for new users
