@@ -469,13 +469,67 @@ export class DatabaseService {
 
   // Daily Plans
   static async getDailyPlans(userId: string): Promise<DailyPlan[]> {
-    const { data, error } = await supabase
-      .from('daily_plans')
-      .select('*')
-      .eq('user_id', userId);
-    
-    if (error) throw error;
-    return data || [];
+    try {
+      console.log('getDailyPlans called with userId:', userId);
+      
+      // Test basic connection first
+      const { data: testData, error: testError } = await supabase
+        .from('tasks')
+        .select('count')
+        .limit(1);
+      
+      if (testError) {
+        console.error('Basic supabase connection failed:', testError);
+        throw testError;
+      }
+      
+      console.log('Basic supabase connection works, testing daily_plans table...');
+      
+      // First test if the table exists by trying a simple select
+      const { data: tableTest, error: tableError } = await supabase
+        .from('daily_plans')
+        .select('id')
+        .limit(1);
+      
+      if (tableError) {
+        console.error('daily_plans table does not exist or is not accessible:', {
+          message: tableError.message,
+          details: tableError.details,
+          hint: tableError.hint,
+          code: tableError.code
+        });
+        
+        // Return empty array if table doesn't exist instead of throwing
+        if (tableError.code === 'PGRST106' || tableError.message.includes('does not exist')) {
+          console.warn('daily_plans table does not exist, returning empty array');
+          return [];
+        }
+        throw tableError;
+      }
+      
+      console.log('daily_plans table exists, querying for user data...');
+      
+      const { data, error } = await supabase
+        .from('daily_plans')
+        .select('*')
+        .eq('user_id', userId);
+      
+      if (error) {
+        console.error('Error fetching daily plans:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+      
+      console.log('Successfully fetched daily plans:', data);
+      return data || [];
+    } catch (err) {
+      console.error('getDailyPlans failed:', err);
+      throw err;
+    }
   }
 
   static async getDailyPlan(date: string, userId: string): Promise<DailyPlan | null> {
@@ -491,14 +545,28 @@ export class DatabaseService {
   }
 
   static async saveDailyPlan(plan: DailyPlan, userId: string): Promise<DailyPlan> {
+    // Convert camelCase to snake_case for database
+    const dbPlan = {
+      id: plan.id,
+      date: plan.date,
+      time_blocks: plan.timeBlocks,
+      user_id: userId
+    };
+    
     const { data, error } = await supabase
       .from('daily_plans')
-      .upsert({ ...plan, user_id: userId })
+      .upsert(dbPlan)
       .select()
       .single();
     
     if (error) throw error;
-    return data;
+    
+    // Convert snake_case back to camelCase for application
+    return {
+      id: data.id,
+      date: data.date,
+      timeBlocks: data.time_blocks || []
+    };
   }
 
   // Journal Entries

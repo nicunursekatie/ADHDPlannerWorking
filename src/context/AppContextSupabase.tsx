@@ -200,8 +200,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Load user data from Supabase
   const loadUserData = useCallback(async (userId: string) => {
+    if (!userId) {
+      console.error('loadUserData called without userId');
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       setIsLoading(true);
+      console.log('Loading data for userId:', userId);
       
       const [
         tasksData,
@@ -221,9 +228,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         DatabaseService.getJournalEntries(userId),
         DatabaseService.getRecurringTasks(userId),
         DatabaseService.getSettings(userId)
-      ]).then(results => results.map(result => 
-        result.status === 'fulfilled' ? result.value : []
-      ));
+      ]).then(results => results.map((result, index) => {
+        if (result.status === 'rejected') {
+          const tableName = ['tasks', 'projects', 'categories', 'daily_plans', 'work_schedules', 'journal_entries', 'recurring_tasks', 'settings'][index];
+          console.error(`Failed to load ${tableName}:`, result.reason);
+          // Return appropriate default value based on index
+          if (index === 7) return DEFAULT_SETTINGS; // settings
+          if (index === 4) return null; // work schedule  
+          return [];
+        }
+        return result.value;
+      }));
 
       // Compute subtasks for each task based on parent-child relationships
       const tasksWithSubtasks = computeSubtasks(tasksData);

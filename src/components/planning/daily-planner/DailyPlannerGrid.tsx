@@ -15,7 +15,7 @@ interface DailyPlannerGridProps {
 }
 
 const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
-  const { tasks, projects, categories, getDailyPlan, saveDailyPlan, updateTask } = useAppContext();
+  const { tasks, getDailyPlan, saveDailyPlan, updateTask } = useAppContext();
   const [modalBlock, setModalBlock] = useState<TimeBlock | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -124,14 +124,13 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
   };
 
   const DraggableTask = ({ task }: { task: Task }) => {
-    const { updateTask } = useAppContext();
     const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: task.id });
     const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
     return (
       <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
         <TaskDisplay 
           task={task}
-          onToggle={(id) => updateTask(id, { completed: !task.completed })}
+          onToggle={(id) => updateTask({ ...task, completed: !task.completed })}
           onEdit={() => {}} // Daily planner doesn't need edit
           onDelete={() => {}} // Daily planner doesn't need delete from here
         />
@@ -219,7 +218,6 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
                 {sortedTimeBlocks.map(block => {
                   const blockTaskIds = block.taskIds || [];
                   const blockTasks = tasks.filter(t => blockTaskIds.includes(t.id));
-                  const duration = calculateDuration(block.startTime, block.endTime, { allowOvernight: true });
                   
                   // Calculate position and height
                   const [startHour, startMinute] = block.startTime.split(':').map(Number);
@@ -296,7 +294,7 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
                                     <div key={task.id} className="scale-90 origin-left">
                                       <TaskDisplay 
                                         task={task}
-                                        onToggle={(id) => updateTask(id, { completed: !task.completed })}
+                                        onToggle={(id) => updateTask({ ...task, completed: !task.completed })}
                                         onEdit={() => {}}
                                         onDelete={() => {
                                           const newTaskIds = blockTaskIds.filter(id => id !== task.id);
