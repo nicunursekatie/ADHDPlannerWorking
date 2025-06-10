@@ -59,7 +59,33 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
   };
   
   const [formData, setFormData] = useState<Partial<Task>>(initialState);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.title || !formData.projectId) {
+      setErrors(prev => ({
+        ...prev,
+        title: !formData.title ? 'Title is required' : '',
+        projectId: !formData.projectId ? 'Project is required' : '',
+      }));
+      return;
+    }
+
+    try {
+      if (isEdit && task?.id) {
+        await updateTask({ ...formData, id: task.id });
+      } else {
+        await addTask(formData);
+      }
+      onClose();
+    } catch (err) {
+      console.error("Error saving task:", err);
+    }
+  };
+
+
+const [errors, setErrors] = useState<{ [key: string]: string }>({});
   
   useEffect(() => {
     // Reset form data when the task prop changes
@@ -209,7 +235,7 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4">
-<form onSubmit={handleSubmit} className="space-y-4">
+<form onSubmit={handleSubmit} onSubmit={handleSubmit} className="space-y-4">
       {/* Task title - always visible and focused */}
       <div>
         <input
