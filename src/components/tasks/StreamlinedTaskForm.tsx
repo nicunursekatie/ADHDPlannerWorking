@@ -208,7 +208,8 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
   }, []);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="w-full max-w-2xl mx-auto px-4">
+<form onSubmit={handleSubmit} className="space-y-4">
       {/* Task title - always visible and focused */}
       <div>
         <input
@@ -835,5 +836,6 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
         </div>
       </div>
     </form>
+</div>
   );
 };
