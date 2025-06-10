@@ -63,18 +63,13 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.projectId) {
-      setErrors(prev => ({
-        ...prev,
-        title: !formData.title ? 'Title is required' : '',
-        projectId: !formData.projectId ? 'Project is required' : '',
-      }));
+    if (!validateForm()) {
       return;
     }
 
     try {
       if (isEdit && task?.id) {
-        await updateTask({ ...formData, id: task.id });
+        await updateTask({ ...task, ...formData });
       } else {
         await addTask(formData);
       }
@@ -195,23 +190,6 @@ const [errors, setErrors] = useState<{ [key: string]: string }>({});
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData.title]);
-
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    if (isEdit && task) {
-      const updatedTask = { ...task, ...formData };
-      updateTask(updatedTask as Task);
-    } else {
-      addTask(formData);
-    }
-    
-    onClose();
-  }, [validateForm, isEdit, task, formData, updateTask, addTask, onClose]);
   
   // Get color based on priority
   const getPriorityColor = useCallback((priority: string | undefined): string => {
