@@ -6,7 +6,7 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'full';
   footer?: ReactNode;
   closeOnOverlayClick?: boolean;
   showCloseButton?: boolean;
@@ -23,7 +23,6 @@ const Modal: React.FC<ModalProps> = ({
   showCloseButton = true,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const firstFocusableRef = useRef<HTMLElement>(null);
   const hasSetInitialFocus = useRef(false);
   
   useEffect(() => {
@@ -89,6 +88,8 @@ const Modal: React.FC<ModalProps> = ({
     md: 'w-full max-w-md',
     lg: 'w-full max-w-lg',
     xl: 'w-full max-w-xl',
+    '2xl': 'w-full max-w-2xl',
+    '3xl': 'w-full max-w-3xl',
     full: 'w-full max-w-full mx-4',
   };
   
@@ -103,7 +104,7 @@ const Modal: React.FC<ModalProps> = ({
       {/* Modal panel */}
       <div
         ref={modalRef}
-        className={`relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl transform transition-all animate-scaleIn ${sizeClasses[size]} mx-auto max-h-[90vh] flex flex-col`}
+        className={`relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl transform transition-all animate-scaleIn ${sizeClasses[size]} mx-auto max-h-[95vh] flex flex-col`}
       >
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">

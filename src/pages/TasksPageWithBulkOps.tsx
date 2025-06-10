@@ -1238,7 +1238,7 @@ const TasksPageWithBulkOps: React.FC = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         title={editingTask ? 'Edit Task' : 'Create New Task'}
-        size="lg"
+        size="2xl"
       >
         <TaskFormWithDependencies
           task={editingTask || undefined}

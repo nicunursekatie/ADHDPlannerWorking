@@ -9,6 +9,7 @@ import {
   Clock,
   Calendar,
   Folder,
+  FolderOpen,
   Tag,
   Link,
   Hash,
@@ -74,8 +75,6 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   const [subtasks, setSubtasks] = useState<string[]>(task?.subtasks || []);
   
   // Progressive disclosure state
-  const [showEmotional, setShowEmotional] = useState(true);
-  const [showScheduling, setShowScheduling] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   
   // Get available tasks for dependencies (excluding self and tasks that would create cycles)
@@ -189,8 +188,8 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   };
   
   return (
-    <div className="max-w-xl mx-auto p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-xl">
-      <form id="task-form" onSubmit={handleSubmit} className="space-y-8">
+    <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-xl">
+      <form id="task-form" onSubmit={handleSubmit} className="space-y-6">
         {/* Title & Description */}
         <div className="space-y-6">
           <div>
@@ -225,309 +224,257 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
             />
           </div>
         </div>
-        
-        {/* How do you feel about this? - Emotional Weight */}
-        <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-indigo-900/20 rounded-3xl p-8 border-2 border-purple-100 dark:border-purple-800 shadow-lg">
-          <button
-            type="button"
-            onClick={() => setShowEmotional(!showEmotional)}
-            className="flex items-center justify-between w-full text-left group hover:bg-white/50 dark:hover:bg-black/20 rounded-2xl p-3 -m-3 transition-all duration-200"
-          >
-            <div className="flex items-center">
-              <div className="w-8 h-8 text-2xl mr-4">💜</div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">How do you feel about this?</h3>
-                <p className="text-sm text-purple-600 dark:text-purple-300">Your emotional connection matters</p>
-              </div>
-            </div>
-            <div className="flex items-center text-gray-500">
-              {showEmotional ? 
-                <ChevronDown className="w-6 h-6 transform transition-transform group-hover:scale-110" /> : 
-                <ChevronRight className="w-6 h-6 transform transition-transform group-hover:scale-110" />
-              }
-            </div>
-          </button>
+
+        {/* Due Date | Project (side by side) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Due Date
+            </label>
+            <input
+              type="date"
+              id="dueDate"
+              name="dueDate"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
+            />
+          </div>
           
-          <div className={`transition-all duration-500 ease-out overflow-hidden ${showEmotional ? 'max-h-96 pt-8' : 'max-h-0'}`}>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                { label: 'Excited!', value: 'easy', emoji: '🎉', desc: 'Love doing this', color: 'border-green-400 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/40 dark:to-emerald-900/40' },
-                { label: 'Good vibes', value: 'neutral', emoji: '😊', desc: 'Looking forward to it', color: 'border-blue-400 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/40 dark:to-cyan-900/40' },
-                { label: 'Ugh...', value: 'stressful', emoji: '😩', desc: 'Not feeling it', color: 'border-orange-400 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/40 dark:to-amber-900/40' },
-                { label: 'Dreading it', value: 'dreading', emoji: '😰', desc: 'Really don\'t want to', color: 'border-red-400 bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/40 dark:to-pink-900/40' },
-              ].map(option => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setEmotionalWeight(option.value as 'easy' | 'neutral' | 'stressful' | 'dreading')}
-                  className={`p-3 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
-                    emotionalWeight === option.value
-                      ? option.color + ' shadow-lg scale-105 ring-2 ring-purple-200 dark:ring-purple-700'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20'
-                  }`}
-                >
-                  <div className="text-2xl mb-2">{option.emoji}</div>
-                  <div className="font-bold text-sm mb-1">{option.label}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">{option.desc}</div>
-                </button>
+          <div>
+            <label htmlFor="project" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Project
+            </label>
+            <select
+              id="project"
+              name="project"
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
+            >
+              <option value="">No project</option>
+              {projects.map(project => (
+                <option key={project.id} value={project.id}>{project.name}</option>
               ))}
-            </div>
-            
-            {/* Energy Required */}
-            <div className="mt-8 pt-6 border-t border-purple-200 dark:border-purple-700">
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                <Zap className="w-5 h-5 mr-2 text-yellow-500" />
-                Energy Level Needed
-              </h4>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: 'Low Energy', value: 'low', emoji: '🔋', desc: 'Easy, relaxed' },
-                  { label: 'Medium Energy', value: 'medium', emoji: '⚡', desc: 'Normal focus' },
-                  { label: 'High Energy', value: 'high', emoji: '🚀', desc: 'Full focus' },
-                ].map(option => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setEnergyRequired(option.value as 'low' | 'medium' | 'high')}
-                    className={`p-3 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
-                      energyRequired === option.value
-                        ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 shadow-lg scale-105'
-                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-yellow-300'
-                    }`}
-                  >
-                    <div className="text-xl mb-1">{option.emoji}</div>
-                    <div className="font-semibold text-xs mb-1">{option.label}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
+            </select>
           </div>
         </div>
-        
-        {/* When & Where - Scheduling */}
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-2xl p-6 border border-blue-100 dark:border-blue-800">
-          <button
-            type="button"
-            onClick={() => setShowScheduling(!showScheduling)}
-            className="flex items-center justify-between w-full text-left group"
-          >
-            <div className="flex items-center">
-              <div className="w-6 h-6 text-blue-500 mr-3">📅</div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">When & Where</h3>
-            </div>
-            <div className="flex items-center text-gray-500">
-              <span className="text-sm mr-2">Schedule & organize</span>
-              {showScheduling ? 
-                <ChevronDown className="w-5 h-5 transform transition-transform group-hover:scale-110" /> : 
-                <ChevronRight className="w-5 h-5 transform transition-transform group-hover:scale-110" />
-              }
-            </div>
-          </button>
-          
-          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showScheduling ? 'max-h-96 mt-6' : 'max-h-0'}`}>
-            <div className="space-y-6">
-              {/* Due Date and Urgency */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Due Date */}
-                <div>
-                  <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    <Calendar size={16} className="inline mr-1" />
-                    When is this due?
-                  </label>
-                  <input
-                    type="date"
-                    id="dueDate"
-                    name="dueDate"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
-                  />
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <button
-                      type="button"
-                      onClick={() => setDueDate(getTodayString())}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                        dueDate === getTodayString()
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                      }`}
-                    >
-                      Today
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDueDate(getTomorrowString())}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                        dueDate === getTomorrowString()
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                      }`}
-                    >
-                      Tomorrow
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nextWeek = new Date();
-                        nextWeek.setDate(nextWeek.getDate() + 7);
-                        setDueDate(formatDateString(nextWeek) || '');
-                      }}
-                      className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-all"
-                    >
-                      Next Week
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDueDate('')}
-                      className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 transition-all"
-                    >
-                      No Date
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Urgency */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    <Flame size={16} className="inline mr-1" />
-                    How urgent is this?
-                  </label>
-                  <div className="space-y-2">
-                    {[
-                      { label: 'Must do today', value: 'today', color: 'bg-red-500 hover:bg-red-600' },
-                      { label: 'This week', value: 'week', color: 'bg-orange-500 hover:bg-orange-600' },
-                      { label: 'This month', value: 'month', color: 'bg-yellow-500 hover:bg-yellow-600' },
-                      { label: 'Someday', value: 'someday', color: 'bg-green-500 hover:bg-green-600' },
-                    ].map(option => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setUrgency(option.value as 'today' | 'week' | 'month' | 'someday')}
-                        className={`block w-full px-4 py-2 rounded-lg text-white font-medium transition-all text-left ${
-                          urgency === option.value
-                            ? option.color + ' shadow-lg'
-                            : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Project */}
-              <div>
-                <label htmlFor="project" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  <Folder size={16} className="inline mr-1" />
-                  Which project?
-                </label>
-                <select
-                  id="project"
-                  name="project"
-                  value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                  className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
-                >
-                  <option value="">No specific project</option>
-                  {projects.map(project => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Time Estimate */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  <Clock size={16} className="inline mr-1" />
-                  How long will this take?
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { label: '15 min', value: 15, desc: 'Quick task' },
-                    { label: '30 min', value: 30, desc: 'Short task' },
-                    { label: '1 hour', value: 60, desc: 'Medium task' },
-                    { label: '2 hours', value: 120, desc: 'Long task' },
-                    { label: 'Half day', value: 240, desc: 'Major task' },
-                    { label: 'Full day', value: 480, desc: 'Big project' },
-                  ].map(option => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setEstimatedMinutes(option.value)}
-                      className={`p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
-                        estimatedMinutes === option.value
-                          ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 shadow-md'
-                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300'
-                      }`}
-                    >
-                      <div className="font-medium text-sm">{option.label}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-3">
-                  <input
-                    type="number"
-                    name="estimatedMinutes"
-                    value={estimatedMinutes}
-                    onChange={(e) => setEstimatedMinutes(parseInt(e.target.value) || 30)}
-                    className="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-all"
-                    placeholder="Custom minutes..."
-                    min="5"
-                    step="5"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Categories - Convert to Dropdown */}
+
+        {/* Categories */}
         <div>
-          <label htmlFor="categories" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            <Tag size={16} className="inline mr-1" />
-            Categories <span className="text-gray-400">(optional)</span>
+          <label htmlFor="category" className="block text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            <Tag className="w-5 h-5 mr-2 text-blue-500 inline" />
+            Category
           </label>
           <select
-            id="categories"
-            name="categories"
-            multiple
-            value={selectedCategoryIds}
+            id="category"
+            name="category"
+            value={selectedCategoryIds[0] || ''}
             onChange={(e) => {
-              const values = Array.from(e.target.selectedOptions, option => option.value);
-              setSelectedCategoryIds(values);
+              if (e.target.value === 'add-new') {
+                setShowNewCategoryModal(true);
+              } else {
+                setSelectedCategoryIds(e.target.value ? [e.target.value] : []);
+              }
             }}
-            className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all duration-200"
-            size={Math.min(categories.length + 1, 4)}
+            className="block w-full px-4 py-4 text-lg rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
           >
+            <option value="">No category</option>
             {categories.map(category => (
               <option key={category.id} value={category.id}>
                 {category.name}
               </option>
             ))}
+            <option value="add-new">+ Add New Category</option>
           </select>
-          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Hold Ctrl/Cmd to select multiple categories
-          </p>
+        </div>
+
+        {/* Priority | Urgency (side by side) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Priority */}
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+              <Star className="w-5 h-5 mr-2 text-purple-500" />
+              Priority
+            </h4>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'Low', value: 'low', emoji: '📋', desc: 'Can wait' },
+                { label: 'Medium', value: 'medium', emoji: '⭐', desc: 'Important' },
+                { label: 'High', value: 'high', emoji: '🚨', desc: 'Critical' },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setPriority(option.value as 'low' | 'medium' | 'high')}
+                  className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-purple-200/50 ${
+                    priority === option.value
+                      ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/30 shadow-lg ring-2 ring-purple-200 dark:ring-purple-700'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-purple-300'
+                  }`}
+                >
+                  <div className="text-lg mb-1">{option.emoji}</div>
+                  <div className="font-semibold text-xs mb-1">{option.label}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Urgency */}
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-red-500" />
+              Urgency
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: 'Today', value: 'today', emoji: '🔥', desc: 'Right now' },
+                { label: 'This Week', value: 'week', emoji: '📅', desc: 'Soon' },
+                { label: 'This Month', value: 'month', emoji: '📌', desc: 'Later' },
+                { label: 'Someday', value: 'someday', emoji: '🌊', desc: 'No rush' },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setUrgency(option.value as 'today' | 'week' | 'month' | 'someday')}
+                  className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-red-200/50 ${
+                    urgency === option.value
+                      ? 'border-red-400 bg-red-50 dark:bg-red-900/30 shadow-lg ring-2 ring-red-200 dark:ring-red-700'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-red-300'
+                  }`}
+                >
+                  <div className="text-lg mb-1">{option.emoji}</div>
+                  <div className="font-semibold text-xs mb-1">{option.label}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Energy Needed | Emotional Weight (side by side) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Energy Needed */}
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-yellow-500" />
+              Energy Needed
+            </h4>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'Low', value: 'low', emoji: '🔋', desc: 'Easy, relaxed' },
+                { label: 'Medium', value: 'medium', emoji: '⚡', desc: 'Normal focus' },
+                { label: 'High', value: 'high', emoji: '🚀', desc: 'Full focus' },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setEnergyRequired(option.value as 'low' | 'medium' | 'high')}
+                  className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-yellow-200/50 ${
+                    energyRequired === option.value
+                      ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 shadow-lg ring-2 ring-yellow-200 dark:ring-yellow-700'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-yellow-300'
+                  }`}
+                >
+                  <div className="text-lg mb-1">{option.emoji}</div>
+                  <div className="font-semibold text-xs mb-1">{option.label}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Emotional Weight */}
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+              <Brain className="w-5 h-5 mr-2 text-pink-500" />
+              Emotional Weight
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: 'Easy/Fun', value: 'easy', emoji: '😊', desc: 'Love it' },
+                { label: 'Neutral', value: 'neutral', emoji: '😐', desc: 'It\'s fine' },
+                { label: 'Stressful', value: 'stressful', emoji: '😰', desc: 'Hard work' },
+                { label: 'Dreading', value: 'dreading', emoji: '😱', desc: 'Really hard' },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setEmotionalWeight(option.value as 'easy' | 'neutral' | 'stressful' | 'dreading')}
+                  className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-pink-200/50 ${
+                    emotionalWeight === option.value
+                      ? 'border-pink-400 bg-pink-50 dark:bg-pink-900/30 shadow-lg ring-2 ring-pink-200 dark:ring-pink-700'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-pink-300'
+                  }`}
+                >
+                  <div className="text-lg mb-1">{option.emoji}</div>
+                  <div className="font-semibold text-xs mb-1">{option.label}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Estimated Time */}
+        <div>
+          <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+            <Clock className="w-5 h-5 mr-2 text-blue-500" />
+            Estimated Time
+          </h4>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: '15 min', value: 15, desc: 'Quick task' },
+              { label: '30 min', value: 30, desc: 'Short task' },
+              { label: '1 hour', value: 60, desc: 'Medium task' },
+              { label: '2 hours', value: 120, desc: 'Long task' },
+              { label: 'Half day', value: 240, desc: 'Major task' },
+              { label: 'Full day', value: 480, desc: 'Big project' },
+            ].map(option => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setEstimatedMinutes(option.value)}
+                className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-blue-200/50 ${
+                  estimatedMinutes === option.value
+                    ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 shadow-lg ring-2 ring-blue-200 dark:ring-blue-700'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300'
+                }`}
+              >
+                <div className="text-base mb-1">⏱️</div>
+                <div className="font-semibold text-xs mb-1">{option.label}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
+              </button>
+            ))}
+          </div>
+          <div className="mt-4">
+            <input
+              type="number"
+              name="estimatedMinutes"
+              value={estimatedMinutes}
+              onChange={(e) => setEstimatedMinutes(parseInt(e.target.value) || 30)}
+              className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-all"
+              placeholder="Custom minutes..."
+              min="5"
+              step="5"
+            />
+          </div>
         </div>
         
-        {/* Advanced Options */}
-        <div className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900/20 dark:to-slate-900/20 rounded-2xl p-6 border border-gray-100 dark:border-gray-800">
+        {/* Advanced Options (collapsed by default) */}
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/20 dark:to-gray-900/20 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="flex items-center justify-between w-full text-left group"
           >
             <div className="flex items-center">
-              <div className="w-5 h-5 text-gray-500 mr-2">⚙️</div>
+              <div className="w-6 h-6 text-gray-500 mr-3">⚙️</div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Advanced Options</h3>
             </div>
             <div className="flex items-center text-gray-500">
-              <span className="text-sm mr-2">Dependencies, tags, etc.</span>
+              <span className="text-sm mr-2">Dependencies, tags & more</span>
               {showAdvanced ? 
                 <ChevronDown className="w-5 h-5 transform transition-transform group-hover:scale-110" /> : 
                 <ChevronRight className="w-5 h-5 transform transition-transform group-hover:scale-110" />
@@ -535,11 +482,109 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
             </div>
           </button>
           
-          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showAdvanced ? 'max-h-96 mt-6' : 'max-h-0'}`}>
-            <div className="space-y-6">
+          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showAdvanced ? 'max-h-[600px] mt-6' : 'max-h-0'}`}>
+            <div className="space-y-8">
+              {/* Dependencies Section */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                  <Hash className="w-5 h-5 mr-2 text-purple-500" />
+                  Dependencies
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setShowDependencyModal(true)}
+                  className="w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 hover:border-purple-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                >
+                  + Add Dependencies
+                </button>
+                {selectedDependencies.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedDependencies.map(depId => {
+                      const depTask = tasks.find(t => t.id === depId);
+                      if (!depTask) return null;
+                      return (
+                        <span
+                          key={depId}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                        >
+                          {depTask.title}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDependencies(selectedDependencies.filter(id => id !== depId))}
+                            className="ml-2 text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-200"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Tags Section */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                  <Tag className="w-5 h-5 mr-2 text-green-500" />
+                  Tags
+                </h4>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (newTag.trim() && !tags.includes(newTag.trim())) {
+                          setTags([...tags, newTag.trim()]);
+                          setNewTag('');
+                        }
+                      }
+                    }}
+                    placeholder="Add a tag..."
+                    className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newTag.trim() && !tags.includes(newTag.trim())) {
+                        setTags([...tags, newTag.trim()]);
+                        setNewTag('');
+                      }
+                    }}
+                    className="px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+                {tags.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => setTags(tags.filter((_, i) => i !== index))}
+                          className="ml-2 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Subtasks Section */}
               <div>
-                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Subtasks</h4>
+                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                  <FolderOpen className="w-5 h-5 mr-2 text-blue-500" />
+                  Subtasks
+                </h4>
                 {!isEdit ? (
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-xl text-blue-700 dark:text-blue-300 text-sm">
                     💡 Save this task first, then you can break it down into smaller subtasks

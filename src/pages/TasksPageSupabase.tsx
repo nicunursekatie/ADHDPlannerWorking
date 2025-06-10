@@ -600,6 +600,7 @@ export const TasksPageSupabase: React.FC = () => {
         key={editingTask?.id || 'new-task'}
         isOpen={showTaskForm}
         title={editingTask ? 'Edit Task' : 'Add New Task'}
+        size="2xl"
         onClose={() => {
           setShowTaskForm(false);
           setEditingTask(null);
