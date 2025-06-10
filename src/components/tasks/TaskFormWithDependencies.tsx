@@ -189,7 +189,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   };
   
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl">
+    <div className="max-w-xl mx-auto p-4 bg-white dark:bg-gray-900 rounded-2xl shadow-xl">
       <form id="task-form" onSubmit={handleSubmit} className="space-y-8">
         {/* Title & Description */}
         <div className="space-y-6">
@@ -249,7 +249,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
           </button>
           
           <div className={`transition-all duration-500 ease-out overflow-hidden ${showEmotional ? 'max-h-96 pt-8' : 'max-h-0'}`}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { label: 'Excited!', value: 'easy', emoji: '🎉', desc: 'Love doing this', color: 'border-green-400 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/40 dark:to-emerald-900/40' },
                 { label: 'Good vibes', value: 'neutral', emoji: '😊', desc: 'Looking forward to it', color: 'border-blue-400 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/40 dark:to-cyan-900/40' },
@@ -260,15 +260,15 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                   key={option.value}
                   type="button"
                   onClick={() => setEmotionalWeight(option.value as 'easy' | 'neutral' | 'stressful' | 'dreading')}
-                  className={`p-6 rounded-2xl border-3 text-center transition-all duration-300 hover:shadow-xl transform hover:scale-110 active:scale-95 ${
+                  className={`p-3 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
                     emotionalWeight === option.value
-                      ? option.color + ' shadow-xl scale-110 ring-4 ring-purple-200 dark:ring-purple-700'
+                      ? option.color + ' shadow-lg scale-105 ring-2 ring-purple-200 dark:ring-purple-700'
                       : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20'
                   }`}
                 >
-                  <div className="text-4xl mb-3">{option.emoji}</div>
-                  <div className="font-bold text-lg mb-2">{option.label}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">{option.desc}</div>
+                  <div className="text-2xl mb-2">{option.emoji}</div>
+                  <div className="font-bold text-sm mb-1">{option.label}</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">{option.desc}</div>
                 </button>
               ))}
             </div>
@@ -281,22 +281,22 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
               </h4>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: 'Low Energy', value: 'low', emoji: '🔋', desc: 'Easy, relaxed task' },
-                  { label: 'Medium Energy', value: 'medium', emoji: '⚡', desc: 'Normal focus needed' },
-                  { label: 'High Energy', value: 'high', emoji: '🚀', desc: 'Full focus required' },
+                  { label: 'Low Energy', value: 'low', emoji: '🔋', desc: 'Easy, relaxed' },
+                  { label: 'Medium Energy', value: 'medium', emoji: '⚡', desc: 'Normal focus' },
+                  { label: 'High Energy', value: 'high', emoji: '🚀', desc: 'Full focus' },
                 ].map(option => (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => setEnergyRequired(option.value as 'low' | 'medium' | 'high')}
-                    className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                    className={`p-3 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
                       energyRequired === option.value
                         ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 shadow-lg scale-105'
                         : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-yellow-300'
                     }`}
                   >
-                    <div className="text-2xl mb-2">{option.emoji}</div>
-                    <div className="font-semibold text-sm mb-1">{option.label}</div>
+                    <div className="text-xl mb-1">{option.emoji}</div>
+                    <div className="font-semibold text-xs mb-1">{option.label}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
                   </button>
                 ))}

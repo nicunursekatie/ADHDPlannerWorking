@@ -129,11 +129,11 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
   
   const [newSubtaskTime, setNewSubtaskTime] = useState<number>(15);
   
-  const handleAddSubtask = useCallback(() => {
+  const handleAddSubtask = useCallback(async () => {
     if (!newSubtaskTitle.trim() || !task?.id) return;
     
     const timestamp = new Date().toISOString();
-    const newTask = addTask({
+    const newTask = await addTask({
       title: newSubtaskTitle,
       parentTaskId: task.id,
       completed: false,
@@ -322,37 +322,6 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
         </div>
       </div>
       
-      {/* Repeat/Recurrence Button Group */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
-        <div className="flex space-x-2">
-          {[
-            { label: 'None', value: 'none' },
-            { label: 'Daily', value: 'daily' },
-            { label: 'Weekly', value: 'weekly' },
-            { label: 'Monthly', value: 'monthly' },
-            { label: 'Custom', value: 'custom' },
-          ].map(option => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setFormData(prev => ({
-                ...prev,
-                isRecurring: option.value !== 'none',
-                recurrencePattern: option.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
-                recurrenceInterval: option.value === 'custom' ? 1 : undefined,
-              }))}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors focus:outline-none ${
-                (formData.recurrencePattern || 'none') === option.value
-                  ? 'bg-amber-500 text-white border-amber-500'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-amber-50'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
       
       {/* Priority selection - visual buttons */}
       <div className="flex space-x-2">
@@ -698,44 +667,44 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
               <Battery size={18} className="text-yellow-500 mr-2" />
               <span className="text-lg font-semibold text-gray-900">Energy Level Needed</span>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => handleEnergyRequiredChange('low')}
-                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                className={`p-3 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-md transform hover:scale-105 ${
                   formData.energyRequired === 'low' 
-                    ? 'border-green-400 bg-green-50 dark:bg-green-900/30 shadow-lg scale-105'
+                    ? 'border-green-400 bg-green-50 dark:bg-green-900/30 shadow-md scale-105'
                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-green-300'
                 }`}
               >
-                <div className="text-2xl mb-2">🔋</div>
-                <div className="font-bold text-sm">Low Energy</div>
+                <div className="text-xl mb-1">🔋</div>
+                <div className="font-bold text-xs">Low Energy</div>
                 <div className="text-xs text-gray-500">Easy, relaxed</div>
               </button>
               <button
                 type="button"
                 onClick={() => handleEnergyRequiredChange('medium')}
-                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                className={`p-3 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-md transform hover:scale-105 ${
                   formData.energyRequired === 'medium' 
-                    ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 shadow-lg scale-105'
+                    ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 shadow-md scale-105'
                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-yellow-300'
                 }`}
               >
-                <div className="text-2xl mb-2">⚡</div>
-                <div className="font-bold text-sm">Medium Energy</div>
+                <div className="text-xl mb-1">⚡</div>
+                <div className="font-bold text-xs">Medium Energy</div>
                 <div className="text-xs text-gray-500">Normal focus</div>
               </button>
               <button
                 type="button"
                 onClick={() => handleEnergyRequiredChange('high')}
-                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                className={`p-3 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-md transform hover:scale-105 ${
                   formData.energyRequired === 'high' 
-                    ? 'border-red-400 bg-red-50 dark:bg-red-900/30 shadow-lg scale-105'
+                    ? 'border-red-400 bg-red-50 dark:bg-red-900/30 shadow-md scale-105'
                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-red-300'
                 }`}
               >
-                <div className="text-2xl mb-2">🚀</div>
-                <div className="font-bold text-sm">High Energy</div>
+                <div className="text-xl mb-1">🚀</div>
+                <div className="font-bold text-xs">High Energy</div>
                 <div className="text-xs text-gray-500">Full focus</div>
               </button>
             </div>
@@ -747,57 +716,57 @@ export const StreamlinedTaskForm: React.FC<StreamlinedTaskFormProps> = ({
               <Brain size={18} className="text-purple-500 mr-2" />
               <span className="text-lg font-semibold text-gray-900">How do you feel about this?</span>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => handleEmotionalWeightChange('easy')}
-                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                className={`p-3 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-md transform hover:scale-105 ${
                   formData.emotionalWeight === 'easy' 
-                    ? 'border-green-400 bg-green-50 dark:bg-green-900/30 shadow-lg scale-105'
+                    ? 'border-green-400 bg-green-50 dark:bg-green-900/30 shadow-md scale-105'
                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-green-300'
                 }`}
               >
-                <div className="text-2xl mb-2">😊</div>
-                <div className="font-bold text-sm">Easy/Fun</div>
+                <div className="text-xl mb-1">😊</div>
+                <div className="font-bold text-xs">Easy/Fun</div>
                 <div className="text-xs text-gray-500">Love doing this</div>
               </button>
               <button
                 type="button"
                 onClick={() => handleEmotionalWeightChange('neutral')}
-                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                className={`p-3 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-md transform hover:scale-105 ${
                   formData.emotionalWeight === 'neutral' 
-                    ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 shadow-lg scale-105'
+                    ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 shadow-md scale-105'
                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-yellow-300'
                 }`}
               >
-                <div className="text-2xl mb-2">😐</div>
-                <div className="font-bold text-sm">Neutral</div>
+                <div className="text-xl mb-1">😐</div>
+                <div className="font-bold text-xs">Neutral</div>
                 <div className="text-xs text-gray-500">Just another task</div>
               </button>
               <button
                 type="button"
                 onClick={() => handleEmotionalWeightChange('stressful')}
-                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                className={`p-3 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-md transform hover:scale-105 ${
                   formData.emotionalWeight === 'stressful' 
-                    ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/30 shadow-lg scale-105'
+                    ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/30 shadow-md scale-105'
                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-orange-300'
                 }`}
               >
-                <div className="text-2xl mb-2">😰</div>
-                <div className="font-bold text-sm">Stressful</div>
+                <div className="text-xl mb-1">😰</div>
+                <div className="font-bold text-xs">Stressful</div>
                 <div className="text-xs text-gray-500">Not feeling it</div>
               </button>
               <button
                 type="button"
                 onClick={() => handleEmotionalWeightChange('dreading')}
-                className={`p-4 rounded-xl border-2 text-center transition-all duration-200 hover:shadow-lg transform hover:scale-105 ${
+                className={`p-3 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-md transform hover:scale-105 ${
                   formData.emotionalWeight === 'dreading' 
-                    ? 'border-red-400 bg-red-50 dark:bg-red-900/30 shadow-lg scale-105'
+                    ? 'border-red-400 bg-red-50 dark:bg-red-900/30 shadow-md scale-105'
                     : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-red-300'
                 }`}
               >
-                <div className="text-2xl mb-2">😱</div>
-                <div className="font-bold text-sm">Dreading</div>
+                <div className="text-xl mb-1">😱</div>
+                <div className="font-bold text-xs">Dreading</div>
                 <div className="text-xs text-gray-500">Really don't want to</div>
               </button>
             </div>
