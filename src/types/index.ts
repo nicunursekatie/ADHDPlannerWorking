@@ -16,7 +16,7 @@ export interface Task {
   tags?: string[]; // Tags associated with the task, including phase name
   
   // Multi-dimensional prioritization fields
-  urgency?: 'today' | 'week' | 'month' | 'someday'; // Time sensitivity
+  urgency?: 'today' | 'tomorrow' | 'week' | 'month' | 'someday'; // Time sensitivity
   importance?: number; // 1-5: How critical to goals (5 = life-changing, 1 = nice-to-have)
   emotionalWeight?: 'easy' | 'neutral' | 'stressful' | 'dreading'; // Emotional difficulty
   energyRequired?: 'low' | 'medium' | 'high'; // Physical/mental effort needed

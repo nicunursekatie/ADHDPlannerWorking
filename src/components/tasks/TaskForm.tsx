@@ -24,7 +24,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
   
   // Progressive disclosure state for ADHD-friendly design
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showEmotionalSection, setShowEmotionalSection] = useState(false);
+  const [showEmotionalSection, setShowEmotionalSection] = useState(true);
   const [showScheduling, setShowScheduling] = useState(false);
   
   const initialState: Partial<Task> = {
@@ -38,9 +38,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
     energyLevel: 'medium',
     size: 'medium',
     estimatedMinutes: 30,
-    urgency: 3,
+    urgency: 'week',
     importance: 3,
-    emotionalWeight: 3,
+    emotionalWeight: 'neutral',
     energyRequired: 'medium',
     subtasks: [],
     ...task,
@@ -101,6 +101,15 @@ const TaskForm: React.FC<TaskFormProps> = ({
     }));
   };
 
+  const handleCategoryChange = (categoryId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      categoryIds: prev.categoryIds?.includes(categoryId)
+        ? prev.categoryIds.filter(id => id !== categoryId)
+        : [...(prev.categoryIds || []), categoryId]
+    }));
+  };
+
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
     
@@ -129,8 +138,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
   };
 
   return (
-    <div className="space-y-8 max-h-[calc(100vh-200px)] overflow-y-auto">
-      <form onSubmit={handleSubmit} className="space-y-8">
+    <div className="space-y-8 max-h-[calc(100vh-200px)] overflow-y-auto pb-20">
+      <form onSubmit={handleSubmit} className="space-y-8" id="task-form">
         {/* Main Task Info - Always visible */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-blue-100 dark:border-blue-800">
           <div className="flex items-center mb-4">
@@ -207,7 +216,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
             </div>
           </button>
           
-          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showEmotionalSection ? 'max-h-96 mt-6' : 'max-h-0'}`}>
+          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showEmotionalSection ? 'max-h-[2000px] mt-6' : 'max-h-0'}`}>
             <div className="space-y-6">
               {/* Emotional Weight */}
               <div>
@@ -306,9 +315,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
                   <Flame size={16} className="inline mr-1" />
                   When does this need to happen?
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {[
                     { label: '🔥', text: 'Today', value: 'today' as const, desc: 'Urgent!' },
+                    { label: '☀️', text: 'Tomorrow', value: 'tomorrow' as const, desc: 'Next day' },
                     { label: '📅', text: 'This Week', value: 'week' as const, desc: 'Soon' },
                     { label: '📌', text: 'This Month', value: 'month' as const, desc: 'Eventually' },
                     { label: '🌊', text: 'Someday', value: 'someday' as const, desc: 'When I get to it' },
@@ -466,6 +476,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           <div className="flex gap-2">
             {[
               { label: '🔥 Today', value: 'today' as const, color: 'red' },
+              { label: '☀️ Tomorrow', value: 'tomorrow' as const, color: 'orange' },
               { label: '📅 This Week', value: 'week' as const, color: 'orange' },
               { label: '📌 This Month', value: 'month' as const, color: 'yellow' },
               { label: '🌊 Someday', value: 'someday' as const, color: 'blue' },
@@ -597,37 +608,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
         />
       </div>
 
-      {/* Repeat/Recurrence Button Group */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Repeat</label>
-        <div className="flex space-x-2">
-          {[
-            { label: 'None', value: 'none' },
-            { label: 'Daily', value: 'daily' },
-            { label: 'Weekly', value: 'weekly' },
-            { label: 'Monthly', value: 'monthly' },
-            { label: 'Custom', value: 'custom' },
-          ].map(option => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setFormData(prev => ({
-                ...prev,
-                isRecurring: option.value !== 'none',
-                recurrencePattern: option.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'custom',
-                recurrenceInterval: option.value === 'custom' ? 1 : undefined,
-              }))}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-all hover:scale-105 focus:outline-none ${
-                (formData.recurrencePattern || 'none') === option.value
-                  ? 'bg-purple-500 dark:bg-purple-600 text-white border-purple-500 dark:border-purple-600'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -703,7 +683,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
             </div>
           </button>
           
-          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showScheduling ? 'max-h-96 mt-6' : 'max-h-0'}`}>
+          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showScheduling ? 'max-h-[2000px] mt-6' : 'max-h-0'}`}>
             <div className="space-y-6">
               {/* Due Date and Project */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -842,7 +822,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
             </div>
           </button>
           
-          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showAdvanced ? 'max-h-96 mt-6' : 'max-h-0'}`}>
+          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showAdvanced ? 'max-h-[2000px] mt-6' : 'max-h-0'}`}>
             <div className="space-y-6">
               {/* Subtasks Section */}
               <div>
@@ -851,13 +831,13 @@ const TaskForm: React.FC<TaskFormProps> = ({
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-xl text-blue-700 dark:text-blue-300 text-sm">
                     💡 Save this task first, then you can break it down into smaller subtasks
                   </div>
-                ) : (
+                ) : task ? (
                   <SubtaskList
                     parentTaskId={task.id}
                     existingSubtasks={formData.subtasks || []}
                     onSubtasksChange={handleSubtasksChange}
                   />
-                )}
+                ) : null}
               </div>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { Task } from '../types';
 import CalendarView from '../components/planning/calendar/CalendarView';
 import WorkScheduleSelector from '../components/planning/calendar/WorkScheduleSelector';
 import Modal from '../components/common/Modal';
-import { StreamlinedTaskForm } from '../components/tasks/StreamlinedTaskForm';
+import TaskForm from '../components/tasks/TaskForm';
 
 const CalendarPage: React.FC = () => {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -62,8 +62,9 @@ const CalendarPage: React.FC = () => {
         isOpen={isTaskModalOpen}
         onClose={handleCloseTaskModal}
         title="Task Details"
+        size="2xl"
       >
-        <StreamlinedTaskForm
+        <TaskForm
           task={selectedTask || undefined}
           onClose={handleCloseTaskModal}
           isEdit={true}

@@ -24,7 +24,7 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import { TaskDisplay } from '../components/TaskDisplay';
 import Modal from '../components/common/Modal';
-import { StreamlinedTaskForm } from '../components/tasks/StreamlinedTaskForm';
+import TaskForm from '../components/tasks/TaskForm';
 import { QuickCapture } from '../components/tasks/QuickCapture';
 import { 
   getTasksDueToday, 
@@ -888,8 +888,9 @@ const Dashboard: React.FC = () => {
         isOpen={isTaskModalOpen}
         onClose={handleCloseTaskModal}
         title={editingTask ? 'Edit Task' : 'Create New Task'}
+        size="2xl"
       >
-        <StreamlinedTaskForm
+        <TaskForm
           task={editingTask || undefined}
           onClose={handleCloseTaskModal}
           isEdit={!!editingTask}

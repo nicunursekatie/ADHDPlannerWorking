@@ -1,5 +1,4 @@
 export { default as TaskForm } from './TaskForm';
-export { StreamlinedTaskForm } from './StreamlinedTaskForm';
 export { QuickCapture } from './QuickCapture';
 export { default as ImprovedTaskCard } from './ImprovedTaskCard';
 export { default as HierarchicalTaskView } from './HierarchicalTaskView';

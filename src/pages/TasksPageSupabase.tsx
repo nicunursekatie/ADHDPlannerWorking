@@ -105,7 +105,12 @@ export const TasksPageSupabase: React.FC = () => {
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const tab = queryParams.get('tab');
-    if (tab) {
+    const categoryId = queryParams.get('categoryId');
+    
+    if (categoryId) {
+      setFilterBy('category');
+      setSelectedCategory(categoryId);
+    } else if (tab) {
       setFilterBy(tab as typeof filterBy);
     }
   }, [location]);
