@@ -25,7 +25,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
   const { addTask, updateTask, deleteTask, projects, categories } = useAppContext();
   const { queueTaskForSave, clearPendingTask } = useTaskAutoSave({ 
     delay: 2000, // Auto-save after 2 seconds of no changes
-    enabled: isEdit && !!task // Only enable auto-save when editing existing tasks
+    enabled: false // Disable auto-save for TaskForm - use manual save instead
   });
   
   // Progressive disclosure state for ADHD-friendly design
@@ -55,26 +55,11 @@ const TaskForm: React.FC<TaskFormProps> = ({
   const [formData, setFormData] = useState<Partial<Task>>(initialState);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Auto-save current form data when editing existing tasks
-  const triggerAutoSave = useCallback(() => {
-    if (isEdit && task && formData.title?.trim()) {
-      // Only auto-save if we have a valid title and this is an edit operation
-      const updatedTask: Task = {
-        ...task,
-        ...formData,
-        id: task.id, // Ensure we keep the original ID
-      } as Task;
-      
-      queueTaskForSave(updatedTask);
-    }
-  }, [isEdit, task, formData, queueTaskForSave]);
 
-  // Helper function to update form data and trigger auto-save
+  // Helper function to update form data (auto-save disabled for forms)
   const updateFormData = useCallback((updater: (prev: Partial<Task>) => Partial<Task>) => {
     setFormData(updater);
-    // Trigger auto-save after state update
-    setTimeout(() => triggerAutoSave(), 0);
-  }, [triggerAutoSave]);
+  }, []);
 
   useEffect(() => {
     // Reset form data when the task prop changes

@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addDays, startOfToday, parseISO, isValid, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
-import { useAutoSave } from '../../hooks/useAutoSave';
 
 interface QuickDueDateEditorProps {
   currentDate: string | null;
@@ -30,27 +29,6 @@ export const QuickDueDateEditor: React.FC<QuickDueDateEditorProps> = ({
   const calendarRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
-  const pendingDateRef = useRef<string | null>(null);
-
-  // Auto-save functionality for due date changes
-  const { triggerSave, saveNow } = useAutoSave({
-    delay: 500, // Save quickly since this is a small, focused change
-    enabled: true,
-    onSave: async () => {
-      if (pendingDateRef.current !== null) {
-        console.log('Auto-save: Saving pending due date change:', pendingDateRef.current);
-        onDateChange(pendingDateRef.current);
-        pendingDateRef.current = null;
-      }
-    },
-    onPageHide: async () => {
-      console.log('Auto-save: Page hiding, saving any pending due date changes');
-      if (pendingDateRef.current !== null) {
-        onDateChange(pendingDateRef.current);
-        pendingDateRef.current = null;
-      }
-    }
-  });
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -142,18 +120,16 @@ export const QuickDueDateEditor: React.FC<QuickDueDateEditorProps> = ({
     const newDate = format(addDays(startOfToday(), days), 'yyyy-MM-dd');
     setSelectedDate(newDate);
     
-    // Queue for auto-save instead of saving immediately
-    pendingDateRef.current = newDate;
-    triggerSave();
+    // Call the parent callback immediately for UI updates
+    onDateChange(newDate);
     onClose();
   };
 
   const handleClearDate = (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Queue for auto-save instead of saving immediately
-    pendingDateRef.current = null;
-    triggerSave();
+    // Call the parent callback immediately for UI updates
+    onDateChange(null);
     onClose();
   };
 
@@ -161,9 +137,8 @@ export const QuickDueDateEditor: React.FC<QuickDueDateEditorProps> = ({
     const dateString = format(date, 'yyyy-MM-dd');
     setSelectedDate(dateString);
     
-    // Queue for auto-save instead of saving immediately
-    pendingDateRef.current = dateString;
-    triggerSave();
+    // Call the parent callback immediately for UI updates
+    onDateChange(dateString);
     setShowCalendar(false);
     onClose();
   };
@@ -276,10 +251,8 @@ export const QuickDueDateEditor: React.FC<QuickDueDateEditorProps> = ({
                 if (isValid(parsed)) {
                   const newDate = format(parsed, 'yyyy-MM-dd');
                   setSelectedDate(newDate);
-                  
-                  // Queue for auto-save with debouncing for typed input
-                  pendingDateRef.current = newDate;
-                  triggerSave();
+                  // Note: We don't call onDateChange here for typed input
+                  // to avoid too many rapid calls while typing
                 }
               } catch (error) {
                 // Invalid date, ignore
