@@ -44,7 +44,11 @@ export class DatabaseService {
       showSubtasks: dbTask.show_subtasks,
       braindumpSource: dbTask.braindump_source,
       completedAt: dbTask.completed_at,
-      aiProcessed: dbTask.ai_processed
+      aiProcessed: dbTask.ai_processed,
+      urgency: dbTask.urgency,
+      importance: dbTask.importance,
+      emotionalWeight: dbTask.emotional_weight,
+      energyRequired: dbTask.energy_required
     };
   }
   
@@ -83,6 +87,10 @@ export class DatabaseService {
     if (task.braindumpSource !== undefined) dbTask.braindump_source = task.braindumpSource;
     if (task.completedAt !== undefined) dbTask.completed_at = task.completedAt;
     if (task.aiProcessed !== undefined) dbTask.ai_processed = task.aiProcessed;
+    if (task.urgency !== undefined) dbTask.urgency = task.urgency;
+    if (task.importance !== undefined) dbTask.importance = task.importance;
+    if (task.emotionalWeight !== undefined) dbTask.emotional_weight = task.emotionalWeight;
+    if (task.energyRequired !== undefined) dbTask.energy_required = task.energyRequired;
     
     return dbTask;
   }
@@ -178,7 +186,11 @@ export class DatabaseService {
       show_subtasks: task.showSubtasks,
       braindump_source: task.braindumpSource,
       completed_at: task.completedAt,
-      ai_processed: task.aiProcessed
+      ai_processed: task.aiProcessed,
+      urgency: task.urgency,
+      importance: task.importance,
+      emotional_weight: task.emotionalWeight,
+      energy_required: task.energyRequired
     };
     
     const { data, error } = await supabase

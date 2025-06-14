@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Task, Project, Category } from '../../types';
 import { useAppContext } from '../../context/AppContextSupabase';
+import { useTaskAutoSave } from '../../hooks/useTaskAutoSave';
 import Button from '../common/Button';
 import SubtaskList from './SubtaskList';
 import { Calendar, Folder, Tag, Flame, Star, Brain, Battery, ChevronDown, ChevronRight, Clock, AlertCircle, Sparkles } from 'lucide-react';
@@ -22,6 +23,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
   initialProjectId = null,
 }) => {
   const { addTask, updateTask, deleteTask, projects, categories } = useAppContext();
+  const { queueTaskForSave, clearPendingTask } = useTaskAutoSave({ 
+    delay: 2000, // Auto-save after 2 seconds of no changes
+    enabled: isEdit && !!task // Only enable auto-save when editing existing tasks
+  });
   
   // Progressive disclosure state for ADHD-friendly design
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -50,6 +55,27 @@ const TaskForm: React.FC<TaskFormProps> = ({
   const [formData, setFormData] = useState<Partial<Task>>(initialState);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+  // Auto-save current form data when editing existing tasks
+  const triggerAutoSave = useCallback(() => {
+    if (isEdit && task && formData.title?.trim()) {
+      // Only auto-save if we have a valid title and this is an edit operation
+      const updatedTask: Task = {
+        ...task,
+        ...formData,
+        id: task.id, // Ensure we keep the original ID
+      } as Task;
+      
+      queueTaskForSave(updatedTask);
+    }
+  }, [isEdit, task, formData, queueTaskForSave]);
+
+  // Helper function to update form data and trigger auto-save
+  const updateFormData = useCallback((updater: (prev: Partial<Task>) => Partial<Task>) => {
+    setFormData(updater);
+    // Trigger auto-save after state update
+    setTimeout(() => triggerAutoSave(), 0);
+  }, [triggerAutoSave]);
+
   useEffect(() => {
     // Reset form data when the task prop changes
     if (task) {
@@ -63,7 +89,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
   useEffect(() => {
   }, [formData]);
 
-  const handleChange = (
+  const handleChange = useCallback((
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
@@ -72,44 +98,44 @@ const TaskForm: React.FC<TaskFormProps> = ({
     if (name === 'dueDate') {
       // If the value is empty, set to null
       if (!value) {
-        setFormData(prev => ({ ...prev, dueDate: null }));
+        updateFormData(prev => ({ ...prev, dueDate: null }));
       } else {
         // Store the date value as is without timezone conversion
-        setFormData(prev => ({ ...prev, dueDate: value }));
+        updateFormData(prev => ({ ...prev, dueDate: value }));
       }
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      updateFormData(prev => ({ ...prev, [name]: value }));
     }
     
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
-  };
+  }, [errors, updateFormData]);
 
-  const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleProjectChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setFormData(prev => ({
+    updateFormData(prev => ({
       ...prev,
       projectId: value === '' ? null : value,
     }));
-  };
+  }, [updateFormData]);
 
   
-  const handleSubtasksChange = (subtaskIds: string[]) => {
-    setFormData(prev => ({
+  const handleSubtasksChange = useCallback((subtaskIds: string[]) => {
+    updateFormData(prev => ({
       ...prev,
       subtasks: subtaskIds,
     }));
-  };
+  }, [updateFormData]);
 
-  const handleCategoryChange = (categoryId: string) => {
-    setFormData(prev => ({
+  const handleCategoryChange = useCallback((categoryId: string) => {
+    updateFormData(prev => ({
       ...prev,
       categoryIds: prev.categoryIds?.includes(categoryId)
         ? prev.categoryIds.filter(id => id !== categoryId)
         : [...(prev.categoryIds || []), categoryId]
     }));
-  };
+  }, [updateFormData]);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
@@ -122,7 +148,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -130,13 +156,16 @@ const TaskForm: React.FC<TaskFormProps> = ({
     }
     
     if (isEdit && task) {
-      updateTask({ ...task, ...formData } as Task);
+      const taskToUpdate = { ...task, ...formData } as Task;
+      updateTask(taskToUpdate);
+      // Clear pending auto-save since we manually saved
+      clearPendingTask(task.id);
     } else {
       addTask(formData);
     }
     
     onClose();
-  };
+  }, [validateForm, isEdit, task, formData, updateTask, clearPendingTask, addTask, onClose]);
 
   return (
     <div className="space-y-8 max-h-[calc(100vh-200px)] overflow-y-auto pb-20">
@@ -234,7 +263,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, emotionalWeight: option.value }))}
+                      onClick={() => updateFormData(prev => ({ ...prev, emotionalWeight: option.value }))}
                       className={`p-4 rounded-xl border-2 text-left transition-all duration-200 hover:scale-105 hover:shadow-md ${
                         (formData.emotionalWeight || 'neutral') === option.value
                           ? 'border-pink-400 bg-pink-50 dark:bg-pink-900/30 shadow-lg transform scale-105'
@@ -267,16 +296,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
                         key={option.value}
                         type="button"
                         onClick={() => {
-                          setFormData(prev => ({ ...prev, priority: option.value }));
-                          // Adjust importance score based on priority
-                          const importanceMap = {
-                            'low': 2,
-                            'medium': 5,
-                            'high': 8
-                          };
-                          setFormData(prev => ({ 
+                          updateFormData(prev => ({ 
                             ...prev, 
-                            importance: importanceMap[option.value]
+                            priority: option.value,
+                            importance: option.value === 'low' ? 2 : option.value === 'medium' ? 5 : 8
                           }));
                         }}
                         className={`w-full p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
@@ -308,20 +331,13 @@ const TaskForm: React.FC<TaskFormProps> = ({
                         key={option.value}
                         type="button"
                         onClick={() => {
-                          setFormData(prev => ({ ...prev, energyRequired: option.value }));
-                          // Adjust time estimate based on energy required
-                          const timeEstimateMap = {
-                            'low': 15,
-                            'medium': 30,
-                            'high': 60
-                          };
-                          // Only update if current estimate is close to default
-                          if (!formData.estimatedMinutes || formData.estimatedMinutes <= 30) {
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              estimatedMinutes: timeEstimateMap[option.value]
-                            }));
-                          }
+                          const timeEstimate = option.value === 'low' ? 15 : option.value === 'medium' ? 30 : 60;
+                          updateFormData(prev => ({ 
+                            ...prev, 
+                            energyRequired: option.value,
+                            // Only update time estimate if current estimate is close to default
+                            estimatedMinutes: (!prev.estimatedMinutes || prev.estimatedMinutes <= 30) ? timeEstimate : prev.estimatedMinutes
+                          }));
                         }}
                         className={`w-full p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
                           (formData.energyRequired || 'medium') === option.value
@@ -355,8 +371,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
                       key={option.value}
                       type="button"
                       onClick={() => {
-                        setFormData(prev => ({ ...prev, urgency: option.value }));
-                        // Set due date based on urgency selection
                         const today = new Date();
                         let dueDate: Date | null = null;
                         
@@ -378,11 +392,11 @@ const TaskForm: React.FC<TaskFormProps> = ({
                             break;
                         }
                         
-                        if (dueDate) {
-                          setFormData(prev => ({ ...prev, dueDate: format(dueDate, 'yyyy-MM-dd') }));
-                        } else {
-                          setFormData(prev => ({ ...prev, dueDate: null }));
-                        }
+                        updateFormData(prev => ({ 
+                          ...prev, 
+                          urgency: option.value,
+                          dueDate: dueDate ? format(dueDate, 'yyyy-MM-dd') : null
+                        }));
                       }}
                       className={`p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
                         (formData.urgency || 'week') === option.value
@@ -451,7 +465,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           onClick={() => {
             const today = new Date();
             const endOfWeek = endOfWeek(today, { weekStartsOn: 1 });
-            setFormData(prev => ({
+            updateFormData(prev => ({
               ...prev,
               priority: 'low',
               urgency: 'week',
@@ -472,7 +486,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           onClick={() => {
             const today = new Date();
             const endOfMonth = endOfMonth(today);
-            setFormData(prev => ({
+            updateFormData(prev => ({
               ...prev,
               priority: 'high',
               urgency: 'month',
@@ -492,7 +506,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           type="button"
           onClick={() => {
             const today = new Date();
-            setFormData(prev => ({
+            updateFormData(prev => ({
               ...prev,
               priority: 'high',
               urgency: 'today',
@@ -527,7 +541,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, priority: option.value }))}
+                onClick={() => updateFormData(prev => ({ ...prev, priority: option.value }))}
                 className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all hover:scale-105 focus:outline-none ${
                   (formData.priority || 'medium') === option.value
                     ? option.value === 'high' 
@@ -562,8 +576,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
                 key={option.value}
                 type="button"
                 onClick={() => {
-                  setFormData(prev => ({ ...prev, urgency: option.value }));
-                  // Set due date based on urgency selection
                   const today = new Date();
                   let dueDate: Date | null = null;
                   
@@ -585,11 +597,11 @@ const TaskForm: React.FC<TaskFormProps> = ({
                       break;
                   }
                   
-                  if (dueDate) {
-                    setFormData(prev => ({ ...prev, dueDate: format(dueDate, 'yyyy-MM-dd') }));
-                  } else {
-                    setFormData(prev => ({ ...prev, dueDate: null }));
-                  }
+                  updateFormData(prev => ({ 
+                    ...prev, 
+                    urgency: option.value,
+                    dueDate: dueDate ? format(dueDate, 'yyyy-MM-dd') : null
+                  }));
                 }}
                 className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all hover:scale-105 focus:outline-none text-lg ${
                   (formData.urgency || 'week') === option.value
@@ -621,7 +633,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           value={formData.categoryIds || []}
           onChange={(e) => {
             const values = Array.from(e.target.selectedOptions, option => option.value);
-            setFormData(prev => ({ ...prev, categoryIds: values }));
+            updateFormData(prev => ({ ...prev, categoryIds: values }));
           }}
           className="mt-1 block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all sm:text-sm"
           size={Math.min(categories.length + 1, 4)}
@@ -652,7 +664,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, energyRequired: option.value }))}
+                onClick={() => updateFormData(prev => ({ ...prev, energyRequired: option.value }))}
                 className={`px-4 py-3 rounded-lg text-base font-medium border-2 transition-all hover:scale-105 focus:outline-none ${
                   (formData.energyRequired || 'medium') === option.value
                     ? 'bg-green-500 dark:bg-green-600 text-white border-green-600 dark:border-green-700 shadow-md'
@@ -681,7 +693,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, emotionalWeight: option.value }))}
+                onClick={() => updateFormData(prev => ({ ...prev, emotionalWeight: option.value }))}
                 className={`px-3 py-3 rounded-lg text-lg font-medium border-2 transition-all hover:scale-105 focus:outline-none ${
                   (formData.emotionalWeight || 'neutral') === option.value
                     ? option.value === 'easy' ? 'bg-green-500 text-white border-green-600 shadow-md'
@@ -845,7 +857,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
                   value={formData.categoryIds || []}
                   onChange={(e) => {
                     const values = Array.from(e.target.selectedOptions, option => option.value);
-                    setFormData(prev => ({ ...prev, categoryIds: values }));
+                    updateFormData(prev => ({ ...prev, categoryIds: values }));
                   }}
                   className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all duration-200"
                   size={Math.min(categories.length + 1, 4)}
@@ -880,8 +892,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
                       key={option.value}
                       type="button"
                       onClick={() => {
-                        setFormData(prev => ({ ...prev, estimatedMinutes: option.value }));
-                        // Adjust task size based on time estimate
                         let size: 'small' | 'medium' | 'large' = 'medium';
                         if (option.value <= 30) {
                           size = 'small';
@@ -890,7 +900,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
                         } else {
                           size = 'large';
                         }
-                        setFormData(prev => ({ ...prev, size }));
+                        updateFormData(prev => ({ ...prev, estimatedMinutes: option.value, size }));
                       }}
                       className={`p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
                         (formData.estimatedMinutes || 30) === option.value
