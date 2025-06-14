@@ -4,6 +4,7 @@ import { useAppContext } from '../../context/AppContextSupabase';
 import Button from '../common/Button';
 import SubtaskList from './SubtaskList';
 import { Calendar, Folder, Tag, Flame, Star, Brain, Battery, ChevronDown, ChevronRight, Clock, AlertCircle, Sparkles } from 'lucide-react';
+import { addDays, endOfWeek, endOfMonth, format } from 'date-fns';
 
 interface TaskFormProps {
   task?: Task;
@@ -265,7 +266,19 @@ const TaskForm: React.FC<TaskFormProps> = ({
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, priority: option.value }))}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, priority: option.value }));
+                          // Adjust importance score based on priority
+                          const importanceMap = {
+                            'low': 2,
+                            'medium': 5,
+                            'high': 8
+                          };
+                          setFormData(prev => ({ 
+                            ...prev, 
+                            importance: importanceMap[option.value]
+                          }));
+                        }}
                         className={`w-full p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
                           (formData.priority || 'medium') === option.value
                             ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 shadow-md'
@@ -294,7 +307,22 @@ const TaskForm: React.FC<TaskFormProps> = ({
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, energyRequired: option.value }))}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, energyRequired: option.value }));
+                          // Adjust time estimate based on energy required
+                          const timeEstimateMap = {
+                            'low': 15,
+                            'medium': 30,
+                            'high': 60
+                          };
+                          // Only update if current estimate is close to default
+                          if (!formData.estimatedMinutes || formData.estimatedMinutes <= 30) {
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              estimatedMinutes: timeEstimateMap[option.value]
+                            }));
+                          }
+                        }}
                         className={`w-full p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
                           (formData.energyRequired || 'medium') === option.value
                             ? 'border-green-400 bg-green-50 dark:bg-green-900/30 shadow-md'
@@ -326,7 +354,36 @@ const TaskForm: React.FC<TaskFormProps> = ({
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, urgency: option.value }))}
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, urgency: option.value }));
+                        // Set due date based on urgency selection
+                        const today = new Date();
+                        let dueDate: Date | null = null;
+                        
+                        switch (option.value) {
+                          case 'today':
+                            dueDate = today;
+                            break;
+                          case 'tomorrow':
+                            dueDate = addDays(today, 1);
+                            break;
+                          case 'week':
+                            dueDate = endOfWeek(today, { weekStartsOn: 1 }); // End of current week
+                            break;
+                          case 'month':
+                            dueDate = endOfMonth(today); // End of current month
+                            break;
+                          case 'someday':
+                            dueDate = null; // No specific date
+                            break;
+                        }
+                        
+                        if (dueDate) {
+                          setFormData(prev => ({ ...prev, dueDate: format(dueDate, 'yyyy-MM-dd') }));
+                        } else {
+                          setFormData(prev => ({ ...prev, dueDate: null }));
+                        }
+                      }}
                       className={`p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
                         (formData.urgency || 'week') === option.value
                           ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/30 shadow-md'
@@ -391,42 +448,62 @@ const TaskForm: React.FC<TaskFormProps> = ({
       <div className="flex gap-2 mb-4">
         <button
           type="button"
-          onClick={() => setFormData(prev => ({
-            ...prev,
-            priority: 'low',
-            urgency: 'week',
-            emotionalWeight: 'easy',
-            energyRequired: 'low',
-            estimatedMinutes: 15
-          }))}
+          onClick={() => {
+            const today = new Date();
+            const endOfWeek = endOfWeek(today, { weekStartsOn: 1 });
+            setFormData(prev => ({
+              ...prev,
+              priority: 'low',
+              urgency: 'week',
+              emotionalWeight: 'easy',
+              energyRequired: 'low',
+              estimatedMinutes: 15,
+              dueDate: format(endOfWeek, 'yyyy-MM-dd'),
+              importance: 2,
+              size: 'small'
+            }));
+          }}
           className="px-4 py-2 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-all text-sm font-medium"
         >
           Quick Task
         </button>
         <button
           type="button"
-          onClick={() => setFormData(prev => ({
-            ...prev,
-            priority: 'high',
-            urgency: 'month',
-            emotionalWeight: 'neutral',
-            energyRequired: 'high',
-            estimatedMinutes: 120
-          }))}
+          onClick={() => {
+            const today = new Date();
+            const endOfMonth = endOfMonth(today);
+            setFormData(prev => ({
+              ...prev,
+              priority: 'high',
+              urgency: 'month',
+              emotionalWeight: 'neutral',
+              energyRequired: 'high',
+              estimatedMinutes: 120,
+              dueDate: format(endOfMonth, 'yyyy-MM-dd'),
+              importance: 8,
+              size: 'large'
+            }));
+          }}
           className="px-4 py-2 bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/30 transition-all text-sm font-medium"
         >
           Big Project
         </button>
         <button
           type="button"
-          onClick={() => setFormData(prev => ({
-            ...prev,
-            priority: 'high',
-            urgency: 'today',
-            emotionalWeight: 'dreading',
-            energyRequired: 'high',
-            estimatedMinutes: 60
-          }))}
+          onClick={() => {
+            const today = new Date();
+            setFormData(prev => ({
+              ...prev,
+              priority: 'high',
+              urgency: 'today',
+              emotionalWeight: 'dreading',
+              energyRequired: 'high',
+              estimatedMinutes: 60,
+              dueDate: format(today, 'yyyy-MM-dd'),
+              importance: 8,
+              size: 'medium'
+            }));
+          }}
           className="px-4 py-2 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/30 transition-all text-sm font-medium"
         >
           Dreaded Task
@@ -484,7 +561,36 @@ const TaskForm: React.FC<TaskFormProps> = ({
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, urgency: option.value }))}
+                onClick={() => {
+                  setFormData(prev => ({ ...prev, urgency: option.value }));
+                  // Set due date based on urgency selection
+                  const today = new Date();
+                  let dueDate: Date | null = null;
+                  
+                  switch (option.value) {
+                    case 'today':
+                      dueDate = today;
+                      break;
+                    case 'tomorrow':
+                      dueDate = addDays(today, 1);
+                      break;
+                    case 'week':
+                      dueDate = endOfWeek(today, { weekStartsOn: 1 }); // End of current week
+                      break;
+                    case 'month':
+                      dueDate = endOfMonth(today); // End of current month
+                      break;
+                    case 'someday':
+                      dueDate = null; // No specific date
+                      break;
+                  }
+                  
+                  if (dueDate) {
+                    setFormData(prev => ({ ...prev, dueDate: format(dueDate, 'yyyy-MM-dd') }));
+                  } else {
+                    setFormData(prev => ({ ...prev, dueDate: null }));
+                  }
+                }}
                 className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all hover:scale-105 focus:outline-none text-lg ${
                   (formData.urgency || 'week') === option.value
                     ? option.color === 'red' ? 'bg-red-500 text-white border-red-500'
@@ -773,7 +879,19 @@ const TaskForm: React.FC<TaskFormProps> = ({
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, estimatedMinutes: option.value }))}
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, estimatedMinutes: option.value }));
+                        // Adjust task size based on time estimate
+                        let size: 'small' | 'medium' | 'large' = 'medium';
+                        if (option.value <= 30) {
+                          size = 'small';
+                        } else if (option.value <= 120) {
+                          size = 'medium';
+                        } else {
+                          size = 'large';
+                        }
+                        setFormData(prev => ({ ...prev, size }));
+                      }}
                       className={`p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
                         (formData.estimatedMinutes || 30) === option.value
                           ? 'border-green-400 bg-green-50 dark:bg-green-900/30 shadow-md'

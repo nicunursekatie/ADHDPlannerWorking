@@ -5,6 +5,7 @@ import Modal from '../common/Modal';
 import Button from '../common/Button';
 import SubtaskList from './SubtaskList';
 import { getTodayString, getTomorrowString, formatDateString } from '../../utils/dateUtils';
+import { addDays, endOfWeek, endOfMonth, format } from 'date-fns';
 import { 
   Clock,
   Calendar,
@@ -57,10 +58,11 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   const [projectId, setProjectId] = useState(task?.projectId || initialProjectId || '');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(task?.categoryIds || []);
   // New ADHD-friendly fields
-  const [urgency, setUrgency] = useState<'today' | 'week' | 'month' | 'someday'>(task?.urgency || 'week');
+  const [urgency, setUrgency] = useState<'today' | 'tomorrow' | 'week' | 'month' | 'someday'>(task?.urgency || 'week');
   const [emotionalWeight, setEmotionalWeight] = useState<'easy' | 'neutral' | 'stressful' | 'dreading'>(task?.emotionalWeight || 'neutral');
   const [energyRequired, setEnergyRequired] = useState<'low' | 'medium' | 'high'>(task?.energyRequired || 'medium');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>(task?.priority || 'medium');
+  const [importance, setImportance] = useState(task?.importance || 5);
   const [estimatedMinutes, setEstimatedMinutes] = useState(task?.estimatedMinutes || 30);
   const [tags, setTags] = useState<string[]>(task?.tags || []);
   const [newTag, setNewTag] = useState('');
@@ -108,6 +110,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
       emotionalWeight,
       energyRequired,
       priority,
+      importance,
       estimatedMinutes,
       tags,
       dependsOn: selectedDependencies,
@@ -306,7 +309,16 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setPriority(option.value as 'low' | 'medium' | 'high')}
+                  onClick={() => {
+                    setPriority(option.value as 'low' | 'medium' | 'high');
+                    // Adjust importance score based on priority
+                    const importanceMap = {
+                      'low': 2,
+                      'medium': 5,
+                      'high': 8
+                    };
+                    setImportance(importanceMap[option.value]);
+                  }}
                   className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-purple-200/50 ${
                     priority === option.value
                       ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/30 shadow-lg ring-2 ring-purple-200 dark:ring-purple-700'
@@ -330,6 +342,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: 'Today', value: 'today', emoji: '🔥', desc: 'Right now' },
+                { label: 'Tomorrow', value: 'tomorrow', emoji: '☀️', desc: 'Next day' },
                 { label: 'This Week', value: 'week', emoji: '📅', desc: 'Soon' },
                 { label: 'This Month', value: 'month', emoji: '📌', desc: 'Later' },
                 { label: 'Someday', value: 'someday', emoji: '🌊', desc: 'No rush' },
@@ -337,7 +350,36 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setUrgency(option.value as 'today' | 'week' | 'month' | 'someday')}
+                  onClick={() => {
+                    setUrgency(option.value as 'today' | 'tomorrow' | 'week' | 'month' | 'someday');
+                    // Set due date based on urgency selection
+                    const today = new Date();
+                    let newDueDate: Date | null = null;
+                    
+                    switch (option.value) {
+                      case 'today':
+                        newDueDate = today;
+                        break;
+                      case 'tomorrow':
+                        newDueDate = addDays(today, 1);
+                        break;
+                      case 'week':
+                        newDueDate = endOfWeek(today, { weekStartsOn: 1 }); // End of current week
+                        break;
+                      case 'month':
+                        newDueDate = endOfMonth(today); // End of current month
+                        break;
+                      case 'someday':
+                        newDueDate = null; // No specific date
+                        break;
+                    }
+                    
+                    if (newDueDate) {
+                      setDueDate(format(newDueDate, 'yyyy-MM-dd'));
+                    } else {
+                      setDueDate('');
+                    }
+                  }}
                   className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-red-200/50 ${
                     urgency === option.value
                       ? 'border-red-400 bg-red-50 dark:bg-red-900/30 shadow-lg ring-2 ring-red-200 dark:ring-red-700'
@@ -370,7 +412,19 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setEnergyRequired(option.value as 'low' | 'medium' | 'high')}
+                  onClick={() => {
+                    setEnergyRequired(option.value as 'low' | 'medium' | 'high');
+                    // Adjust time estimate based on energy required
+                    const timeEstimateMap = {
+                      'low': 15,
+                      'medium': 30,
+                      'high': 60
+                    };
+                    // Only update if current estimate is close to default
+                    if (estimatedMinutes <= 30) {
+                      setEstimatedMinutes(timeEstimateMap[option.value]);
+                    }
+                  }}
                   className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-yellow-200/50 ${
                     energyRequired === option.value
                       ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 shadow-lg ring-2 ring-yellow-200 dark:ring-yellow-700'
