@@ -174,13 +174,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           loadedCategories = localStorage.getCategories();
         } catch (error) {
         }
-        
         try {
-          loadedDailyPlans = localStorage.getDailyPlans();
-        } catch (error) {
-        }
+          // loadedDailyPlans = localStorage.getDailyPlans();
+        } catch (error) {        
         
-        try {
+          try {
           loadedWorkSchedule = localStorage.getWorkSchedule();
         } catch (error) {
         }
@@ -197,15 +195,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         
         // Debug logging
         
-        setTasks(loadedTasks);
-        setProjects(loadedProjects);
-        setCategories(loadedCategories);
-        setDailyPlans(loadedDailyPlans);
-        setWorkSchedule(loadedWorkSchedule);
-        setJournalEntries(loadedJournalEntries);
-        if (loadedSettings) {
-          setSettings(loadedSettings);
-        }
+          setTasks(loadedTasks);
+          setProjects(loadedProjects);
+          setCategories(loadedCategories);
+          // setDailyPlans(loadedDailyPlans);
+          setWorkSchedule(loadedWorkSchedule);
+          setJournalEntries(loadedJournalEntries);
+          if (loadedSettings) {
+            setSettings(loadedSettings);
+          }
         
         // Check if data exists
         const hasData = 
