@@ -22,6 +22,7 @@ import {
 import { Task, Project, Category } from '../../types';
 import Badge from '../common/Badge';
 import { formatDateForDisplay } from '../../utils/helpers';
+import { getRelativeTimeDisplay } from '../../utils/dateUtils';
 import { useAppContext } from '../../context/AppContextSupabase';
 import { QuickDueDateEditor } from './QuickDueDateEditor';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji, calculateSmartPriorityScore } from '../../utils/taskPrioritization';
@@ -137,30 +138,34 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
   
   // Format due date with color based on urgency
   const renderDueDate = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
     let textColor = 'text-text-muted';
     let dateText = 'Add date';
     
     if (task.dueDate) {
-      // Parse the task due date from YYYY-MM-DD format
-      const [year, month, day] = task.dueDate.split('-').map(num => parseInt(num, 10));
-      const dueDate = new Date(year, month - 1, day); // Month is 0-indexed in JS Date
-      dueDate.setHours(0, 0, 0, 0);
+      const relativeTimeInfo = getRelativeTimeDisplay(task.dueDate, true); // Use weekend-relative display
       
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      
-      if (dueDate < today) {
-        textColor = 'text-red-600 dark:text-red-400 font-medium';
-      } else if (dueDate.getTime() === today.getTime()) {
-        textColor = 'text-purple-600 dark:text-purple-400 font-medium';
-      } else if (dueDate.getTime() === tomorrow.getTime()) {
-        textColor = 'text-blue-500 dark:text-blue-400';
+      if (relativeTimeInfo) {
+        // Use the combined format (e.g., "Monday after this weekend (Jun 17)")
+        dateText = relativeTimeInfo.combined;
+        
+        // Apply styling based on urgency level
+        switch (relativeTimeInfo.urgencyLevel) {
+          case 'overdue':
+            textColor = 'text-red-700 dark:text-red-300 font-bold bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700';
+            break;
+          case 'today':
+            textColor = 'text-purple-700 dark:text-purple-300 font-bold bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700';
+            break;
+          case 'soon':
+            textColor = 'text-blue-600 dark:text-blue-400 font-medium';
+            break;
+          default:
+            textColor = 'text-gray-600 dark:text-gray-400';
+        }
+      } else {
+        // Fallback to original format
+        dateText = formatDateForDisplay(task.dueDate);
       }
-      
-      dateText = formatDateForDisplay(task.dueDate);
     }
     
     return (
@@ -170,10 +175,10 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
             e.stopPropagation();
             setShowDateEditor(!showDateEditor);
           }}
-          className={`flex items-center text-xs ${textColor} hover:bg-purple-50 dark:hover:bg-purple-900/20 px-2 py-1 rounded-xl transition-all hover:scale-105`}
+          className={`flex items-center text-sm font-medium ${textColor} px-3 py-1.5 rounded-xl transition-all hover:scale-105 border ${textColor.includes('bg-') ? '' : 'border-transparent hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-200 dark:hover:border-purple-700'}`}
           title={task.dueDate ? "Click to change due date" : "Click to add due date"}
         >
-          <Calendar size={14} className="mr-1" />
+          <Calendar size={16} className="mr-1.5" />
           {dateText}
         </button>
         

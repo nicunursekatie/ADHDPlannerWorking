@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle, Sparkles } from 'lucide-react';
 import { Task } from '../types';
 import { useAppContext } from '../context/AppContextSupabase';
-import { getDueDateStatus } from '../utils/dateUtils';
+import { getDueDateStatus, getRelativeTimeDisplay } from '../utils/dateUtils';
 import { GuidedWalkthroughModal } from './tasks/GuidedWalkthroughModal';
 import { QuickDueDateEditor } from './tasks/QuickDueDateEditor';
 import { TaskDetailWizard } from './tasks/TaskDetailWizard';
@@ -86,8 +86,10 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   
   
   const dueDateStatus = getDueDateStatus(task.dueDate);
+  const relativeTimeInfo = getRelativeTimeDisplay(task.dueDate, true); // Use weekend-relative display
+  
   const dueDateInfo = dueDateStatus ? {
-    text: dueDateStatus.text,
+    text: relativeTimeInfo?.combined || dueDateStatus.text,
     className: dueDateStatus.className,
     icon: dueDateStatus.isOverdue ? <AlertCircle className="w-4 h-4" /> : <Calendar className="w-4 h-4" />
   } : null;
@@ -295,10 +297,10 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                   e.stopPropagation();
                   setShowDateEditor(!showDateEditor);
                 }}
-                className={`flex items-center gap-1 text-xs ${dueDateInfo.className} hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded-lg transition-all hover:scale-105`}
+                className={`flex items-center gap-1.5 text-sm font-medium ${dueDateInfo.className} hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg transition-all hover:scale-105 border border-transparent hover:border-gray-200 dark:hover:border-gray-700`}
                 title="Click to change due date"
               >
-                {dueDateInfo.icon}
+                <div className="w-4 h-4">{dueDateInfo.icon}</div>
                 <span>{dueDateInfo.text}</span>
               </button>
             ) : (
@@ -307,10 +309,10 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                   e.stopPropagation();
                   setShowDateEditor(!showDateEditor);
                 }}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-2 py-1 rounded-lg transition-all hover:scale-105"
+                className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-3 py-1.5 rounded-lg transition-all hover:scale-105 border border-transparent hover:border-purple-200 dark:hover:border-purple-700"
                 title="Add due date"
               >
-                <Calendar className="w-3 h-3" />
+                <Calendar className="w-4 h-4" />
                 <span>Add date</span>
               </button>
             )}

@@ -1,4 +1,4 @@
-import { format, parse, isValid, startOfDay, addDays, addWeeks, addMonths, nextDay, lastDayOfMonth } from 'date-fns';
+import { format, parse, isValid, startOfDay, addDays, addWeeks, addMonths, nextDay, lastDayOfMonth, differenceInDays, differenceInWeeks, differenceInMonths, getDay, startOfWeek, endOfWeek } from 'date-fns';
 
 /**
  * Standard date format used throughout the app (YYYY-MM-DD)
@@ -462,4 +462,267 @@ export function extractDateFromText(text: string): { cleanedText: string; date: 
   }
   
   return { cleanedText, date: foundDate };
+}
+
+/**
+ * Get relative time display for a date string
+ * Returns format like "Today (Jun 14)" or "In 3 days (Jun 17)"
+ * @param dateString - The date string to format
+ * @param useWeekendRelative - Whether to use weekend-relative format instead
+ */
+export function getRelativeTimeDisplay(
+  dateString: string | null | undefined, 
+  useWeekendRelative: boolean = false
+): {
+  relative: string;
+  absolute: string;
+  combined: string;
+  urgencyLevel: 'overdue' | 'today' | 'soon' | 'future';
+} | null {
+  if (!dateString) return null;
+  
+  const date = parseDate(dateString);
+  if (!date) return null;
+  
+  // Use weekend-relative display if requested
+  if (useWeekendRelative) {
+    return getWeekendRelativeDisplay(dateString);
+  }
+  
+  const today = startOfDay(new Date());
+  const targetDate = startOfDay(date);
+  const daysDiff = differenceInDays(targetDate, today);
+  
+  let relative = '';
+  let urgencyLevel: 'overdue' | 'today' | 'soon' | 'future' = 'future';
+  
+  // Handle past dates (overdue)
+  if (daysDiff < 0) {
+    const daysOverdue = Math.abs(daysDiff);
+    urgencyLevel = 'overdue';
+    
+    if (daysOverdue === 1) {
+      relative = 'Yesterday';
+    } else if (daysOverdue <= 7) {
+      relative = `${daysOverdue} days ago`;
+    } else if (daysOverdue <= 14) {
+      relative = 'Last week';
+    } else {
+      const weeksAgo = Math.floor(daysOverdue / 7);
+      relative = `${weeksAgo} weeks ago`;
+    }
+  }
+  // Handle today
+  else if (daysDiff === 0) {
+    relative = 'Today';
+    urgencyLevel = 'today';
+  }
+  // Handle future dates
+  else {
+    if (daysDiff === 1) {
+      relative = 'Tomorrow';
+      urgencyLevel = 'soon';
+    } else if (daysDiff <= 6) {
+      // Within this week - show day name
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayName = dayNames[getDay(targetDate)];
+      const todayDayName = dayNames[getDay(today)];
+      
+      // Check if it's still this week
+      const weeksDiff = differenceInWeeks(targetDate, today);
+      if (weeksDiff === 0) {
+        relative = `This ${dayName}`;
+      } else {
+        relative = `Next ${dayName}`;
+      }
+      urgencyLevel = daysDiff <= 3 ? 'soon' : 'future';
+    } else if (daysDiff <= 13) {
+      relative = 'Next week';
+      urgencyLevel = 'future';
+    } else if (daysDiff <= 30) {
+      const weeks = Math.ceil(daysDiff / 7);
+      relative = `In ${weeks} weeks`;
+      urgencyLevel = 'future';
+    } else {
+      const months = differenceInMonths(targetDate, today);
+      if (months === 1) {
+        relative = 'Next month';
+      } else {
+        relative = `In ${months} months`;
+      }
+      urgencyLevel = 'future';
+    }
+  }
+  
+  const absolute = formatDateForDisplay(dateString);
+  const combined = `${relative} (${absolute})`;
+  
+  return {
+    relative,
+    absolute,
+    combined,
+    urgencyLevel
+  };
+}
+
+/**
+ * Get weekend-relative date display
+ * Returns format like "Monday after this weekend" or "Sunday of next weekend"
+ */
+export function getWeekendRelativeDisplay(dateString: string | null | undefined, currentDate: Date = new Date()): {
+  weekendRelative: string;
+  absolute: string;
+  combined: string;
+  urgencyLevel: 'overdue' | 'today' | 'soon' | 'future';
+} | null {
+  if (!dateString) return null;
+  
+  const targetDate = parseDate(dateString);
+  if (!targetDate) return null;
+  
+  const today = startOfDay(currentDate);
+  const target = startOfDay(targetDate);
+  
+  // Day names
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const targetDayName = dayNames[getDay(target)];
+  
+  const daysDiff = differenceInDays(target, today);
+  
+  // Priority 1: Use simple language for immediate dates
+  let weekendRelative = '';
+  let urgencyLevel: 'overdue' | 'today' | 'soon' | 'future' = 'future';
+  
+  // Handle today
+  if (daysDiff === 0) {
+    weekendRelative = 'Today';
+    urgencyLevel = 'today';
+  }
+  // Handle yesterday  
+  else if (daysDiff === -1) {
+    weekendRelative = 'Yesterday';
+    urgencyLevel = 'overdue';
+  }
+  // Handle tomorrow
+  else if (daysDiff === 1) {
+    weekendRelative = 'Tomorrow';
+    urgencyLevel = 'soon';
+  }
+  // Handle 2-3 days ago (simple)
+  else if (daysDiff >= -3 && daysDiff < -1) {
+    const daysAgo = Math.abs(daysDiff);
+    weekendRelative = `${daysAgo} days ago`;
+    urgencyLevel = 'overdue';
+  }
+  // Handle this week (next few days)
+  else if (daysDiff > 1 && daysDiff <= 6) {
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const targetDayName = dayNames[getDay(target)];
+    
+    // Check if it's still in the same week
+    const todayWeekStart = startOfWeek(today, { weekStartsOn: 0 });
+    const targetWeekStart = startOfWeek(target, { weekStartsOn: 0 });
+    
+    if (todayWeekStart.getTime() === targetWeekStart.getTime()) {
+      weekendRelative = `This ${targetDayName}`;
+    } else {
+      weekendRelative = `Next ${targetDayName}`;
+    }
+    urgencyLevel = daysDiff <= 3 ? 'soon' : 'future';
+  }
+  // For dates beyond this range, use weekend-relative logic
+  else {
+    // Set urgency based on timing
+    if (target < today) {
+      urgencyLevel = 'overdue';
+    } else if (differenceInDays(target, today) <= 7) {
+      urgencyLevel = 'soon';
+    } else {
+      urgencyLevel = 'future';
+    }
+  
+    // Find the Saturday and Sunday of the current week and target week
+    const getCurrentWeekend = (date: Date) => {
+      const weekStart = startOfWeek(date, { weekStartsOn: 0 }); // Sunday
+      const saturday = addDays(weekStart, 6);
+      const sunday = weekStart;
+      return { saturday, sunday };
+    };
+    
+    const todayWeekend = getCurrentWeekend(today);
+    const targetWeekend = getCurrentWeekend(target);
+    
+    let weekendReference = '';
+    let position = '';
+    
+    // Determine which weekend period we're referring to
+    const weekDiff = Math.floor(differenceInDays(targetWeekend.saturday, todayWeekend.saturday) / 7);
+    
+    if (weekDiff === 0) {
+      // Same week as today
+      weekendReference = 'this weekend';
+    } else if (weekDiff === 1) {
+      // Next week
+      weekendReference = 'next weekend';
+    } else if (weekDiff === 2) {
+      // Week after next
+      weekendReference = 'weekend after next';
+    } else if (weekDiff < 0) {
+      // Past weeks
+      const weeksAgo = Math.abs(weekDiff);
+      if (weeksAgo === 1) {
+        weekendReference = 'last weekend';
+      } else {
+        weekendReference = `${weeksAgo} weekends ago`;
+      }
+    } else {
+      // Far future
+      weekendReference = `${weekDiff} weekends from now`;
+    }
+    
+    // Determine position relative to weekend
+    const targetDay = getDay(target);
+    if (targetDay === 6 || targetDay === 0) {
+      // Saturday or Sunday
+      position = 'of';
+    } else if (targetDay < 6) {
+      // Monday through Friday
+      position = 'before';
+    } else {
+      // This shouldn't happen, but just in case
+      position = 'after';
+    }
+    
+    // Special case: if target is Monday-Friday and it's AFTER the weekend, adjust
+    if (position === 'before' && weekDiff > 0) {
+      // This is actually after the previous weekend
+      if (weekDiff === 1) {
+        weekendReference = 'this weekend';
+        position = 'after';
+      } else {
+        const adjustedWeekDiff = weekDiff - 1;
+        if (adjustedWeekDiff === 0) {
+          weekendReference = 'this weekend';
+        } else if (adjustedWeekDiff === 1) {
+          weekendReference = 'next weekend';
+        } else {
+          weekendReference = `weekend after next`;
+        }
+        position = 'after';
+      }
+    }
+    
+    // Construct the weekend-relative string for far dates
+    weekendRelative = `${targetDayName} ${position} ${weekendReference}`;
+  }
+  
+  const absolute = formatDateForDisplay(dateString);
+  const combined = `${weekendRelative} (${absolute})`;
+  
+  return {
+    weekendRelative,
+    absolute,
+    combined,
+    urgencyLevel
+  };
 }
