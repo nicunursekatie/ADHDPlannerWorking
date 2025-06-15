@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Task } from '../../types';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import { Plus, X, ChevronDown, ChevronRight, Clock } from 'lucide-react';
 import Button from '../common/Button';
 

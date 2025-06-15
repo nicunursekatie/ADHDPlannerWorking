@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Task } from '../../types';
-import { useAppContext } from '../../context/AppContext';
-import { Plus, Circle, Calendar, Folder, Tag } from 'lucide-react';
-import { getTodayString, getTomorrowString, formatDateString } from '../../utils/dateUtils';
+import { useAppContext } from '../../context/AppContextSupabase';
+import { Plus, Circle, Calendar, Folder, Tag, Flame, Star, Brain, Battery } from 'lucide-react';
+import { getTodayString, getTomorrowString, formatDateString, extractDateFromText } from '../../utils/dateUtils';
 
 interface QuickTaskInputProps {
   onTaskAdded?: () => void;
@@ -22,6 +22,9 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
   const [projectId, setProjectId] = useState<string | null>(defaultProjectId);
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [urgency, setUrgency] = useState<'today' | 'week' | 'month' | 'someday'>('week');
+  const [emotionalWeight, setEmotionalWeight] = useState<'easy' | 'neutral' | 'stressful' | 'dreading'>('neutral');
+  const [energyRequired, setEnergyRequired] = useState<'low' | 'medium' | 'high'>('medium');
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [showProjectPicker, setShowProjectPicker] = useState(false);
   
@@ -47,6 +50,10 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
       dueDate,
       projectId,
       categoryIds,
+      priority,
+      urgency,
+      emotionalWeight,
+      energyRequired,
       completed: false,
       archived: false,
     };
@@ -59,6 +66,9 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
     if (!defaultProjectId) setProjectId(null);
     setCategoryIds([]);
     setPriority('medium');
+    setUrgency('week');
+    setEmotionalWeight('neutral');
+    setEnergyRequired('medium');
     
     if (onTaskAdded) {
       onTaskAdded();
@@ -82,53 +92,29 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
   
   // Process title for smart parsing
   const processTitle = (input: string) => {
-    // Keep spaces in the input when setting the title
-    setTitle(input);
+    let processedText = input;
     
-    // Use a trimmed version only for pattern matching
-    const titleText = input.trim();
-    
-    // Check for due date patterns like "!today", "!tomorrow", "!3d", "!2w"
-    if (titleText.includes('!today')) {
-      setDueDate(getTodayString());
-      setTitle(input.replace('!today', ''));
-    } else if (titleText.includes('!tomorrow')) {
-      setDueDate(getTomorrowString());
-      setTitle(input.replace('!tomorrow', ''));
-    } else if (titleText.match(/!(\d+)d/)) {
-      const match = titleText.match(/!(\d+)d/);
-      if (match && match[1]) {
-        const days = parseInt(match[1], 10);
-        const date = new Date();
-        date.setDate(date.getDate() + days);
-        setDueDate(formatDateString(date) || '');
-        setTitle(input.replace(/!(\d+)d/, ''));
-      }
-    } else if (titleText.match(/!(\d+)w/)) {
-      const match = titleText.match(/!(\d+)w/);
-      if (match && match[1]) {
-        const weeks = parseInt(match[1], 10);
-        const date = new Date();
-        date.setDate(date.getDate() + (weeks * 7));
-        setDueDate(formatDateString(date) || '');
-        setTitle(input.replace(/!(\d+)w/, ''));
-      }
+    // First extract natural language dates
+    const { cleanedText, date } = extractDateFromText(processedText);
+    if (date) {
+      setDueDate(formatDateString(date));
+      processedText = cleanedText;
     }
     
     // Check for priority markers like "!high", "!medium", "!low"
-    if (titleText.includes('!high')) {
+    if (processedText.includes('!high')) {
       setPriority('high');
-      setTitle(input.replace('!high', ''));
-    } else if (titleText.includes('!medium')) {
+      processedText = processedText.replace('!high', '');
+    } else if (processedText.includes('!medium')) {
       setPriority('medium');
-      setTitle(input.replace('!medium', ''));
-    } else if (titleText.includes('!low')) {
+      processedText = processedText.replace('!medium', '');
+    } else if (processedText.includes('!low')) {
       setPriority('low');
-      setTitle(input.replace('!low', ''));
+      processedText = processedText.replace('!low', '');
     }
     
     // Check for project tags like "#project-name"
-    const projectMatch = titleText.match(/#([a-zA-Z0-9-_]+)/);
+    const projectMatch = processedText.match(/#([a-zA-Z0-9-_]+)/);
     if (projectMatch && projectMatch[1]) {
       const projectName = projectMatch[1].toLowerCase();
       const matchedProject = projects.find(p => 
@@ -137,15 +123,14 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
       
       if (matchedProject) {
         setProjectId(matchedProject.id);
-        setTitle(input.replace(/#([a-zA-Z0-9-_]+)/, ''));
+        processedText = processedText.replace(/#([a-zA-Z0-9-_]+)/, '');
       }
     }
     
     // Check for category tags like "@category-name"
-    const categoryMatches = titleText.match(/@([a-zA-Z0-9-_]+)/g);
+    const categoryMatches = processedText.match(/@([a-zA-Z0-9-_]+)/g);
     if (categoryMatches) {
       const newCategoryIds: string[] = [];
-      let newTitle = input;
       
       categoryMatches.forEach(match => {
         const categoryName = match.substring(1).toLowerCase();
@@ -155,15 +140,18 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
         
         if (matchedCategory) {
           newCategoryIds.push(matchedCategory.id);
-          newTitle = newTitle.replace(match, '');
+          processedText = processedText.replace(match, '');
         }
       });
       
       if (newCategoryIds.length > 0) {
         setCategoryIds(newCategoryIds);
-        setTitle(newTitle);
       }
     }
+    
+    // Clean up any double spaces and set the final title
+    processedText = processedText.replace(/\s+/g, ' ').trim();
+    setTitle(processedText);
   };
   
   const getPriorityColor = () => {
@@ -174,6 +162,49 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
         return 'text-orange-500';
       case 'low':
         return 'text-green-500';
+      default:
+        return 'text-gray-400';
+    }
+  };
+
+  const getUrgencyColor = () => {
+    switch (urgency) {
+      case 'today':
+        return 'text-red-600 bg-red-50 px-2 py-1 rounded-full';
+      case 'week':
+        return 'text-orange-600 bg-orange-50 px-2 py-1 rounded-full';
+      case 'month':
+        return 'text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full';
+      case 'someday':
+        return 'text-blue-600 bg-blue-50 px-2 py-1 rounded-full';
+      default:
+        return 'text-gray-400';
+    }
+  };
+
+  const getEnergyColor = () => {
+    switch (energyRequired) {
+      case 'low':
+        return 'text-green-600 bg-green-50 px-2 py-1 rounded-full';
+      case 'medium':
+        return 'text-green-600 bg-green-50 px-2 py-1 rounded-full';
+      case 'high':
+        return 'text-green-600 bg-green-50 px-2 py-1 rounded-full';
+      default:
+        return 'text-gray-400';
+    }
+  };
+
+  const getEmotionalColor = () => {
+    switch (emotionalWeight) {
+      case 'easy':
+        return 'text-green-600 bg-green-50 px-2 py-1 rounded-full';
+      case 'neutral':
+        return 'text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full';
+      case 'stressful':
+        return 'text-orange-600 bg-orange-50 px-2 py-1 rounded-full';
+      case 'dreading':
+        return 'text-red-600 bg-red-50 px-2 py-1 rounded-full';
       default:
         return 'text-gray-400';
     }
@@ -304,6 +335,54 @@ const QuickTaskInput: React.FC<QuickTaskInputProps> = ({
                   </div>
                 )}
               </div>
+              
+              {/* Enhanced ADHD-friendly fields */}
+              <button
+                type="button"
+                className={`flex items-center font-medium transition-all hover:scale-105 ${getUrgencyColor()}`}
+                onClick={() => {
+                  if (urgency === 'week') setUrgency('today');
+                  else if (urgency === 'today') setUrgency('month');
+                  else if (urgency === 'month') setUrgency('someday');
+                  else setUrgency('week');
+                }}
+              >
+                <Flame size={18} className="mr-2" />
+                <span className="text-base">
+                  {urgency === 'today' ? '🔥 Today' : urgency === 'week' ? '📅 Week' : urgency === 'month' ? '📌 Month' : '🌊 Someday'}
+                </span>
+              </button>
+              
+              <button
+                type="button"
+                className={`flex items-center font-medium transition-all hover:scale-105 ${getEnergyColor()}`}
+                onClick={() => {
+                  if (energyRequired === 'medium') setEnergyRequired('low');
+                  else if (energyRequired === 'low') setEnergyRequired('high');
+                  else setEnergyRequired('medium');
+                }}
+              >
+                <Battery size={18} className="mr-2" />
+                <span className="text-base">
+                  {energyRequired === 'low' ? '🔋 Low' : energyRequired === 'medium' ? '⚡ Med' : '🚀 High'}
+                </span>
+              </button>
+              
+              <button
+                type="button"
+                className={`flex items-center font-medium transition-all hover:scale-105 ${getEmotionalColor()}`}
+                onClick={() => {
+                  if (emotionalWeight === 'neutral') setEmotionalWeight('easy');
+                  else if (emotionalWeight === 'easy') setEmotionalWeight('stressful');
+                  else if (emotionalWeight === 'stressful') setEmotionalWeight('dreading');
+                  else setEmotionalWeight('neutral');
+                }}
+              >
+                <Brain size={18} className="mr-2" />
+                <span className="text-base">
+                  {emotionalWeight === 'easy' ? '😊 Love it' : emotionalWeight === 'neutral' ? '😐 Neutral' : emotionalWeight === 'stressful' ? '😩 Ugh' : '😰 Dread'}
+                </span>
+              </button>
             </div>
           </div>
         )}

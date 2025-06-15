@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Task, Project, Category } from '../../types';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import Button from '../common/Button';
 import { Calendar, Flag, ArrowDownCircle, Save, Plus, Target } from 'lucide-react';
 import { formatDate } from '../../utils/helpers';

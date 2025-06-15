@@ -8,22 +8,29 @@ export interface Task {
   projectId: string | null;
   categoryIds: string[];
   parentTaskId: string | null;
-  subtasks: string[]; // IDs of subtasks
-  dependsOn: string[]; // IDs of tasks this task depends on
-  dependedOnBy: string[]; // IDs of tasks that depend on this task
   priority?: 'low' | 'medium' | 'high';
   energyLevel?: 'low' | 'medium' | 'high';
   size?: 'small' | 'medium' | 'large';
   estimatedMinutes?: number;
   phase?: string; // Project phase this task belongs to
   tags?: string[]; // Tags associated with the task, including phase name
-  recurringTaskId?: string; // ID of the recurring task that generated this task
+  
+  // Multi-dimensional prioritization fields
+  urgency?: 'today' | 'tomorrow' | 'week' | 'month' | 'someday'; // Time sensitivity
+  importance?: number; // 1-5: How critical to goals (5 = life-changing, 1 = nice-to-have)
+  emotionalWeight?: 'easy' | 'neutral' | 'stressful' | 'dreading'; // Emotional difficulty
+  energyRequired?: 'low' | 'medium' | 'high'; // Physical/mental effort needed
+  smartPriorityScore?: number; // Calculated composite score
+  
   createdAt: string;
   updatedAt: string;
-  // Recurrence fields
-  isRecurring?: boolean;
-  recurrencePattern?: 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
-  recurrenceInterval?: number; // For custom recurrence, e.g., every X days
+  completedAt?: string | null;
+  recurringTaskId?: string | null;
+  
+  // Runtime computed fields (not stored in DB)
+  subtasks?: string[]; // IDs of subtasks - computed from parent-child relationships
+  dependsOn?: string[]; // IDs of tasks this task depends on - computed from dependencies table
+  dependedOnBy?: string[]; // IDs of tasks that depend on this task - computed from dependencies table
 }
 
 export interface Project {
@@ -31,6 +38,7 @@ export interface Project {
   name: string;
   description: string;
   color: string;
+  order?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,6 +75,15 @@ export interface WhatNowCriteria {
 
 export type ViewMode = 'day' | 'week' | 'month';
 
+export type TaskSortMode = 
+  | 'whatnow' // Matches current energy to task requirements
+  | 'eatthefrog' // High emotional weight tasks when energy is high
+  | 'quickwins' // Low time + low emotional weight for momentum
+  | 'deadline' // Pure urgency-based
+  | 'energymatch' // Only shows tasks matching current energy level
+  | 'priority' // Traditional priority sorting
+  | 'smart'; // Smart priority score based
+
 // Project breakdown structures
 export interface ProjectPhase {
   id: string;
@@ -99,41 +116,31 @@ export interface JournalEntry {
   updatedAt: string;
 }
 
-// Recurring task types
-export interface RecurringTask {
-  id: string;
-  title: string;
-  description: string;
-  pattern: RecurrencePattern;
-  nextDue: string; // ISO date string for next occurrence
-  lastGenerated: string | null; // ISO date string for last generated task
-  active: boolean; // Whether this recurring task is currently active
-  source: RecurringTaskSource;
-  // Task properties that will be copied to generated tasks
-  priority?: 'low' | 'medium' | 'high';
-  energyLevel?: 'low' | 'medium' | 'high';
-  estimatedMinutes?: number;
-  categoryIds: string[];
-  projectId: string | null;
-  tags?: string[];
-  createdAt: string;
-  updatedAt: string;
-}
 
-export interface RecurrencePattern {
-  type: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
-  interval: number; // e.g., every 2 days, every 3 weeks
-  daysOfWeek?: number[]; // 0-6 for Sunday-Saturday
-  dayOfMonth?: number; // 1-31
-  monthOfYear?: number; // 0-11
-  endDate?: string; // Optional end date for the recurrence
-  time?: string; // Optional time of day (HH:MM format)
+// Settings types
+export interface AppSettings {
+  // Time Management Settings
+  timeManagement: {
+    defaultBufferTime: number; // minutes between tasks
+    timeBlindnessAlerts: boolean;
+    timeBlindnessInterval: number; // minutes between alerts
+    autoAdjustEstimates: boolean;
+    gettingReadyTime: number; // minutes to add before appointments
+  };
+  
+  // Visual Preferences
+  visual: {
+    fontSize: 'small' | 'medium' | 'large';
+    layoutDensity: 'compact' | 'comfortable' | 'spacious';
+    reduceAnimations: boolean;
+    highContrast: boolean;
+    customPriorityColors: {
+      high: string;
+      medium: string;
+      low: string;
+    };
+  };
 }
-
-export type RecurringTaskSource = {
-  type: 'manual' | 'medication' | 'bill' | 'chore' | 'appointment' | 'routine';
-  metadata?: Record<string, any>; // Extra data specific to the source type
-};
 
 // Re-export WorkSchedule types
 export * from './WorkSchedule';

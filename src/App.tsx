@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { SettingsProvider } from './components/common/SettingsProvider';
 import Layout from './components/layout/Layout';
 
 // Lazy-loaded pages
@@ -50,17 +51,19 @@ function App() {
   return (
     <ThemeProvider>
       <AppProvider>
-        <Router>
-          <Layout>
-            <Suspense fallback={<div>Loading...</div>}>
-              <Routes>
-                {appRoutes.map(({ path, Component }) => (
-                  <Route key={path} path={path} element={<Component />} />
-                ))}
-              </Routes>
-            </Suspense>
-          </Layout>
-        </Router>
+        <SettingsProvider>
+          <Router>
+            <Layout>
+              <Suspense fallback={<div>Loading...</div>}>
+                <Routes>
+                  {appRoutes.map(({ path, Component }) => (
+                    <Route key={path} path={path} element={<Component />} />
+                  ))}
+                </Routes>
+              </Suspense>
+            </Layout>
+          </Router>
+        </SettingsProvider>
       </AppProvider>
     </ThemeProvider>
   );

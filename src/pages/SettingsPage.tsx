@@ -4,10 +4,12 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import AISettings from '../components/settings/AISettings';
-import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp } from 'lucide-react';
+import { DuplicateCleanupLocal } from '../components/settings/DuplicateCleanupLocal';
+import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Users } from 'lucide-react';
+import { Category } from '../types';
 
 const SettingsPage: React.FC = () => {
-  const { exportData, importData, resetData, initializeSampleData } = useAppContext();
+  const { exportData, importData, resetData, initializeSampleData, categories, addCategory, updateCategory, deleteCategory, settings, updateSettings } = useAppContext();
   
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
@@ -15,6 +17,15 @@ const SettingsPage: React.FC = () => {
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState(false);
   const [showAISettings, setShowAISettings] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [categoryName, setCategoryName] = useState('');
+  const [categoryColor, setCategoryColor] = useState('#6366f1');
+  const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
+  const [showTimeManagement, setShowTimeManagement] = useState(false);
+  const [showVisualPreferences, setShowVisualPreferences] = useState(false);
+  const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   
   const handleExportData = () => {
     const data = exportData();
@@ -93,6 +104,54 @@ const SettingsPage: React.FC = () => {
   
   const handleLoadSampleData = () => {
     initializeSampleData();
+  };
+
+  const handleAddCategory = () => {
+    setEditingCategory(null);
+    setCategoryName('');
+    setCategoryColor('#6366f1');
+    setCategoryModalOpen(true);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setCategoryName(category.name);
+    setCategoryColor(category.color);
+    setCategoryModalOpen(true);
+  };
+
+  const handleSaveCategory = () => {
+    if (!categoryName.trim()) return;
+
+    if (editingCategory) {
+      updateCategory({
+        ...editingCategory,
+        name: categoryName.trim(),
+        color: categoryColor,
+        updatedAt: new Date().toISOString()
+      });
+    } else {
+      addCategory({
+        name: categoryName.trim(),
+        color: categoryColor
+      });
+    }
+
+    setCategoryModalOpen(false);
+    setCategoryName('');
+    setCategoryColor('#6366f1');
+    setEditingCategory(null);
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    setDeleteCategoryId(categoryId);
+  };
+
+  const confirmDeleteCategory = () => {
+    if (deleteCategoryId) {
+      deleteCategory(deleteCategoryId);
+      setDeleteCategoryId(null);
+    }
   };
   
   return (
@@ -206,6 +265,425 @@ const SettingsPage: React.FC = () => {
         )}
       </Card>
       
+      {/* Category Management */}
+      <Card>
+        <div 
+          className="cursor-pointer"
+          onClick={() => setShowCategories(!showCategories)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Tag className="w-5 h-5 text-indigo-600 mr-2" />
+              <h2 className="text-lg font-medium text-gray-900">Categories</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">{categories.length} categories</span>
+              {showCategories ? (
+                <ChevronUp className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              )}
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 mt-1">
+            Organize your tasks with custom categories
+          </p>
+        </div>
+        
+        {showCategories && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="space-y-3">
+              {categories.map((category) => (
+                <div key={category.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: category.color }}
+                    />
+                    <span className="font-medium">{category.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditCategory(category);
+                      }}
+                      className="p-1 hover:bg-gray-200 rounded transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4 text-gray-600" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteCategory(category.id);
+                      }}
+                      className="p-1 hover:bg-red-100 rounded transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              
+              <Button
+                variant="primary"
+                icon={<Plus size={16} />}
+                onClick={handleAddCategory}
+                className="w-full"
+              >
+                Add Category
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
+      
+      {/* Duplicate Cleanup */}
+      <Card>
+        <div 
+          className="cursor-pointer"
+          onClick={() => setShowDuplicateCleanup(!showDuplicateCleanup)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Users className="w-5 h-5 text-amber-600 mr-2" />
+              <h2 className="text-lg font-medium text-gray-900">Duplicate Cleanup</h2>
+            </div>
+            {showDuplicateCleanup ? (
+              <ChevronUp className="w-5 h-5 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-400" />
+            )}
+          </div>
+          <p className="text-sm text-gray-600 mt-1">
+            Find and remove duplicate tasks, projects, and categories
+          </p>
+        </div>
+        
+        {showDuplicateCleanup && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <DuplicateCleanupLocal />
+          </div>
+        )}
+      </Card>
+      
+      {/* Time Management Settings */}
+      <Card>
+        <div 
+          className="cursor-pointer"
+          onClick={() => setShowTimeManagement(!showTimeManagement)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Clock className="w-5 h-5 text-blue-600 mr-2" />
+              <h2 className="text-lg font-medium text-gray-900">Time Management</h2>
+            </div>
+            {showTimeManagement ? (
+              <ChevronUp className="w-5 h-5 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-400" />
+            )}
+          </div>
+          <p className="text-sm text-gray-600 mt-1">
+            Configure time-related settings for better ADHD management
+          </p>
+        </div>
+        
+        {showTimeManagement && (
+          <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Default Buffer Time Between Tasks
+              </label>
+              <select
+                value={settings.timeManagement.defaultBufferTime}
+                onChange={(e) => updateSettings({
+                  timeManagement: {
+                    ...settings.timeManagement,
+                    defaultBufferTime: parseInt(e.target.value)
+                  }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="0">No buffer</option>
+                <option value="5">5 minutes</option>
+                <option value="10">10 minutes</option>
+                <option value="15">15 minutes</option>
+                <option value="20">20 minutes</option>
+                <option value="30">30 minutes</option>
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                Automatically add transition time between scheduled tasks
+              </p>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={settings.timeManagement.timeBlindnessAlerts}
+                  onChange={(e) => updateSettings({
+                    timeManagement: {
+                      ...settings.timeManagement,
+                      timeBlindnessAlerts: e.target.checked
+                    }
+                  })}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Enable Time Blindness Alerts</span>
+              </label>
+              <p className="mt-1 ml-7 text-sm text-gray-500">
+                Get periodic reminders of the current time
+              </p>
+            </div>
+
+            {settings.timeManagement.timeBlindnessAlerts && (
+              <div className="ml-7">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Alert Frequency
+                </label>
+                <select
+                  value={settings.timeManagement.timeBlindnessInterval}
+                  onChange={(e) => updateSettings({
+                    timeManagement: {
+                      ...settings.timeManagement,
+                      timeBlindnessInterval: parseInt(e.target.value)
+                    }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="30">Every 30 minutes</option>
+                  <option value="60">Every hour</option>
+                  <option value="120">Every 2 hours</option>
+                </select>
+              </div>
+            )}
+
+            <div>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={settings.timeManagement.autoAdjustEstimates}
+                  onChange={(e) => updateSettings({
+                    timeManagement: {
+                      ...settings.timeManagement,
+                      autoAdjustEstimates: e.target.checked
+                    }
+                  })}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Auto-adjust Time Estimates</span>
+              </label>
+              <p className="mt-1 ml-7 text-sm text-gray-500">
+                Learn from your actual task completion times
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Getting Ready Time for Appointments
+              </label>
+              <select
+                value={settings.timeManagement.gettingReadyTime}
+                onChange={(e) => updateSettings({
+                  timeManagement: {
+                    ...settings.timeManagement,
+                    gettingReadyTime: parseInt(e.target.value)
+                  }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">1 hour</option>
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                Add preparation time before appointments automatically
+              </p>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Visual Preferences */}
+      <Card>
+        <div 
+          className="cursor-pointer"
+          onClick={() => setShowVisualPreferences(!showVisualPreferences)}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Eye className="w-5 h-5 text-purple-600 mr-2" />
+              <h2 className="text-lg font-medium text-gray-900">Visual Preferences</h2>
+            </div>
+            {showVisualPreferences ? (
+              <ChevronUp className="w-5 h-5 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-400" />
+            )}
+          </div>
+          <p className="text-sm text-gray-600 mt-1">
+            Customize the appearance for better focus
+          </p>
+        </div>
+        
+        {showVisualPreferences && (
+          <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Font Size
+              </label>
+              <select
+                value={settings.visual.fontSize}
+                onChange={(e) => updateSettings({
+                  visual: {
+                    ...settings.visual,
+                    fontSize: e.target.value as 'small' | 'medium' | 'large'
+                  }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Layout Density
+              </label>
+              <select
+                value={settings.visual.layoutDensity}
+                onChange={(e) => updateSettings({
+                  visual: {
+                    ...settings.visual,
+                    layoutDensity: e.target.value as 'compact' | 'comfortable' | 'spacious'
+                  }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="compact">Compact</option>
+                <option value="comfortable">Comfortable</option>
+                <option value="spacious">Spacious</option>
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                Adjust spacing between elements
+              </p>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={settings.visual.reduceAnimations}
+                  onChange={(e) => updateSettings({
+                    visual: {
+                      ...settings.visual,
+                      reduceAnimations: e.target.checked
+                    }
+                  })}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Reduce Animations</span>
+              </label>
+              <p className="mt-1 ml-7 text-sm text-gray-500">
+                Minimize motion for less distraction
+              </p>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={settings.visual.highContrast}
+                  onChange={(e) => updateSettings({
+                    visual: {
+                      ...settings.visual,
+                      highContrast: e.target.checked
+                    }
+                  })}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">High Contrast Mode</span>
+              </label>
+              <p className="mt-1 ml-7 text-sm text-gray-500">
+                Increase contrast for better visibility
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Priority Colors
+              </label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600 w-20">High:</span>
+                  <input
+                    type="color"
+                    value={settings.visual.customPriorityColors.high}
+                    onChange={(e) => updateSettings({
+                      visual: {
+                        ...settings.visual,
+                        customPriorityColors: {
+                          ...settings.visual.customPriorityColors,
+                          high: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+                  />
+                  <span className="text-sm font-mono text-gray-600">
+                    {settings.visual.customPriorityColors.high}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600 w-20">Medium:</span>
+                  <input
+                    type="color"
+                    value={settings.visual.customPriorityColors.medium}
+                    onChange={(e) => updateSettings({
+                      visual: {
+                        ...settings.visual,
+                        customPriorityColors: {
+                          ...settings.visual.customPriorityColors,
+                          medium: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+                  />
+                  <span className="text-sm font-mono text-gray-600">
+                    {settings.visual.customPriorityColors.medium}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600 w-20">Low:</span>
+                  <input
+                    type="color"
+                    value={settings.visual.customPriorityColors.low}
+                    onChange={(e) => updateSettings({
+                      visual: {
+                        ...settings.visual,
+                        customPriorityColors: {
+                          ...settings.visual.customPriorityColors,
+                          low: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+                  />
+                  <span className="text-sm font-mono text-gray-600">
+                    {settings.visual.customPriorityColors.low}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
+      
       {/* About */}
       <Card title="About TaskManager">
         <div className="space-y-2">
@@ -313,6 +791,101 @@ const SettingsPage: React.FC = () => {
               onClick={handleResetConfirm}
             >
               Reset All Data
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      
+      {/* Category Modal */}
+      <Modal
+        isOpen={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        title={editingCategory ? 'Edit Category' : 'Add Category'}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Category Name
+            </label>
+            <input
+              type="text"
+              value={categoryName}
+              onChange={(e) => setCategoryName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="Enter category name"
+              autoFocus
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Color
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={categoryColor}
+                onChange={(e) => setCategoryColor(e.target.value)}
+                className="w-16 h-10 border border-gray-300 rounded cursor-pointer"
+              />
+              <div
+                className="w-24 h-10 rounded-md border border-gray-300 flex items-center justify-center text-sm font-mono"
+                style={{ backgroundColor: categoryColor }}
+              >
+                {categoryColor}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => setCategoryModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSaveCategory}
+              disabled={!categoryName.trim()}
+            >
+              {editingCategory ? 'Save' : 'Add'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      
+      {/* Delete Category Confirmation Modal */}
+      <Modal
+        isOpen={!!deleteCategoryId}
+        onClose={() => setDeleteCategoryId(null)}
+        title="Delete Category"
+      >
+        <div className="space-y-4">
+          <div className="p-3 bg-red-50 text-red-700 rounded-md flex items-start">
+            <AlertCircle size={16} className="mr-2 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium">This action cannot be undone</p>
+              <p className="text-sm">Tasks with this category will still exist but won't have this category.</p>
+            </div>
+          </div>
+          
+          <p className="text-gray-600">
+            Are you sure you want to delete this category?
+          </p>
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteCategoryId(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmDeleteCategory}
+            >
+              Delete Category
             </Button>
           </div>
         </div>

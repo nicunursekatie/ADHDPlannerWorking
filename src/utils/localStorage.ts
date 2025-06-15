@@ -1,4 +1,4 @@
-import { Task, Project, Category, DailyPlan, JournalEntry, RecurringTask } from '../types';
+import { Task, Project, Category, DailyPlan, JournalEntry, AppSettings } from '../types';
 import { WorkSchedule, WorkShift } from '../types/WorkSchedule';
 import { transformImportedData } from './importTransform';
 
@@ -11,8 +11,8 @@ const DAILY_PLANS_KEY = `${KEY_PREFIX}dailyPlans`;
 const WORK_SCHEDULE_KEY = `${KEY_PREFIX}workSchedule`;
 const JOURNAL_ENTRIES_KEY = `${KEY_PREFIX}journalEntries`;
 const LAST_WEEKLY_REVIEW_KEY = `${KEY_PREFIX}lastWeeklyReview`;
-const RECURRING_TASKS_KEY = `${KEY_PREFIX}recurringTasks`;
 const DELETED_TASKS_KEY = `${KEY_PREFIX}deletedTasks`;
+const SETTINGS_KEY = `${KEY_PREFIX}settings`;
 
 // Tasks
 export const getTasks = (): Task[] => {
@@ -371,7 +371,6 @@ export const exportData = (): string => {
       categories: categories,
       dailyPlans: getDailyPlans() || [],
       workSchedule: getWorkSchedule(),
-      recurringTasks: getRecurringTasks() || [],
       exportDate: new Date().toISOString(),
       version: "1.1.0"
     };
@@ -384,7 +383,6 @@ export const exportData = (): string => {
       projects: [],
       categories: [],
       dailyPlans: [],
-      recurringTasks: [],
       exportDate: new Date().toISOString(),
       version: "1.1.0",
       error: "Failed to access stored data"
@@ -413,8 +411,7 @@ export const importData = (jsonData: string): boolean => {
       !data.projects && 
       !data.categories && 
       !data.dailyPlans && 
-      !data.workSchedule &&
-      !data.recurringTasks
+      !data.workSchedule
     )) {
       return false;
     }
@@ -465,11 +462,6 @@ export const importData = (jsonData: string): boolean => {
       importSuccessful = true;
     }
     
-    if (Array.isArray(data.recurringTasks)) {
-      saveRecurringTasks(data.recurringTasks);
-      importSuccessful = true;
-    }
-    
     if (importSuccessful) {
       return true;
     } else {
@@ -488,7 +480,6 @@ export const resetData = (): void => {
   localStorage.removeItem(WORK_SCHEDULE_KEY);
   localStorage.removeItem(JOURNAL_ENTRIES_KEY);
   localStorage.removeItem(LAST_WEEKLY_REVIEW_KEY);
-  localStorage.removeItem(RECURRING_TASKS_KEY);
 };
 
 // Weekly Review Date Functions
@@ -628,43 +619,6 @@ export const getJournalEntriesForWeek = (weekNumber: number, weekYear: number): 
   }
 };
 
-// Recurring Tasks
-export const getRecurringTasks = (): RecurringTask[] => {
-  try {
-    const recurringTasksJSON = localStorage.getItem(RECURRING_TASKS_KEY);
-    return recurringTasksJSON ? JSON.parse(recurringTasksJSON) : [];
-  } catch (error) {
-    return [];
-  }
-};
-
-export const saveRecurringTasks = (recurringTasks: RecurringTask[]): void => {
-  try {
-    localStorage.setItem(RECURRING_TASKS_KEY, JSON.stringify(recurringTasks));
-  } catch (error) {
-  }
-};
-
-export const addRecurringTask = (recurringTask: RecurringTask): void => {
-  const recurringTasks = getRecurringTasks();
-  recurringTasks.push(recurringTask);
-  saveRecurringTasks(recurringTasks);
-};
-
-export const updateRecurringTask = (updatedRecurringTask: RecurringTask): void => {
-  const recurringTasks = getRecurringTasks();
-  const index = recurringTasks.findIndex(rt => rt.id === updatedRecurringTask.id);
-  if (index !== -1) {
-    recurringTasks[index] = updatedRecurringTask;
-    saveRecurringTasks(recurringTasks);
-  }
-};
-
-export const deleteRecurringTask = (recurringTaskId: string): void => {
-  const recurringTasks = getRecurringTasks();
-  const filteredTasks = recurringTasks.filter(rt => rt.id !== recurringTaskId);
-  saveRecurringTasks(filteredTasks);
-};
 
 // Deleted Tasks Management
 export interface DeletedTask {
@@ -756,6 +710,23 @@ export const permanentlyDeleteTask = (taskId: string): void => {
 export const clearAllDeletedTasks = (): void => {
   try {
     saveDeletedTasks([]);
+  } catch (error) {
+  }
+};
+
+// Settings
+export const getSettings = (): AppSettings | null => {
+  try {
+    const settingsJSON = localStorage.getItem(SETTINGS_KEY);
+    return settingsJSON ? JSON.parse(settingsJSON) : null;
+  } catch (error) {
+    return null;
+  }
+};
+
+export const saveSettings = (settings: AppSettings): void => {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch (error) {
   }
 };

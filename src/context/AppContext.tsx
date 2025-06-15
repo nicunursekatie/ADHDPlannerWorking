@@ -1,9 +1,9 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { Task, Project, Category, DailyPlan, WhatNowCriteria, JournalEntry, RecurringTask } from '../types';
+import { Task, Project, Category, DailyPlan, WhatNowCriteria, JournalEntry, AppSettings } from '../types';
 import { WorkSchedule, WorkShift, ShiftType, DEFAULT_SHIFTS } from '../types/WorkSchedule';
 import * as localStorage from '../utils/localStorage';
 import { generateId, createSampleData, recommendTasks as recommendTasksUtil } from '../utils/helpers';
-import { getTodayString, formatDateString } from '../utils/dateUtils';
+import { getTodayString, formatDateString, extractDateFromText } from '../utils/dateUtils';
 
 interface DeletedTask {
   task: Task;
@@ -30,6 +30,7 @@ interface AppContextType {
   bulkMoveTasks: (taskIds: string[], projectId: string | null) => void;
   bulkArchiveTasks: (taskIds: string[]) => void;
   bulkConvertToSubtasks: (taskIds: string[], parentTaskId: string) => void;
+  bulkAssignCategories: (taskIds: string[], categoryIds: string[], mode: 'add' | 'replace') => void;
   
   // Dependencies
   addTaskDependency: (taskId: string, dependsOnId: string) => void;
@@ -78,15 +79,12 @@ interface AppContextType {
   updateLastWeeklyReviewDate: () => void;
   needsWeeklyReview: () => boolean;
   
-  // Recurring Tasks
-  recurringTasks: RecurringTask[];
-  addRecurringTask: (recurringTask: RecurringTask) => void;
-  updateRecurringTask: (recurringTask: RecurringTask) => void;
-  deleteRecurringTask: (recurringTaskId: string) => void;
-  generateTaskFromRecurring: (recurringTaskId: string) => Task | null;
-  
   // What Now Wizard
   recommendTasks: (criteria: WhatNowCriteria) => Task[];
+  
+  // Settings
+  settings: AppSettings;
+  updateSettings: (settings: Partial<AppSettings>) => void;
   
   // Data Management
   exportData: () => string;
@@ -103,6 +101,27 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const UNDO_WINDOW = 5000; // 5 seconds window for undo
 
+const DEFAULT_SETTINGS: AppSettings = {
+  timeManagement: {
+    defaultBufferTime: 15,
+    timeBlindnessAlerts: false,
+    timeBlindnessInterval: 60,
+    autoAdjustEstimates: false,
+    gettingReadyTime: 30
+  },
+  visual: {
+    fontSize: 'medium',
+    layoutDensity: 'comfortable',
+    reduceAnimations: false,
+    highContrast: false,
+    customPriorityColors: {
+      high: '#ef4444',
+      medium: '#f59e0b',
+      low: '#10b981'
+    }
+  }
+};
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -110,10 +129,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [dailyPlans, setDailyPlans] = useState<DailyPlan[]>([]);
   const [workSchedule, setWorkSchedule] = useState<WorkSchedule | null>(null);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
-  const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
   const [deletedTasks, setDeletedTasks] = useState<DeletedTask[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   
   // Clean up old deleted tasks
   useEffect(() => {
@@ -139,7 +158,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         let loadedDailyPlans = [];
         let loadedWorkSchedule = null;
         let loadedJournalEntries = [];
-        let loadedRecurringTasks = [];
+        let loadedSettings = null;
         
         try {
           loadedTasks = localStorage.getTasks();
@@ -155,13 +174,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           loadedCategories = localStorage.getCategories();
         } catch (error) {
         }
-        
         try {
-          loadedDailyPlans = localStorage.getDailyPlans();
-        } catch (error) {
-        }
+          // loadedDailyPlans = localStorage.getDailyPlans();
+        } catch (error) {        
         
-        try {
+          try {
           loadedWorkSchedule = localStorage.getWorkSchedule();
         } catch (error) {
         }
@@ -172,19 +189,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
         
         try {
-          loadedRecurringTasks = localStorage.getRecurringTasks();
+          loadedSettings = localStorage.getSettings();
         } catch (error) {
         }
         
         // Debug logging
         
-        setTasks(loadedTasks);
-        setProjects(loadedProjects);
-        setCategories(loadedCategories);
-        setDailyPlans(loadedDailyPlans);
-        setWorkSchedule(loadedWorkSchedule);
-        setJournalEntries(loadedJournalEntries);
-        setRecurringTasks(loadedRecurringTasks);
+          setTasks(loadedTasks);
+          setProjects(loadedProjects);
+          setCategories(loadedCategories);
+          // setDailyPlans(loadedDailyPlans);
+          setWorkSchedule(loadedWorkSchedule);
+          setJournalEntries(loadedJournalEntries);
+          if (loadedSettings) {
+            setSettings(loadedSettings);
+          }
         
         // Check if data exists
         const hasData = 
@@ -745,25 +764,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     let priority: 'low' | 'medium' | 'high' = 'medium';
     let categoryIds: string[] = [];
     
-    // Extract date patterns
-    if (processedTitle.includes('!today')) {
-      const today = new Date();
-      dueDate = today.toISOString().split('T')[0];
-      processedTitle = processedTitle.replace('!today', '').trim();
-    } else if (processedTitle.includes('!tomorrow')) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      dueDate = tomorrow.toISOString().split('T')[0];
-      processedTitle = processedTitle.replace('!tomorrow', '').trim();
-    } else if (processedTitle.match(/!(\d+)d/)) {
-      const match = processedTitle.match(/!(\d+)d/);
-      if (match && match[1]) {
-        const days = parseInt(match[1], 10);
-        const date = new Date();
-        date.setDate(date.getDate() + days);
-        dueDate = date.toISOString().split('T')[0];
-        processedTitle = processedTitle.replace(/!(\d+)d/, '').trim();
-      }
+    // First extract natural language dates
+    const { cleanedText, date } = extractDateFromText(processedTitle);
+    if (date) {
+      processedTitle = cleanedText;
+      dueDate = formatDateString(date);
     }
     
     // Extract priority
@@ -773,7 +778,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } else if (processedTitle.includes('!low')) {
       priority = 'low';
       processedTitle = processedTitle.replace('!low', '').trim();
+    } else if (processedTitle.includes('!medium')) {
+      priority = 'medium';
+      processedTitle = processedTitle.replace('!medium', '').trim();
     }
+    
+    // Clean up any double spaces
+    processedTitle = processedTitle.replace(/\s+/g, ' ').trim();
     
     // Create and return the task
     return addTask({
@@ -1020,6 +1031,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setTasks(updatedTasks);
     localStorage.saveTasks(updatedTasks);
   }, [tasks]);
+  
+  const bulkAssignCategories = useCallback((taskIds: string[], categoryIds: string[], mode: 'add' | 'replace') => {
+    const timestamp = new Date().toISOString();
+    
+    const updatedTasks = tasks.map(task => {
+      if (taskIds.includes(task.id)) {
+        let newCategoryIds: string[];
+        
+        if (mode === 'replace') {
+          // Replace all existing categories
+          newCategoryIds = categoryIds;
+        } else {
+          // Add to existing categories (avoiding duplicates)
+          const existingIds = task.categoryIds || [];
+          const uniqueNewIds = categoryIds.filter(id => !existingIds.includes(id));
+          newCategoryIds = [...existingIds, ...uniqueNewIds];
+        }
+        
+        return {
+          ...task,
+          categoryIds: newCategoryIds,
+          updatedAt: timestamp
+        };
+      }
+      return task;
+    });
+    
+    setTasks(updatedTasks);
+    localStorage.saveTasks(updatedTasks);
+  }, [tasks]);
 
   // Dependency management functions
   const addTaskDependency = useCallback((taskId: string, dependsOnId: string) => {
@@ -1108,100 +1149,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return localStorage.needsWeeklyReview();
   }, []);
 
-  // Recurring Tasks
-  const addRecurringTask = useCallback((recurringTask: RecurringTask) => {
-    localStorage.addRecurringTask(recurringTask);
-    setRecurringTasks(prev => [...prev, recurringTask]);
-  }, []);
 
-  const updateRecurringTask = useCallback((recurringTask: RecurringTask) => {
-    localStorage.updateRecurringTask(recurringTask);
-    setRecurringTasks(prev => prev.map(rt => rt.id === recurringTask.id ? recurringTask : rt));
-  }, []);
-
-  const deleteRecurringTask = useCallback((recurringTaskId: string) => {
-    localStorage.deleteRecurringTask(recurringTaskId);
-    setRecurringTasks(prev => prev.filter(rt => rt.id !== recurringTaskId));
-  }, []);
-
-  const generateTaskFromRecurring = useCallback((recurringTaskId: string): Task | null => {
-    const recurringTask = recurringTasks.find(rt => rt.id === recurringTaskId);
-    if (!recurringTask) return null;
-
-    const newTask: Task = {
-      id: generateId(),
-      title: recurringTask.title,
-      description: recurringTask.description,
-      completed: false,
-      archived: false,
-      dueDate: recurringTask.nextDue,
-      projectId: recurringTask.projectId,
-      categoryIds: recurringTask.categoryIds,
-      parentTaskId: null,
-      subtasks: [],
-      dependsOn: [],
-      dependedOnBy: [],
-      priority: recurringTask.priority,
-      energyLevel: recurringTask.energyLevel,
-      estimatedMinutes: recurringTask.estimatedMinutes,
-      tags: recurringTask.tags,
-      recurringTaskId: recurringTaskId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    return newTask;
-  }, [recurringTasks]);
-
-  // Generate tasks from recurring tasks if needed
-  const checkAndGenerateRecurringTasks = useCallback(() => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    recurringTasks.forEach(recurringTask => {
-      if (!recurringTask.active) return;
-      
-      // Check if a task needs to be generated
-      if (recurringTask.nextDue <= today) {
-        // Check if task was already generated today
-        const alreadyGenerated = recurringTask.lastGenerated && 
-          recurringTask.lastGenerated.split('T')[0] === today;
-        
-        if (!alreadyGenerated) {
-          const newTask = generateTaskFromRecurring(recurringTask.id);
-          if (newTask) {
-            addTask(newTask);
-            
-            // Calculate next due date
-            const pattern = recurringTask.pattern;
-            const currentDue = new Date(recurringTask.nextDue);
-            let nextDue = new Date(currentDue);
-            
-            switch (pattern.type) {
-              case 'daily':
-                nextDue.setDate(nextDue.getDate() + pattern.interval);
-                break;
-              case 'weekly':
-                nextDue.setDate(nextDue.getDate() + (pattern.interval * 7));
-                break;
-              case 'monthly':
-                nextDue.setMonth(nextDue.getMonth() + pattern.interval);
-                break;
-              case 'yearly':
-                nextDue.setFullYear(nextDue.getFullYear() + pattern.interval);
-                break;
-            }
-            
-            // Update the recurring task
-            updateRecurringTask({
-              ...recurringTask,
-              nextDue: nextDue.toISOString().split('T')[0],
-              lastGenerated: new Date().toISOString(),
-            });
-          }
+  const updateSettings = useCallback((newSettings: Partial<AppSettings>) => {
+    const updated = {
+      ...settings,
+      ...newSettings,
+      timeManagement: {
+        ...settings.timeManagement,
+        ...(newSettings.timeManagement || {})
+      },
+      visual: {
+        ...settings.visual,
+        ...(newSettings.visual || {}),
+        customPriorityColors: {
+          ...settings.visual.customPriorityColors,
+          ...(newSettings.visual?.customPriorityColors || {})
         }
       }
-    });
-  }, [recurringTasks]);
+    };
+    setSettings(updated);
+    localStorage.saveSettings(updated);
+  }, [settings]);
 
   const contextValue: AppContextType = {
     tasks,
@@ -1222,6 +1190,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     bulkMoveTasks,
     bulkArchiveTasks,
     bulkConvertToSubtasks,
+    bulkAssignCategories,
     
     // Dependencies
     addTaskDependency,
@@ -1264,13 +1233,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     updateLastWeeklyReviewDate,
     needsWeeklyReview,
     
-    recurringTasks,
-    addRecurringTask,
-    updateRecurringTask,
-    deleteRecurringTask,
-    generateTaskFromRecurring,
-    
     recommendTasks,
+    
+    settings,
+    updateSettings,
     
     exportData,
     importData,
@@ -1281,12 +1247,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     isDataInitialized,
   };
   
-  // Check for recurring tasks that need to be generated after everything is initialized
-  useEffect(() => {
-    if (!isLoading && recurringTasks.length > 0 && checkAndGenerateRecurringTasks) {
-      checkAndGenerateRecurringTasks();
-    }
-  }, [isLoading, recurringTasks.length]);
   
   return (
     <AppContext.Provider value={contextValue}>

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import { Plus, Circle } from 'lucide-react';
+import { extractDateFromText, formatDateString } from '../../utils/dateUtils';
 
 interface QuickCaptureProps {
   onTaskAdded?: () => void;
@@ -19,31 +20,31 @@ export const QuickCapture: React.FC<QuickCaptureProps> = ({
   
   // Process input for smart text parsing
   const processInput = (input: string) => {
-    // Keep spaces in the input during editing
     let processedTitle = input;
     let dueDate: string | null = null;
     let priority: 'low' | 'medium' | 'high' = 'medium';
     
-    // Check for date patterns (basic ones that are easy to remember)
-    if (input.includes('!today')) {
-      const today = new Date();
-      dueDate = today.toISOString().split('T')[0];
-      processedTitle = input.replace('!today', '');
-    } else if (input.includes('!tomorrow')) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      dueDate = tomorrow.toISOString().split('T')[0];
-      processedTitle = input.replace('!tomorrow', '');
+    // First extract natural language dates
+    const { cleanedText, date } = extractDateFromText(input);
+    if (date) {
+      processedTitle = cleanedText;
+      dueDate = formatDateString(date);
     }
     
     // Check for priority markers
-    if (input.includes('!high')) {
+    if (processedTitle.includes('!high')) {
       priority = 'high';
       processedTitle = processedTitle.replace('!high', '');
-    } else if (input.includes('!low')) {
+    } else if (processedTitle.includes('!low')) {
       priority = 'low';
       processedTitle = processedTitle.replace('!low', '');
+    } else if (processedTitle.includes('!medium')) {
+      priority = 'medium';
+      processedTitle = processedTitle.replace('!medium', '');
     }
+    
+    // Clean up any remaining spaces
+    processedTitle = processedTitle.replace(/\s+/g, ' ').trim();
     
     return { title: processedTitle, dueDate, priority };
   };

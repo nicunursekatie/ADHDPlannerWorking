@@ -59,8 +59,8 @@ const TimeBlockModal: React.FC<TimeBlockModalProps> = ({
   };
 
   const validateForm = (): boolean => {
-    // Use the utility function to validate that end time is after start time
-    const duration = calculateDuration(formData.startTime, formData.endTime);
+    // Use the utility function to validate duration with overnight support
+    const duration = calculateDuration(formData.startTime, formData.endTime, { allowOvernight: true });
     
     if (duration <= 0) {
       setValidationError('End time must be after start time');

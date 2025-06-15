@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import { Task } from '../../types';
 import Card from '../common/Card';
 import Button from '../common/Button';
@@ -7,15 +7,9 @@ import { formatDate } from '../../utils/helpers';
 import { 
   AlertCircle, 
   BarChart2, 
-  CalendarDays,
   CheckCircle, 
-  ChevronDown, 
   Clock, 
-  Trash2, 
-  ListChecks, 
-  RefreshCw, 
-  Ban, 
-  X
+  RefreshCw
 } from 'lucide-react';
 
 interface AccountabilityCheckInProps {
@@ -39,12 +33,13 @@ type TaskWithReason = {
 
 const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpdated }) => {
   const { tasks, updateTask, deleteTask } = useAppContext();
-  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
   const [tasksWithReasons, setTasksWithReasons] = useState<TaskWithReason[]>([]);
   const [showProgress, setShowProgress] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
   const [completionRate, setCompletionRate] = useState(0);
   const [lastUpdatedTask, setLastUpdatedTask] = useState<string | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   // Common reasons for not completing tasks - streamlined list
   const [commonReasons, setCommonReasons] = useState<Reason[]>([
@@ -110,19 +105,37 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     
     setCompletionRate(rate);
     
-    // Initialize tasks with reasons
-  if (tasksWithReasons.length === 0 && tasksNeedingAttention.length > 0) {
-    const initializedTasks = tasksNeedingAttention.map(task => ({
-      task,
-      selectedReason: null,
-      customReason: '',
-      action: null,
-      rescheduleDate: undefined
-    }));
-    setTasksWithReasons(initializedTasks);
-  }
-}, [tasksNeedingAttention, tasksWithReasons.length]);
+    // Initialize tasks with reasons only once
+    if (!hasInitialized && tasksNeedingAttention.length > 0) {
+      const initializedTasks = tasksNeedingAttention.map(task => ({
+        task,
+        selectedReason: null,
+        customReason: '',
+        action: null,
+        rescheduleDate: undefined
+      }));
+      setTasksWithReasons(initializedTasks);
+      setHasInitialized(true);
+    }
+  }, [tasks, lastWeek, lastWeekStr, today, hasInitialized, tasksNeedingAttention]); // Fixed dependencies
 
+  // Update tasksWithReasons when the underlying task data changes
+  useEffect(() => {
+    setTasksWithReasons(prev => {
+      // Update task data for existing entries
+      return prev.map(item => {
+        const updatedTask = tasks.find(t => t.id === item.task.id);
+        if (updatedTask && !updatedTask.completed) {
+          return { ...item, task: updatedTask };
+        }
+        return item;
+      }).filter(item => {
+        // Remove tasks that have been completed or deleted
+        const taskExists = tasks.find(t => t.id === item.task.id);
+        return taskExists && !taskExists.completed;
+      });
+    });
+  }, [tasks]);
   
   const handleReasonSelect = (taskId: string, reasonId: string) => {
     
@@ -287,7 +300,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
     }
   }, [commonReasons, deleteTask, updateTask, onTaskUpdated]);
 
-  // Handle Enter key to save and continue
+  // Enhanced keyboard shortcuts for better navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't trigger if user is typing in an input field
@@ -296,8 +309,28 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
         return;
       }
       
-      if (e.key === 'Enter' && expandedTask) {
-        const currentTask = tasksWithReasons.find(t => t.task.id === expandedTask);
+      // Navigate through tasks with arrow keys
+      if (e.key === 'ArrowDown' && currentTaskIndex < tasksWithReasons.length - 1) {
+        e.preventDefault();
+        setCurrentTaskIndex(currentTaskIndex + 1);
+      } else if (e.key === 'ArrowUp' && currentTaskIndex > 0) {
+        e.preventDefault();
+        setCurrentTaskIndex(currentTaskIndex - 1);
+      }
+      
+      // Quick reason selection with number keys
+      if (e.key >= '1' && e.key <= '6' && tasksWithReasons.length > 0) {
+        e.preventDefault();
+        const reasonIndex = parseInt(e.key) - 1;
+        const currentTask = tasksWithReasons[currentTaskIndex];
+        if (currentTask && commonReasons[reasonIndex]) {
+          handleReasonSelect(currentTask.task.id, commonReasons[reasonIndex].id);
+        }
+      }
+      
+      // Save current task with Enter
+      if (e.key === 'Enter' && tasksWithReasons.length > 0) {
+        const currentTask = tasksWithReasons[currentTaskIndex];
         if (currentTask && currentTask.selectedReason && 
             (currentTask.selectedReason !== 'custom' || currentTask.customReason)) {
           e.preventDefault();
@@ -308,7 +341,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [expandedTask, tasksWithReasons, handleTaskUpdate]);
+  }, [currentTaskIndex, tasksWithReasons, handleTaskUpdate, commonReasons]);
   
   // Get the most common reasons for not completing tasks
   const topReasons = [...commonReasons]
@@ -450,202 +483,158 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
               )}
             </div>
           ) : (
-            <div className="space-y-3">
-              {tasksWithReasons.map(taskWithReason => (
-                <div 
-                  key={taskWithReason.task.id} 
-                  className="border rounded-lg overflow-hidden"
-                >
+            <div className="space-y-2">
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800 mb-2">
+                  🚀 <strong>Quick Review:</strong> Click the reason that best fits each task or use keyboard shortcuts:
+                </p>
+                <div className="text-xs text-blue-700 space-y-1">
+                  <div>• Numbers <kbd>1-6</kbd> to select reasons quickly</div>
+                  <div>• <kbd>↑↓</kbd> to navigate between tasks</div>
+                  <div>• <kbd>Enter</kbd> to save and continue</div>
+                </div>
+              </div>
+              
+              {tasksWithReasons.map((taskWithReason, index) => {
+                const isProcessed = taskWithReason.selectedReason !== null;
+                const isCurrentTask = index === currentTaskIndex;
+                return (
                   <div 
-                    className={`p-3 bg-gray-50 flex items-center justify-between cursor-pointer
-                      ${expandedTask === taskWithReason.task.id ? 'border-b border-gray-200' : ''}
-                    `}
-                    onClick={() => setExpandedTask(
-                      expandedTask === taskWithReason.task.id ? null : taskWithReason.task.id
-                    )}
+                    key={taskWithReason.task.id} 
+                    className={`border rounded-lg p-4 transition-all ${
+                      isProcessed ? 'bg-green-50 border-green-200' : 
+                      isCurrentTask ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200' : 'bg-white'
+                    }`}
                   >
-                    <div className="flex items-center">
-                      <AlertCircle size={16} className="text-orange-500 mr-2" />
-                      <span className="font-medium">{taskWithReason.task.title}</span>
-                    </div>
-                    <ChevronDown 
-                      size={18} 
-                      className={`text-gray-500 transition-transform ${
-                        expandedTask === taskWithReason.task.id ? 'transform rotate-180' : ''
-                      }`} 
-                    />
-                  </div>
-                  
-                  {expandedTask === taskWithReason.task.id && (
-                    <div className="p-3">
-                      <div className="mb-4">
-                        <h5 className="text-sm font-medium text-gray-700 mb-2">
-                          Why wasn't this task completed?
-                        </h5>
-                        <div className="space-y-2">
-                          {commonReasons.map(reason => {
-                            const isChecked = tasksWithReasons.find(item => item.task.id === taskWithReason.task.id)?.selectedReason === reason.id;
-                            return (
-                              <div key={reason.id} className="flex items-center">
-                                <input 
-                                  type="radio" 
-                                  id={`${taskWithReason.task.id}-${reason.id}`}
-                                  name={`reason-${taskWithReason.task.id}`}
-                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                                  checked={isChecked}
-                                  onChange={() => handleReasonSelect(taskWithReason.task.id, reason.id)}
-                                />
-                                <label 
-                                  htmlFor={`${taskWithReason.task.id}-${reason.id}`}
-                                  className="ml-2 text-sm text-gray-700"
-                                >
-                                  {reason.text}
-                                </label>
-                              </div>
-                            );
-                          })}
-                          
-                          <div className="pt-1">
-                            <div className="flex items-center">
-                              <input 
-                                type="radio" 
-                                id={`${taskWithReason.task.id}-custom`}
-                                name={`reason-${taskWithReason.task.id}`}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                                checked={tasksWithReasons.find(item => item.task.id === taskWithReason.task.id)?.selectedReason === 'custom'}
-                                onChange={() => handleReasonSelect(taskWithReason.task.id, 'custom')}
-                              />
-                              <label 
-                                htmlFor={`${taskWithReason.task.id}-custom`}
-                                className="ml-2 text-sm text-gray-700"
-                              >
-                                Other reason:
-                              </label>
-                            </div>
-                            
-                            <input 
-                              type="text"
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                              placeholder="Enter your reason..."
-                              value={taskWithReason.customReason}
-                              onChange={(e) => handleCustomReasonChange(taskWithReason.task.id, e.target.value)}
-                              onFocus={() => handleReasonSelect(taskWithReason.task.id, 'custom')}
-                            />
-                          </div>
-                        </div>
+                    <div className="mb-3">
+                      <div className="flex items-center mb-2">
+                        {isProcessed ? (
+                          <CheckCircle size={16} className="text-green-500 mr-2" />
+                        ) : (
+                          <AlertCircle size={16} className="text-orange-500 mr-2" />
+                        )}
+                        <span className="font-medium text-gray-900">{taskWithReason.task.title}</span>
+                        {taskWithReason.task.dueDate && (
+                          <span className="ml-2 text-xs text-gray-500">Due: {taskWithReason.task.dueDate}</span>
+                        )}
                       </div>
                       
-                      {taskWithReason.action === 'reschedule' && (
-                        <div className="mb-4 border border-blue-200 rounded-lg p-3 bg-blue-50">
-                          <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                            <CalendarDays size={16} className="mr-2 text-blue-600" />
-                            When would you like to reschedule this task?
-                          </h5>
-                          <p className="text-xs text-gray-600 mb-2">
-                            Leave blank if you're not ready to schedule a specific date yet
-                          </p>
-                          <div className="relative">
-                            <input
-                              type="date"
-                              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm pl-8"
-                              value={taskWithReason.rescheduleDate || ''}
-                              onChange={(e) => handleRescheduleDateChange(taskWithReason.task.id, e.target.value)}
-                              min={formatDate(new Date())}
-                            />
-                            <CalendarDays 
-                              size={16} 
-                              className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"
-                            />
-                          </div>
-                          {taskWithReason.task.dueDate && (
-                            <div className="mt-2 text-xs text-gray-600">
-                              Original due date: {taskWithReason.task.dueDate}
-                            </div>
-                          )}
+                      {/* Quick reason buttons */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-3">
+                        {commonReasons.slice(0, 6).map((reason, reasonIndex) => {
+                          const isSelected = taskWithReason.selectedReason === reason.id;
+                          return (
+                            <button
+                              key={reason.id}
+                              onClick={() => handleReasonSelect(taskWithReason.task.id, reason.id)}
+                              className={`p-2 text-xs rounded-md border transition-colors text-left relative ${
+                                isSelected
+                                  ? 'bg-amber-100 border-amber-300 text-amber-800'
+                                  : 'bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-700'
+                              }`}
+                            >
+                              <span className="absolute top-1 right-1 text-xs opacity-50 font-mono">
+                                {reasonIndex + 1}
+                              </span>
+                              {reason.text}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* Custom reason input - only show if needed */}
+                      {!isProcessed && (
+                        <div className="mb-3">
+                          <input
+                            type="text"
+                            placeholder="Or type a custom reason..."
+                            value={taskWithReason.customReason}
+                            onChange={(e) => {
+                              handleCustomReasonChange(taskWithReason.task.id, e.target.value);
+                              if (e.target.value) {
+                                handleReasonSelect(taskWithReason.task.id, 'custom');
+                              }
+                            }}
+                            className="w-full p-2 text-sm border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          />
                         </div>
                       )}
                       
-                      <div className="mb-4">
-                        <h5 className="text-sm font-medium text-gray-700 mb-2">
-                          What would you like to do with this task? (Optional)
-                        </h5>
-                        <p className="text-xs text-gray-600 mb-2">
-                          You can save without selecting an action if you just want to log the reason
-                        </p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            variant={taskWithReason.action === 'completed' ? 'secondary' : 'outline'}
-                            size="sm"
-                            className="justify-center"
+                      {/* Quick actions - only show after reason is selected */}
+                      {isProcessed && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <button
                             onClick={() => handleActionSelect(taskWithReason.task.id, 'completed')}
-                            icon={<CheckCircle size={14} />}
+                            className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                              taskWithReason.action === 'completed'
+                                ? 'bg-green-100 border-green-300 text-green-800'
+                                : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-green-50'
+                            }`}
                           >
-                            Mark Completed
-                          </Button>
-                          <Button
-                            variant={taskWithReason.action === 'reschedule' ? 'secondary' : 'outline'}
-                            size="sm"
-                            className="justify-center"
+                            ✓ Completed
+                          </button>
+                          <button
                             onClick={() => handleActionSelect(taskWithReason.task.id, 'reschedule')}
-                            icon={<RefreshCw size={14} />}
+                            className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                              taskWithReason.action === 'reschedule'
+                                ? 'bg-blue-100 border-blue-300 text-blue-800'
+                                : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-blue-50'
+                            }`}
                           >
-                            Reschedule
-                          </Button>
-                          <Button
-                            variant={taskWithReason.action === 'break_down' ? 'secondary' : 'outline'}
-                            size="sm"
-                            className="justify-center"
+                            📅 Reschedule
+                          </button>
+                          <button
                             onClick={() => handleActionSelect(taskWithReason.task.id, 'break_down')}
-                            icon={<ListChecks size={14} />}
+                            className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                              taskWithReason.action === 'break_down'
+                                ? 'bg-yellow-100 border-yellow-300 text-yellow-800'
+                                : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-yellow-50'
+                            }`}
                           >
-                            Break down
-                          </Button>
-                          <Button
-                            variant={taskWithReason.action === 'blocked' ? 'secondary' : 'outline'}
-                            size="sm"
-                            className="justify-center"
-                            onClick={() => handleActionSelect(taskWithReason.task.id, 'blocked')}
-                            icon={<Ban size={14} />}
-                          >
-                            Mark Blocked
-                          </Button>
-                          <Button
-                            variant={taskWithReason.action === 'abandon' ? 'danger' : 'outline'}
-                            size="sm"
-                            className="justify-center"
+                            🧩 Break Down
+                          </button>
+                          <button
                             onClick={() => handleActionSelect(taskWithReason.task.id, 'abandon')}
-                            icon={<Trash2 size={14} />}
+                            className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                              taskWithReason.action === 'abandon'
+                                ? 'bg-red-100 border-red-300 text-red-800'
+                                : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-red-50'
+                            }`}
                           >
-                            Delete Task
-                          </Button>
+                            🗑️ Drop It
+                          </button>
                         </div>
-                      </div>
+                      )}
                       
-                      <div className="flex justify-end space-x-2 border-t pt-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setExpandedTask(null)}
-                          icon={<X size={14} />}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          size="sm"
-                          disabled={
-                            !taskWithReason.selectedReason || 
-                            (taskWithReason.selectedReason === 'custom' && !taskWithReason.customReason)
-                          }
-                          onClick={() => handleTaskUpdate(taskWithReason)}
-                          icon={<CheckCircle size={14} />}
-                        >
-                          Save & Continue (Enter)
-                        </Button>
-                      </div>
+                      {/* Reschedule date picker - compact */}
+                      {taskWithReason.action === 'reschedule' && (
+                        <div className="mb-3 p-3 bg-blue-50 rounded-md">
+                          <label className="block text-xs text-blue-800 mb-1">New date (optional):</label>
+                          <input
+                            type="date"
+                            value={taskWithReason.rescheduleDate || ''}
+                            onChange={(e) => handleRescheduleDateChange(taskWithReason.task.id, e.target.value)}
+                            className="w-full p-1 text-sm border border-blue-300 rounded"
+                            min={formatDate(new Date())}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Save button - only show when ready */}
+                      {isProcessed && (
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => handleTaskUpdate(taskWithReason)}
+                            className="px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors"
+                          >
+                            Save & Continue →
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

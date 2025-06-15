@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext } from '../context/AppContextSupabase';
 import { Task } from '../types';
 import { TaskDisplay } from "../components/TaskDisplay";
 import TaskForm from '../components/tasks/TaskForm';
@@ -137,7 +137,7 @@ const ProjectDetailPage: React.FC = () => {
             <TaskDisplay
             key={task.id}
             task={task}
-            onToggle={(id) => updateTask(id, { completed: !task.completed })}
+            onToggle={() => updateTask({ ...task, completed: !task.completed })}
             onEdit={() => handleOpenTaskModal(task)}
             onDelete={() => deleteTask(task.id)}
           />

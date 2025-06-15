@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Task, Project, Category } from '../../types';
-import { ChevronDown, ChevronRight, Plus, Circle, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Circle, CheckCircle2, Calendar } from 'lucide-react';
 import Badge from '../common/Badge';
-import { useAppContext } from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContextSupabase';
 import { formatDateForDisplay } from '../../utils/helpers';
 
 interface HierarchicalTaskViewProps {
@@ -175,7 +175,7 @@ const TaskNode: React.FC<TaskNodeProps> = ({
             {task.completed ? (
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             ) : (
-              <Circle className="h-5 w-5 text-gray-400 hover:text-indigo-500" />
+              <Circle className="h-5 w-5 text-text-muted hover:text-primary-600 transition-colors" />
             )}
           </button>
           
@@ -185,19 +185,19 @@ const TaskNode: React.FC<TaskNodeProps> = ({
                 className="cursor-pointer flex-grow"
                 onClick={handleEdit}
               >
-                <h3 className={`text-lg font-medium ${task.completed ? 'line-through text-gray-500' : isOverdue ? 'text-red-600' : 'text-gray-900'}`}>
+                <h3 className={`text-lg font-medium ${task.completed ? 'text-text-tertiary opacity-75' : isOverdue ? 'text-danger-600' : 'text-text-primary'}`}>
                   {task.title}
                 </h3>
                 
                 {task.description && (
-                  <p className={`mt-1 text-sm ${task.completed ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <p className={`mt-1 text-sm ${task.completed ? 'text-text-muted' : 'text-text-secondary'}`}>
                     {task.description}
                   </p>
                 )}
                 
                 <div className="mt-2 flex flex-wrap gap-2 items-center">
                   {task.dueDate && (
-                    <div className={`flex items-center text-xs ${isOverdue ? 'text-red-500 font-semibold' : isToday ? 'text-green-600 font-semibold' : 'text-gray-500'}`}>
+                    <div className={`flex items-center text-xs ${isOverdue ? 'text-danger-500 font-semibold' : isToday ? 'text-success-600 font-semibold' : 'text-text-tertiary'}`}>
                       <Calendar size={14} className="mr-1" />
                       {formatDateForDisplay(task.dueDate)}
                     </div>
@@ -225,7 +225,7 @@ const TaskNode: React.FC<TaskNodeProps> = ({
               </div>
               
               <button
-                className="p-1 ml-2 text-gray-400 hover:text-indigo-500 rounded"
+                className="p-1 ml-2 text-text-muted hover:text-primary-600 rounded transition-colors"
                 onClick={handleAddSubtask}
               >
                 <Plus size={16} />
@@ -235,7 +235,7 @@ const TaskNode: React.FC<TaskNodeProps> = ({
             {subtasks.length > 0 && (
               <div className="mt-2">
                 <button
-                  className={`flex items-center text-sm ${task.completed ? 'text-gray-400' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`flex items-center text-sm ${task.completed ? 'text-text-muted' : 'text-text-tertiary hover:text-text-secondary'}`}
                   onClick={toggleExpand}
                 >
                   {expanded ? (
