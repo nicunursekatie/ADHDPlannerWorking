@@ -120,10 +120,18 @@ export const QuickDueDateEditor: React.FC<QuickDueDateEditorProps> = ({
     e.stopPropagation();
     let newDate: string;
     
+    console.log(`handleQuickDate called with days: ${days}`);
+    
     if (days === 0) {
       newDate = getTodayString();
+      console.log(`Today string: ${newDate}`);
+      console.log(`Current system date: ${new Date()}`);
+      console.log(`System says today is: ${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`);
     } else if (days === 1) {
       newDate = getTomorrowString();
+      console.log(`Tomorrow string: ${newDate}`);
+      console.log(`Current system date: ${new Date()}`);
+      console.log(`System says tomorrow should be: ${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate() + 1).padStart(2, '0')}`);
     } else {
       // For other days, calculate based on today's date
       const today = new Date();
@@ -135,11 +143,14 @@ export const QuickDueDateEditor: React.FC<QuickDueDateEditorProps> = ({
       const month = String(targetDate.getMonth() + 1).padStart(2, '0');
       const day = String(targetDate.getDate()).padStart(2, '0');
       newDate = `${year}-${month}-${day}`;
+      console.log(`Calculated date for ${days} days: ${newDate}`);
     }
     
+    console.log(`Setting selected date to: ${newDate}`);
     setSelectedDate(newDate);
     
     // Call the parent callback immediately for UI updates
+    console.log(`Calling onDateChange with: ${newDate}`);
     onDateChange(newDate);
     onClose();
   };

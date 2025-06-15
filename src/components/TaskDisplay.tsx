@@ -88,6 +88,12 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const dueDateStatus = getDueDateStatus(task.dueDate);
   const relativeTimeInfo = getRelativeTimeDisplay(task.dueDate, true); // Use weekend-relative display
   
+  // Debug date display
+  console.log(`Task ${task.title} - Raw dueDate:`, task.dueDate);
+  console.log(`Task ${task.title} - Parsed date:`, task.dueDate ? new Date(task.dueDate) : null);
+  console.log(`Task ${task.title} - Relative time info:`, relativeTimeInfo);
+  console.log(`Task ${task.title} - Due date status:`, dueDateStatus);
+  
   const dueDateInfo = dueDateStatus ? {
     text: relativeTimeInfo?.combined || dueDateStatus.text,
     className: dueDateStatus.className,
@@ -321,7 +327,47 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
               <QuickDueDateEditor
                 currentDate={task.dueDate}
                 onDateChange={(newDate) => {
-                  updateTask({ ...task, dueDate: newDate });
+                  console.log('QuickDueDateEditor onDateChange called with:', newDate);
+                  console.log('Current task dueDate:', task.dueDate);
+                  
+                  // Create update with essential fields only, excluding computed fields
+                  const updateData = {
+                    id: task.id,
+                    title: task.title,
+                    description: task.description,
+                    completed: task.completed,
+                    archived: task.archived,
+                    dueDate: newDate,
+                    projectId: task.projectId,
+                    categoryIds: task.categoryIds,
+                    parentTaskId: task.parentTaskId,
+                    priority: task.priority,
+                    energyLevel: task.energyLevel,
+                    size: task.size,
+                    estimatedMinutes: task.estimatedMinutes,
+                    createdAt: task.createdAt,
+                    updatedAt: task.updatedAt,
+                    // Exclude computed fields: subtasks, dependsOn, dependedOnBy
+                    tags: task.tags,
+                    isRecurring: task.isRecurring,
+                    recurrencePattern: task.recurrencePattern,
+                    recurrenceInterval: task.recurrenceInterval,
+                    recurringTaskId: task.recurringTaskId,
+                    projectPhase: task.projectPhase,
+                    phaseOrder: task.phaseOrder,
+                    deletedAt: task.deletedAt,
+                    showSubtasks: task.showSubtasks,
+                    braindumpSource: task.braindumpSource,
+                    completedAt: task.completedAt,
+                    aiProcessed: task.aiProcessed,
+                    urgency: task.urgency,
+                    importance: task.importance,
+                    emotionalWeight: task.emotionalWeight,
+                    energyRequired: task.energyRequired
+                  } as Task;
+                  
+                  console.log('About to call updateTask with:', updateData);
+                  updateTask(updateData);
                   setShowDateEditor(false);
                 }}
                 onClose={() => setShowDateEditor(false)}

@@ -20,7 +20,7 @@ export class DatabaseService {
       description: dbTask.description,
       completed: dbTask.completed,
       archived: dbTask.archived,
-      dueDate: dbTask.due_date,
+      dueDate: dbTask.due_date ? (dbTask.due_date.includes('T') ? dbTask.due_date.split('T')[0] : dbTask.due_date) : null,
       createdAt: dbTask.created_at,
       updatedAt: dbTask.updated_at,
       projectId: dbTask.project_id,
@@ -62,7 +62,14 @@ export class DatabaseService {
     if (task.description !== undefined) dbTask.description = task.description;
     if (task.completed !== undefined) dbTask.completed = task.completed;
     if (task.archived !== undefined) dbTask.archived = task.archived;
-    if (task.dueDate !== undefined) dbTask.due_date = task.dueDate;
+    if (task.dueDate !== undefined) {
+      // Ensure we only store the date part (YYYY-MM-DD) without timezone
+      if (task.dueDate && task.dueDate.includes('T')) {
+        dbTask.due_date = task.dueDate.split('T')[0];
+      } else {
+        dbTask.due_date = task.dueDate;
+      }
+    }
     if (task.createdAt !== undefined) dbTask.created_at = task.createdAt;
     if (task.updatedAt !== undefined) dbTask.updated_at = task.updatedAt;
     if (task.projectId !== undefined) dbTask.project_id = task.projectId;
@@ -212,7 +219,9 @@ export class DatabaseService {
     console.log('DatabaseService.updateTask called with:');
     console.log('Task ID:', id);
     console.log('Updates received:', updates);
+    console.log('DueDate in updates:', updates.dueDate);
     console.log('Mapped DB updates:', dbUpdates);
+    console.log('due_date in DB updates:', dbUpdates.due_date);
     
     const { data, error } = await supabase
       .from('tasks')

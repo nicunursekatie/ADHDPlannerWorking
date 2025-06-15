@@ -102,17 +102,23 @@ export const getTimeContext = (tasks: Task[]): TimeContext => {
 };
 
 export const formatTimeRemaining = (minutes: number): string => {
-  if (minutes < 60) {
-    return `${Math.round(minutes)}min`;
-  } else if (minutes < 1440) { // Less than 24 hours
-    const hours = Math.floor(minutes / 60);
-    const mins = Math.round(minutes % 60);
-    return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+  const absMinutes = Math.abs(minutes);
+  const isOverdue = minutes < 0;
+  
+  let timeString: string;
+  if (absMinutes < 60) {
+    timeString = `${Math.round(absMinutes)}min`;
+  } else if (absMinutes < 1440) { // Less than 24 hours
+    const hours = Math.floor(absMinutes / 60);
+    const mins = Math.round(absMinutes % 60);
+    timeString = mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
   } else {
-    const days = Math.floor(minutes / 1440);
-    const hours = Math.floor((minutes % 1440) / 60);
-    return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
+    const days = Math.floor(absMinutes / 1440);
+    const hours = Math.floor((absMinutes % 1440) / 60);
+    timeString = hours > 0 ? `${days}d ${hours}h` : `${days}d`;
   }
+  
+  return isOverdue ? `${timeString} ago` : timeString;
 };
 
 export const getTaskTimeEstimate = (

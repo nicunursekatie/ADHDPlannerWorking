@@ -270,10 +270,10 @@ const Dashboard: React.FC = () => {
               {/* Time Awareness + Task Stats */}
               <div className="flex flex-col gap-2">
                 {/* Next Deadline Alert */}
-                {timeContext.nextDeadline && timeContext.nextDeadline.minutesUntil < 240 && (
+                {timeContext.nextDeadline && Math.abs(timeContext.nextDeadline.minutesUntil) < 240 && (
                   <div className={`px-3 py-1 rounded-full text-xs font-bold ${getUrgencyColor(timeContext.nextDeadline.urgency)} backdrop-blur-sm`}>
                     {timeContext.nextDeadline.urgency === 'critical' ? '🚨 ' : timeContext.nextDeadline.urgency === 'urgent' ? '⚠️ ' : '⏰ '}
-                    {timeContext.nextDeadline.task.title} in {formatTimeRemaining(timeContext.nextDeadline.minutesUntil)}
+                    {timeContext.nextDeadline.task.title} {timeContext.nextDeadline.minutesUntil < 0 ? 'overdue by' : 'in'} {formatTimeRemaining(timeContext.nextDeadline.minutesUntil)}
                   </div>
                 )}
                 
@@ -386,7 +386,43 @@ const Dashboard: React.FC = () => {
             <div key={task.id} className="animate-fadeIn border-l-4 border-red-500 pl-2 bg-red-50/50 rounded-r-xl" style={{ animationDelay: `${index * 0.1}s` }}>
               <TaskDisplay
                 task={task}
-                onToggle={() => updateTask({ ...task, completed: !task.completed })}
+                onToggle={() => {
+                  // Create clean update object without computed fields
+                  const updateData = {
+                    id: task.id,
+                    title: task.title,
+                    description: task.description,
+                    completed: !task.completed,
+                    archived: task.archived,
+                    dueDate: task.dueDate,
+                    projectId: task.projectId,
+                    categoryIds: task.categoryIds,
+                    parentTaskId: task.parentTaskId,
+                    priority: task.priority,
+                    energyLevel: task.energyLevel,
+                    size: task.size,
+                    estimatedMinutes: task.estimatedMinutes,
+                    createdAt: task.createdAt,
+                    updatedAt: task.updatedAt,
+                    tags: task.tags,
+                    isRecurring: task.isRecurring,
+                    recurrencePattern: task.recurrencePattern,
+                    recurrenceInterval: task.recurrenceInterval,
+                    recurringTaskId: task.recurringTaskId,
+                    projectPhase: task.projectPhase,
+                    phaseOrder: task.phaseOrder,
+                    deletedAt: task.deletedAt,
+                    showSubtasks: task.showSubtasks,
+                    braindumpSource: task.braindumpSource,
+                    completedAt: !task.completed ? new Date().toISOString() : null,
+                    aiProcessed: task.aiProcessed,
+                    urgency: task.urgency,
+                    importance: task.importance,
+                    emotionalWeight: task.emotionalWeight,
+                    energyRequired: task.energyRequired
+                  } as Task;
+                  updateTask(updateData);
+                }}
                 onEdit={() => handleOpenTaskModal(task)}
                 onDelete={() => deleteTask(task.id)}
               />
@@ -398,7 +434,43 @@ const Dashboard: React.FC = () => {
             <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${(overdueTasks.length + index) * 0.1}s` }}>
               <TaskDisplay
                 task={task}
-                onToggle={() => updateTask({ ...task, completed: !task.completed })}
+                onToggle={() => {
+                  // Create clean update object without computed fields
+                  const updateData = {
+                    id: task.id,
+                    title: task.title,
+                    description: task.description,
+                    completed: !task.completed,
+                    archived: task.archived,
+                    dueDate: task.dueDate,
+                    projectId: task.projectId,
+                    categoryIds: task.categoryIds,
+                    parentTaskId: task.parentTaskId,
+                    priority: task.priority,
+                    energyLevel: task.energyLevel,
+                    size: task.size,
+                    estimatedMinutes: task.estimatedMinutes,
+                    createdAt: task.createdAt,
+                    updatedAt: task.updatedAt,
+                    tags: task.tags,
+                    isRecurring: task.isRecurring,
+                    recurrencePattern: task.recurrencePattern,
+                    recurrenceInterval: task.recurrenceInterval,
+                    recurringTaskId: task.recurringTaskId,
+                    projectPhase: task.projectPhase,
+                    phaseOrder: task.phaseOrder,
+                    deletedAt: task.deletedAt,
+                    showSubtasks: task.showSubtasks,
+                    braindumpSource: task.braindumpSource,
+                    completedAt: !task.completed ? new Date().toISOString() : null,
+                    aiProcessed: task.aiProcessed,
+                    urgency: task.urgency,
+                    importance: task.importance,
+                    emotionalWeight: task.emotionalWeight,
+                    energyRequired: task.energyRequired
+                  } as Task;
+                  updateTask(updateData);
+                }}
                 onEdit={() => handleOpenTaskModal(task)}
                 onDelete={() => deleteTask(task.id)}
               />
@@ -469,7 +541,43 @@ const Dashboard: React.FC = () => {
             <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
               <TaskDisplay
                 task={task}
-                onToggle={() => updateTask({ ...task, completed: !task.completed })}
+                onToggle={() => {
+                  // Create clean update object without computed fields
+                  const updateData = {
+                    id: task.id,
+                    title: task.title,
+                    description: task.description,
+                    completed: !task.completed,
+                    archived: task.archived,
+                    dueDate: task.dueDate,
+                    projectId: task.projectId,
+                    categoryIds: task.categoryIds,
+                    parentTaskId: task.parentTaskId,
+                    priority: task.priority,
+                    energyLevel: task.energyLevel,
+                    size: task.size,
+                    estimatedMinutes: task.estimatedMinutes,
+                    createdAt: task.createdAt,
+                    updatedAt: task.updatedAt,
+                    tags: task.tags,
+                    isRecurring: task.isRecurring,
+                    recurrencePattern: task.recurrencePattern,
+                    recurrenceInterval: task.recurrenceInterval,
+                    recurringTaskId: task.recurringTaskId,
+                    projectPhase: task.projectPhase,
+                    phaseOrder: task.phaseOrder,
+                    deletedAt: task.deletedAt,
+                    showSubtasks: task.showSubtasks,
+                    braindumpSource: task.braindumpSource,
+                    completedAt: !task.completed ? new Date().toISOString() : null,
+                    aiProcessed: task.aiProcessed,
+                    urgency: task.urgency,
+                    importance: task.importance,
+                    emotionalWeight: task.emotionalWeight,
+                    energyRequired: task.energyRequired
+                  } as Task;
+                  updateTask(updateData);
+                }}
                 onEdit={() => handleOpenTaskModal(task)}
                 onDelete={() => deleteTask(task.id)}
               />
@@ -727,7 +835,43 @@ const Dashboard: React.FC = () => {
                 <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
                   <TaskDisplay
                     task={task}
-                    onToggle={() => updateTask({ ...task, completed: !task.completed })}
+                    onToggle={() => {
+                  // Create clean update object without computed fields
+                  const updateData = {
+                    id: task.id,
+                    title: task.title,
+                    description: task.description,
+                    completed: !task.completed,
+                    archived: task.archived,
+                    dueDate: task.dueDate,
+                    projectId: task.projectId,
+                    categoryIds: task.categoryIds,
+                    parentTaskId: task.parentTaskId,
+                    priority: task.priority,
+                    energyLevel: task.energyLevel,
+                    size: task.size,
+                    estimatedMinutes: task.estimatedMinutes,
+                    createdAt: task.createdAt,
+                    updatedAt: task.updatedAt,
+                    tags: task.tags,
+                    isRecurring: task.isRecurring,
+                    recurrencePattern: task.recurrencePattern,
+                    recurrenceInterval: task.recurrenceInterval,
+                    recurringTaskId: task.recurringTaskId,
+                    projectPhase: task.projectPhase,
+                    phaseOrder: task.phaseOrder,
+                    deletedAt: task.deletedAt,
+                    showSubtasks: task.showSubtasks,
+                    braindumpSource: task.braindumpSource,
+                    completedAt: !task.completed ? new Date().toISOString() : null,
+                    aiProcessed: task.aiProcessed,
+                    urgency: task.urgency,
+                    importance: task.importance,
+                    emotionalWeight: task.emotionalWeight,
+                    energyRequired: task.energyRequired
+                  } as Task;
+                  updateTask(updateData);
+                }}
                     onEdit={() => handleOpenTaskModal(task)}
                     onDelete={() => deleteTask(task.id)}
                   />
@@ -872,7 +1016,43 @@ const Dashboard: React.FC = () => {
                 <div key={task.id} className="animate-fadeIn opacity-75 hover:opacity-100 transition-opacity" style={{ animationDelay: `${index * 0.1}s` }}>
                   <TaskDisplay
                     task={task}
-                    onToggle={() => updateTask({ ...task, completed: !task.completed })}
+                    onToggle={() => {
+                  // Create clean update object without computed fields
+                  const updateData = {
+                    id: task.id,
+                    title: task.title,
+                    description: task.description,
+                    completed: !task.completed,
+                    archived: task.archived,
+                    dueDate: task.dueDate,
+                    projectId: task.projectId,
+                    categoryIds: task.categoryIds,
+                    parentTaskId: task.parentTaskId,
+                    priority: task.priority,
+                    energyLevel: task.energyLevel,
+                    size: task.size,
+                    estimatedMinutes: task.estimatedMinutes,
+                    createdAt: task.createdAt,
+                    updatedAt: task.updatedAt,
+                    tags: task.tags,
+                    isRecurring: task.isRecurring,
+                    recurrencePattern: task.recurrencePattern,
+                    recurrenceInterval: task.recurrenceInterval,
+                    recurringTaskId: task.recurringTaskId,
+                    projectPhase: task.projectPhase,
+                    phaseOrder: task.phaseOrder,
+                    deletedAt: task.deletedAt,
+                    showSubtasks: task.showSubtasks,
+                    braindumpSource: task.braindumpSource,
+                    completedAt: !task.completed ? new Date().toISOString() : null,
+                    aiProcessed: task.aiProcessed,
+                    urgency: task.urgency,
+                    importance: task.importance,
+                    emotionalWeight: task.emotionalWeight,
+                    energyRequired: task.energyRequired
+                  } as Task;
+                  updateTask(updateData);
+                }}
                     onEdit={() => handleOpenTaskModal(task)}
                     onDelete={() => deleteTask(task.id)}
                   />

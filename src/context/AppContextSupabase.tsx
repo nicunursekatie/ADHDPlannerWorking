@@ -411,6 +411,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     try {
       console.log('AppContext.updateTask called with:', updatedTask);
+      console.log('DueDate in updatedTask:', updatedTask.dueDate);
       console.log('Parent task ID in update:', updatedTask.parentTaskId);
       
       const timestamp = new Date().toISOString();
@@ -420,9 +421,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
       
       console.log('Task with timestamp:', taskWithTimestamp);
+      console.log('DueDate in taskWithTimestamp:', taskWithTimestamp.dueDate);
       
       const dbResult = await DatabaseService.updateTask(updatedTask.id, taskWithTimestamp, user.id);
       console.log('DB update result:', dbResult);
+      console.log('DB result dueDate:', dbResult.dueDate);
       
       setTasks(prev => {
         const updatedTasks = prev.map(task => 
