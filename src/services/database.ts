@@ -9,6 +9,7 @@ import {
   WorkSchedule,
   AppSettings 
 } from '../types';
+import { DatabaseService } from '@/services/database'; // or adjust path if needed
 
 export class DatabaseService {
   // Helper to map database snake_case to TypeScript camelCase
