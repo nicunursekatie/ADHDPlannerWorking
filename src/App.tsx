@@ -1,27 +1,50 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Layout from './components/layout/Layout';
 
-// Pages
-import Dashboard from './pages/Dashboard';
-import TasksPageWithBulkOps from './pages/TasksPageWithBulkOps';
-import ProjectsPage from './pages/ProjectsPage';
-import ProjectDetailPage from './pages/ProjectDetailPage';
-import CategoriesPage from './pages/CategoriesPage';
-import WhatNowPage from './pages/WhatNowPage';
-import CalendarPage from './pages/CalendarPage';
-import EnhancedPlanningPage from './pages/EnhancedPlanningPage';
-import PlannerPage from './pages/PlannerPage';
-import SettingsPage from './pages/SettingsPage';
+// Lazy-loaded pages
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const TasksPageWithBulkOps = React.lazy(() => import('./pages/TasksPageWithBulkOps'));
+const ProjectsPage = React.lazy(() => import('./pages/ProjectsPage'));
+const ProjectDetailPage = React.lazy(() => import('./pages/ProjectDetailPage'));
+const CategoriesPage = React.lazy(() => import('./pages/CategoriesPage'));
+const WhatNowPage = React.lazy(() => import('./pages/WhatNowPage'));
+const CalendarPage = React.lazy(() => import('./pages/CalendarPage'));
+const EnhancedPlanningPage = React.lazy(() => import('./pages/EnhancedPlanningPage'));
+const PlannerPage = React.lazy(() => import('./pages/PlannerPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
 
 // Memory Tools Pages
-import BrainDumpPage from './pages/BrainDumpPage';
-import WeeklyReviewPage from './pages/WeeklyReviewPage';
-import AccountabilityPage from './pages/AccountabilityPage';
-import RecurringTasksPage from './pages/RecurringTasksPage';
-import DeletedTasksPage from './pages/DeletedTasksPage';
+const BrainDumpPage = React.lazy(() => import('./pages/BrainDumpPage'));
+const WeeklyReviewPage = React.lazy(() => import('./pages/WeeklyReviewPage'));
+const AccountabilityPage = React.lazy(() => import('./pages/AccountabilityPage'));
+const RecurringTasksPage = React.lazy(() => import('./pages/RecurringTasksPage'));
+const DeletedTasksPage = React.lazy(() => import('./pages/DeletedTasksPage'));
+
+interface AppRoute {
+  path: string;
+  Component: React.ComponentType;
+}
+
+const appRoutes: AppRoute[] = [
+  { path: '/', Component: Dashboard },
+  { path: '/tasks', Component: TasksPageWithBulkOps },
+  { path: '/projects', Component: ProjectsPage },
+  { path: '/projects/:projectId', Component: ProjectDetailPage },
+  { path: '/categories', Component: CategoriesPage },
+  { path: '/what-now', Component: WhatNowPage },
+  { path: '/calendar', Component: CalendarPage },
+  { path: '/planner', Component: PlannerPage },
+  { path: '/planning', Component: EnhancedPlanningPage },
+  { path: '/settings', Component: SettingsPage },
+  { path: '/brain-dump', Component: BrainDumpPage },
+  { path: '/weekly-review', Component: WeeklyReviewPage },
+  { path: '/accountability', Component: AccountabilityPage },
+  { path: '/recurring-tasks', Component: RecurringTasksPage },
+  { path: '/deleted-tasks', Component: DeletedTasksPage },
+];
 
 function App() {
   return (
@@ -29,27 +52,15 @@ function App() {
       <AppProvider>
         <Router>
           <Layout>
-            <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/tasks" element={<TasksPageWithBulkOps />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
-            <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/what-now" element={<WhatNowPage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/planner" element={<PlannerPage />} />
-            <Route path="/planning" element={<EnhancedPlanningPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            
-            {/* Memory Tools Routes */}
-            <Route path="/brain-dump" element={<BrainDumpPage />} />
-            <Route path="/weekly-review" element={<WeeklyReviewPage />} />
-            <Route path="/accountability" element={<AccountabilityPage />} />
-            <Route path="/recurring-tasks" element={<RecurringTasksPage />} />
-            <Route path="/deleted-tasks" element={<DeletedTasksPage />} />
-          </Routes>
-        </Layout>
-      </Router>
+            <Suspense fallback={<div>Loading...</div>}>
+              <Routes>
+                {appRoutes.map(({ path, Component }) => (
+                  <Route key={path} path={path} element={<Component />} />
+                ))}
+              </Routes>
+            </Suspense>
+          </Layout>
+        </Router>
       </AppProvider>
     </ThemeProvider>
   );
