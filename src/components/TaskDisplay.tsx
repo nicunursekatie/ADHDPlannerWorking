@@ -326,49 +326,54 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             {showDateEditor && (
               <QuickDueDateEditor
                 currentDate={task.dueDate}
-                onDateChange={(newDate) => {
+                onDateChange={async (newDate) => {
                   console.log('QuickDueDateEditor onDateChange called with:', newDate);
                   console.log('Current task dueDate:', task.dueDate);
                   
-                  // Create update with essential fields only, excluding computed fields
-                  const updateData = {
-                    id: task.id,
-                    title: task.title,
-                    description: task.description,
-                    completed: task.completed,
-                    archived: task.archived,
-                    dueDate: newDate,
-                    projectId: task.projectId,
-                    categoryIds: task.categoryIds,
-                    parentTaskId: task.parentTaskId,
-                    priority: task.priority,
-                    energyLevel: task.energyLevel,
-                    size: task.size,
-                    estimatedMinutes: task.estimatedMinutes,
-                    createdAt: task.createdAt,
-                    updatedAt: task.updatedAt,
-                    // Exclude computed fields: subtasks, dependsOn, dependedOnBy
-                    tags: task.tags,
-                    isRecurring: task.isRecurring,
-                    recurrencePattern: task.recurrencePattern,
-                    recurrenceInterval: task.recurrenceInterval,
-                    recurringTaskId: task.recurringTaskId,
-                    projectPhase: task.projectPhase,
-                    phaseOrder: task.phaseOrder,
-                    deletedAt: task.deletedAt,
-                    showSubtasks: task.showSubtasks,
-                    braindumpSource: task.braindumpSource,
-                    completedAt: task.completedAt,
-                    aiProcessed: task.aiProcessed,
-                    urgency: task.urgency,
-                    importance: task.importance,
-                    emotionalWeight: task.emotionalWeight,
-                    energyRequired: task.energyRequired
-                  } as Task;
-                  
-                  console.log('About to call updateTask with:', updateData);
-                  updateTask(updateData);
-                  setShowDateEditor(false);
+                  try {
+                    // Create update with essential fields only, excluding computed fields
+                    const updateData = {
+                      id: task.id,
+                      title: task.title,
+                      description: task.description,
+                      completed: task.completed,
+                      archived: task.archived,
+                      dueDate: newDate,
+                      projectId: task.projectId,
+                      categoryIds: task.categoryIds,
+                      parentTaskId: task.parentTaskId,
+                      priority: task.priority,
+                      energyLevel: task.energyLevel,
+                      size: task.size,
+                      estimatedMinutes: task.estimatedMinutes,
+                      createdAt: task.createdAt,
+                      updatedAt: task.updatedAt,
+                      // Exclude computed fields: subtasks, dependsOn, dependedOnBy
+                      tags: task.tags,
+                      isRecurring: task.isRecurring,
+                      recurrencePattern: task.recurrencePattern,
+                      recurrenceInterval: task.recurrenceInterval,
+                      recurringTaskId: task.recurringTaskId,
+                      projectPhase: task.projectPhase,
+                      phaseOrder: task.phaseOrder,
+                      deletedAt: task.deletedAt,
+                      showSubtasks: task.showSubtasks,
+                      braindumpSource: task.braindumpSource,
+                      completedAt: task.completedAt,
+                      aiProcessed: task.aiProcessed,
+                      urgency: task.urgency,
+                      importance: task.importance,
+                      emotionalWeight: task.emotionalWeight,
+                      energyRequired: task.energyRequired
+                    } as Task;
+                    
+                    console.log('About to call updateTask with:', updateData);
+                    await updateTask(updateData);
+                    setShowDateEditor(false);
+                  } catch (error) {
+                    console.error('Failed to update task date:', error);
+                    // Don't close the editor if there was an error
+                  }
                 }}
                 onClose={() => setShowDateEditor(false)}
               />
