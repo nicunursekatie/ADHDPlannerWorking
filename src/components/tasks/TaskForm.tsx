@@ -64,11 +64,16 @@ const TaskForm: React.FC<TaskFormProps> = ({
   useEffect(() => {
     // Reset form data when the task prop changes
     if (task) {
-      setFormData({ ...task });
-    } else {
-      setFormData(initialState);
+      setFormData({ 
+        ...task,
+        // Ensure these fields are included even if missing from task
+        urgency: task.urgency || 'week',
+        importance: task.importance || 3,
+        emotionalWeight: task.emotionalWeight || 'neutral',
+        energyRequired: task.energyRequired || 'medium'
+      });
     }
-  }, [task, parentTask]);
+  }, [task?.id]); // Only re-run when task ID changes
   
   // Debug current formData
   useEffect(() => {

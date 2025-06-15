@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Calendar, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, addDays, startOfToday, parseISO, isValid, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
+import { format, parseISO, isValid, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
+import { getTodayString, getTomorrowString } from '../../utils/dateUtils';
 
 interface QuickDueDateEditorProps {
   currentDate: string | null;
@@ -15,11 +16,11 @@ export const QuickDueDateEditor: React.FC<QuickDueDateEditorProps> = ({
   onClose
 }) => {
   const [selectedDate, setSelectedDate] = useState<string>(
-    currentDate || format(startOfToday(), 'yyyy-MM-dd')
+    currentDate || getTodayString()
   );
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(
-    currentDate ? parseISO(currentDate) : startOfToday()
+    currentDate ? parseISO(currentDate) : new Date()
   );
   const [position, setPosition] = useState({ x: 0, y: 0, showAbove: false });
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
@@ -117,7 +118,25 @@ export const QuickDueDateEditor: React.FC<QuickDueDateEditorProps> = ({
 
   const handleQuickDate = (days: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    const newDate = format(addDays(startOfToday(), days), 'yyyy-MM-dd');
+    let newDate: string;
+    
+    if (days === 0) {
+      newDate = getTodayString();
+    } else if (days === 1) {
+      newDate = getTomorrowString();
+    } else {
+      // For other days, calculate based on today's date
+      const today = new Date();
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() + days);
+      
+      // Format to YYYY-MM-DD
+      const year = targetDate.getFullYear();
+      const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+      const day = String(targetDate.getDate()).padStart(2, '0');
+      newDate = `${year}-${month}-${day}`;
+    }
+    
     setSelectedDate(newDate);
     
     // Call the parent callback immediately for UI updates
@@ -152,7 +171,8 @@ export const QuickDueDateEditor: React.FC<QuickDueDateEditorProps> = ({
     const endDate = monthEnd;
     
     const days = eachDayOfInterval({ start: startDate, end: endDate });
-    const today = startOfToday();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today in local timezone
     const selectedDateObj = selectedDate ? parseISO(selectedDate) : null;
 
     return createPortal(

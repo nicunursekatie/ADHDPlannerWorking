@@ -162,10 +162,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Only reload data on SIGNED_IN or SIGNED_OUT events
+      // Ignore TOKEN_REFRESHED to prevent unnecessary reloads
+      if (event === 'TOKEN_REFRESHED') {
+        return;
+      }
+      
       setUser(session?.user ?? null);
       if (session?.user) {
-        loadUserData(session.user.id);
+        // Only load data if user ID changed
+        if (user?.id !== session.user.id) {
+          loadUserData(session.user.id);
+        }
       } else {
         // Clear data when user signs out
         setTasks([]);
@@ -417,7 +426,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       setTasks(prev => {
         const updatedTasks = prev.map(task => 
-          task.id === updatedTask.id ? taskWithTimestamp : task
+          task.id === updatedTask.id ? dbResult : task
         );
         const tasksWithSubtasks = computeSubtasks(updatedTasks);
         console.log('Tasks after compute subtasks:', tasksWithSubtasks.find(t => t.id === updatedTask.id));

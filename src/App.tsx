@@ -21,7 +21,6 @@ const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
 const BrainDumpPage = React.lazy(() => import('./pages/BrainDumpPage'));
 const WeeklyReviewPage = React.lazy(() => import('./pages/WeeklyReviewPage'));
 const AccountabilityPage = React.lazy(() => import('./pages/AccountabilityPage'));
-const RecurringTasksPage = React.lazy(() => import('./pages/RecurringTasksPage'));
 const DeletedTasksPage = React.lazy(() => import('./pages/DeletedTasksPage'));
 
 interface AppRoute {
@@ -43,7 +42,6 @@ const appRoutes: AppRoute[] = [
   { path: '/brain-dump', Component: BrainDumpPage },
   { path: '/weekly-review', Component: WeeklyReviewPage },
   { path: '/accountability', Component: AccountabilityPage },
-  { path: '/recurring-tasks', Component: RecurringTasksPage },
   { path: '/deleted-tasks', Component: DeletedTasksPage },
 ];
 
