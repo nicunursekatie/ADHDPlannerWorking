@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { Task, Project, Category, DailyPlan, WhatNowCriteria, JournalEntry, RecurringTask, AppSettings } from '../types';
 import { WorkSchedule, WorkShift, ShiftType, DEFAULT_SHIFTS } from '../types/WorkSchedule';
 import { DatabaseService } from '../services/database';
@@ -147,6 +147,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
+  const currentUserIdRef = useRef<string | null>(null);
   const [deletedTasks, setDeletedTasks] = useState<DeletedTask[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [lastWeeklyReviewDate, setLastWeeklyReviewDate] = useState<string | null>(null);
@@ -156,8 +157,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
+        currentUserIdRef.current = session.user.id;
         loadUserData(session.user.id);
       } else {
+        currentUserIdRef.current = null;
         setIsLoading(false);
       }
     });
@@ -171,11 +174,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Only load data if user ID changed
-        if (user?.id !== session.user.id) {
+        // Only load data if user ID actually changed
+        if (currentUserIdRef.current !== session.user.id) {
+          currentUserIdRef.current = session.user.id;
           loadUserData(session.user.id);
         }
       } else {
+        currentUserIdRef.current = null;
         // Clear data when user signs out
         setTasks([]);
         setProjects([]);
@@ -309,7 +314,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } finally {
       setIsLoading(false);
     }
-  }, [computeSubtasks, supabase]);
+  }, [supabase]);
 
   // Helper function to compute dependencies for all tasks
   const computeDependencies = useCallback(async (tasksList: Task[], userId: string): Promise<Task[]> => {
@@ -404,7 +409,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // No need to update parent task - subtasks are computed dynamically
     
     return createdTask;
-  }, [user, tasks, computeSubtasks]);
+  }, [user, tasks]);
 
   const updateTask = useCallback(async (updatedTask: Task) => {
     if (!user) throw new Error('User not authenticated');
@@ -439,7 +444,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       console.error('Error updating task:', error);
       throw error;
     }
-  }, [user, computeSubtasks]);
+  }, [user]);
 
   const deleteTask = useCallback(async (taskId: string) => {
     if (!user) throw new Error('User not authenticated');
@@ -475,7 +480,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const updatedTasks = prev.filter(task => task.id !== taskId);
       return computeSubtasks(updatedTasks);
     });
-  }, [user, tasks, computeSubtasks]);
+  }, [user, tasks]);
 
   const undoDelete = useCallback(async () => {
     if (!user || deletedTasks.length === 0) return;
@@ -488,7 +493,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return computeSubtasks(updatedTasks);
     });
     setDeletedTasks(prev => prev.slice(0, -1));
-  }, [user, deletedTasks, computeSubtasks]);
+  }, [user, deletedTasks]);
 
   const hasRecentlyDeleted = deletedTasks.length > 0;
 
@@ -514,7 +519,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       );
       return computeSubtasks(updatedTasks);
     });
-  }, [user, tasks, computeSubtasks]);
+  }, [user, tasks]);
 
   const archiveCompletedTasks = useCallback(async () => {
     if (!user) throw new Error('User not authenticated');
@@ -546,7 +551,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
       return computeSubtasks(updatedTasks);
     });
-  }, [user, tasks, computeSubtasks]);
+  }, [user, tasks]);
 
   // Projects
   const addProject = useCallback(async (projectData: Partial<Project>): Promise<Project> => {
@@ -615,7 +620,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Delete project
     await DatabaseService.deleteProject(projectId, user.id);
     setProjects(prev => prev.filter(project => project.id !== projectId));
-  }, [user, tasks, computeSubtasks]);
+  }, [user, tasks]);
 
   const reorderProjects = useCallback(async (projectIds: string[]) => {
     if (!user) throw new Error('User not authenticated');
@@ -731,7 +736,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Delete category
     await DatabaseService.deleteCategory(categoryId, user.id);
     setCategories(prev => prev.filter(category => category.id !== categoryId));
-  }, [user, tasks, computeSubtasks]);
+  }, [user, tasks]);
 
   // Daily Plans
   const getDailyPlan = useCallback((date: string): DailyPlan | null => {
@@ -1571,7 +1576,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       console.error('Error importing data:', error);
       return false;
     }
-  }, [user, supabase, loadUserData]);
+  }, [user, supabase]);
 
   const resetData = useCallback(async () => {
     if (!user) throw new Error('User not authenticated');

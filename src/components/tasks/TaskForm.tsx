@@ -3,8 +3,9 @@ import { Task, Project, Category } from '../../types';
 import { useAppContext } from '../../context/AppContextSupabase';
 import { useTaskAutoSave } from '../../hooks/useTaskAutoSave';
 import Button from '../common/Button';
+import Modal from '../common/Modal';
 import SubtaskList from './SubtaskList';
-import { Calendar, Folder, Tag, Flame, Star, Brain, Battery, ChevronDown, ChevronRight, Clock, AlertCircle, Sparkles } from 'lucide-react';
+import { Calendar, Folder, Tag, Flame, Star, Brain, Battery, ChevronDown, ChevronRight, Clock, AlertCircle, Sparkles, Hash, Plus, X } from 'lucide-react';
 import { addDays, endOfWeek, endOfMonth, format } from 'date-fns';
 
 interface TaskFormProps {
@@ -22,7 +23,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
   isEdit = false,
   initialProjectId = null,
 }) => {
-  const { addTask, updateTask, deleteTask, projects, categories } = useAppContext();
+  const { addTask, updateTask, deleteTask, projects, categories, tasks, addTaskDependency, removeTaskDependency, addCategory } = useAppContext();
   const { queueTaskForSave, clearPendingTask } = useTaskAutoSave({ 
     delay: 2000, // Auto-save after 2 seconds of no changes
     enabled: false // Disable auto-save for TaskForm - use manual save instead
@@ -30,8 +31,17 @@ const TaskForm: React.FC<TaskFormProps> = ({
   
   // Progressive disclosure state for ADHD-friendly design
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showEmotionalSection, setShowEmotionalSection] = useState(true);
+  const [showEmotionalSection, setShowEmotionalSection] = useState(false);
   const [showScheduling, setShowScheduling] = useState(false);
+  
+  // New features state
+  const [tags, setTags] = useState<string[]>(task?.tags || []);
+  const [newTag, setNewTag] = useState('');
+  const [selectedDependencies, setSelectedDependencies] = useState<string[]>(task?.dependsOn || []);
+  const [showDependencyModal, setShowDependencyModal] = useState(false);
+  const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
   
   const initialState: Partial<Task> = {
     title: '',
@@ -43,7 +53,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
     priority: 'medium',
     energyLevel: 'medium',
     size: 'medium',
-    estimatedMinutes: 30,
+    estimatedMinutes: 0,
     urgency: 'week',
     importance: 3,
     emotionalWeight: 'neutral',
@@ -61,6 +71,64 @@ const TaskForm: React.FC<TaskFormProps> = ({
     setFormData(updater);
   }, []);
 
+  // Helper functions for new features
+  const getAvailableTasksForDependency = useCallback(() => {
+    if (!task) return tasks.filter(t => !t.completed && !t.archived);
+    
+    // Filter out:
+    // 1. The current task itself
+    // 2. Tasks that already depend on this task (to avoid cycles)
+    // 3. Completed or archived tasks
+    return tasks.filter(t => 
+      t.id !== task.id && 
+      !t.completed && 
+      !t.archived &&
+      !(t.dependsOn && t.dependsOn.includes(task.id))
+    );
+  }, [task, tasks]);
+
+  const toggleDependency = useCallback((taskId: string) => {
+    if (selectedDependencies.includes(taskId)) {
+      setSelectedDependencies(selectedDependencies.filter(id => id !== taskId));
+    } else {
+      setSelectedDependencies([...selectedDependencies, taskId]);
+    }
+  }, [selectedDependencies]);
+
+  const addTag = useCallback(() => {
+    if (newTag.trim() && !tags.includes(newTag.trim())) {
+      setTags([...tags, newTag.trim()]);
+      setNewTag('');
+    }
+  }, [newTag, tags]);
+
+  const removeTag = useCallback((tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  }, [tags]);
+
+  const handleCreateCategory = useCallback(async () => {
+    if (!newCategoryName.trim()) return;
+    
+    try {
+      const category = await addCategory({
+        name: newCategoryName.trim(),
+        color: newCategoryColor,
+      });
+      
+      // Add the new category to the current task's categories
+      updateFormData(prev => ({ 
+        ...prev, 
+        categoryIds: [...(prev.categoryIds || []), category.id] 
+      }));
+      
+      setNewCategoryName('');
+      setNewCategoryColor('#3B82F6');
+      setShowNewCategoryModal(false);
+    } catch (error) {
+      console.error('Error creating category:', error);
+    }
+  }, [newCategoryName, newCategoryColor, addCategory, updateFormData]);
+
   useEffect(() => {
     // Reset form data when the task prop changes
     if (task) {
@@ -75,9 +143,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
     }
   }, [task?.id]); // Only re-run when task ID changes
   
-  // Debug current formData
-  useEffect(() => {
-  }, [formData]);
+  // Remove empty useEffect that causes unnecessary re-renders
 
   const handleChange = useCallback((
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -93,6 +159,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
         // Store the date value as is without timezone conversion
         updateFormData(prev => ({ ...prev, dueDate: value }));
       }
+    } else if (name === 'estimatedMinutes') {
+      // Handle number input - allow empty values
+      updateFormData(prev => ({ ...prev, [name]: value ? parseInt(value) : 0 }));
     } else {
       updateFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -138,24 +207,53 @@ const TaskForm: React.FC<TaskFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
       return;
     }
     
-    if (isEdit && task) {
-      const taskToUpdate = { ...task, ...formData } as Task;
-      updateTask(taskToUpdate);
-      // Clear pending auto-save since we manually saved
-      clearPendingTask(task.id);
-    } else {
-      addTask(formData);
-    }
+    const taskData = {
+      ...formData,
+      tags,
+      dependsOn: selectedDependencies,
+    };
     
-    onClose();
-  }, [validateForm, isEdit, task, formData, updateTask, clearPendingTask, addTask, onClose]);
+    try {
+      if (isEdit && task) {
+        const taskToUpdate = { ...task, ...taskData } as Task;
+        await updateTask(taskToUpdate);
+        
+        // Update dependencies if they have changed
+        const oldDependencies = task.dependsOn || [];
+        const toRemove = oldDependencies.filter(id => !selectedDependencies.includes(id));
+        const toAdd = selectedDependencies.filter(id => !oldDependencies.includes(id));
+        
+        if (addTaskDependency && removeTaskDependency) {
+          await Promise.all([
+            ...toRemove.map(depId => removeTaskDependency(task.id, depId)),
+            ...toAdd.map(depId => addTaskDependency(task.id, depId))
+          ]);
+        }
+        
+        clearPendingTask(task.id);
+      } else {
+        const newTask = await addTask(taskData);
+        
+        // Add dependencies to the new task
+        if (selectedDependencies.length > 0 && addTaskDependency) {
+          await Promise.all(
+            selectedDependencies.map(depId => addTaskDependency(newTask.id, depId))
+          );
+        }
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('Error saving task:', error);
+    }
+  }, [validateForm, isEdit, task, formData, tags, selectedDependencies, updateTask, clearPendingTask, addTask, addTaskDependency, removeTaskDependency, onClose]);
 
   return (
     <div className="space-y-8 max-h-[calc(100vh-200px)] overflow-y-auto pb-20">
@@ -321,12 +419,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
                         key={option.value}
                         type="button"
                         onClick={() => {
-                          const timeEstimate = option.value === 'low' ? 15 : option.value === 'medium' ? 30 : 60;
                           updateFormData(prev => ({ 
                             ...prev, 
-                            energyRequired: option.value,
-                            // Only update time estimate if current estimate is close to default
-                            estimatedMinutes: (!prev.estimatedMinutes || prev.estimatedMinutes <= 30) ? timeEstimate : prev.estimatedMinutes
+                            energyRequired: option.value
                           }));
                         }}
                         className={`w-full p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
@@ -708,11 +803,11 @@ const TaskForm: React.FC<TaskFormProps> = ({
         <input
           type="number"
           name="estimatedMinutes"
-          value={formData.estimatedMinutes || 30}
+          value={formData.estimatedMinutes || ''}
           onChange={handleChange}
           className="block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all sm:text-sm"
-          min="5"
-          step="5"
+          min="1"
+          step="1"
         />
       </div>
 
@@ -840,37 +935,74 @@ const TaskForm: React.FC<TaskFormProps> = ({
                   <Tag size={16} className="inline mr-1" />
                   Categories <span className="text-gray-400">(optional)</span>
                 </label>
-                <select
-                  id="categories"
-                  name="categories"
-                  multiple
-                  value={formData.categoryIds || []}
-                  onChange={(e) => {
-                    const values = Array.from(e.target.selectedOptions, option => option.value);
-                    updateFormData(prev => ({ ...prev, categoryIds: values }));
-                  }}
-                  className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all duration-200"
-                  size={Math.min(categories.length + 1, 4)}
-                >
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
+                <div className="space-y-3">
+                  <select
+                    id="categories"
+                    name="categories"
+                    multiple
+                    value={formData.categoryIds || []}
+                    onChange={(e) => {
+                      const values = Array.from(e.target.selectedOptions, option => option.value);
+                      if (values.includes('add-new')) {
+                        setShowNewCategoryModal(true);
+                      } else {
+                        updateFormData(prev => ({ ...prev, categoryIds: values }));
+                      }
+                    }}
+                    className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all duration-200"
+                    size={Math.min(categories.length + 2, 5)}
+                  >
+                    {categories.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                    <option value="add-new" className="font-semibold text-green-600">
+                      + Add New Category
                     </option>
-                  ))}
-                </select>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Hold Ctrl/Cmd to select multiple categories
-                </p>
+                  </select>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Hold Ctrl/Cmd to select multiple categories
+                  </p>
+                </div>
               </div>
 
+            </div>
+          </div>
+        </div>
+
+        {/* Advanced Options */}
+        <div className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900/20 dark:to-slate-900/20 rounded-2xl p-6 border border-gray-100 dark:border-gray-800">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center justify-between w-full text-left group"
+          >
+            <div className="flex items-center">
+              <div className="w-5 h-5 text-gray-500 mr-2">⚙️</div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Advanced Options</h3>
+            </div>
+            <div className="flex items-center text-gray-500">
+              <span className="text-sm mr-2">Time, dependencies, tags, subtasks</span>
+              {showAdvanced ? 
+                <ChevronDown className="w-5 h-5 transform transition-transform group-hover:scale-110" /> : 
+                <ChevronRight className="w-5 h-5 transform transition-transform group-hover:scale-110" />
+              }
+            </div>
+          </button>
+          
+          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showAdvanced ? 'max-h-[2000px] mt-6' : 'max-h-0'}`}>
+            <div className="space-y-6">
               {/* Time Estimate */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  <Clock size={16} className="inline mr-1" />
-                  How long will this take?
-                </label>
+                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                  <Clock className="w-5 h-5 mr-2 text-orange-500" />
+                  Time Estimate
+                </h4>
                 <div className="grid grid-cols-3 gap-3">
                   {[
+                    { label: '1 min', value: 1, desc: 'Micro task' },
+                    { label: '5 min', value: 5, desc: 'Very quick' },
                     { label: '15 min', value: 15, desc: 'Quick task' },
                     { label: '30 min', value: 30, desc: 'Short task' },
                     { label: '1 hour', value: 60, desc: 'Medium task' },
@@ -893,9 +1025,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
                         updateFormData(prev => ({ ...prev, estimatedMinutes: option.value, size }));
                       }}
                       className={`p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
-                        (formData.estimatedMinutes || 30) === option.value
-                          ? 'border-green-400 bg-green-50 dark:bg-green-900/30 shadow-md'
-                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-green-300'
+                        (formData.estimatedMinutes || 0) === option.value
+                          ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/30 shadow-md'
+                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-orange-300'
                       }`}
                     >
                       <div className="font-medium text-sm">{option.label}</div>
@@ -907,41 +1039,103 @@ const TaskForm: React.FC<TaskFormProps> = ({
                   <input
                     type="number"
                     name="estimatedMinutes"
-                    value={formData.estimatedMinutes || 30}
+                    value={formData.estimatedMinutes || ''}
                     onChange={handleChange}
-                    className="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all"
+                    className="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-orange-500 focus:ring-orange-500 transition-all"
                     placeholder="Custom minutes..."
-                    min="5"
-                    step="5"
+                    min="1"
+                    step="1"
                   />
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Advanced Options */}
-        <div className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900/20 dark:to-slate-900/20 rounded-2xl p-6 border border-gray-100 dark:border-gray-800">
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center justify-between w-full text-left group"
-          >
-            <div className="flex items-center">
-              <div className="w-5 h-5 text-gray-500 mr-2">⚙️</div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Advanced Options</h3>
-            </div>
-            <div className="flex items-center text-gray-500">
-              <span className="text-sm mr-2">Subtasks, etc.</span>
-              {showAdvanced ? 
-                <ChevronDown className="w-5 h-5 transform transition-transform group-hover:scale-110" /> : 
-                <ChevronRight className="w-5 h-5 transform transition-transform group-hover:scale-110" />
-              }
-            </div>
-          </button>
-          
-          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showAdvanced ? 'max-h-[2000px] mt-6' : 'max-h-0'}`}>
-            <div className="space-y-6">
+              {/* Dependencies Section */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                  <Hash className="w-5 h-5 mr-2 text-purple-500" />
+                  Dependencies
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setShowDependencyModal(true)}
+                  className="w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 hover:border-purple-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                >
+                  + Add Dependencies
+                </button>
+                {selectedDependencies.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedDependencies.map(depId => {
+                      const depTask = tasks.find(t => t.id === depId);
+                      if (!depTask) return null;
+                      return (
+                        <span
+                          key={depId}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                        >
+                          {depTask.title}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDependencies(selectedDependencies.filter(id => id !== depId))}
+                            className="ml-2 text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-200"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Tags Section */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                  <Tag className="w-5 h-5 mr-2 text-green-500" />
+                  Tags
+                </h4>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addTag();
+                      }
+                    }}
+                    placeholder="Add a tag..."
+                    className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={addTag}
+                    className="px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+                {tags.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="ml-2 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-200"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Subtasks Section */}
               <div>
                 <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Subtasks</h4>
@@ -999,6 +1193,137 @@ const TaskForm: React.FC<TaskFormProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Dependency Selection Modal */}
+      {showDependencyModal && (
+        <Modal
+          isOpen={showDependencyModal}
+          onClose={() => setShowDependencyModal(false)}
+          title="Select Dependencies"
+          size="lg"
+        >
+          <div className="space-y-4">
+            <p className="text-gray-600 dark:text-gray-400">
+              Choose which tasks need to be completed before this one can start.
+            </p>
+            
+            {getAvailableTasksForDependency().length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No other tasks available as dependencies
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {getAvailableTasksForDependency().map(task => (
+                  <label
+                    key={task.id}
+                    className="flex items-center p-3 rounded-lg border hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedDependencies.includes(task.id)}
+                      onChange={() => toggleDependency(task.id)}
+                      className="mr-3 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">
+                        {task.title}
+                      </div>
+                      {task.description && (
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {task.description}
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowDependencyModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => setShowDependencyModal(false)}
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Category Creation Modal */}
+      {showNewCategoryModal && (
+        <Modal
+          isOpen={showNewCategoryModal}
+          onClose={() => {
+            setShowNewCategoryModal(false);
+            setNewCategoryName('');
+            setNewCategoryColor('#3B82F6');
+          }}
+          title="Create New Category"
+          size="md"
+        >
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="newCategoryName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Category Name
+              </label>
+              <input
+                type="text"
+                id="newCategoryName"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter category name..."
+                autoFocus
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="newCategoryColor" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Color
+              </label>
+              <input
+                type="color"
+                id="newCategoryColor"
+                value={newCategoryColor}
+                onChange={(e) => setNewCategoryColor(e.target.value)}
+                className="block w-full h-10 border border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setShowNewCategoryModal(false);
+                  setNewCategoryName('');
+                  setNewCategoryColor('#3B82F6');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleCreateCategory}
+                disabled={!newCategoryName.trim()}
+              >
+                Create Category
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

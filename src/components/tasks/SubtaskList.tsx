@@ -18,7 +18,7 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
   const { tasks, addTask, updateTask } = useAppContext();
   const [expanded, setExpanded] = useState(true);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
-  const [newSubtaskTime, setNewSubtaskTime] = useState<number>(15);
+  const [newSubtaskTime, setNewSubtaskTime] = useState<number>(5);
   
   // Log props for debugging
   useEffect(() => {
@@ -120,10 +120,10 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
                           type="number"
                           min="1"
                           step="1"
-                          value={subtask.estimatedMinutes || 15}
+                          value={subtask.estimatedMinutes || 5}
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
-                            handleTimeEstimateChange(subtask.id, isNaN(value) ? 15 : value);
+                            handleTimeEstimateChange(subtask.id, isNaN(value) ? 5 : value);
                           }}
                           className="w-12 text-xs text-right border-0 p-0 focus:ring-0"
                           title="Estimated minutes"
@@ -170,7 +170,7 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
                   value={newSubtaskTime}
                   onChange={(e) => {
                     const value = parseInt(e.target.value);
-                    setNewSubtaskTime(isNaN(value) ? 15 : value);
+                    setNewSubtaskTime(isNaN(value) ? 5 : value);
                   }}
                   className="w-14 text-xs text-right border border-gray-200 rounded p-1"
                   title="Estimated minutes"

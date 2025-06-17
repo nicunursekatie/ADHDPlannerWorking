@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContextSupabase';
 import { Task, TaskSortMode, WhatNowCriteria } from '../types';
 import { TaskDisplay } from '../components/TaskDisplay';
-import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
+import TaskForm from '../components/tasks/TaskForm';
 import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
@@ -1240,7 +1240,7 @@ const TasksPageWithBulkOps: React.FC = () => {
         title={editingTask ? 'Edit Task' : 'Create New Task'}
         size="2xl"
       >
-        <TaskFormWithDependencies
+        <TaskForm
           task={editingTask || undefined}
           onClose={handleCloseModal}
           isEdit={!!editingTask}

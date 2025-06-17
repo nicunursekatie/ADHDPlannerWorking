@@ -44,6 +44,7 @@ const WhatNowPage: React.FC = () => {
         isOpen={isTaskModalOpen}
         onClose={handleCloseTaskModal}
         title="Task Details"
+        size="2xl"
       >
         <TaskForm
           task={selectedTask || undefined}

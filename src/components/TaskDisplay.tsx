@@ -41,10 +41,16 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     focusTracker.initialize();
     
     const timer = setInterval(() => {
-      setCurrentTime(new Date());
+      const now = new Date();
+      // Only update if minute has actually changed to prevent unnecessary re-renders
+      setCurrentTime(prevTime => {
+        const currentMinute = now.getHours() * 60 + now.getMinutes();
+        const prevMinute = prevTime.getHours() * 60 + prevTime.getMinutes();
+        return currentMinute !== prevMinute ? now : prevTime;
+      });
       setFocusTime(focusTracker.getTaskFocusTime(task.id));
       setCurrentSession(focusTracker.getCurrentSession());
-    }, 60000); // Update every minute instead of every second
+    }, 30000); // Check every 30 seconds but only update when minute changes
     
     return () => clearInterval(timer);
   }, [task.id]);
@@ -85,28 +91,32 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       .filter(Boolean) as Task[] : [];
   
   
-  const dueDateStatus = getDueDateStatus(task.dueDate);
-  const relativeTimeInfo = getRelativeTimeDisplay(task.dueDate, true); // Use weekend-relative display
-  
-  // Debug date display
-  console.log(`Task ${task.title} - Raw dueDate:`, task.dueDate);
-  console.log(`Task ${task.title} - Parsed date:`, task.dueDate ? new Date(task.dueDate) : null);
-  console.log(`Task ${task.title} - Relative time info:`, relativeTimeInfo);
-  console.log(`Task ${task.title} - Due date status:`, dueDateStatus);
-  
-  const dueDateInfo = dueDateStatus ? {
-    text: relativeTimeInfo?.combined || dueDateStatus.text,
-    className: dueDateStatus.className,
-    icon: dueDateStatus.isOverdue ? <AlertCircle className="w-4 h-4" /> : <Calendar className="w-4 h-4" />
-  } : null;
+  // Memoize date calculations to prevent excessive re-renders
+  const dueDateInfo = React.useMemo(() => {
+    const dueDateStatus = getDueDateStatus(task.dueDate);
+    const relativeTimeInfo = getRelativeTimeDisplay(task.dueDate, true); // Use weekend-relative display
+    
+    return dueDateStatus ? {
+      text: relativeTimeInfo?.combined || dueDateStatus.text,
+      className: dueDateStatus.className,
+      icon: dueDateStatus.isOverdue ? <AlertCircle className="w-4 h-4" /> : <Calendar className="w-4 h-4" />
+    } : null;
+  }, [task.dueDate]);
 
   
   const taskCompleteness = analyzeTaskCompleteness(task);
   const showIncompleteIndicator = !task.completed && !taskCompleteness.isComplete;
   
-  // Time awareness calculations - only recalculate when tasks change, not every minute
-  const timeContext = React.useMemo(() => getTimeContext(tasks), [tasks]);
-  const timeEstimate = React.useMemo(() => getTaskTimeEstimate(task, timeContext), [task, timeContext]);
+  // Time awareness calculations - optimize to prevent excessive recalculation
+  const tasksFingerprint = React.useMemo(() => 
+    tasks.map(t => `${t.id}-${t.dueDate}-${t.estimatedMinutes}`).join(','), 
+    [tasks]
+  );
+  const timeContext = React.useMemo(() => getTimeContext(tasks), [tasks, tasksFingerprint]);
+  const timeEstimate = React.useMemo(() => getTaskTimeEstimate(task, timeContext), [
+    task, 
+    timeContext
+  ]);
   
   return (
     <>

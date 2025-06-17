@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContextSupabase';
 import { Task } from '../types';
 import { TaskDisplay } from '../components/TaskDisplay';
-import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
+import TaskForm from '../components/tasks/TaskForm';
 import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
@@ -611,7 +611,7 @@ export const TasksPageSupabase: React.FC = () => {
           setEditingTask(null);
         }}
       >
-        <TaskFormWithDependencies
+        <TaskForm
           task={editingTask}
           onClose={() => {
             setShowTaskForm(false);
