@@ -63,7 +63,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   const [energyRequired, setEnergyRequired] = useState<'low' | 'medium' | 'high'>(task?.energyRequired || 'medium');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>(task?.priority || 'medium');
   const [importance, setImportance] = useState(task?.importance || 5);
-  const [estimatedMinutes, setEstimatedMinutes] = useState(task?.estimatedMinutes || 30);
+  const [estimatedMinutes, setEstimatedMinutes] = useState(task?.estimatedMinutes || 0);
   const [tags, setTags] = useState<string[]>(task?.tags || []);
   const [newTag, setNewTag] = useState('');
   const [selectedDependencies, setSelectedDependencies] = useState<string[]>(task?.dependsOn || []);
@@ -414,16 +414,6 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                   type="button"
                   onClick={() => {
                     setEnergyRequired(option.value as 'low' | 'medium' | 'high');
-                    // Adjust time estimate based on energy required
-                    const timeEstimateMap = {
-                      'low': 15,
-                      'medium': 30,
-                      'high': 60
-                    };
-                    // Only update if current estimate is close to default
-                    if (estimatedMinutes <= 30) {
-                      setEstimatedMinutes(timeEstimateMap[option.value]);
-                    }
                   }}
                   className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-yellow-200/50 ${
                     energyRequired === option.value
@@ -479,6 +469,8 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
           </h4>
           <div className="grid grid-cols-3 gap-2">
             {[
+              { label: '1 min', value: 1, desc: 'Micro task' },
+              { label: '5 min', value: 5, desc: 'Very quick' },
               { label: '15 min', value: 15, desc: 'Quick task' },
               { label: '30 min', value: 30, desc: 'Short task' },
               { label: '1 hour', value: 60, desc: 'Medium task' },
@@ -506,12 +498,12 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
             <input
               type="number"
               name="estimatedMinutes"
-              value={estimatedMinutes}
-              onChange={(e) => setEstimatedMinutes(parseInt(e.target.value) || 30)}
+              value={estimatedMinutes || ''}
+              onChange={(e) => setEstimatedMinutes(e.target.value ? parseInt(e.target.value) : 0)}
               className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-all"
               placeholder="Custom minutes..."
-              min="5"
-              step="5"
+              min="1"
+              step="1"
             />
           </div>
         </div>
