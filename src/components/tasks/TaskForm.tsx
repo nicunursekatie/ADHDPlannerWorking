@@ -207,12 +207,20 @@ const TaskForm: React.FC<TaskFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('TaskForm handleSubmit called');
     
     if (!validateForm()) {
+      console.log('Form validation failed');
       return;
     }
+    
+    setIsSubmitting(true);
+    setSubmitError(null);
     
     const taskData = {
       ...formData,
@@ -220,8 +228,11 @@ const TaskForm: React.FC<TaskFormProps> = ({
       dependsOn: selectedDependencies,
     };
     
+    console.log('Task data to be saved:', taskData);
+    
     try {
       if (isEdit && task) {
+        console.log('Updating existing task');
         const taskToUpdate = { ...task, ...taskData } as Task;
         await updateTask(taskToUpdate);
         
@@ -239,7 +250,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
         
         clearPendingTask(task.id);
       } else {
+        console.log('Creating new task');
         const newTask = await addTask(taskData);
+        console.log('New task created:', newTask);
         
         // Add dependencies to the new task
         if (selectedDependencies.length > 0 && addTaskDependency) {
@@ -249,14 +262,29 @@ const TaskForm: React.FC<TaskFormProps> = ({
         }
       }
       
+      console.log('Task saved successfully, closing form');
       onClose();
     } catch (error) {
       console.error('Error saving task:', error);
+      setSubmitError(error instanceof Error ? error.message : 'Failed to save task. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   }, [validateForm, isEdit, task, formData, tags, selectedDependencies, updateTask, clearPendingTask, addTask, addTaskDependency, removeTaskDependency, onClose]);
 
   return (
-    <div className="space-y-8 max-h-[calc(100vh-200px)] overflow-y-auto pb-20">
+    <div className="space-y-8 max-h-[calc(100vh-200px)] overflow-y-auto pb-20 px-1">
+      {submitError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-red-400" />
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error saving task</h3>
+              <div className="mt-2 text-sm text-red-700 dark:text-red-300">{submitError}</div>
+            </div>
+          </div>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-8" id="task-form">
         {/* Main Task Info - Always visible */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6 border border-blue-100 dark:border-blue-800">
@@ -341,20 +369,20 @@ const TaskForm: React.FC<TaskFormProps> = ({
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
                   Choose what feels right
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-1">
                   {[
                     { label: '😊', text: 'Easy/Fun', value: 'easy' as const, desc: 'Looking forward to this' },
                     { label: '😐', text: 'Neutral', value: 'neutral' as const, desc: 'Just another task' },
                     { label: '😰', text: 'Stressful', value: 'stressful' as const, desc: 'A bit overwhelming' },
-                    { label: '😱', text: 'Dreading', value: 'dreading' as const, desc: 'Really not looking forward' },
+                    { label: '😱', text: 'Dreading', value: 'dreading' as const, desc: 'Not looking forward' },
                   ].map(option => (
                     <button
                       key={option.value}
                       type="button"
                       onClick={() => updateFormData(prev => ({ ...prev, emotionalWeight: option.value }))}
-                      className={`p-4 rounded-xl border-2 text-left transition-all duration-200 hover:scale-105 hover:shadow-md ${
+                      className={`p-3 rounded-xl border-2 text-left transition-all duration-200 hover:shadow-md ${
                         (formData.emotionalWeight || 'neutral') === option.value
-                          ? 'border-pink-400 bg-pink-50 dark:bg-pink-900/30 shadow-lg transform scale-105'
+                          ? 'border-pink-400 bg-pink-50 dark:bg-pink-900/30 shadow-lg'
                           : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-pink-300'
                       }`}
                     >
@@ -444,7 +472,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
                   <Flame size={16} className="inline mr-1" />
                   When does this need to happen?
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                   {[
                     { label: '🔥', text: 'Today', value: 'today' as const, desc: 'Urgent!' },
                     { label: '☀️', text: 'Tomorrow', value: 'tomorrow' as const, desc: 'Next day' },
@@ -609,101 +637,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
         </button>
       </div>
 
-      {/* Priority and Urgency Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Priority */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            <Star size={16} className="inline mr-1" />
-            Priority
-          </label>
-          <div className="flex gap-2">
-            {[
-              { label: 'Low', value: 'low' as const },
-              { label: 'Medium', value: 'medium' as const },
-              { label: 'High', value: 'high' as const },
-            ].map(option => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => updateFormData(prev => ({ ...prev, priority: option.value }))}
-                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all hover:scale-105 focus:outline-none ${
-                  (formData.priority || 'medium') === option.value
-                    ? option.value === 'high' 
-                      ? 'bg-red-500 text-white border-red-500'
-                      : option.value === 'medium'
-                      ? 'bg-yellow-500 text-white border-yellow-500'
-                      : 'bg-green-500 text-white border-green-500'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Urgency */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            <Flame size={16} className="inline mr-1" />
-            Urgency
-          </label>
-          <div className="flex gap-2">
-            {[
-              { label: '🔥 Today', value: 'today' as const, color: 'red' },
-              { label: '☀️ Tomorrow', value: 'tomorrow' as const, color: 'orange' },
-              { label: '📅 This Week', value: 'week' as const, color: 'orange' },
-              { label: '📌 This Month', value: 'month' as const, color: 'yellow' },
-              { label: '🌊 Someday', value: 'someday' as const, color: 'blue' },
-            ].map(option => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  const today = new Date();
-                  let dueDate: Date | null = null;
-                  
-                  switch (option.value) {
-                    case 'today':
-                      dueDate = today;
-                      break;
-                    case 'tomorrow':
-                      dueDate = addDays(today, 1);
-                      break;
-                    case 'week':
-                      dueDate = endOfWeek(today, { weekStartsOn: 1 }); // End of current week
-                      break;
-                    case 'month':
-                      dueDate = endOfMonth(today); // End of current month
-                      break;
-                    case 'someday':
-                      dueDate = null; // No specific date
-                      break;
-                  }
-                  
-                  updateFormData(prev => ({ 
-                    ...prev, 
-                    urgency: option.value,
-                    dueDate: dueDate ? format(dueDate, 'yyyy-MM-dd') : null
-                  }));
-                }}
-                className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all hover:scale-105 focus:outline-none text-lg ${
-                  (formData.urgency || 'week') === option.value
-                    ? option.color === 'red' ? 'bg-red-500 text-white border-red-500'
-                    : option.color === 'orange' ? 'bg-orange-500 text-white border-orange-500'
-                    : option.color === 'yellow' ? 'bg-yellow-500 text-white border-yellow-500'
-                    : 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:shadow-md'
-                }`}
-                title={option.label}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* Categories */}
       <div>
@@ -732,118 +665,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Hold Ctrl/Cmd to select multiple categories</p>
       </div>
 
-      {/* Energy and Emotional Weight Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Energy Needed */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            <Battery size={16} className="inline mr-1" />
-            Energy Needed
-          </label>
-          <div className="flex gap-2">
-            {[
-              { label: '🔋 Low', value: 'low' as const },
-              { label: '🔋🔋 Medium', value: 'medium' as const },
-              { label: '🔋🔋🔋 High', value: 'high' as const },
-            ].map(option => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => updateFormData(prev => ({ ...prev, energyRequired: option.value }))}
-                className={`px-4 py-3 rounded-lg text-base font-medium border-2 transition-all hover:scale-105 focus:outline-none ${
-                  (formData.energyRequired || 'medium') === option.value
-                    ? 'bg-green-500 dark:bg-green-600 text-white border-green-600 dark:border-green-700 shadow-md'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-400'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        {/* Emotional Weight */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            <Brain size={16} className="inline mr-1" />
-            Emotional Weight
-          </label>
-          <div className="flex gap-2">
-            {[
-              { label: '😊 Easy/Fun', value: 'easy' as const, color: 'green' },
-              { label: '😐 Neutral', value: 'neutral' as const, color: 'yellow' },
-              { label: '😰 Stressful', value: 'stressful' as const, color: 'orange' },
-              { label: '😱 Dreading', value: 'dreading' as const, color: 'red' },
-            ].map(option => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => updateFormData(prev => ({ ...prev, emotionalWeight: option.value }))}
-                className={`px-3 py-3 rounded-lg text-lg font-medium border-2 transition-all hover:scale-105 focus:outline-none ${
-                  (formData.emotionalWeight || 'neutral') === option.value
-                    ? option.value === 'easy' ? 'bg-green-500 text-white border-green-600 shadow-md'
-                    : option.value === 'neutral' ? 'bg-yellow-500 text-white border-yellow-600 shadow-md'
-                    : option.value === 'stressful' ? 'bg-orange-500 text-white border-orange-600 shadow-md'
-                    : 'bg-red-500 text-white border-red-600 shadow-md'
-                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:shadow-md'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Estimated Time */}
-      <div className="mt-4">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Estimated Time (minutes)
-        </label>
-        <input
-          type="number"
-          name="estimatedMinutes"
-          value={formData.estimatedMinutes || ''}
-          onChange={handleChange}
-          className="block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all sm:text-sm"
-          min="1"
-          step="1"
-        />
-      </div>
-
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Categories
-        </label>
-        <div className="flex items-start">
-          <Tag size={18} className="text-purple-400 dark:text-purple-500 mr-2 mt-1" />
-          <div className="flex flex-wrap gap-2">
-            {categories.map(category => (
-              <div
-                key={category.id}
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm 
-                  ${
-                    (formData.categoryIds?.includes(category.id) || false)
-                      ? 'bg-opacity-100 text-white'
-                      : 'bg-opacity-25 text-gray-700 dark:text-gray-300'
-                  } cursor-pointer transition-all hover:scale-105`}
-                style={{ 
-                  backgroundColor: (formData.categoryIds?.includes(category.id) || false)
-                    ? category.color 
-                    : `${category.color}40`
-                }}
-                onClick={() => handleCategoryChange(category.id)}
-              >
-                <span>{category.name}</span>
-              </div>
-            ))}
-            {categories.length === 0 && (
-              <p className="text-sm text-gray-500">No categories available</p>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Always show subtasks section */}
       <div className="mt-4 border-t border-gray-200 pt-4">
@@ -864,112 +686,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
         )}
       </div>
 
-        {/* When & Where - Scheduling Section */}
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl p-6 border border-green-100 dark:border-green-800">
-          <button
-            type="button"
-            onClick={() => setShowScheduling(!showScheduling)}
-            className="flex items-center justify-between w-full text-left group"
-          >
-            <div className="flex items-center">
-              <Calendar className="w-5 h-5 text-green-500 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">When & Where</h3>
-            </div>
-            <div className="flex items-center text-gray-500">
-              <span className="text-sm mr-2">
-                {formData.dueDate ? new Date(formData.dueDate).toLocaleDateString() : 'No date set'}
-              </span>
-              {showScheduling ? 
-                <ChevronDown className="w-5 h-5 transform transition-transform group-hover:scale-110" /> : 
-                <ChevronRight className="w-5 h-5 transform transition-transform group-hover:scale-110" />
-              }
-            </div>
-          </button>
-          
-          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showScheduling ? 'max-h-[2000px] mt-6' : 'max-h-0'}`}>
-            <div className="space-y-6">
-              {/* Due Date and Project */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Due Date */}
-                <div>
-                  <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    <Calendar size={16} className="inline mr-1" />
-                    When is this due?
-                  </label>
-                  <input
-                    type="date"
-                    id="dueDate"
-                    name="dueDate"
-                    value={formData.dueDate || ''}
-                    onChange={handleChange}
-                    className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all duration-200"
-                  />
-                </div>
-                
-                {/* Project */}
-                <div>
-                  <label htmlFor="project" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                    <Folder size={16} className="inline mr-1" />
-                    Which project?
-                  </label>
-                  <select
-                    id="project"
-                    name="project"
-                    value={formData.projectId || ''}
-                    onChange={handleProjectChange}
-                    className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all duration-200"
-                  >
-                    <option value="">No specific project</option>
-                    {projects.map(project => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Categories */}
-              <div>
-                <label htmlFor="categories" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                  <Tag size={16} className="inline mr-1" />
-                  Categories <span className="text-gray-400">(optional)</span>
-                </label>
-                <div className="space-y-3">
-                  <select
-                    id="categories"
-                    name="categories"
-                    multiple
-                    value={formData.categoryIds || []}
-                    onChange={(e) => {
-                      const values = Array.from(e.target.selectedOptions, option => option.value);
-                      if (values.includes('add-new')) {
-                        setShowNewCategoryModal(true);
-                      } else {
-                        updateFormData(prev => ({ ...prev, categoryIds: values }));
-                      }
-                    }}
-                    className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all duration-200"
-                    size={Math.min(categories.length + 2, 5)}
-                  >
-                    {categories.map(category => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                    <option value="add-new" className="font-semibold text-green-600">
-                      + Add New Category
-                    </option>
-                  </select>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Hold Ctrl/Cmd to select multiple categories
-                  </p>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
 
         {/* Advanced Options */}
         <div className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900/20 dark:to-slate-900/20 rounded-2xl p-6 border border-gray-100 dark:border-gray-800">
@@ -999,7 +715,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
                   <Clock className="w-5 h-5 mr-2 text-orange-500" />
                   Time Estimate
                 </h4>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {[
                     { label: '1 min', value: 1, desc: 'Micro task' },
                     { label: '5 min', value: 5, desc: 'Very quick' },
@@ -1187,8 +903,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
               type="submit"
               variant="primary"
               form="task-form"
+              disabled={isSubmitting}
             >
-              {isEdit ? 'Update Task' : 'Create Task'}
+              {isSubmitting ? 'Saving...' : (isEdit ? 'Update Task' : 'Create Task')}
             </Button>
           </div>
         </div>

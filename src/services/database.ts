@@ -35,25 +35,27 @@ export class DatabaseService {
       // subtasks: dbTask.subtasks || [],
       // dependsOn: dbTask.depends_on || [],
       // dependedOnBy: dbTask.depended_on_by || [],
-      isRecurring: dbTask.is_recurring,
-      recurrencePattern: dbTask.recurrence_pattern,
-      recurrenceInterval: dbTask.recurrence_interval,
-      recurringTaskId: dbTask.recurring_task_id,
-      projectPhase: dbTask.project_phase,
-      phaseOrder: dbTask.phase_order,
-      deletedAt: dbTask.deleted_at,
-      showSubtasks: dbTask.show_subtasks,
-      braindumpSource: dbTask.braindump_source,
-      completedAt: dbTask.completed_at,
-      aiProcessed: dbTask.ai_processed,
-      urgency: dbTask.urgency,
-      importance: dbTask.importance,
-      emotionalWeight: dbTask.emotional_weight,
-      energyRequired: dbTask.energy_required
+      
+      // Set default values for fields that might not exist in DB
+      isRecurring: dbTask.is_recurring || false,
+      recurrencePattern: dbTask.recurrence_pattern || null,
+      recurrenceInterval: dbTask.recurrence_interval || null,
+      recurringTaskId: dbTask.recurring_task_id || null,
+      projectPhase: dbTask.project_phase || null,
+      phaseOrder: dbTask.phase_order || null,
+      deletedAt: dbTask.deleted_at || null,
+      showSubtasks: dbTask.show_subtasks || false,
+      braindumpSource: dbTask.braindump_source || null,
+      completedAt: dbTask.completed_at || null,
+      aiProcessed: dbTask.ai_processed || false,
+      urgency: dbTask.urgency || 'week',
+      importance: dbTask.importance || 3,
+      emotionalWeight: dbTask.emotional_weight || 'neutral',
+      energyRequired: dbTask.energy_required || 'medium'
     };
   }
   
-  // Helper to map TypeScript camelCase to database snake_case
+  // Helper to map TypeScript camelCase to database snake_case - only core fields
   private static mapTaskToDb(task: Partial<Task>): any {
     const dbTask: any = {};
     
@@ -80,25 +82,6 @@ export class DatabaseService {
     if (task.size !== undefined) dbTask.size = task.size;
     if (task.estimatedMinutes !== undefined) dbTask.estimated_minutes = task.estimatedMinutes;
     if (task.parentTaskId !== undefined) dbTask.parent_task_id = task.parentTaskId;
-    // Don't map these fields as they're not stored in DB anymore
-    // if (task.subtasks !== undefined) dbTask.subtasks = task.subtasks;
-    // if (task.dependsOn !== undefined) dbTask.depends_on = task.dependsOn;
-    // if (task.dependedOnBy !== undefined) dbTask.depended_on_by = task.dependedOnBy;
-    if (task.isRecurring !== undefined) dbTask.is_recurring = task.isRecurring;
-    if (task.recurrencePattern !== undefined) dbTask.recurrence_pattern = task.recurrencePattern;
-    if (task.recurrenceInterval !== undefined) dbTask.recurrence_interval = task.recurrenceInterval;
-    if (task.recurringTaskId !== undefined) dbTask.recurring_task_id = task.recurringTaskId;
-    if (task.projectPhase !== undefined) dbTask.project_phase = task.projectPhase;
-    if (task.phaseOrder !== undefined) dbTask.phase_order = task.phaseOrder;
-    if (task.deletedAt !== undefined) dbTask.deleted_at = task.deletedAt;
-    if (task.showSubtasks !== undefined) dbTask.show_subtasks = task.showSubtasks;
-    if (task.braindumpSource !== undefined) dbTask.braindump_source = task.braindumpSource;
-    if (task.completedAt !== undefined) dbTask.completed_at = task.completedAt;
-    if (task.aiProcessed !== undefined) dbTask.ai_processed = task.aiProcessed;
-    if (task.urgency !== undefined) dbTask.urgency = task.urgency;
-    if (task.importance !== undefined) dbTask.importance = task.importance;
-    if (task.emotionalWeight !== undefined) dbTask.emotional_weight = task.emotionalWeight;
-    if (task.energyRequired !== undefined) dbTask.energy_required = task.energyRequired;
     
     return dbTask;
   }
@@ -161,7 +144,7 @@ export class DatabaseService {
   }
 
   static async createTask(task: Task, userId: string): Promise<Task> {
-    // Map camelCase to snake_case for database
+    // Map camelCase to snake_case for database - only include core fields
     const dbTask = {
       id: task.id,
       user_id: userId,
@@ -179,26 +162,7 @@ export class DatabaseService {
       energy_level: task.energyLevel,
       size: task.size,
       estimated_minutes: task.estimatedMinutes,
-      parent_task_id: task.parentTaskId,
-      // Don't store these - they're computed at runtime
-      // subtasks: task.subtasks,
-      // depends_on: task.dependsOn,
-      // depended_on_by: task.dependedOnBy,
-      is_recurring: task.isRecurring,
-      recurrence_pattern: task.recurrencePattern,
-      recurrence_interval: task.recurrenceInterval,
-      recurring_task_id: task.recurringTaskId,
-      project_phase: task.projectPhase,
-      phase_order: task.phaseOrder,
-      deleted_at: task.deletedAt,
-      show_subtasks: task.showSubtasks,
-      braindump_source: task.braindumpSource,
-      completed_at: task.completedAt,
-      ai_processed: task.aiProcessed,
-      urgency: task.urgency,
-      importance: task.importance,
-      emotional_weight: task.emotionalWeight,
-      energy_required: task.energyRequired
+      parent_task_id: task.parentTaskId
     };
     
     const { data, error } = await supabase
