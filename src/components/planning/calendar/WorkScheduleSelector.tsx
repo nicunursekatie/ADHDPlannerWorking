@@ -14,9 +14,11 @@ export const WorkScheduleSelector: React.FC<WorkScheduleSelectorProps> = ({
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedShiftType, setSelectedShiftType] = useState<ShiftType>('full');
+  const [isLoading, setIsLoading] = useState(false);
   
   // Get work schedule data from context
   const { workShifts, addWorkShift, updateWorkShift, deleteWorkShift, getShiftsForMonth } = useAppContext();
+  
 
   // Get shifts for the current month
   const monthShifts = getShiftsForMonth(currentYear, currentMonth);
@@ -121,29 +123,46 @@ export const WorkScheduleSelector: React.FC<WorkScheduleSelectorProps> = ({
   };
   
   // Toggle shift for a date
-  const toggleShift = (dateStr: string) => {
-    const existingShift = shiftsLookup[dateStr];
+  const toggleShift = async (dateStr: string) => {
+    if (isLoading) return; // Prevent multiple clicks
     
-    if (existingShift) {
-      if (existingShift.shiftType === selectedShiftType) {
-        // If clicking the same shift type, remove the shift
-        deleteWorkShift(existingShift.id);
+    setIsLoading(true);
+    try {
+      const existingShift = shiftsLookup[dateStr];
+      
+      if (existingShift) {
+        if (existingShift.shiftType === selectedShiftType) {
+          // If clicking the same shift type, remove the shift
+          await deleteWorkShift(existingShift.id);
+        } else {
+          // If clicking a different shift type, update the shift
+          const newShift = { 
+            ...existingShift,
+            ...DEFAULT_SHIFTS[selectedShiftType]
+          };
+          await updateWorkShift(newShift);
+        }
       } else {
-        // If clicking a different shift type, update the shift
-        const newShift = { 
-          ...existingShift,
-          ...DEFAULT_SHIFTS[selectedShiftType]
-        };
-        updateWorkShift(newShift);
+        // Add a new shift with the selected type
+        await addWorkShift(dateStr, selectedShiftType);
       }
-    } else {
-      // Add a new shift with the selected type
-      addWorkShift(dateStr, selectedShiftType);
-    }
-    
-    // Notify parent of change
-    if (onScheduleChange) {
-      onScheduleChange();
+      
+      // Notify parent of change
+      if (onScheduleChange) {
+        onScheduleChange();
+      }
+    } catch (error) {
+      console.error('Error toggling work shift:', error);
+      console.error('Error details:', {
+        dateStr,
+        selectedShiftType,
+        existingShift: shiftsLookup[dateStr],
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined
+      });
+      alert(`Failed to update work shift: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -176,10 +195,12 @@ export const WorkScheduleSelector: React.FC<WorkScheduleSelectorProps> = ({
           <button
             key={dateStr}
             onClick={() => toggleShift(dateStr)}
+            disabled={isLoading}
             className={`
               relative h-12 p-1 rounded transition-colors
               ${isPreviousMonth || isNextMonth ? 'text-gray-400' : 'text-gray-800'}
               ${isToday(date) && !hasShift ? 'bg-indigo-100' : ''}
+              ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
               ${(() => {
                 if (!hasShift) return 'hover:bg-gray-100';
                 const shift = shiftsLookup[dateStr];

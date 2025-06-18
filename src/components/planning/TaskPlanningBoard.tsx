@@ -52,7 +52,7 @@ const TaskPlanningBoard: React.FC<TaskPlanningBoardProps> = ({
   );
 
   const handleMoveTask = (task: Task, targetColumn: ColumnType) => {
-    let updatedTask = { ...task };
+    const updatedTask = { ...task };
     
     // Update task based on target column
     switch (targetColumn) {

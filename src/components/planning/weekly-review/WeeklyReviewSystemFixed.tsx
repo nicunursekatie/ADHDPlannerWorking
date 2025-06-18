@@ -279,6 +279,10 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
         2: {
           question: 'What do you actually want to get out of next week?',
           options: [] // This will be free text only
+        },
+        3: {
+          question: 'Any other planning thoughts?',
+          options: [] // This will be free text only
         }
       }
     },
@@ -287,15 +291,37 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
       title: 'Review Your Projects',
       icon: <LayoutGrid size={18} />,
       description: 'Check progress and priorities across projects',
-      prompts: [
-        'Which projects are on track?',
-        'Where are you stuck or blocked?',
-        'Should any projects be paused or dropped?',
-        'Are your projects aligned with your goals?',
-        'What project should be your main focus next week?',
-      ],
+      prompts: [],
       complete: weeklyJournalEntries.filter((entry) => entry.section === 'projects').length > 0,
       hasJournal: true,
+      multipleChoiceOptions: {
+        0: {
+          question: 'Which projects are on track?',
+          options: [] // This will be free text only
+        },
+        1: {
+          question: 'Where are you stuck or blocked?',
+          options: [] // This will be free text only
+        },
+        2: {
+          question: 'Should any projects be paused or dropped?',
+          options: [] // This will be free text only
+        },
+        3: {
+          question: 'Are your projects aligned with your goals?',
+          options: [
+            { value: 'very-aligned', label: 'Very aligned', emoji: '🎯' },
+            { value: 'mostly-aligned', label: 'Mostly aligned', emoji: '✅' },
+            { value: 'somewhat-aligned', label: 'Somewhat aligned', emoji: '⚖️' },
+            { value: 'not-aligned', label: 'Not really aligned', emoji: '❌' },
+            { value: 'unclear', label: 'Unclear on goals', emoji: '🤔' }
+          ]
+        },
+        4: {
+          question: 'What project should be your main focus next week?',
+          options: [] // This will be free text only
+        }
+      }
     },
     {
       id: 'life-areas',
@@ -345,6 +371,10 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
         3: {
           question: 'What might help you not self-erase next week?',
           options: [] // This will be free text only
+        },
+        4: {
+          question: 'Any other life balance thoughts?',
+          options: [] // This will be free text only
         }
       }
     },
@@ -372,13 +402,15 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
     const activeSection = reviewSections.find(s => s.id === activeSectionId);
     if (!activeSection) return;
     
-    // Save multiple choice responses
+    // Save responses
     if (activeSection.multipleChoiceOptions) {
-      Object.entries(multipleChoiceAnswers).forEach(([key, values]) => {
-        if (key.startsWith(`${activeSectionId}-mc-`) && values.length > 0) {
-          const questionIndex = key.split('-').pop();
-          const questionData = activeSection.multipleChoiceOptions?.[questionIndex as string];
-          if (questionData) {
+      Object.entries(activeSection.multipleChoiceOptions).forEach(([questionIndex, questionData]) => {
+        const questionKey = `${activeSectionId}-mc-${questionIndex}`;
+        
+        // Handle multiple choice questions
+        if (questionData.options.length > 0) {
+          const values = multipleChoiceAnswers[questionKey];
+          if (values && values.length > 0) {
             const selectedLabels = values.map(value => 
               questionData.options.find(opt => opt.value === value)?.label || value
             );
@@ -389,11 +421,30 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
               date: new Date().toISOString(),
               section: activeSectionId as 'projects' | 'reflect' | 'overdue' | 'upcoming' | 'life-areas',
               prompt: questionData.question,
-              promptIndex: parseInt(questionIndex as string),
+              promptIndex: parseInt(questionIndex),
               weekNumber,
               weekYear,
               mood: currentMood,
               tags: ['weekly-review', activeSectionId, 'multiple-choice']
+            };
+            
+            addJournalEntry(entryData);
+          }
+        } else {
+          // Handle free text questions
+          const textResponse = additionalNotes[questionKey];
+          if (textResponse && textResponse.trim()) {
+            const entryData = {
+              title: questionData.question,
+              content: textResponse,
+              date: new Date().toISOString(),
+              section: activeSectionId as 'projects' | 'reflect' | 'overdue' | 'upcoming' | 'life-areas',
+              prompt: questionData.question,
+              promptIndex: parseInt(questionIndex),
+              weekNumber,
+              weekYear,
+              mood: currentMood,
+              tags: ['weekly-review', activeSectionId, 'free-text']
             };
             
             addJournalEntry(entryData);
@@ -718,7 +769,7 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
               </div>
             </div>
             
-            {/* Multiple choice questions */}
+            {/* Questions */}
             <div className="space-y-6">
               {activeSection.multipleChoiceOptions && Object.entries(activeSection.multipleChoiceOptions)
                 .slice(promptChunkIndex * PROMPTS_PER_CHUNK, (promptChunkIndex + 1) * PROMPTS_PER_CHUNK)
@@ -729,36 +780,52 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                   return (
                     <div key={questionKey} className="space-y-3">
                       <h4 className="font-medium text-gray-900">{questionData.question}</h4>
-                      <div className="grid grid-cols-1 gap-2">
-                        {questionData.options.map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() => {
-                              if (questionData.allowMultiple) {
-                                setMultipleChoiceAnswers(prev => ({
-                                  ...prev,
-                                  [questionKey]: selectedValues.includes(option.value)
-                                    ? selectedValues.filter(v => v !== option.value)
-                                    : [...selectedValues, option.value]
-                                }));
-                              } else {
-                                setMultipleChoiceAnswers(prev => ({
-                                  ...prev,
-                                  [questionKey]: [option.value]
-                                }));
-                              }
-                            }}
-                            className={`p-3 rounded-lg border-2 transition-all text-left flex items-center gap-3 ${
-                              selectedValues.includes(option.value)
-                                ? 'border-amber-500 bg-amber-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <span className="text-xl">{option.emoji}</span>
-                            <span className="font-medium">{option.label}</span>
-                          </button>
-                        ))}
-                      </div>
+                      
+                      {/* If there are options, show multiple choice */}
+                      {questionData.options.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-2">
+                          {questionData.options.map((option) => (
+                            <button
+                              key={option.value}
+                              onClick={() => {
+                                if (questionData.allowMultiple) {
+                                  setMultipleChoiceAnswers(prev => ({
+                                    ...prev,
+                                    [questionKey]: selectedValues.includes(option.value)
+                                      ? selectedValues.filter(v => v !== option.value)
+                                      : [...selectedValues, option.value]
+                                  }));
+                                } else {
+                                  setMultipleChoiceAnswers(prev => ({
+                                    ...prev,
+                                    [questionKey]: [option.value]
+                                  }));
+                                }
+                              }}
+                              className={`p-3 rounded-lg border-2 transition-all text-left flex items-center gap-3 ${
+                                selectedValues.includes(option.value)
+                                  ? 'border-amber-500 bg-amber-50'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <span className="text-xl">{option.emoji}</span>
+                              <span className="font-medium">{option.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        /* If no options, show text area for free text */
+                        <textarea
+                          value={additionalNotes[questionKey] || ''}
+                          onChange={(e) => setAdditionalNotes(prev => ({
+                            ...prev,
+                            [questionKey]: e.target.value
+                          }))}
+                          className="w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+                          rows={3}
+                          placeholder="Share your thoughts..."
+                        />
+                      )}
                     </div>
                   );
                 })}
@@ -1240,83 +1307,75 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Multiple choice questions for this section */}
+                {/* Questions for this section */}
                 {reviewSections[currentSectionIndex].multipleChoiceOptions && 
                   Object.entries(reviewSections[currentSectionIndex].multipleChoiceOptions!).map(([promptIndex, mcOption]) => (
                     <div key={promptIndex} className="space-y-3">
                       <h4 className="font-medium text-gray-900">{mcOption.question}</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {mcOption.options.map(option => {
-                          const isSelected = mcOption.allowMultiple
-                            ? multipleChoiceAnswers[`${reviewSections[currentSectionIndex].id}-${promptIndex}`]?.includes(option.value)
-                            : multipleChoiceAnswers[`${reviewSections[currentSectionIndex].id}-${promptIndex}`]?.[0] === option.value;
-                          
-                          return (
-                            <button
-                              key={option.value}
-                              onClick={() => {
-                                const key = `${reviewSections[currentSectionIndex].id}-${promptIndex}`;
-                                if (mcOption.allowMultiple) {
-                                  const current = multipleChoiceAnswers[key] || [];
-                                  if (current.includes(option.value)) {
-                                    setMultipleChoiceAnswers({
-                                      ...multipleChoiceAnswers,
-                                      [key]: current.filter(v => v !== option.value)
-                                    });
+                      
+                      {/* If there are options, show multiple choice */}
+                      {mcOption.options.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {mcOption.options.map(option => {
+                            const isSelected = mcOption.allowMultiple
+                              ? multipleChoiceAnswers[`${reviewSections[currentSectionIndex].id}-${promptIndex}`]?.includes(option.value)
+                              : multipleChoiceAnswers[`${reviewSections[currentSectionIndex].id}-${promptIndex}`]?.[0] === option.value;
+                            
+                            return (
+                              <button
+                                key={option.value}
+                                onClick={() => {
+                                  const key = `${reviewSections[currentSectionIndex].id}-${promptIndex}`;
+                                  if (mcOption.allowMultiple) {
+                                    const current = multipleChoiceAnswers[key] || [];
+                                    if (current.includes(option.value)) {
+                                      setMultipleChoiceAnswers({
+                                        ...multipleChoiceAnswers,
+                                        [key]: current.filter(v => v !== option.value)
+                                      });
+                                    } else {
+                                      setMultipleChoiceAnswers({
+                                        ...multipleChoiceAnswers,
+                                        [key]: [...current, option.value]
+                                      });
+                                    }
                                   } else {
                                     setMultipleChoiceAnswers({
                                       ...multipleChoiceAnswers,
-                                      [key]: [...current, option.value]
+                                      [key]: [option.value]
                                     });
                                   }
-                                } else {
-                                  setMultipleChoiceAnswers({
-                                    ...multipleChoiceAnswers,
-                                    [key]: [option.value]
-                                  });
-                                }
-                              }}
-                              className={`p-3 rounded-lg border-2 text-left transition-all ${
-                                isSelected
-                                  ? 'border-amber-500 bg-amber-50'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                {option.emoji && <span className="text-xl">{option.emoji}</span>}
-                                <span className="text-gray-700">{option.label}</span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                                }}
+                                className={`p-3 rounded-lg border-2 text-left transition-all ${
+                                  isSelected
+                                    ? 'border-amber-500 bg-amber-50'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {option.emoji && <span className="text-xl">{option.emoji}</span>}
+                                  <span className="text-gray-700">{option.label}</span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        /* If no options, show text area for free text */
+                        <textarea
+                          value={additionalNotes[`${reviewSections[currentSectionIndex].id}-${promptIndex}`] || ''}
+                          onChange={(e) => setAdditionalNotes({
+                            ...additionalNotes,
+                            [`${reviewSections[currentSectionIndex].id}-${promptIndex}`]: e.target.value
+                          })}
+                          className="w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
+                          rows={3}
+                          placeholder="Share your thoughts..."
+                        />
+                      )}
                     </div>
                   ))
                 }
-                
-                {/* Free text area for additional thoughts */}
-                <div>
-                  <label className="block font-medium text-gray-900 mb-2">
-                    {reviewSections[currentSectionIndex].multipleChoiceOptions && 
-                     Object.values(reviewSections[currentSectionIndex].multipleChoiceOptions!).find(opt => opt.options.length === 0)?.question ||
-                     'Any additional thoughts? (optional)'}
-                  </label>
-                  <textarea
-                    value={additionalNotes[reviewSections[currentSectionIndex].id] || ''}
-                    onChange={(e) => setAdditionalNotes({
-                      ...additionalNotes,
-                      [reviewSections[currentSectionIndex].id]: e.target.value
-                    })}
-                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500"
-                    rows={3}
-                    placeholder="Share any other reflections..."
-                  />
-                  {!additionalNotes[reviewSections[currentSectionIndex].id] && (
-                    <p className="text-xs text-gray-500 mt-1 italic">
-                      Want to skip this? Totally fine
-                    </p>
-                  )}
-                </div>
                 
                 {/* Navigation */}
                 <div className="flex justify-between pt-4 border-t">
@@ -1338,43 +1397,50 @@ const WeeklyReviewSystemFixed: React.FC<WeeklyReviewSystemFixedProps> = ({ onTas
                       // Save responses for this section
                       const section = reviewSections[currentSectionIndex];
                       
-                      // Save multiple choice answers as journal entries
+                      // Save responses as journal entries
                       if (section.multipleChoiceOptions) {
                         Object.entries(section.multipleChoiceOptions).forEach(([promptIndex, mcOption]) => {
                           const key = `${section.id}-${promptIndex}`;
-                          const answers = multipleChoiceAnswers[key];
-                          if (answers && answers.length > 0) {
-                            const selectedLabels = answers.map(value => 
-                              mcOption.options.find(opt => opt.value === value)?.label
-                            ).filter(Boolean).join(', ');
-                            
-                            addJournalEntry({
-                              title: mcOption.question,
-                              content: selectedLabels,
-                              date: new Date().toISOString(),
-                              section: section.id as any,
-                              prompt: mcOption.question,
-                              promptIndex: parseInt(promptIndex),
-                              weekNumber,
-                              weekYear,
-                              mood: currentMood,
-                              tags: ['weekly-review', section.id, 'multiple-choice']
-                            });
+                          
+                          // Handle multiple choice questions
+                          if (mcOption.options.length > 0) {
+                            const answers = multipleChoiceAnswers[key];
+                            if (answers && answers.length > 0) {
+                              const selectedLabels = answers.map(value => 
+                                mcOption.options.find(opt => opt.value === value)?.label
+                              ).filter(Boolean).join(', ');
+                              
+                              addJournalEntry({
+                                title: mcOption.question,
+                                content: selectedLabels,
+                                date: new Date().toISOString(),
+                                section: section.id as any,
+                                prompt: mcOption.question,
+                                promptIndex: parseInt(promptIndex),
+                                weekNumber,
+                                weekYear,
+                                mood: currentMood,
+                                tags: ['weekly-review', section.id, 'multiple-choice']
+                              });
+                            }
+                          } else {
+                            // Handle free text questions
+                            const textResponse = additionalNotes[key];
+                            if (textResponse && textResponse.trim()) {
+                              addJournalEntry({
+                                title: mcOption.question,
+                                content: textResponse,
+                                date: new Date().toISOString(),
+                                section: section.id as any,
+                                prompt: mcOption.question,
+                                promptIndex: parseInt(promptIndex),
+                                weekNumber,
+                                weekYear,
+                                mood: currentMood,
+                                tags: ['weekly-review', section.id, 'free-text']
+                              });
+                            }
                           }
-                        });
-                      }
-                      
-                      // Save additional notes if any
-                      if (additionalNotes[section.id]) {
-                        addJournalEntry({
-                          title: 'Additional thoughts',
-                          content: additionalNotes[section.id],
-                          date: new Date().toISOString(),
-                          section: section.id as any,
-                          weekNumber,
-                          weekYear,
-                          mood: currentMood,
-                          tags: ['weekly-review', section.id, 'notes']
                         });
                       }
                       

@@ -62,7 +62,7 @@ const CalendarPage: React.FC = () => {
         isOpen={isTaskModalOpen}
         onClose={handleCloseTaskModal}
         title="Task Details"
-        size="2xl"
+        size="3xl"
       >
         <TaskForm
           task={selectedTask || undefined}

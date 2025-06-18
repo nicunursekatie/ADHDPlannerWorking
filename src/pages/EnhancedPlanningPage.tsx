@@ -333,6 +333,7 @@ const EnhancedPlanningPage: React.FC = () => {
         isOpen={isTaskModalOpen}
         onClose={handleCloseTaskModal}
         title={editingTask ? 'Edit Task' : 'Create New Task'}
+        size="3xl"
       >
         <TaskForm
           task={editingTask || undefined}

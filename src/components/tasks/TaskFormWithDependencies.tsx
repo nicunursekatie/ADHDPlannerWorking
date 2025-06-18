@@ -263,7 +263,80 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
           </div>
         </div>
 
-        {/* Categories */}
+        {/* Time Estimate - Always Visible */}
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-2xl p-6 border border-orange-100 dark:border-orange-800">
+          <div className="flex items-center mb-4">
+            <Clock className="w-5 h-5 text-orange-500 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">How long will this take?</h3>
+            {estimatedMinutes && (
+              <span className="ml-auto text-sm text-orange-600 dark:text-orange-400 font-medium">
+                ~{estimatedMinutes} min
+              </span>
+            )}
+          </div>
+          
+          <div className="space-y-4">
+            {/* Quick Time Presets */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: '5 min', value: 5, desc: 'Very quick' },
+                { label: '15 min', value: 15, desc: 'Quick task' },
+                { label: '30 min', value: 30, desc: 'Short task' },
+                { label: '1 hour', value: 60, desc: 'Medium task' },
+                { label: '2 hours', value: 120, desc: 'Long task' },
+                { label: 'Half day', value: 240, desc: 'Major task' },
+                { label: 'Full day', value: 480, desc: 'Big project' },
+                { label: 'Custom', value: 0, desc: 'Enter exact time' },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    if (option.value === 0) {
+                      // Focus the custom input field
+                      const input = document.querySelector('input[name="estimatedMinutes"]') as HTMLInputElement;
+                      if (input) input.focus();
+                      return;
+                    }
+                    setEstimatedMinutes(option.value);
+                  }}
+                  className={`p-3 rounded-xl border-2 text-left transition-all duration-200 hover:shadow-md ${
+                    option.value === 0 
+                      ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-orange-300 hover:shadow-lg'
+                      : (estimatedMinutes || 0) === option.value
+                        ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/30 shadow-lg'
+                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-orange-300'
+                  }`}
+                >
+                  <div className="font-medium text-sm">{option.label}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
+                </button>
+              ))}
+            </div>
+            
+            {/* Custom Time Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Or enter exact time (minutes)
+              </label>
+              <input
+                type="number"
+                name="estimatedMinutes"
+                value={estimatedMinutes || ''}
+                onChange={(e) => setEstimatedMinutes(e.target.value ? parseFloat(e.target.value) : 0)}
+                className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-orange-500 focus:ring-orange-500 transition-all"
+                placeholder="Enter any number of minutes (e.g., 7, 23, 45)..."
+                min="0"
+                step="0.5"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                You can enter any time estimate - whole numbers or decimals (e.g., 2.5 for 2 minutes 30 seconds)
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Categories */
         <div>
           <label htmlFor="category" className="block text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             <Tag className="w-5 h-5 mr-2 text-blue-500 inline" />
@@ -283,15 +356,17 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
             className="block w-full px-4 py-4 text-lg rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
           >
             <option value="">No category</option>
-            {categories.map(category => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
+            {categories && categories.map((category) => {
+              return (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              );
+            })}
             <option value="add-new">+ Add New Category</option>
           </select>
         </div>
-
+        }
         {/* Priority | Urgency (side by side) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Priority */}
@@ -461,52 +536,6 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
           </div>
         </div>
 
-        {/* Estimated Time */}
-        <div>
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-            <Clock className="w-5 h-5 mr-2 text-blue-500" />
-            Estimated Time
-          </h4>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { label: '1 min', value: 1, desc: 'Micro task' },
-              { label: '5 min', value: 5, desc: 'Very quick' },
-              { label: '15 min', value: 15, desc: 'Quick task' },
-              { label: '30 min', value: 30, desc: 'Short task' },
-              { label: '1 hour', value: 60, desc: 'Medium task' },
-              { label: '2 hours', value: 120, desc: 'Long task' },
-              { label: 'Half day', value: 240, desc: 'Major task' },
-              { label: 'Full day', value: 480, desc: 'Big project' },
-            ].map(option => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setEstimatedMinutes(option.value)}
-                className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-blue-200/50 ${
-                  estimatedMinutes === option.value
-                    ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/30 shadow-lg ring-2 ring-blue-200 dark:ring-blue-700'
-                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300'
-                }`}
-              >
-                <div className="text-base mb-1">⏱️</div>
-                <div className="font-semibold text-xs mb-1">{option.label}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
-              </button>
-            ))}
-          </div>
-          <div className="mt-4">
-            <input
-              type="number"
-              name="estimatedMinutes"
-              value={estimatedMinutes || ''}
-              onChange={(e) => setEstimatedMinutes(e.target.value ? parseInt(e.target.value) : 0)}
-              className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-all"
-              placeholder="Custom minutes..."
-              min="1"
-              step="1"
-            />
-          </div>
-        </div>
         
         {/* Advanced Options (collapsed by default) */}
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/20 dark:to-gray-900/20 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
@@ -520,7 +549,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Advanced Options</h3>
             </div>
             <div className="flex items-center text-gray-500">
-              <span className="text-sm mr-2">Dependencies, tags & more</span>
+              <span className="text-sm mr-2">Dependencies, tags & subtasks</span>
               {showAdvanced ? 
                 <ChevronDown className="w-5 h-5 transform transition-transform group-hover:scale-110" /> : 
                 <ChevronRight className="w-5 h-5 transform transition-transform group-hover:scale-110" />
@@ -530,7 +559,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
           
           <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showAdvanced ? 'max-h-[600px] mt-6' : 'max-h-0'}`}>
             <div className="space-y-8">
-              {/* Dependencies Section */}
+              {/* Dependencies Section */
               <div>
                 <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
                   <Hash className="w-5 h-5 mr-2 text-purple-500" />
@@ -567,7 +596,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                   </div>
                 )}
               </div>
-
+              }
               {/* Tags Section */}
               <div>
                 <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">

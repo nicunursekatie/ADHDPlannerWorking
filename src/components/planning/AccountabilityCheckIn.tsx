@@ -230,7 +230,7 @@ const AccountabilityCheckIn: React.FC<AccountabilityCheckInProps> = ({ onTaskUpd
   const handleTaskUpdate = useCallback((taskWithReason: TaskWithReason) => {
     const { task, action, rescheduleDate } = taskWithReason;
     
-    let updatedTask: Task = { ...task };
+    const updatedTask: Task = { ...task };
     
     // Get the reason text first
     const reasonText = taskWithReason.selectedReason === 'custom' 

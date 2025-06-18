@@ -160,8 +160,9 @@ const TaskForm: React.FC<TaskFormProps> = ({
         updateFormData(prev => ({ ...prev, dueDate: value }));
       }
     } else if (name === 'estimatedMinutes') {
-      // Handle number input - allow empty values
-      updateFormData(prev => ({ ...prev, [name]: value ? parseInt(value) : 0 }));
+      // Handle number input - allow empty values and decimals
+      const numericValue = value ? parseFloat(value) : 0;
+      updateFormData(prev => ({ ...prev, [name]: numericValue }));
     } else {
       updateFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -212,10 +213,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
   
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('TaskForm handleSubmit called');
     
     if (!validateForm()) {
-      console.log('Form validation failed');
       return;
     }
     
@@ -228,11 +227,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
       dependsOn: selectedDependencies,
     };
     
-    console.log('Task data to be saved:', taskData);
-    
     try {
       if (isEdit && task) {
-        console.log('Updating existing task');
         const taskToUpdate = { ...task, ...taskData } as Task;
         await updateTask(taskToUpdate);
         
@@ -250,9 +246,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
         
         clearPendingTask(task.id);
       } else {
-        console.log('Creating new task');
         const newTask = await addTask(taskData);
-        console.log('New task created:', newTask);
         
         // Add dependencies to the new task
         if (selectedDependencies.length > 0 && addTaskDependency) {
@@ -262,11 +256,24 @@ const TaskForm: React.FC<TaskFormProps> = ({
         }
       }
       
-      console.log('Task saved successfully, closing form');
       onClose();
     } catch (error) {
-      console.error('Error saving task:', error);
-      setSubmitError(error instanceof Error ? error.message : 'Failed to save task. Please try again.');
+      console.error('TaskForm save error:', error);
+      console.error('Task data that failed to save:', taskData);
+      let errorMessage = 'Failed to save task. Please try again.';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      setSubmitError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -333,6 +340,88 @@ const TaskForm: React.FC<TaskFormProps> = ({
                 className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-200 placeholder:text-gray-400"
                 placeholder="Add any additional details or context..."
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Time Estimate - Always Visible */}
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-2xl p-6 border border-orange-100 dark:border-orange-800">
+          <div className="flex items-center mb-4">
+            <Clock className="w-5 h-5 text-orange-500 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">How long will this take?</h3>
+            {formData.estimatedMinutes && (
+              <span className="ml-auto text-sm text-orange-600 dark:text-orange-400 font-medium">
+                ~{formData.estimatedMinutes} min
+              </span>
+            )}
+          </div>
+          
+          <div className="space-y-4">
+            {/* Quick Time Presets */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: '5 min', value: 5, desc: 'Very quick' },
+                { label: '15 min', value: 15, desc: 'Quick task' },
+                { label: '30 min', value: 30, desc: 'Short task' },
+                { label: '1 hour', value: 60, desc: 'Medium task' },
+                { label: '2 hours', value: 120, desc: 'Long task' },
+                { label: 'Half day', value: 240, desc: 'Major task' },
+                { label: 'Full day', value: 480, desc: 'Big project' },
+                { label: 'Custom', value: 0, desc: 'Enter exact time' },
+              ].map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    if (option.value === 0) {
+                      // Focus the custom input field
+                      const input = document.querySelector('input[name="estimatedMinutes"]') as HTMLInputElement;
+                      if (input) input.focus();
+                      return;
+                    }
+                    
+                    let size: 'small' | 'medium' | 'large' = 'medium';
+                    if (option.value <= 30) {
+                      size = 'small';
+                    } else if (option.value <= 120) {
+                      size = 'medium';
+                    } else {
+                      size = 'large';
+                    }
+                    updateFormData(prev => ({ ...prev, estimatedMinutes: option.value, size }));
+                  }}
+                  className={`p-3 rounded-xl border-2 text-left transition-all duration-200 hover:shadow-md ${
+                    option.value === 0 
+                      ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-orange-300 hover:shadow-lg'
+                      : (formData.estimatedMinutes || 0) === option.value
+                        ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/30 shadow-lg'
+                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-orange-300'
+                  }`}
+                >
+                  <div className="font-medium text-sm">{option.label}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
+                </button>
+              ))}
+            </div>
+            
+            {/* Custom Time Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Or enter exact time (minutes)
+              </label>
+              <input
+                type="number"
+                name="estimatedMinutes"
+                value={formData.estimatedMinutes || ''}
+                onChange={handleChange}
+                className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-orange-500 focus:ring-orange-500 transition-all"
+                placeholder="Enter any number of minutes (e.g., 7, 23, 45)..."
+                min="0"
+                step="0.5"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                You can enter any time estimate - whole numbers or decimals (e.g., 2.5 for 2 minutes 30 seconds)
+              </p>
             </div>
           </div>
         </div>
@@ -709,61 +798,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
           
           <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showAdvanced ? 'max-h-[2000px] mt-6' : 'max-h-0'}`}>
             <div className="space-y-6">
-              {/* Time Estimate */}
-              <div>
-                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                  <Clock className="w-5 h-5 mr-2 text-orange-500" />
-                  Time Estimate
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {[
-                    { label: '1 min', value: 1, desc: 'Micro task' },
-                    { label: '5 min', value: 5, desc: 'Very quick' },
-                    { label: '15 min', value: 15, desc: 'Quick task' },
-                    { label: '30 min', value: 30, desc: 'Short task' },
-                    { label: '1 hour', value: 60, desc: 'Medium task' },
-                    { label: '2 hours', value: 120, desc: 'Long task' },
-                    { label: 'Half day', value: 240, desc: 'Major task' },
-                    { label: 'Full day', value: 480, desc: 'Big project' },
-                  ].map(option => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => {
-                        let size: 'small' | 'medium' | 'large' = 'medium';
-                        if (option.value <= 30) {
-                          size = 'small';
-                        } else if (option.value <= 120) {
-                          size = 'medium';
-                        } else {
-                          size = 'large';
-                        }
-                        updateFormData(prev => ({ ...prev, estimatedMinutes: option.value, size }));
-                      }}
-                      className={`p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
-                        (formData.estimatedMinutes || 0) === option.value
-                          ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/30 shadow-md'
-                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-orange-300'
-                      }`}
-                    >
-                      <div className="font-medium text-sm">{option.label}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-3">
-                  <input
-                    type="number"
-                    name="estimatedMinutes"
-                    value={formData.estimatedMinutes || ''}
-                    onChange={handleChange}
-                    className="block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-orange-500 focus:ring-orange-500 transition-all"
-                    placeholder="Custom minutes..."
-                    min="1"
-                    step="1"
-                  />
-                </div>
-              </div>
 
               {/* Dependencies Section */}
               <div>

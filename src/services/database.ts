@@ -216,13 +216,6 @@ export class DatabaseService {
   static async updateTask(id: string, updates: Partial<Task>, userId: string): Promise<Task> {
     const dbUpdates = this.mapTaskToDb(updates);
     
-    console.log('DatabaseService.updateTask called with:');
-    console.log('Task ID:', id);
-    console.log('Updates received:', updates);
-    console.log('DueDate in updates:', updates.dueDate);
-    console.log('Mapped DB updates:', dbUpdates);
-    console.log('due_date in DB updates:', dbUpdates.due_date);
-    
     const { data, error } = await supabase
       .from('tasks')
       .update(dbUpdates)
@@ -236,10 +229,7 @@ export class DatabaseService {
       throw error;
     }
     
-    console.log('Supabase response data:', data);
     const mappedTask = this.mapTaskFromDb(data);
-    console.log('Mapped task from DB:', mappedTask);
-    
     return mappedTask;
   }
 
@@ -492,7 +482,6 @@ export class DatabaseService {
   // Daily Plans
   static async getDailyPlans(userId: string): Promise<DailyPlan[]> {
     try {
-      console.log('getDailyPlans called with userId:', userId);
       
       // Test basic connection first
       const { data: testData, error: testError } = await supabase
@@ -505,7 +494,6 @@ export class DatabaseService {
         throw testError;
       }
       
-      console.log('Basic supabase connection works, testing daily_plans table...');
       
       // First test if the table exists by trying a simple select
       const { data: tableTest, error: tableError } = await supabase
@@ -529,7 +517,6 @@ export class DatabaseService {
         throw tableError;
       }
       
-      console.log('daily_plans table exists, querying for user data...');
       
       const { data, error } = await supabase
         .from('daily_plans')
@@ -546,7 +533,6 @@ export class DatabaseService {
         throw error;
       }
       
-      console.log('Successfully fetched daily plans:', data);
       return data || [];
     } catch (err) {
       console.error('getDailyPlans failed:', err);
@@ -653,6 +639,28 @@ export class DatabaseService {
     if (error) throw error;
   }
 
+  // Helper to map database snake_case to TypeScript camelCase for work schedules
+  private static mapWorkScheduleFromDb(dbSchedule: any): WorkSchedule {
+    return {
+      id: dbSchedule.id,
+      name: dbSchedule.name,
+      shifts: dbSchedule.shifts || [],
+      createdAt: dbSchedule.created_at,
+      updatedAt: dbSchedule.updated_at,
+    };
+  }
+
+  // Helper to map TypeScript camelCase to database snake_case for work schedules
+  private static mapWorkScheduleToDb(schedule: Partial<WorkSchedule>) {
+    const mapped: any = {};
+    if (schedule.id !== undefined) mapped.id = schedule.id;
+    if (schedule.name !== undefined) mapped.name = schedule.name;
+    if (schedule.shifts !== undefined) mapped.shifts = schedule.shifts;
+    if (schedule.createdAt !== undefined) mapped.created_at = schedule.createdAt;
+    if (schedule.updatedAt !== undefined) mapped.updated_at = schedule.updatedAt;
+    return mapped;
+  }
+
   // Work Schedules
   static async getWorkSchedules(userId: string): Promise<WorkSchedule[]> {
     const { data, error } = await supabase
@@ -661,31 +669,33 @@ export class DatabaseService {
       .eq('user_id', userId);
     
     if (error) throw error;
-    return data || [];
+    return (data || []).map(this.mapWorkScheduleFromDb);
   }
 
   static async createWorkSchedule(schedule: WorkSchedule, userId: string): Promise<WorkSchedule> {
+    const dbSchedule = this.mapWorkScheduleToDb(schedule);
     const { data, error } = await supabase
       .from('work_schedules')
-      .insert({ ...schedule, user_id: userId })
+      .insert({ ...dbSchedule, user_id: userId })
       .select()
       .single();
     
     if (error) throw error;
-    return data;
+    return this.mapWorkScheduleFromDb(data);
   }
 
   static async updateWorkSchedule(id: string, updates: Partial<WorkSchedule>, userId: string): Promise<WorkSchedule> {
+    const dbUpdates = this.mapWorkScheduleToDb(updates);
     const { data, error } = await supabase
       .from('work_schedules')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', id)
       .eq('user_id', userId)
       .select()
       .single();
     
     if (error) throw error;
-    return data;
+    return this.mapWorkScheduleFromDb(data);
   }
 
   static async deleteWorkSchedule(id: string, userId: string): Promise<void> {

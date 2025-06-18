@@ -127,7 +127,7 @@ export const TasksPageSupabase: React.FC = () => {
   }
 
   // Filter and sort tasks
-  let filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter(task => {
     // Exclude subtasks (tasks with a parentTaskId) from the main list
     if (task.parentTaskId) return false;
     
@@ -347,30 +347,21 @@ export const TasksPageSupabase: React.FC = () => {
     if (!selectedParentTaskId || selectedTasks.size === 0) return;
     
     try {
-      console.log('Converting tasks to subtasks...');
-      console.log('Parent task ID:', selectedParentTaskId);
-      console.log('Selected tasks:', Array.from(selectedTasks));
       
       // Use the bulkConvertToSubtasks function from context
       await bulkConvertToSubtasks(Array.from(selectedTasks), selectedParentTaskId);
       
-      console.log('Conversion completed');
       
       // Verify the updates
       const verifyTasks = tasks.filter(t => selectedTasks.has(t.id));
-      console.log('Verification - tasks after update:', verifyTasks);
       
       // Also log the parent task to check its subtasks array
       const parentTask = tasks.find(t => t.id === selectedParentTaskId);
-      console.log('Parent task after conversion:', parentTask);
-      console.log('Parent task subtasks array:', parentTask?.subtasks);
       
       // Check again after a short delay to see if it updates
       setTimeout(() => {
         const updatedParentTask = tasks.find(t => t.id === selectedParentTaskId);
-        console.log('Parent task after delay:', updatedParentTask);
-        console.log('Parent task subtasks array after delay:', updatedParentTask?.subtasks);
-      }, 100);
+          }, 100);
       
       setSelectedTasks(new Set());
       setShowBulkActions(false);
@@ -605,7 +596,7 @@ export const TasksPageSupabase: React.FC = () => {
         key={editingTask?.id || 'new-task'}
         isOpen={showTaskForm}
         title={editingTask ? 'Edit Task' : 'Add New Task'}
-        size="2xl"
+        size="3xl"
         onClose={() => {
           setShowTaskForm(false);
           setEditingTask(null);

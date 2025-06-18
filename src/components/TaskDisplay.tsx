@@ -88,11 +88,6 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const dueDateStatus = getDueDateStatus(task.dueDate);
   const relativeTimeInfo = getRelativeTimeDisplay(task.dueDate, true); // Use weekend-relative display
   
-  // Debug date display
-  console.log(`Task ${task.title} - Raw dueDate:`, task.dueDate);
-  console.log(`Task ${task.title} - Parsed date:`, task.dueDate ? new Date(task.dueDate) : null);
-  console.log(`Task ${task.title} - Relative time info:`, relativeTimeInfo);
-  console.log(`Task ${task.title} - Due date status:`, dueDateStatus);
   
   const dueDateInfo = dueDateStatus ? {
     text: relativeTimeInfo?.combined || dueDateStatus.text,

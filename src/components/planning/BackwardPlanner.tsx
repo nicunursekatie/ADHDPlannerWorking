@@ -85,7 +85,7 @@ const BackwardPlanner: React.FC<BackwardPlannerProps> = ({
     
     // Create milestone tasks in reverse order (backward planning)
     let previousTaskId = null;
-    let subtaskIds: string[] = [];
+    const subtaskIds: string[] = [];
     
     // Sort milestones by date, furthest date first (backward planning)
     const sortedMilestones = [...milestones].sort((a, b) => 

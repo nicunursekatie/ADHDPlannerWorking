@@ -186,18 +186,15 @@ const TasksPageWithBulkOps: React.FC = () => {
   // };
   
   const handleOpenModal = (task?: Task) => {
-    console.log('handleOpenModal called with task:', task);
     if (task) {
       setEditingTask(task);
     } else {
       setEditingTask(null);
     }
     setIsModalOpen(true);
-    console.log('isModalOpen set to true');
   };
   
   const handleCloseModal = () => {
-    console.log('handleCloseModal called');
     setIsModalOpen(false);
     setEditingTask(null);
   };
@@ -1233,12 +1230,11 @@ const TasksPageWithBulkOps: React.FC = () => {
       </div>
       
       {/* Task Modal */}
-      {console.log('Rendering modal with isModalOpen:', isModalOpen)}
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         title={editingTask ? 'Edit Task' : 'Create New Task'}
-        size="2xl"
+        size="3xl"
       >
         <TaskFormWithDependencies
           task={editingTask || undefined}

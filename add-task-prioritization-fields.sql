@@ -1,8 +1,8 @@
 -- Add multi-dimensional prioritization fields to tasks table
 ALTER TABLE tasks
-ADD COLUMN IF NOT EXISTS urgency INTEGER CHECK (urgency >= 1 AND urgency <= 5),
+ADD COLUMN IF NOT EXISTS urgency TEXT CHECK (urgency IN ('today', 'tomorrow', 'week', 'month', 'someday')),
 ADD COLUMN IF NOT EXISTS importance INTEGER CHECK (importance >= 1 AND importance <= 5),
-ADD COLUMN IF NOT EXISTS emotional_weight INTEGER CHECK (emotional_weight >= 1 AND emotional_weight <= 5),
+ADD COLUMN IF NOT EXISTS emotional_weight TEXT CHECK (emotional_weight IN ('easy', 'neutral', 'stressful', 'dreading')),
 ADD COLUMN IF NOT EXISTS energy_required TEXT CHECK (energy_required IN ('low', 'medium', 'high')),
 ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP WITH TIME ZONE,
 ADD COLUMN IF NOT EXISTS recurring_task_id UUID REFERENCES recurring_tasks(id) ON DELETE SET NULL;

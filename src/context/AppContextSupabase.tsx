@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { Task, Project, Category, DailyPlan, WhatNowCriteria, JournalEntry, RecurringTask, AppSettings } from '../types';
 import { WorkSchedule, WorkShift, ShiftType, DEFAULT_SHIFTS } from '../types/WorkSchedule';
 import { DatabaseService } from '../services/database';
@@ -151,31 +151,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [lastWeeklyReviewDate, setLastWeeklyReviewDate] = useState<string | null>(null);
 
+  // Use ref to track current user ID to prevent unnecessary data loads
+  const currentUserIdRef = useRef<string | null>(null);
+  const isLoadingDataRef = useRef(false);
+
   // Auth state management
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const handleAuthStateChange = async (session: any) => {
+      const userId = session?.user?.id || null;
       setUser(session?.user ?? null);
-      if (session?.user) {
-        loadUserData(session.user.id);
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Only reload data on SIGNED_IN or SIGNED_OUT events
-      // Ignore TOKEN_REFRESHED to prevent unnecessary reloads
-      if (event === 'TOKEN_REFRESHED') {
-        return;
-      }
       
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        // Only load data if user ID changed
-        if (user?.id !== session.user.id) {
-          loadUserData(session.user.id);
+      if (userId && userId !== currentUserIdRef.current && !isLoadingDataRef.current) {
+        currentUserIdRef.current = userId;
+        isLoadingDataRef.current = true;
+        try {
+          await loadUserData(userId);
+        } finally {
+          isLoadingDataRef.current = false;
         }
-      } else {
+      } else if (!userId) {
+        currentUserIdRef.current = null;
         // Clear data when user signs out
         setTasks([]);
         setProjects([]);
@@ -186,7 +181,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setRecurringTasks([]);
         setSettings(DEFAULT_SETTINGS);
         setIsDataInitialized(false);
+        setIsLoading(false);
       }
+    };
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleAuthStateChange(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Only reload data on SIGNED_IN or SIGNED_OUT events
+      // Ignore TOKEN_REFRESHED to prevent unnecessary reloads
+      if (event === 'TOKEN_REFRESHED') {
+        return;
+      }
+      
+      handleAuthStateChange(session);
     });
 
     return () => subscription.unsubscribe();
@@ -217,7 +228,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     try {
       setIsLoading(true);
-      console.log('Loading data for userId:', userId);
       
       const [
         tasksData,
@@ -410,29 +420,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!user) throw new Error('User not authenticated');
     
     try {
-      console.log('AppContext.updateTask called with:', updatedTask);
-      console.log('DueDate in updatedTask:', updatedTask.dueDate);
-      console.log('Parent task ID in update:', updatedTask.parentTaskId);
-      
       const timestamp = new Date().toISOString();
       const taskWithTimestamp = {
         ...updatedTask,
         updatedAt: timestamp,
       };
       
-      console.log('Task with timestamp:', taskWithTimestamp);
-      console.log('DueDate in taskWithTimestamp:', taskWithTimestamp.dueDate);
-      
       const dbResult = await DatabaseService.updateTask(updatedTask.id, taskWithTimestamp, user.id);
-      console.log('DB update result:', dbResult);
-      console.log('DB result dueDate:', dbResult.dueDate);
       
       setTasks(prev => {
         const updatedTasks = prev.map(task => 
           task.id === updatedTask.id ? dbResult : task
         );
         const tasksWithSubtasks = computeSubtasks(updatedTasks);
-        console.log('Tasks after compute subtasks:', tasksWithSubtasks.find(t => t.id === updatedTask.id));
         return tasksWithSubtasks;
       });
     } catch (error) {
@@ -1024,7 +1024,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     let processedTitle = title.trim();
     let dueDate: string | null = null;
     let priority: 'low' | 'medium' | 'high' = 'medium';
-    let categoryIds: string[] = [];
+    const categoryIds: string[] = [];
     
     // First extract natural language dates
     const { cleanedText, date } = extractDateFromText(processedTitle);
@@ -1571,7 +1571,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       console.error('Error importing data:', error);
       return false;
     }
-  }, [user, supabase, loadUserData]);
+  }, [user, supabase]);
 
   const resetData = useCallback(async () => {
     if (!user) throw new Error('User not authenticated');

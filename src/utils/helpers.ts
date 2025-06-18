@@ -65,7 +65,7 @@ export const calculateDuration = (
     const endMinutes = parseInt(endTimeParts[0], 10) * 60 + parseInt(endTimeParts[1], 10);
     
     // Handle overnight blocks
-    let durationMinutes = endMinutes >= startMinutes ? 
+    const durationMinutes = endMinutes >= startMinutes ? 
       endMinutes - startMinutes : 
       (options?.allowOvernight ? (24 * 60) - startMinutes + endMinutes : 0);
     
