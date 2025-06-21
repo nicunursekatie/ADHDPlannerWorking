@@ -90,6 +90,8 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const dueDateStatus = getDueDateStatus(task.dueDate);
   const relativeTimeInfo = getRelativeTimeDisplay(task.dueDate, true); // Use weekend-relative display
   
+  // Check if task can be completed based on start date
+  const canComplete = !task.startDate || new Date(task.startDate) <= new Date();
   
   const dueDateInfo = dueDateStatus ? {
     text: relativeTimeInfo?.combined || dueDateStatus.text,
@@ -110,7 +112,9 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     <div 
       className={`
         group flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer overflow-hidden backdrop-blur-sm
-        ${task.completed 
+        ${!canComplete
+          ? 'bg-gray-100/50 border-gray-200/50 opacity-60'
+          : task.completed 
           ? 'bg-gray-50/90 border-gray-200/70 shadow-sm' 
           : task.emotionalWeight === 'easy' 
             ? 'bg-white/90 border-green-200/70 hover:border-green-300/80 hover:shadow-lg hover:bg-green-50/50'
@@ -121,7 +125,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             : task.emotionalWeight === 'dreading'
             ? 'bg-white/90 border-red-200/70 hover:border-red-300/80 hover:shadow-lg hover:bg-red-50/50'
             : 'bg-white/90 border-gray-200/70 hover:border-primary-300/80 hover:shadow-lg hover:bg-white/95 hover:backdrop-blur-md'}
-        transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5
+        transition-all duration-300 ${canComplete ? 'hover:scale-[1.02] hover:-translate-y-0.5' : ''}
       `}
       onClick={handleTaskClick}
     >
@@ -129,6 +133,11 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       <button
         onClick={(e) => {
           e.stopPropagation();
+          
+          // Don't allow completion if task hasn't started yet
+          if (!canComplete) {
+            return;
+          }
           
           // If completing the task, trigger celebration
           if (!task.completed) {
@@ -139,10 +148,14 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
           
           onToggle(task.id);
         }}
-        className="mt-0.5 flex-shrink-0"
+        className={`mt-0.5 flex-shrink-0 ${!canComplete ? 'cursor-not-allowed' : ''}`}
+        disabled={!canComplete}
+        title={!canComplete ? `This task starts on ${new Date(task.startDate!).toLocaleDateString()}` : undefined}
       >
         {task.completed ? (
           <CheckCircle2 className="w-5 h-5 text-success-600" />
+        ) : !canComplete ? (
+          <Circle className="w-5 h-5 text-gray-300" />
         ) : (
           <Circle className="w-5 h-5 text-text-muted hover:text-primary-600 transition-colors" />
         )}
@@ -263,6 +276,14 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                 </div>
               )}
               
+              {/* Start Date Indicator */}
+              {!canComplete && task.startDate && (
+                <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                  <Calendar className="w-3 h-3" />
+                  <span>Starts {new Date(task.startDate).toLocaleDateString()}</span>
+                </div>
+              )}
+              
               {/* Focus Session Indicator */}
               {currentSession && currentSession.taskId === task.id && (
                 <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
@@ -323,7 +344,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             )}
             
             {/* Start Working Button */}
-            {!task.completed && (
+            {!task.completed && canComplete && (
               currentSession && currentSession.taskId === task.id ? (
                 // Show stop button if this task is in focus
                 <button
