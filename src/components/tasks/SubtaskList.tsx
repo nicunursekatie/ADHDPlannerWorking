@@ -133,7 +133,12 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
                       
                       {/* Delete button */}
                       <button
-                        onClick={() => handleRemoveSubtask(subtask.id)}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleRemoveSubtask(subtask.id);
+                        }}
                         className="text-gray-400 hover:text-red-500"
                         title="Remove subtask"
                       >
