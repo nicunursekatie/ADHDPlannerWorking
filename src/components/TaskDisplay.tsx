@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle, Sparkles } from 'lucide-react';
+import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle, Sparkles, Play, Timer } from 'lucide-react';
 import { Task } from '../types';
 import { useAppContext } from '../context/AppContextSupabase';
 import { getDueDateStatus, getRelativeTimeDisplay } from '../utils/dateUtils';
@@ -49,8 +49,15 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     return () => clearInterval(timer);
   }, [task.id]);
 
-  // Check for focus session warnings when clicking on task
+  // Handle clicking on task - just open editor
   const handleTaskClick = () => {
+    onEdit(task);
+  };
+  
+  // Handle starting focus on a task
+  const handleStartFocus = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
     const currentSessionData = focusTracker.getCurrentSession();
     
     if (currentSessionData && currentSessionData.taskId !== task.id) {
@@ -58,23 +65,18 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       
       if (shouldWarn) {
         const currentDuration = focusTracker.getCurrentSessionDuration();
-        if (window.confirm(
+        if (!window.confirm(
           `You just started working on another task ${Math.round(currentDuration)} minutes ago. ` +
           `Stay focused on that task, or switch to "${task.title}"?`
         )) {
-          focusTracker.startFocus(task.id);
+          return;
         }
-        return;
       }
     }
     
     // Start focus tracking for this task
-    if (!currentSessionData || currentSessionData.taskId !== task.id) {
-      focusTracker.startFocus(task.id);
-      setCurrentSession(focusTracker.getCurrentSession());
-    }
-    
-    onEdit(task);
+    focusTracker.startFocus(task.id);
+    setCurrentSession(focusTracker.getCurrentSession());
   };
   
   // Get actual subtask objects, filtering out null/undefined IDs
@@ -253,7 +255,9 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
               )}
               
               {/* Finish Time Prediction */}
-              {!task.completed && timeEstimate.percentOfDayRemaining < 1 && (
+              {!task.completed && 
+               timeEstimate.percentOfDayRemaining < 1 && 
+               (!task.startDate || new Date(task.startDate) <= new Date()) && (
                 <div className="text-xs text-gray-500">
                   Done by {formatTimeOfDay(timeEstimate.finishTime)}
                 </div>
@@ -316,6 +320,36 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                 <Calendar className="w-4 h-4" />
                 <span>Add date</span>
               </button>
+            )}
+            
+            {/* Start Working Button */}
+            {!task.completed && (
+              currentSession && currentSession.taskId === task.id ? (
+                // Show stop button if this task is in focus
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    focusTracker.endFocus();
+                    setCurrentSession(null);
+                    setFocusTime(focusTracker.getTaskFocusTime(task.id));
+                  }}
+                  className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-all hover:scale-105 border border-transparent hover:border-red-200 dark:hover:border-red-700"
+                  title="Stop working on this task"
+                >
+                  <Timer className="w-4 h-4" />
+                  <span>Stop Working</span>
+                </button>
+              ) : (
+                // Show start button if not in focus
+                <button
+                  onClick={handleStartFocus}
+                  className="flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 px-3 py-1.5 rounded-lg transition-all hover:scale-105 border border-transparent hover:border-green-200 dark:hover:border-green-700"
+                  title="Start working on this task"
+                >
+                  <Play className="w-4 h-4" />
+                  <span>Start Working</span>
+                </button>
+              )
             )}
             
             {showDateEditor && (

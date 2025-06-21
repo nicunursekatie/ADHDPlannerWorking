@@ -327,6 +327,7 @@ const Dashboard: React.FC = () => {
       {/* PRIORITY #1: Due Today */}
       <Card
         id="due-today"
+        padding={tasksDueToday.length === 0 && overdueTasks.length === 0 ? 'sm' : 'lg'}
         title={
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
@@ -478,22 +479,20 @@ const Dashboard: React.FC = () => {
           ))}
           
           {tasksDueToday.length === 0 && overdueTasks.length === 0 && (
-            <div className="text-center py-12 text-success-600 dark:text-success-400">
-              <div className="w-20 h-20 bg-gradient-to-r from-success-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-10 h-10 text-success-600" />
+            <div className="text-center py-4 text-success-600 dark:text-success-400">
+              <div className="flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-success-600" />
+                <span className="text-sm font-medium">Nothing due today! 🎉</span>
               </div>
-              <h3 className="text-xl font-bold mb-2">Nothing due today! 🎉</h3>
-              <p className="text-success-500">You're ahead of the game. Time to relax or get ahead on tomorrow!</p>
             </div>
           )}
           
           {tasksDueToday.length === 0 && overdueTasks.length > 0 && (
-            <div className="text-center py-8 text-orange-600 dark:text-orange-400">
-              <div className="w-16 h-16 bg-gradient-to-r from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="w-8 h-8 text-red-600" />
+            <div className="text-center py-4 text-orange-600 dark:text-orange-400">
+              <div className="flex items-center justify-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-orange-600" />
+                <span className="text-sm font-medium">No new tasks today, but you have overdue items above!</span>
               </div>
-              <h3 className="text-lg font-bold mb-2">No new tasks today, but you have overdue items above!</h3>
-              <p className="text-orange-500">Focus on catching up first, then you'll be free! 💪</p>
             </div>
           )}
         </div>

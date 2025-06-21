@@ -18,6 +18,59 @@ import {
 } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek, getActionableTasks, getFutureTasks } from '../utils/helpers';
 
+// Utility function to group tasks by project and due date
+const groupTasksByProjectAndDueDate = (tasks: Task[], projects: any[]) => {
+  // Create a map for quick project lookup
+  const projectMap = new Map(projects.map(proj => [proj.id, proj]));
+  
+  // Group tasks by project
+  const tasksByProject = new Map<string, Task[]>();
+  
+  tasks.forEach(task => {
+    const projectKey = task.projectId || 'no-project';
+    if (!tasksByProject.has(projectKey)) {
+      tasksByProject.set(projectKey, []);
+    }
+    tasksByProject.get(projectKey)!.push(task);
+  });
+  
+  // Sort tasks within each project by due date
+  const sortedGroups = Array.from(tasksByProject.entries()).map(([projectId, projectTasks]) => {
+    const sortedTasks = [...projectTasks].sort((a, b) => {
+      // Tasks without due dates go to the end
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      
+      // Sort by due date
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    });
+    
+    const project = projectMap.get(projectId);
+    const projectName = projectId === 'no-project' 
+      ? 'No Project' 
+      : project?.name || 'Unknown Project';
+    
+    const projectColor = projectId === 'no-project' 
+      ? '#6B7280' 
+      : project?.color || '#6B7280';
+    
+    return {
+      projectId,
+      projectName,
+      projectColor,
+      tasks: sortedTasks
+    };
+  });
+  
+  // Sort projects alphabetically, but keep "No Project" at the end
+  return sortedGroups.sort((a, b) => {
+    if (a.projectId === 'no-project') return 1;
+    if (b.projectId === 'no-project') return -1;
+    return a.projectName.localeCompare(b.projectName);
+  });
+};
+
 interface BulkTaskCardProps {
   task: Task;
   isSelected: boolean;
@@ -581,7 +634,7 @@ export const TasksPageSupabase: React.FC = () => {
       )}
 
       {/* Tasks List */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {filteredTasks.length === 0 ? (
           <Empty 
             message="No tasks found" 
@@ -589,21 +642,45 @@ export const TasksPageSupabase: React.FC = () => {
             onAction={() => setShowTaskForm(true)}
           />
         ) : (
-          filteredTasks.map(task => (
-            <BulkTaskCard
-              key={task.id}
-              task={task}
-              isSelected={selectedTasks.has(task.id)}
-              onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
-              onEdit={(task) => {
-                setEditingTask(task);
-                setShowTaskForm(true);
-              }}
-              onDelete={handleDeleteTask}
-              onBreakdown={handleAIBreakdown}
-              showCheckbox={bulkActionsEnabled}
-            />
-          ))
+          (() => {
+            const groupedTasks = groupTasksByProjectAndDueDate(filteredTasks, projects);
+            return groupedTasks.map(group => (
+              <div key={group.projectId} className="space-y-3">
+                {/* Project Header */}
+                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: group.projectColor }}
+                  />
+                  <h3 className="font-semibold text-gray-800 text-lg">
+                    {group.projectName}
+                  </h3>
+                  <span className="text-sm text-gray-500 ml-auto">
+                    {group.tasks.length} task{group.tasks.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                
+                {/* Tasks in this project */}
+                <div className="space-y-3 ml-4">
+                  {group.tasks.map(task => (
+                    <BulkTaskCard
+                      key={task.id}
+                      task={task}
+                      isSelected={selectedTasks.has(task.id)}
+                      onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
+                      onEdit={(task) => {
+                        setEditingTask(task);
+                        setShowTaskForm(true);
+                      }}
+                      onDelete={handleDeleteTask}
+                      onBreakdown={handleAIBreakdown}
+                      showCheckbox={bulkActionsEnabled}
+                    />
+                  ))}
+                </div>
+              </div>
+            ));
+          })()
         )}
       </div>
 
