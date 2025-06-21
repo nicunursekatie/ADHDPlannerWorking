@@ -626,29 +626,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           </div>
         </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Start Date */}
-        <div>
-          <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Available From
-          </label>
-          <div className="flex items-center">
-            <Calendar size={18} className="text-green-400 dark:text-green-500 mr-2" />
-            <input
-              type="date"
-              id="startDate"
-              name="startDate"
-              value={formData.startDate || ''}
-              onChange={handleChange}
-              className="block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all sm:text-sm"
-              title="The earliest date this task can be started"
-            />
-          </div>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            When you can start this task
-          </p>
-        </div>
-        
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Due Date */}
         <div>
           <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -824,7 +802,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Advanced Options</h3>
             </div>
             <div className="flex items-center text-gray-500">
-              <span className="text-sm mr-2">Time, dependencies, tags, subtasks</span>
+              <span className="text-sm mr-2">Start date, dependencies, tags, subtasks</span>
               {showAdvanced ? 
                 <ChevronDown className="w-5 h-5 transform transition-transform group-hover:scale-110" /> : 
                 <ChevronRight className="w-5 h-5 transform transition-transform group-hover:scale-110" />
@@ -834,6 +812,34 @@ const TaskForm: React.FC<TaskFormProps> = ({
           
           <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showAdvanced ? 'max-h-[2000px] mt-6' : 'max-h-0'}`}>
             <div className="space-y-6">
+
+              {/* Start Date */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                  <Calendar className="w-5 h-5 mr-2 text-green-500" />
+                  Start Date
+                </h4>
+                <div>
+                  <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Available From
+                  </label>
+                  <div className="flex items-center">
+                    <Calendar size={18} className="text-green-400 dark:text-green-500 mr-2" />
+                    <input
+                      type="date"
+                      id="startDate"
+                      name="startDate"
+                      value={formData.startDate || ''}
+                      onChange={handleChange}
+                      className="block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all sm:text-sm"
+                      title="The earliest date this task can be started"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    When you can start this task - useful for tasks that can't begin until a specific date
+                  </p>
+                </div>
+              </div>
 
               {/* Dependencies Section */}
               <div>
