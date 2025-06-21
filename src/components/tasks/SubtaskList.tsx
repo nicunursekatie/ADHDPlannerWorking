@@ -15,7 +15,7 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
   existingSubtasks,
   onSubtasksChange
 }) => {
-  const { tasks, addTask, updateTask } = useAppContext();
+  const { tasks, addTask, updateTask, deleteTask } = useAppContext();
   const [expanded, setExpanded] = useState(true);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [newSubtaskTime, setNewSubtaskTime] = useState<number>(15);
@@ -72,8 +72,17 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
   };
   
   // Remove a subtask
-  const handleRemoveSubtask = (subtaskId: string) => {
-    onSubtasksChange(existingSubtasks.filter(id => id !== subtaskId));
+  const handleRemoveSubtask = async (subtaskId: string) => {
+    try {
+      // Delete the subtask from the database
+      await deleteTask(subtaskId);
+      
+      // Update the local state to remove the subtask ID
+      onSubtasksChange(existingSubtasks.filter(id => id !== subtaskId));
+    } catch (error) {
+      console.error('Error deleting subtask:', error);
+      // Optionally show an error message to the user
+    }
   };
   
   // Handle enter key on input
