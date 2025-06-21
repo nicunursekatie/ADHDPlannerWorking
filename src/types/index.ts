@@ -5,6 +5,7 @@ export interface Task {
   completed: boolean;
   archived: boolean;
   dueDate: string | null;
+  startDate: string | null; // When the task becomes available to start
   projectId: string | null;
   categoryIds: string[];
   parentTaskId: string | null;
@@ -26,6 +27,21 @@ export interface Task {
   updatedAt: string;
   completedAt?: string | null;
   recurringTaskId?: string | null;
+  
+  // Recurring task fields
+  isRecurring?: boolean;
+  recurrencePattern?: string;
+  recurrenceInterval?: number;
+  
+  // Project phase fields
+  projectPhase?: string;
+  phaseOrder?: number;
+  
+  // Additional fields
+  deletedAt?: string | null;
+  showSubtasks?: boolean;
+  braindumpSource?: string;
+  aiProcessed?: boolean;
   
   // Runtime computed fields (not stored in DB)
   subtasks?: string[]; // IDs of subtasks - computed from parent-child relationships

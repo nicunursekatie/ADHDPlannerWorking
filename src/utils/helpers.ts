@@ -116,6 +116,60 @@ export const getOverdueTasks = (tasks: Task[]): Task[] => {
   });
 };
 
+// Get tasks that are available to start (start date has passed or no start date)
+export const getAvailableTasks = (tasks: Task[]): Task[] => {
+  return tasks.filter((task) => {
+    if (task.completed || task.parentTaskId) return false;
+    
+    // If no start date is set, the task is available
+    if (!task.startDate) return true;
+    
+    // Check if start date has passed (task is available)
+    return isPastDate(task.startDate) || isToday(task.startDate);
+  });
+};
+
+// Get tasks that are not yet available (start date is in the future)
+export const getFutureTasks = (tasks: Task[]): Task[] => {
+  return tasks.filter((task) => {
+    if (task.completed || task.parentTaskId) return false;
+    
+    // Only include tasks with start dates in the future
+    if (!task.startDate) return false;
+    
+    const daysUntilStart = getDaysBetween(formatDateString(new Date()) || '', task.startDate);
+    if (daysUntilStart === null) return false;
+    
+    // Task is not available if start date is in the future
+    return daysUntilStart > 0;
+  });
+};
+
+// Get tasks that become available today
+export const getTasksAvailableToday = (tasks: Task[]): Task[] => {
+  return tasks.filter((task) => {
+    if (task.completed || task.parentTaskId) return false;
+    
+    // Only include tasks with start dates that are today
+    if (!task.startDate) return false;
+    
+    return isToday(task.startDate);
+  });
+};
+
+// Get actionable tasks (available and not completed)
+export const getActionableTasks = (tasks: Task[]): Task[] => {
+  return tasks.filter((task) => {
+    if (task.completed || task.archived || task.parentTaskId) return false;
+    
+    // If no start date is set, the task is actionable
+    if (!task.startDate) return true;
+    
+    // Check if start date has passed or is today (task is actionable)
+    return isPastDate(task.startDate) || isToday(task.startDate);
+  });
+};
+
 // Get tasks for a specific project
 export const getTasksByProject = (tasks: Task[], projectId: string): Task[] => {
   return tasks.filter((task) => task.projectId === projectId);

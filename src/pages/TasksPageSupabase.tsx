@@ -16,7 +16,7 @@ import {
   Trash2, CheckCircle2, Folder, FileArchive,
   ArrowUpDown, Clock, Star, Hash, FolderOpen, Tag
 } from 'lucide-react';
-import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek } from '../utils/helpers';
+import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek, getActionableTasks, getFutureTasks } from '../utils/helpers';
 
 interface BulkTaskCardProps {
   task: Task;
@@ -85,7 +85,7 @@ export const TasksPageSupabase: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showAIBreakdown, setShowAIBreakdown] = useState(false);
   const [aiBreakdownTask, setAiBreakdownTask] = useState<Task | null>(null);
-  const [filterBy, setFilterBy] = useState<'all' | 'completed' | 'active' | 'overdue' | 'today' | 'week' | 'project' | 'category' | 'archived'>('all');
+  const [filterBy, setFilterBy] = useState<'all' | 'completed' | 'active' | 'overdue' | 'today' | 'week' | 'actionable' | 'future' | 'project' | 'category' | 'archived'>('all');
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'created' | 'alphabetical' | 'energy' | 'estimated'>('dueDate');
@@ -138,6 +138,8 @@ export const TasksPageSupabase: React.FC = () => {
     if (filterBy === 'overdue') return getOverdueTasks([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
     if (filterBy === 'today') return getTasksDueToday([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
     if (filterBy === 'week') return getTasksDueThisWeek([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
+    if (filterBy === 'actionable') return getActionableTasks([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
+    if (filterBy === 'future') return getFutureTasks([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
     if (filterBy === 'project') return task.projectId === selectedProject && !task.archived && !task.deletedAt;
     if (filterBy === 'category') return task.categoryIds?.includes(selectedCategory) && !task.archived && !task.deletedAt;
     return true;
@@ -439,12 +441,19 @@ export const TasksPageSupabase: React.FC = () => {
       {/* Filters */}
       <Card className="mb-6 p-4">
         <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilterBy('all')}
               className={`px-3 py-1 rounded text-sm ${filterBy === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
             >
               All ({tasks.filter(t => !t.archived && !t.deletedAt).length})
+            </button>
+            <button
+              onClick={() => setFilterBy('actionable')}
+              className={`px-3 py-1 rounded text-sm ${filterBy === 'actionable' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              title="Tasks you can work on right now"
+            >
+              Actionable ({getActionableTasks(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
             </button>
             <button
               onClick={() => setFilterBy('active')}
@@ -463,6 +472,13 @@ export const TasksPageSupabase: React.FC = () => {
               className={`px-3 py-1 rounded text-sm ${filterBy === 'overdue' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
             >
               Overdue ({getOverdueTasks(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
+            </button>
+            <button
+              onClick={() => setFilterBy('future')}
+              className={`px-3 py-1 rounded text-sm ${filterBy === 'future' ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              title="Tasks that can't be started yet"
+            >
+              Future ({getFutureTasks(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
             </button>
           </div>
           

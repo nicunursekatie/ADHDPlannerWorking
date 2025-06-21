@@ -47,6 +47,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
     title: '',
     description: '',
     dueDate: null,
+    startDate: null,
     projectId: parentTask?.projectId || initialProjectId || null,
     categoryIds: [],
     parentTaskId: parentTask?.id || null,
@@ -158,6 +159,14 @@ const TaskForm: React.FC<TaskFormProps> = ({
       } else {
         // Store the date value as is without timezone conversion
         updateFormData(prev => ({ ...prev, dueDate: value }));
+      }
+    } else if (name === 'startDate') {
+      // If the value is empty, set to null
+      if (!value) {
+        updateFormData(prev => ({ ...prev, startDate: null }));
+      } else {
+        // Store the date value as is without timezone conversion
+        updateFormData(prev => ({ ...prev, startDate: value }));
       }
     } else if (name === 'estimatedMinutes') {
       // Handle number input - allow empty values and decimals
@@ -617,24 +626,51 @@ const TaskForm: React.FC<TaskFormProps> = ({
           </div>
         </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Start Date */}
+        <div>
+          <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Available From
+          </label>
+          <div className="flex items-center">
+            <Calendar size={18} className="text-green-400 dark:text-green-500 mr-2" />
+            <input
+              type="date"
+              id="startDate"
+              name="startDate"
+              value={formData.startDate || ''}
+              onChange={handleChange}
+              className="block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all sm:text-sm"
+              title="The earliest date this task can be started"
+            />
+          </div>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            When you can start this task
+          </p>
+        </div>
+        
         {/* Due Date */}
         <div>
           <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Due Date
           </label>
           <div className="flex items-center">
-            <Calendar size={18} className="text-purple-400 dark:text-purple-500 mr-2" />
+            <Calendar size={18} className="text-red-400 dark:text-red-500 mr-2" />
             <input
               type="date"
               id="dueDate"
               name="dueDate"
               value={formData.dueDate || ''}
               onChange={handleChange}
-              className="block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all sm:text-sm"
+              className="block w-full rounded-xl border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-red-500 focus:ring-red-500 transition-all sm:text-sm"
+              title="When this task must be completed"
             />
           </div>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            When this must be done
+          </p>
         </div>
+        
         {/* Project */}
         <div>
           <label htmlFor="project" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

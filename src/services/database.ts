@@ -21,6 +21,7 @@ export class DatabaseService {
       completed: dbTask.completed,
       archived: dbTask.archived,
       dueDate: dbTask.due_date ? (dbTask.due_date.includes('T') ? dbTask.due_date.split('T')[0] : dbTask.due_date) : null,
+      startDate: dbTask.start_date ? (dbTask.start_date.includes('T') ? dbTask.start_date.split('T')[0] : dbTask.start_date) : null,
       createdAt: dbTask.created_at,
       updatedAt: dbTask.updated_at,
       projectId: dbTask.project_id,
@@ -68,6 +69,14 @@ export class DatabaseService {
         dbTask.due_date = task.dueDate.split('T')[0];
       } else {
         dbTask.due_date = task.dueDate;
+      }
+    }
+    if (task.startDate !== undefined) {
+      // Ensure we only store the date part (YYYY-MM-DD) without timezone
+      if (task.startDate && task.startDate.includes('T')) {
+        dbTask.start_date = task.startDate.split('T')[0];
+      } else {
+        dbTask.start_date = task.startDate;
       }
     }
     if (task.createdAt !== undefined) dbTask.created_at = task.createdAt;
@@ -170,6 +179,7 @@ export class DatabaseService {
       completed: task.completed,
       archived: task.archived,
       due_date: task.dueDate,
+      start_date: task.startDate,
       created_at: task.createdAt,
       updated_at: task.updatedAt,
       project_id: task.projectId,
