@@ -65,19 +65,19 @@ const HeaderWithAuth: React.FC = () => {
           </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
+          <nav className="hidden md:flex items-center space-x-2">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all duration-200 hover:scale-105 ${
+                className={`inline-flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 hover:scale-105 border shadow-sm ${
                   isActive(item.path)
-                    ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg border-purple-400 hover:shadow-xl'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 dark:hover:from-purple-900/20 dark:hover:to-blue-900/20 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
                 }`}
               >
-                {item.icon}
-                <span className="ml-2">{item.label}</span>
+                <span className="text-lg">{item.icon}</span>
+                <span className="ml-2 tracking-wide">{item.label}</span>
               </Link>
             ))}
           </nav>

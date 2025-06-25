@@ -6,8 +6,9 @@ import { getDueDateStatus, getRelativeTimeDisplay } from '../utils/dateUtils';
 import { GuidedWalkthroughModal } from './tasks/GuidedWalkthroughModal';
 import { QuickDueDateEditor } from './tasks/QuickDueDateEditor';
 import { TaskDetailWizard } from './tasks/TaskDetailWizard';
+import { TimeTrackingDisplay } from './tasks/TimeTrackingDisplay';
 import { analyzeTaskCompleteness } from '../utils/taskCompleteness';
-import { triggerCelebration, addCelebrationPulse, showToastCelebration } from '../utils/celebrations';
+import { triggerCelebration, showToastCelebration } from '../utils/celebrations';
 import { getTimeContext, getTaskTimeEstimate, formatTimeRemaining, formatTimeOfDay, getUrgencyColor } from '../utils/timeAwareness';
 import { focusTracker } from '../utils/focusTracker';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji } from '../utils/taskPrioritization';
@@ -32,6 +33,8 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showDateEditor, setShowDateEditor] = useState(false);
   const [showDetailWizard, setShowDetailWizard] = useState(false);
+  // Note: TimeSpentModal is now handled at the page level to avoid container constraints
+  // const [showTimeSpentModal, setShowTimeSpentModal] = useState(false);
   const [, setCurrentTime] = useState(new Date());
   const [focusTime, setFocusTime] = useState(0);
   const [currentSession, setCurrentSession] = useState(focusTracker.getCurrentSession());
@@ -107,25 +110,28 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const timeContext = React.useMemo(() => getTimeContext(tasks), [tasks]);
   const timeEstimate = React.useMemo(() => getTaskTimeEstimate(task, timeContext), [task, timeContext]);
   
+  // Time tracking handlers are now at the page level
+  
   return (
     <>
     <div 
       className={`
-        group flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer overflow-hidden backdrop-blur-sm
+        group flex items-start gap-4 p-5 rounded-2xl border cursor-pointer overflow-hidden backdrop-blur-sm
+        shadow-md hover:shadow-xl transition-all duration-300
         ${!canComplete
-          ? 'bg-gray-100/50 border-gray-200/50 opacity-60'
+          ? 'bg-gray-100/60 border-gray-300/40 opacity-60'
           : task.completed 
-          ? 'bg-gray-50/90 border-gray-200/70 shadow-sm' 
+          ? 'bg-gray-50/95 border-gray-300/60 shadow-sm' 
           : task.emotionalWeight === 'easy' 
-            ? 'bg-white/90 border-green-200/70 hover:border-green-300/80 hover:shadow-lg hover:bg-green-50/50'
+            ? 'bg-gradient-to-br from-green-50/90 to-emerald-50/90 border-green-300/50 hover:border-green-400/70 hover:shadow-xl hover:shadow-green-100/50'
             : task.emotionalWeight === 'neutral'
-            ? 'bg-white/90 border-yellow-200/70 hover:border-yellow-300/80 hover:shadow-lg hover:bg-yellow-50/50'
+            ? 'bg-gradient-to-br from-blue-50/90 to-indigo-50/90 border-blue-300/50 hover:border-blue-400/70 hover:shadow-xl hover:shadow-blue-100/50'
             : task.emotionalWeight === 'stressful'
-            ? 'bg-white/90 border-orange-200/70 hover:border-orange-300/80 hover:shadow-lg hover:bg-orange-50/50'
+            ? 'bg-gradient-to-br from-orange-50/90 to-amber-50/90 border-orange-300/50 hover:border-orange-400/70 hover:shadow-xl hover:shadow-orange-100/50'
             : task.emotionalWeight === 'dreading'
-            ? 'bg-white/90 border-red-200/70 hover:border-red-300/80 hover:shadow-lg hover:bg-red-50/50'
-            : 'bg-white/90 border-gray-200/70 hover:border-primary-300/80 hover:shadow-lg hover:bg-white/95 hover:backdrop-blur-md'}
-        transition-all duration-300 ${canComplete ? 'hover:scale-[1.02] hover:-translate-y-0.5' : ''}
+            ? 'bg-gradient-to-br from-red-50/90 to-pink-50/90 border-red-300/50 hover:border-red-400/70 hover:shadow-xl hover:shadow-red-100/50'
+            : 'bg-gradient-to-br from-white/95 to-gray-50/95 border-gray-300/50 hover:border-primary-400/70 hover:shadow-xl hover:shadow-primary-100/50'}
+        ${canComplete ? 'hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98]' : ''}
       `}
       onClick={handleTaskClick}
     >
@@ -133,31 +139,43 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       <button
         onClick={(e) => {
           e.stopPropagation();
+          console.log('[TaskDisplay] Checkbox clicked', {
+            taskId: task.id,
+            taskTitle: task.title,
+            completed: task.completed,
+            estimatedMinutes: task.estimatedMinutes,
+            canComplete
+          });
           
           // Don't allow completion if task hasn't started yet
           if (!canComplete) {
+            console.log('[TaskDisplay] Task cannot be completed yet (start date in future)');
             return;
           }
           
-          // If completing the task, trigger celebration
+          // If completing the task
           if (!task.completed) {
+            // Time tracking is now handled at the page level
+            console.log('[TaskDisplay] Completing task (time tracking handled by parent)');
             triggerCelebration();
             showToastCelebration(`"${task.title}" completed! 🎉`);
-            addCelebrationPulse(e.currentTarget);
+            onToggle(task.id);
+          } else {
+            // Uncompleting a task
+            console.log('[TaskDisplay] Uncompleting task');
+            onToggle(task.id);
           }
-          
-          onToggle(task.id);
         }}
-        className={`mt-0.5 flex-shrink-0 ${!canComplete ? 'cursor-not-allowed' : ''}`}
+        className={`mt-1 flex-shrink-0 p-1 rounded-full hover:bg-white/80 transition-all duration-200 ${!canComplete ? 'cursor-not-allowed' : 'hover:scale-110'}`}
         disabled={!canComplete}
         title={!canComplete ? `This task starts on ${new Date(task.startDate!).toLocaleDateString()}` : undefined}
       >
         {task.completed ? (
-          <CheckCircle2 className="w-5 h-5 text-success-600" />
+          <CheckCircle2 className="w-6 h-6 text-green-600 drop-shadow-sm" />
         ) : !canComplete ? (
-          <Circle className="w-5 h-5 text-gray-300" />
+          <Circle className="w-6 h-6 text-gray-400" />
         ) : (
-          <Circle className="w-5 h-5 text-text-muted hover:text-primary-600 transition-colors" />
+          <Circle className="w-6 h-6 text-gray-400 hover:text-primary-600 hover:scale-110 transition-all duration-200" />
         )}
       </button>
       
@@ -167,8 +185,8 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
           <div className="flex-1">
             <div className="flex items-start gap-2 flex-wrap">
               <h3 className={`
-                text-base font-semibold tracking-tight whitespace-normal break-words
-                ${task.completed ? 'text-text-tertiary opacity-75' : 'text-text-primary'}
+                text-lg font-bold tracking-tight leading-relaxed whitespace-normal break-words
+                ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}
               `}>
                 {task.title}
               </h3>
@@ -186,48 +204,112 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                 </button>
               )}
             </div>
+            
+            {/* Time Tracking Information for Completed Tasks */}
+            {task.completed && (task.actualMinutesSpent || task.estimatedMinutes || task.completedAt) && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-800">Task Completed</span>
+                  {task.completedAt && (
+                    <span className="text-xs text-green-600">
+                      {new Date(task.completedAt).toLocaleDateString()} at {new Date(task.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                </div>
+                
+                {(task.actualMinutesSpent || task.estimatedMinutes) && (
+                  <TimeTrackingDisplay
+                    estimatedMinutes={task.estimatedMinutes}
+                    actualMinutesSpent={task.actualMinutesSpent}
+                    completedAt={task.completedAt}
+                    size="md"
+                    showLabel={true}
+                  />
+                )}
+                
+                {/* Additional completion details */}
+                <div className="mt-2 flex items-center gap-3 text-xs text-green-700">
+                  {task.actualMinutesSpent && (
+                    <span className="font-medium">
+                      Total time: {task.actualMinutesSpent < 60 
+                        ? `${task.actualMinutesSpent} minutes` 
+                        : `${Math.floor(task.actualMinutesSpent / 60)}h ${task.actualMinutesSpent % 60}m`
+                      }
+                    </span>
+                  )}
+                  {task.estimatedMinutes && task.actualMinutesSpent && (
+                    <span>
+                      {task.actualMinutesSpent < task.estimatedMinutes 
+                        ? `🎉 Finished ${Math.round((1 - task.actualMinutesSpent / task.estimatedMinutes) * 100)}% faster!`
+                        : task.actualMinutesSpent > task.estimatedMinutes * 1.5
+                        ? `⏰ Took ${Math.round((task.actualMinutesSpent / task.estimatedMinutes - 1) * 100)}% longer`
+                        : `✅ Close to estimate`
+                      }
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+            
             {/* ADHD-Friendly Priority Indicators */}
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <div className="flex items-center gap-3 mt-3 flex-wrap">
               {/* Urgency */}
               {task.urgency && (
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-medium">
-                  <span className="text-sm" title={`Urgency: ${task.urgency}`}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border
+                  ${task.urgency === 'today' 
+                    ? 'bg-red-100 text-red-800 border-red-200'
+                    : task.urgency === 'tomorrow'
+                    ? 'bg-orange-100 text-orange-800 border-orange-200'
+                    : task.urgency === 'week'
+                    ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                    : task.urgency === 'month'
+                    ? 'bg-blue-100 text-blue-800 border-blue-200'
+                    : 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                  <span className="text-base" title={`Urgency: ${task.urgency}`}>
                     {getUrgencyEmoji(task.urgency)}
                   </span>
-                  <span className="text-gray-600 dark:text-gray-400 capitalize">
-                    {task.urgency === 'today' ? 'Today' : 
-                     task.urgency === 'week' ? 'This Week' : 
-                     task.urgency === 'month' ? 'This Month' : 'Someday'}
+                  <span className="uppercase tracking-wide">
+                    {task.urgency === 'today' ? 'TODAY' : 
+                     task.urgency === 'week' ? 'THIS WEEK' : 
+                     task.urgency === 'month' ? 'THIS MONTH' : 'SOMEDAY'}
                   </span>
                 </div>
               )}
               
               {/* Emotional Weight */}
               {task.emotionalWeight && (
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                  task.emotionalWeight === 'easy' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300' :
-                  task.emotionalWeight === 'neutral' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' :
-                  task.emotionalWeight === 'stressful' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300' :
-                  'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'
-                }`}>
-                  <span className="text-sm" title={`Emotional Weight: ${task.emotionalWeight}`}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border
+                  ${task.emotionalWeight === 'easy' 
+                    ? 'bg-green-100 text-green-800 border-green-200' 
+                    : task.emotionalWeight === 'neutral' 
+                    ? 'bg-blue-100 text-blue-800 border-blue-200' 
+                    : task.emotionalWeight === 'stressful' 
+                    ? 'bg-orange-100 text-orange-800 border-orange-200' 
+                    : 'bg-red-100 text-red-800 border-red-200'}`}>
+                  <span className="text-base" title={`Emotional Weight: ${task.emotionalWeight}`}>
                     {getEmotionalWeightEmoji(task.emotionalWeight)}
                   </span>
-                  <span className="capitalize">
-                    {task.emotionalWeight === 'easy' ? 'Easy' : 
-                     task.emotionalWeight === 'neutral' ? 'Neutral' : 
-                     task.emotionalWeight === 'stressful' ? 'Stressful' : 'Dreading'}
+                  <span className="uppercase tracking-wide">
+                    {task.emotionalWeight === 'easy' ? 'EASY' : 
+                     task.emotionalWeight === 'neutral' ? 'NEUTRAL' : 
+                     task.emotionalWeight === 'stressful' ? 'STRESSFUL' : 'DREADING'}
                   </span>
                 </div>
               )}
               
               {/* Energy Required */}
               {task.energyRequired && (
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-medium">
-                  <span className="text-sm" title={`Energy Required: ${task.energyRequired}`}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border
+                  ${task.energyRequired === 'low' 
+                    ? 'bg-green-100 text-green-800 border-green-200'
+                    : task.energyRequired === 'medium'
+                    ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                    : 'bg-red-100 text-red-800 border-red-200'}`}>
+                  <span className="text-base" title={`Energy Required: ${task.energyRequired}`}>
                     {getEnergyRequiredEmoji(task.energyRequired)}
                   </span>
-                  <span className="capitalize">{task.energyRequired}</span>
+                  <span className="uppercase tracking-wide">{task.energyRequired} ENERGY</span>
                 </div>
               )}
               
@@ -323,7 +405,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                   e.stopPropagation();
                   setShowDateEditor(!showDateEditor);
                 }}
-                className={`flex items-center gap-1.5 text-sm font-medium ${dueDateInfo.className} hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded-lg transition-all hover:scale-105 border border-transparent hover:border-gray-200 dark:hover:border-gray-700`}
+                className={`flex items-center gap-2 text-sm font-bold ${dueDateInfo.className} hover:bg-white/90 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 hover:border-gray-300 active:scale-95`}
                 title="Click to change due date"
               >
                 <div className="w-4 h-4">{dueDateInfo.icon}</div>
@@ -335,7 +417,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                   e.stopPropagation();
                   setShowDateEditor(!showDateEditor);
                 }}
-                className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-3 py-1.5 rounded-lg transition-all hover:scale-105 border border-transparent hover:border-purple-200 dark:hover:border-purple-700"
+                className="flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-purple-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 border-gray-300 hover:border-purple-400 active:scale-95"
                 title="Add due date"
               >
                 <Calendar className="w-4 h-4" />
@@ -354,7 +436,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                     setCurrentSession(null);
                     setFocusTime(focusTracker.getTaskFocusTime(task.id));
                   }}
-                  className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1.5 rounded-lg transition-all hover:scale-105 border border-transparent hover:border-red-200 dark:hover:border-red-700"
+                  className="flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-md active:scale-95"
                   title="Stop working on this task"
                 >
                   <Timer className="w-4 h-4" />
@@ -364,7 +446,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                 // Show start button if not in focus
                 <button
                   onClick={handleStartFocus}
-                  className="flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 px-3 py-1.5 rounded-lg transition-all hover:scale-105 border border-transparent hover:border-green-200 dark:hover:border-green-700"
+                  className="flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-md active:scale-95"
                   title="Start working on this task"
                 >
                   <Play className="w-4 h-4" />
@@ -482,13 +564,15 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             
             {/* Expanded subtasks */}
             {isExpanded && (
-              <div className="mt-2 ml-6 space-y-2">
+              <div className="mt-4 ml-8 space-y-3 pl-4 border-l-2 border-purple-200">
                 {subtasks.map(subtask => (
                   <div 
                     key={subtask.id}
-                    className={`flex items-start gap-2 p-2 rounded-xl ${
-                      subtask.completed ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-purple-50 dark:bg-purple-900/20'
-                    } transition-all hover:scale-[1.01]`}
+                    className={`flex items-start gap-3 p-3 rounded-xl border shadow-sm transition-all hover:shadow-md ${
+                      subtask.completed 
+                        ? 'bg-gray-50/80 border-gray-200 opacity-75' 
+                        : 'bg-white border-purple-200 hover:border-purple-300'
+                    }`}
                   >
                     <button
                       onClick={(e) => {
@@ -585,6 +669,8 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
         }
       }}
     />
+    
+    {/* Time Spent Modal is now handled at the page level to avoid container constraints */}
     </>
   );
 };

@@ -26,6 +26,7 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
   completedAt?: string | null;
+  actualMinutesSpent?: number | null; // Actual time spent on the task
   recurringTaskId?: string | null;
   
   // Recurring task fields

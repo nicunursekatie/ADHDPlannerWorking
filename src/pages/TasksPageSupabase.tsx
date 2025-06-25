@@ -17,6 +17,9 @@ import {
   ArrowUpDown, Clock, Star, Hash, FolderOpen, Tag
 } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek, getActionableTasks, getFutureTasks } from '../utils/helpers';
+import { TimeSpentModal } from '../components/tasks/TimeSpentModal';
+import { triggerCelebration, showToastCelebration } from '../utils/celebrations';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 
 // Utility function to group tasks by project and due date
 const groupTasksByProjectAndDueDate = (tasks: Task[], projects: any[]) => {
@@ -78,6 +81,7 @@ interface BulkTaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onBreakdown?: (task: Task) => void;
+  onToggle: (taskId: string) => void;
   showCheckbox: boolean;
 }
 
@@ -88,9 +92,9 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
   onEdit,
   onDelete,
   onBreakdown,
+  onToggle,
   showCheckbox
 }) => {
-  const { updateTask } = useAppContext();
   
   return (
     <div className="relative">
@@ -110,7 +114,7 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
       <div className={showCheckbox ? "ml-6" : ""}>
         <TaskDisplay
           task={task}
-          onToggle={(taskId) => updateTask({ ...task, completed: !task.completed })}
+          onToggle={onToggle}
           onEdit={onEdit}
           onDelete={onDelete}
           onBreakdown={onBreakdown}
@@ -129,6 +133,7 @@ export const TasksPageSupabase: React.FC = () => {
     addTask, 
     updateTask, 
     deleteTask,
+    completeTask,
     archiveCompletedTasks,
     bulkConvertToSubtasks,
     isLoading 
@@ -147,6 +152,10 @@ export const TasksPageSupabase: React.FC = () => {
   
   // Bulk operations state
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
+  
+  // Time tracking modal state
+  const [showTimeSpentModal, setShowTimeSpentModal] = useState(false);
+  const [taskBeingCompleted, setTaskBeingCompleted] = useState<Task | null>(null);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [bulkActionsEnabled, setBulkActionsEnabled] = useState(false);
   const [showConvertToSubtasksModal, setShowConvertToSubtasksModal] = useState(false);
@@ -271,6 +280,83 @@ export const TasksPageSupabase: React.FC = () => {
   const handleAIBreakdown = (task: Task) => {
     setAiBreakdownTask(task);
     setShowAIBreakdown(true);
+  };
+
+  // Custom task completion handler that shows time tracking modal
+  const handleTaskToggle = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    console.log('[TasksPageSupabase] handleTaskToggle called', {
+      taskId,
+      taskTitle: task.title,
+      completed: task.completed
+    });
+    
+    if (!task.completed) {
+      // Show time tracking modal when completing a task
+      console.log('[TasksPageSupabase] Showing time spent modal for task completion');
+      setTaskBeingCompleted(task);
+      setShowTimeSpentModal(true);
+    } else {
+      // Uncompleting a task - do it directly
+      console.log('[TasksPageSupabase] Uncompleting task');
+      completeTask(taskId);
+    }
+  };
+  
+  // Handle time tracking modal confirm
+  const handleTimeSpentConfirm = async (actualMinutes: number) => {
+    if (!taskBeingCompleted) return;
+    
+    console.log('[TasksPageSupabase] handleTimeSpentConfirm called', {
+      taskId: taskBeingCompleted.id,
+      actualMinutes
+    });
+    
+    const timestamp = new Date().toISOString();
+    
+    // Update the task with both completion and time spent in one operation
+    await updateTask({
+      ...taskBeingCompleted,
+      actualMinutesSpent: actualMinutes,
+      completed: true,
+      completedAt: timestamp,
+      updatedAt: timestamp
+    });
+    
+    // Trigger celebration
+    triggerCelebration();
+    showToastCelebration(`"${taskBeingCompleted.title}" completed! 🎉`);
+    
+    // Close modal and clear state
+    setShowTimeSpentModal(false);
+    setTaskBeingCompleted(null);
+  };
+  
+  // Handle time tracking modal skip
+  const handleTimeSpentSkip = async () => {
+    if (!taskBeingCompleted) return;
+    
+    console.log('[TasksPageSupabase] handleTimeSpentSkip called, completing without time tracking');
+    
+    const timestamp = new Date().toISOString();
+    
+    // Complete the task without recording time in one operation
+    await updateTask({
+      ...taskBeingCompleted,
+      completed: true,
+      completedAt: timestamp,
+      updatedAt: timestamp
+    });
+    
+    // Trigger celebration
+    triggerCelebration();
+    showToastCelebration(`"${taskBeingCompleted.title}" completed! 🎉`);
+    
+    // Close modal and clear state
+    setShowTimeSpentModal(false);
+    setTaskBeingCompleted(null);
   };
 
   const handleTaskSelect = (taskId: string, selected: boolean) => {
@@ -473,8 +559,9 @@ export const TasksPageSupabase: React.FC = () => {
           <Button
             onClick={() => setShowTaskForm(true)}
             variant="primary"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-lg px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border-0"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-5 h-5 mr-2" />
             Add Task
           </Button>
         </div>
@@ -482,7 +569,13 @@ export const TasksPageSupabase: React.FC = () => {
 
       {/* Quick Capture */}
       {showQuickCapture && (
-        <Card className="mb-6 p-4">
+        <Card className="mb-8 p-6 bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 shadow-lg">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <Plus className="w-5 h-5 text-blue-600" />
+              Quick Add Task
+            </h3>
+          </div>
           <QuickCapture
             onAdd={handleAddTask}
             ref={quickCaptureRef}
@@ -525,6 +618,16 @@ export const TasksPageSupabase: React.FC = () => {
               className={`px-3 py-1 rounded text-sm ${filterBy === 'overdue' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
             >
               Overdue ({getOverdueTasks(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
+            </button>
+            <button
+              onClick={() => setFilterBy('today')}
+              className={`px-4 py-2 rounded-lg text-sm font-bold shadow-md transition-all duration-200 hover:scale-105 ${
+                filterBy === 'today' 
+                  ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg' 
+                  : 'bg-gradient-to-r from-red-100 to-orange-100 text-red-800 hover:from-red-200 hover:to-orange-200'
+              }`}
+            >
+              🔥 TODAY ({getTasksDueToday(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
             </button>
             <button
               onClick={() => setFilterBy('future')}
@@ -634,7 +737,7 @@ export const TasksPageSupabase: React.FC = () => {
       )}
 
       {/* Tasks List */}
-      <div className="space-y-6">
+      <div className="space-y-8">
         {filteredTasks.length === 0 ? (
           <Empty 
             message="No tasks found" 
@@ -645,37 +748,39 @@ export const TasksPageSupabase: React.FC = () => {
           (() => {
             const groupedTasks = groupTasksByProjectAndDueDate(filteredTasks, projects);
             return groupedTasks.map(group => (
-              <div key={group.projectId} className="space-y-3">
+              <div key={group.projectId} className="space-y-4">
                 {/* Project Header */}
-                <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <div className="flex items-center gap-3 pb-3 border-b-2 border-gray-200">
                   <div 
-                    className="w-3 h-3 rounded-full" 
+                    className="w-4 h-4 rounded-full shadow-sm" 
                     style={{ backgroundColor: group.projectColor }}
                   />
-                  <h3 className="font-semibold text-gray-800 text-lg">
+                  <h2 className="font-bold text-gray-900 text-xl tracking-tight">
                     {group.projectName}
-                  </h3>
-                  <span className="text-sm text-gray-500 ml-auto">
+                  </h2>
+                  <span className="text-sm text-gray-600 ml-auto bg-gray-100 px-3 py-1 rounded-full font-medium">
                     {group.tasks.length} task{group.tasks.length !== 1 ? 's' : ''}
                   </span>
                 </div>
                 
                 {/* Tasks in this project */}
-                <div className="space-y-3 ml-4">
+                <div className="space-y-4 ml-6">
                   {group.tasks.map(task => (
-                    <BulkTaskCard
-                      key={task.id}
-                      task={task}
-                      isSelected={selectedTasks.has(task.id)}
-                      onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
-                      onEdit={(task) => {
-                        setEditingTask(task);
-                        setShowTaskForm(true);
-                      }}
-                      onDelete={handleDeleteTask}
-                      onBreakdown={handleAIBreakdown}
-                      showCheckbox={bulkActionsEnabled}
-                    />
+                    <ErrorBoundary key={task.id}>
+                      <BulkTaskCard
+                        task={task}
+                        isSelected={selectedTasks.has(task.id)}
+                        onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
+                        onEdit={(task) => {
+                          setEditingTask(task);
+                          setShowTaskForm(true);
+                        }}
+                        onDelete={handleDeleteTask}
+                        onBreakdown={handleAIBreakdown}
+                        onToggle={handleTaskToggle}
+                        showCheckbox={bulkActionsEnabled}
+                      />
+                    </ErrorBoundary>
                   ))}
                 </div>
               </div>
@@ -804,6 +909,21 @@ export const TasksPageSupabase: React.FC = () => {
             </div>
           </div>
         </Modal>
+      )}
+      
+      {/* Time Spent Modal - rendered at top level to avoid container constraints */}
+      {taskBeingCompleted && (
+        <TimeSpentModal
+          isOpen={showTimeSpentModal}
+          onClose={() => {
+            setShowTimeSpentModal(false);
+            setTaskBeingCompleted(null);
+          }}
+          taskTitle={taskBeingCompleted.title}
+          estimatedMinutes={taskBeingCompleted.estimatedMinutes}
+          onConfirm={handleTimeSpentConfirm}
+          onSkip={handleTimeSpentSkip}
+        />
       )}
     </div>
   );

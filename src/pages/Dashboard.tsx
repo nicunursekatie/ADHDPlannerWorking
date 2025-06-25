@@ -36,6 +36,9 @@ import { getIncompleteTasks } from '../utils/taskCompleteness';
 import { TaskDetailWizard } from '../components/tasks/TaskDetailWizard';
 import { getTimeContext, formatTimeRemaining, formatTimeOfDay, getUrgencyColor } from '../utils/timeAwareness';
 import { focusTracker } from '../utils/focusTracker';
+import { TimeSpentModal } from '../components/tasks/TimeSpentModal';
+import { triggerCelebration, showToastCelebration } from '../utils/celebrations';
+import TimeTrackingAnalytics from '../components/analytics/TimeTrackingAnalytics';
 
 const Dashboard: React.FC = () => {
   const {
@@ -47,6 +50,7 @@ const Dashboard: React.FC = () => {
     initializeSampleData,
     deleteTask,
     updateTask,
+    completeTask,
     needsWeeklyReview,
     getLastWeeklyReviewDate
   } = useAppContext();
@@ -60,6 +64,10 @@ const Dashboard: React.FC = () => {
   const [recentlyReviewedTaskIds, setRecentlyReviewedTaskIds] = useState<Set<string>>(new Set());
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showHyperfocusAlert, setShowHyperfocusAlert] = useState(false);
+  
+  // Time tracking modal state
+  const [showTimeSpentModal, setShowTimeSpentModal] = useState(false);
+  const [taskBeingCompleted, setTaskBeingCompleted] = useState<Task | null>(null);
   
   // Check if weekly review is needed
   useEffect(() => {
@@ -100,6 +108,112 @@ const Dashboard: React.FC = () => {
 
   // Time awareness context
   const timeContext = React.useMemo(() => getTimeContext(tasks), [tasks, currentTime]);
+  
+  // Custom task completion handler that shows time tracking modal
+  const handleTaskToggle = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    console.log('[Dashboard] handleTaskToggle called', {
+      taskId,
+      taskTitle: task.title,
+      completed: task.completed
+    });
+    
+    if (!task.completed) {
+      // Show time tracking modal when completing a task
+      console.log('[Dashboard] Showing time spent modal for task completion');
+      setTaskBeingCompleted(task);
+      setShowTimeSpentModal(true);
+    } else {
+      // Uncompleting a task - do it directly
+      console.log('[Dashboard] Uncompleting task');
+      completeTask(taskId);
+    }
+  };
+  
+  // Handle time tracking modal confirm
+  const handleTimeSpentConfirm = async (actualMinutes: number) => {
+    if (!taskBeingCompleted) return;
+    
+    console.log('[Dashboard] handleTimeSpentConfirm called', {
+      taskId: taskBeingCompleted.id,
+      actualMinutes
+    });
+    
+    const timestamp = new Date().toISOString();
+    
+    // Update the task with both completion and time spent in one operation
+    const updatedTask = {
+      ...taskBeingCompleted,
+      actualMinutesSpent: actualMinutes,
+      completed: true,
+      completedAt: timestamp,
+      updatedAt: timestamp
+    };
+    
+    console.log('[Dashboard] Updating task with:', {
+      taskId: updatedTask.id,
+      completed: updatedTask.completed,
+      actualMinutesSpent: updatedTask.actualMinutesSpent,
+      completedAt: updatedTask.completedAt
+    });
+    
+    try {
+      await updateTask(updatedTask);
+      console.log('[Dashboard] Task update completed successfully');
+      
+      // Double-check: log the current task state
+      setTimeout(() => {
+        const currentTask = tasks.find(t => t.id === taskBeingCompleted.id);
+        console.log('[Dashboard] Task state after update:', {
+          taskId: currentTask?.id,
+          completed: currentTask?.completed,
+          actualMinutesSpent: currentTask?.actualMinutesSpent,
+          completedAt: currentTask?.completedAt
+        });
+      }, 100);
+      
+    } catch (error) {
+      console.error('[Dashboard] Error updating task:', error);
+      // Fallback: try using completeTask if updateTask fails
+      console.log('[Dashboard] Falling back to completeTask');
+      await completeTask(taskBeingCompleted.id);
+    }
+    
+    // Trigger celebration
+    triggerCelebration();
+    showToastCelebration(`"${taskBeingCompleted.title}" completed! 🎉`);
+    
+    // Close modal and clear state
+    setShowTimeSpentModal(false);
+    setTaskBeingCompleted(null);
+  };
+  
+  // Handle time tracking modal skip
+  const handleTimeSpentSkip = async () => {
+    if (!taskBeingCompleted) return;
+    
+    console.log('[Dashboard] handleTimeSpentSkip called, completing without time tracking');
+    
+    const timestamp = new Date().toISOString();
+    
+    // Complete the task without recording time in one operation
+    await updateTask({
+      ...taskBeingCompleted,
+      completed: true,
+      completedAt: timestamp,
+      updatedAt: timestamp
+    });
+    
+    // Trigger celebration
+    triggerCelebration();
+    showToastCelebration(`"${taskBeingCompleted.title}" completed! 🎉`);
+    
+    // Close modal and clear state
+    setShowTimeSpentModal(false);
+    setTaskBeingCompleted(null);
+  };
   
   if (isLoading) {
     return (
@@ -199,6 +313,14 @@ const Dashboard: React.FC = () => {
           >
             📊 Stats
           </button>
+          {tasks.some(task => task.completed && task.actualMinutesSpent) && (
+            <button
+              onClick={() => document.getElementById('time-tracking')?.scrollIntoView({ behavior: 'smooth' })}
+              className="px-4 py-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-xl font-semibold text-sm hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors whitespace-nowrap"
+            >
+              ⏱️ Time Insights
+            </button>
+          )}
         </div>
       </div>
 
@@ -387,43 +509,7 @@ const Dashboard: React.FC = () => {
             <div key={task.id} className="animate-fadeIn border-l-4 border-red-500 pl-2 bg-red-50/50 rounded-r-xl" style={{ animationDelay: `${index * 0.1}s` }}>
               <TaskDisplay
                 task={task}
-                onToggle={() => {
-                  // Create clean update object without computed fields
-                  const updateData = {
-                    id: task.id,
-                    title: task.title,
-                    description: task.description,
-                    completed: !task.completed,
-                    archived: task.archived,
-                    dueDate: task.dueDate,
-                    projectId: task.projectId,
-                    categoryIds: task.categoryIds,
-                    parentTaskId: task.parentTaskId,
-                    priority: task.priority,
-                    energyLevel: task.energyLevel,
-                    size: task.size,
-                    estimatedMinutes: task.estimatedMinutes,
-                    createdAt: task.createdAt,
-                    updatedAt: task.updatedAt,
-                    tags: task.tags,
-                    isRecurring: task.isRecurring,
-                    recurrencePattern: task.recurrencePattern,
-                    recurrenceInterval: task.recurrenceInterval,
-                    recurringTaskId: task.recurringTaskId,
-                    projectPhase: task.projectPhase,
-                    phaseOrder: task.phaseOrder,
-                    deletedAt: task.deletedAt,
-                    showSubtasks: task.showSubtasks,
-                    braindumpSource: task.braindumpSource,
-                    completedAt: !task.completed ? new Date().toISOString() : null,
-                    aiProcessed: task.aiProcessed,
-                    urgency: task.urgency,
-                    importance: task.importance,
-                    emotionalWeight: task.emotionalWeight,
-                    energyRequired: task.energyRequired
-                  } as Task;
-                  updateTask(updateData);
-                }}
+                onToggle={handleTaskToggle}
                 onEdit={() => handleOpenTaskModal(task)}
                 onDelete={() => deleteTask(task.id)}
               />
@@ -435,43 +521,7 @@ const Dashboard: React.FC = () => {
             <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${(overdueTasks.length + index) * 0.1}s` }}>
               <TaskDisplay
                 task={task}
-                onToggle={() => {
-                  // Create clean update object without computed fields
-                  const updateData = {
-                    id: task.id,
-                    title: task.title,
-                    description: task.description,
-                    completed: !task.completed,
-                    archived: task.archived,
-                    dueDate: task.dueDate,
-                    projectId: task.projectId,
-                    categoryIds: task.categoryIds,
-                    parentTaskId: task.parentTaskId,
-                    priority: task.priority,
-                    energyLevel: task.energyLevel,
-                    size: task.size,
-                    estimatedMinutes: task.estimatedMinutes,
-                    createdAt: task.createdAt,
-                    updatedAt: task.updatedAt,
-                    tags: task.tags,
-                    isRecurring: task.isRecurring,
-                    recurrencePattern: task.recurrencePattern,
-                    recurrenceInterval: task.recurrenceInterval,
-                    recurringTaskId: task.recurringTaskId,
-                    projectPhase: task.projectPhase,
-                    phaseOrder: task.phaseOrder,
-                    deletedAt: task.deletedAt,
-                    showSubtasks: task.showSubtasks,
-                    braindumpSource: task.braindumpSource,
-                    completedAt: !task.completed ? new Date().toISOString() : null,
-                    aiProcessed: task.aiProcessed,
-                    urgency: task.urgency,
-                    importance: task.importance,
-                    emotionalWeight: task.emotionalWeight,
-                    energyRequired: task.energyRequired
-                  } as Task;
-                  updateTask(updateData);
-                }}
+                onToggle={handleTaskToggle}
                 onEdit={() => handleOpenTaskModal(task)}
                 onDelete={() => deleteTask(task.id)}
               />
@@ -540,43 +590,7 @@ const Dashboard: React.FC = () => {
             <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
               <TaskDisplay
                 task={task}
-                onToggle={() => {
-                  // Create clean update object without computed fields
-                  const updateData = {
-                    id: task.id,
-                    title: task.title,
-                    description: task.description,
-                    completed: !task.completed,
-                    archived: task.archived,
-                    dueDate: task.dueDate,
-                    projectId: task.projectId,
-                    categoryIds: task.categoryIds,
-                    parentTaskId: task.parentTaskId,
-                    priority: task.priority,
-                    energyLevel: task.energyLevel,
-                    size: task.size,
-                    estimatedMinutes: task.estimatedMinutes,
-                    createdAt: task.createdAt,
-                    updatedAt: task.updatedAt,
-                    tags: task.tags,
-                    isRecurring: task.isRecurring,
-                    recurrencePattern: task.recurrencePattern,
-                    recurrenceInterval: task.recurrenceInterval,
-                    recurringTaskId: task.recurringTaskId,
-                    projectPhase: task.projectPhase,
-                    phaseOrder: task.phaseOrder,
-                    deletedAt: task.deletedAt,
-                    showSubtasks: task.showSubtasks,
-                    braindumpSource: task.braindumpSource,
-                    completedAt: !task.completed ? new Date().toISOString() : null,
-                    aiProcessed: task.aiProcessed,
-                    urgency: task.urgency,
-                    importance: task.importance,
-                    emotionalWeight: task.emotionalWeight,
-                    energyRequired: task.energyRequired
-                  } as Task;
-                  updateTask(updateData);
-                }}
+                onToggle={handleTaskToggle}
                 onEdit={() => handleOpenTaskModal(task)}
                 onDelete={() => deleteTask(task.id)}
               />
@@ -834,43 +848,7 @@ const Dashboard: React.FC = () => {
                 <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
                   <TaskDisplay
                     task={task}
-                    onToggle={() => {
-                  // Create clean update object without computed fields
-                  const updateData = {
-                    id: task.id,
-                    title: task.title,
-                    description: task.description,
-                    completed: !task.completed,
-                    archived: task.archived,
-                    dueDate: task.dueDate,
-                    projectId: task.projectId,
-                    categoryIds: task.categoryIds,
-                    parentTaskId: task.parentTaskId,
-                    priority: task.priority,
-                    energyLevel: task.energyLevel,
-                    size: task.size,
-                    estimatedMinutes: task.estimatedMinutes,
-                    createdAt: task.createdAt,
-                    updatedAt: task.updatedAt,
-                    tags: task.tags,
-                    isRecurring: task.isRecurring,
-                    recurrencePattern: task.recurrencePattern,
-                    recurrenceInterval: task.recurrenceInterval,
-                    recurringTaskId: task.recurringTaskId,
-                    projectPhase: task.projectPhase,
-                    phaseOrder: task.phaseOrder,
-                    deletedAt: task.deletedAt,
-                    showSubtasks: task.showSubtasks,
-                    braindumpSource: task.braindumpSource,
-                    completedAt: !task.completed ? new Date().toISOString() : null,
-                    aiProcessed: task.aiProcessed,
-                    urgency: task.urgency,
-                    importance: task.importance,
-                    emotionalWeight: task.emotionalWeight,
-                    energyRequired: task.energyRequired
-                  } as Task;
-                  updateTask(updateData);
-                }}
+                    onToggle={(taskId) => completeTask(taskId)}
                     onEdit={() => handleOpenTaskModal(task)}
                     onDelete={() => deleteTask(task.id)}
                   />
@@ -1015,43 +993,7 @@ const Dashboard: React.FC = () => {
                 <div key={task.id} className="animate-fadeIn opacity-75 hover:opacity-100 transition-opacity" style={{ animationDelay: `${index * 0.1}s` }}>
                   <TaskDisplay
                     task={task}
-                    onToggle={() => {
-                  // Create clean update object without computed fields
-                  const updateData = {
-                    id: task.id,
-                    title: task.title,
-                    description: task.description,
-                    completed: !task.completed,
-                    archived: task.archived,
-                    dueDate: task.dueDate,
-                    projectId: task.projectId,
-                    categoryIds: task.categoryIds,
-                    parentTaskId: task.parentTaskId,
-                    priority: task.priority,
-                    energyLevel: task.energyLevel,
-                    size: task.size,
-                    estimatedMinutes: task.estimatedMinutes,
-                    createdAt: task.createdAt,
-                    updatedAt: task.updatedAt,
-                    tags: task.tags,
-                    isRecurring: task.isRecurring,
-                    recurrencePattern: task.recurrencePattern,
-                    recurrenceInterval: task.recurrenceInterval,
-                    recurringTaskId: task.recurringTaskId,
-                    projectPhase: task.projectPhase,
-                    phaseOrder: task.phaseOrder,
-                    deletedAt: task.deletedAt,
-                    showSubtasks: task.showSubtasks,
-                    braindumpSource: task.braindumpSource,
-                    completedAt: !task.completed ? new Date().toISOString() : null,
-                    aiProcessed: task.aiProcessed,
-                    urgency: task.urgency,
-                    importance: task.importance,
-                    emotionalWeight: task.emotionalWeight,
-                    energyRequired: task.energyRequired
-                  } as Task;
-                  updateTask(updateData);
-                }}
+                    onToggle={(taskId) => completeTask(taskId)}
                     onEdit={() => handleOpenTaskModal(task)}
                     onDelete={() => deleteTask(task.id)}
                   />
@@ -1060,6 +1002,13 @@ const Dashboard: React.FC = () => {
             }
           </div>
         </Card>
+      )}
+      
+      {/* Time Tracking Analytics */}
+      {tasks.some(task => task.completed && task.actualMinutesSpent) && (
+        <div id="time-tracking" className="animate-fadeInUp" style={{ animationDelay: '1.2s' }}>
+          <TimeTrackingAnalytics tasks={tasks} />
+        </div>
       )}
       
       {/* Task Modal */}
@@ -1107,6 +1056,21 @@ const Dashboard: React.FC = () => {
               setCurrentIncompleteTaskId(null);
             }
           }}
+        />
+      )}
+      
+      {/* Time Spent Modal - rendered at top level to avoid container constraints */}
+      {taskBeingCompleted && (
+        <TimeSpentModal
+          isOpen={showTimeSpentModal}
+          onClose={() => {
+            setShowTimeSpentModal(false);
+            setTaskBeingCompleted(null);
+          }}
+          taskTitle={taskBeingCompleted.title}
+          estimatedMinutes={taskBeingCompleted.estimatedMinutes}
+          onConfirm={handleTimeSpentConfirm}
+          onSkip={handleTimeSpentSkip}
         />
       )}
     </div>

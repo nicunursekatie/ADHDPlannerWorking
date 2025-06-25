@@ -50,7 +50,8 @@ export class DatabaseService {
       urgency: dbTask.urgency,
       importance: dbTask.importance,
       emotionalWeight: dbTask.emotional_weight,
-      energyRequired: dbTask.energy_required
+      energyRequired: dbTask.energy_required,
+      actualMinutesSpent: dbTask.actual_minutes_spent
     };
   }
   
@@ -108,6 +109,7 @@ export class DatabaseService {
     if (task.importance !== undefined) dbTask.importance = task.importance;
     if (task.emotionalWeight !== undefined) dbTask.emotional_weight = task.emotionalWeight;
     if (task.energyRequired !== undefined) dbTask.energy_required = task.energyRequired;
+    if (task.actualMinutesSpent !== undefined) dbTask.actual_minutes_spent = task.actualMinutesSpent;
     
     return dbTask;
   }
@@ -208,7 +210,8 @@ export class DatabaseService {
       urgency: task.urgency,
       importance: task.importance,
       emotional_weight: task.emotionalWeight,
-      energy_required: task.energyRequired
+      energy_required: task.energyRequired,
+      actual_minutes_spent: task.actualMinutesSpent
     };
     
     const { data, error } = await supabase
@@ -226,6 +229,12 @@ export class DatabaseService {
   static async updateTask(id: string, updates: Partial<Task>, userId: string): Promise<Task> {
     const dbUpdates = this.mapTaskToDb(updates);
     
+    console.log('[DatabaseService] Updating task with:', {
+      taskId: id,
+      dbUpdates,
+      originalUpdates: updates
+    });
+    
     const { data, error } = await supabase
       .from('tasks')
       .update(dbUpdates)
@@ -239,7 +248,16 @@ export class DatabaseService {
       throw error;
     }
     
+    console.log('[DatabaseService] Update successful, raw data from DB:', data);
+    
     const mappedTask = this.mapTaskFromDb(data);
+    console.log('[DatabaseService] Mapped task result:', {
+      id: mappedTask.id,
+      completed: mappedTask.completed,
+      actualMinutesSpent: mappedTask.actualMinutesSpent,
+      completedAt: mappedTask.completedAt
+    });
+    
     return mappedTask;
   }
 

@@ -26,6 +26,7 @@ import { getRelativeTimeDisplay } from '../../utils/dateUtils';
 import { useAppContext } from '../../context/AppContextSupabase';
 import { QuickDueDateEditor } from './QuickDueDateEditor';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji, calculateSmartPriorityScore } from '../../utils/taskPrioritization';
+import { TimeSpentModal } from './TimeSpentModal';
 
 interface ImprovedTaskCardProps {
   task: Task;
@@ -47,6 +48,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
   const [expanded, setExpanded] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [showDateEditor, setShowDateEditor] = useState(false);
+  const [showTimeSpentModal, setShowTimeSpentModal] = useState(false);
   const { completeTask, tasks, addTask, updateTask } = useAppContext();
   
   const project = task.projectId 
@@ -67,7 +69,56 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
   
   const handleComplete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    completeTask(task.id);
+    console.log('[ImprovedTaskCard] handleComplete called', {
+      taskId: task.id,
+      taskTitle: task.title,
+      completed: task.completed,
+      estimatedMinutes: task.estimatedMinutes
+    });
+    
+    if (!task.completed) {
+      // Always show the time spent modal when completing a task
+      console.log('[ImprovedTaskCard] Showing time spent modal for task completion');
+      setShowTimeSpentModal(true);
+    } else {
+      // Uncompleting a task
+      console.log('[ImprovedTaskCard] Uncompleting task');
+      completeTask(task.id);
+    }
+  };
+  
+  const handleTimeSpentConfirm = async (actualMinutes: number) => {
+    console.log('[ImprovedTaskCard] handleTimeSpentConfirm called', {
+      taskId: task.id,
+      actualMinutes
+    });
+    
+    const timestamp = new Date().toISOString();
+    
+    // Update the task with both completion and time spent in one operation
+    await updateTask({
+      ...task,
+      actualMinutesSpent: actualMinutes,
+      completed: true,
+      completedAt: timestamp,
+      updatedAt: timestamp
+    });
+    setShowTimeSpentModal(false);
+  };
+  
+  const handleTimeSpentSkip = async () => {
+    console.log('[ImprovedTaskCard] handleTimeSpentSkip called, completing without time tracking');
+    
+    const timestamp = new Date().toISOString();
+    
+    // Complete the task without recording time in one operation
+    await updateTask({
+      ...task,
+      completed: true,
+      completedAt: timestamp,
+      updatedAt: timestamp
+    });
+    setShowTimeSpentModal(false);
   };
   
   const handleEdit = (e: React.MouseEvent) => {
@@ -355,6 +406,16 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
           </div>
         )}
       </div>
+      
+      {/* Time Spent Modal */}
+      <TimeSpentModal
+        isOpen={showTimeSpentModal}
+        onClose={() => setShowTimeSpentModal(false)}
+        taskTitle={task.title}
+        estimatedMinutes={task.estimatedMinutes}
+        onConfirm={handleTimeSpentConfirm}
+        onSkip={handleTimeSpentSkip}
+      />
     </div>
   );
 };
