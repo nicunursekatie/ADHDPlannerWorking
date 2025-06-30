@@ -338,7 +338,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
           </div>
         </div>
 
-        {/* Categories */
+        {/* Categories */}
         <div>
           <label htmlFor="category" className="block text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             <Tag className="w-5 h-5 mr-2 text-blue-500 inline" />
