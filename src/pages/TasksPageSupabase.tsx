@@ -146,7 +146,7 @@ export const TasksPageSupabase: React.FC = () => {
   const [filterBy, setFilterBy] = useState<'all' | 'completed' | 'active' | 'overdue' | 'today' | 'week' | 'actionable' | 'future' | 'project' | 'category' | 'archived'>('all');
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'created' | 'alphabetical' | 'energy' | 'estimated'>('dueDate');
+  const [sortBy, setSortBy] = useState<'smart' | 'dueDate' | 'priority' | 'created' | 'alphabetical' | 'energy' | 'estimated'>('smart');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showQuickCapture, setShowQuickCapture] = useState(false);
   
@@ -212,16 +212,43 @@ export const TasksPageSupabase: React.FC = () => {
     let comparison = 0;
     
     switch (sortBy) {
+      case 'smart':
+        // Smart sort: Combines due date urgency with priority
+        const now = new Date();
+        const getUrgencyScore = (task: Task) => {
+          if (!task.dueDate) return 0;
+          const dueDate = new Date(task.dueDate);
+          const daysUntilDue = (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+          
+          // Overdue tasks get highest urgency
+          if (daysUntilDue < 0) return 100;
+          // Due today
+          if (daysUntilDue < 1) return 90;
+          // Due tomorrow
+          if (daysUntilDue < 2) return 80;
+          // Due this week
+          if (daysUntilDue < 7) return 70;
+          // Due this month
+          if (daysUntilDue < 30) return 50;
+          // Everything else
+          return 30;
+        };
+        
+        const priorityScores = { 'urgent': 40, 'high': 30, 'medium': 20, 'low': 10 };
+        const scoreA = getUrgencyScore(a) + (priorityScores[a.priority as keyof typeof priorityScores] || 0);
+        const scoreB = getUrgencyScore(b) + (priorityScores[b.priority as keyof typeof priorityScores] || 0);
+        comparison = scoreB - scoreA; // Higher score first
+        break;
       case 'dueDate':
         const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
         const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
         comparison = dateA - dateB;
         break;
       case 'priority':
-        const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+        const priorityOrder = { 'urgent': 4, 'high': 3, 'medium': 2, 'low': 1 };
         const priorityA = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
         const priorityB = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
-        comparison = priorityB - priorityA; // High priority first
+        comparison = priorityB - priorityA; // Urgent/High priority first
         break;
       case 'created':
         comparison = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -644,6 +671,7 @@ export const TasksPageSupabase: React.FC = () => {
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
               className="px-3 py-1 border rounded text-sm"
             >
+              <option value="smart">Smart (Urgency + Priority)</option>
               <option value="dueDate">Due Date</option>
               <option value="priority">Priority</option>
               <option value="created">Created</option>
@@ -737,7 +765,7 @@ export const TasksPageSupabase: React.FC = () => {
       )}
 
       {/* Tasks List */}
-      <div className="space-y-8">
+      <div className="space-y-4">
         {filteredTasks.length === 0 ? (
           <Empty 
             message="No tasks found" 
@@ -745,47 +773,51 @@ export const TasksPageSupabase: React.FC = () => {
             onAction={() => setShowTaskForm(true)}
           />
         ) : (
-          (() => {
-            const groupedTasks = groupTasksByProjectAndDueDate(filteredTasks, projects);
-            return groupedTasks.map(group => (
-              <div key={group.projectId} className="space-y-4">
-                {/* Project Header */}
-                <div className="flex items-center gap-3 pb-3 border-b-2 border-gray-200">
-                  <div 
-                    className="w-4 h-4 rounded-full shadow-sm" 
-                    style={{ backgroundColor: group.projectColor }}
-                  />
-                  <h2 className="font-bold text-gray-900 text-xl tracking-tight">
-                    {group.projectName}
-                  </h2>
-                  <span className="text-sm text-gray-600 ml-auto bg-gray-100 px-3 py-1 rounded-full font-medium">
-                    {group.tasks.length} task{group.tasks.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                
-                {/* Tasks in this project */}
-                <div className="space-y-4 ml-6">
-                  {group.tasks.map(task => (
-                    <ErrorBoundary key={task.id}>
-                      <BulkTaskCard
-                        task={task}
-                        isSelected={selectedTasks.has(task.id)}
-                        onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
-                        onEdit={(task) => {
-                          setEditingTask(task);
-                          setShowTaskForm(true);
-                        }}
-                        onDelete={handleDeleteTask}
-                        onBreakdown={handleAIBreakdown}
-                        onToggle={handleTaskToggle}
-                        showCheckbox={bulkActionsEnabled}
+          <>
+            {/* Sort info header */}
+            <div className="text-sm text-gray-600 mb-2">
+              {sortBy === 'smart' && 'Smart sort: Most urgent and important tasks first'}
+              {sortBy === 'dueDate' && 'Sorted by due date (earliest first)'}
+              {sortBy === 'priority' && 'Sorted by priority (highest first)'}
+              {sortBy === 'created' && 'Sorted by creation date (newest first)'}
+              {sortBy === 'alphabetical' && 'Sorted alphabetically'}
+              {sortBy === 'energy' && 'Sorted by energy level required'}
+              {sortBy === 'estimated' && 'Sorted by estimated time'}
+              {' • '}
+              {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
+            </div>
+            
+            {/* Tasks displayed in sorted order without project grouping */}
+            {filteredTasks.map(task => {
+              const project = projects.find(p => p.id === task.projectId);
+              return (
+                <ErrorBoundary key={task.id}>
+                  <div className="relative">
+                    {/* Optional project indicator */}
+                    {project && (
+                      <div className="absolute -left-2 top-0 bottom-0 w-1 rounded-full" 
+                        style={{ backgroundColor: project.color }}
+                        title={project.name}
                       />
-                    </ErrorBoundary>
-                  ))}
-                </div>
-              </div>
-            ));
-          })()
+                    )}
+                    <BulkTaskCard
+                      task={task}
+                      isSelected={selectedTasks.has(task.id)}
+                      onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
+                      onEdit={(task) => {
+                        setEditingTask(task);
+                        setShowTaskForm(true);
+                      }}
+                      onDelete={handleDeleteTask}
+                      onBreakdown={handleAIBreakdown}
+                      onToggle={handleTaskToggle}
+                      showCheckbox={bulkActionsEnabled}
+                    />
+                  </div>
+                </ErrorBoundary>
+              );
+            })}
+          </>
         )}
       </div>
 
