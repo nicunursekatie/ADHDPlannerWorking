@@ -247,19 +247,35 @@ const ProjectsPage: React.FC = () => {
   
   // Calculate project statistics
   const getProjectStats = (projectId: string) => {
-    const projectTasks = tasks.filter(task => task.projectId === projectId);
+    const projectTasks = tasks.filter(task => 
+      task.projectId === projectId && 
+      !task.deletedAt && 
+      !task.parentTaskId  // Only count parent tasks, not subtasks
+      // Note: Removed !task.archived so completed/archived tasks are counted
+    );
+    
+    // Debug: Log project tasks for troubleshooting
+    if (projectId && projectTasks.length > 0) {
+      console.log(`[ProjectStats] Project ${projectId} has ${projectTasks.length} tasks`);
+      projectTasks.forEach(task => {
+        console.log(`[ProjectStats] Task "${task.title}": completed=${task.completed}, subtasks=${task.subtasks?.length || 0}`);
+      });
+    }
     
     // Helper function to determine if a task should be considered complete
     const getTaskCompletionStatus = (task: Task): boolean => {
-      // If task has subtasks, it's complete only if all subtasks are complete
-      if (task.subtasks && task.subtasks.length > 0) {
-        const subtaskObjects = task.subtasks
-          .map(id => tasks.find(t => t.id === id))
-          .filter(Boolean) as Task[];
-        return subtaskObjects.every(subtask => subtask.completed);
-      }
-      // If no subtasks, use the task's own completion status
+      // For now, let's simplify this to just use the task's completion status
+      // The subtask logic might be causing issues since subtasks are runtime computed
       return task.completed;
+      
+      // Original subtask logic (commented out for debugging)
+      // if (task.subtasks && task.subtasks.length > 0) {
+      //   const subtaskObjects = task.subtasks
+      //     .map(id => tasks.find(t => t.id === id))
+      //     .filter(Boolean) as Task[];
+      //   return subtaskObjects.every(subtask => subtask.completed);
+      // }
+      // return task.completed;
     };
     
     const completedTasks = projectTasks.filter(getTaskCompletionStatus);

@@ -33,7 +33,10 @@ const ProjectDetailPage: React.FC = () => {
   }
   
   const projectTasks = tasks.filter(
-    task => task.projectId === projectId && !task.parentTaskId
+    task => task.projectId === projectId && 
+    !task.parentTaskId &&
+    !task.deletedAt 
+    // Note: Removed !task.archived to show completed/archived tasks
   );
   
   const handleOpenTaskModal = (task?: Task) => {

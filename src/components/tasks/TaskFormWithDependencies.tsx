@@ -63,7 +63,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   const [emotionalWeight, setEmotionalWeight] = useState<'easy' | 'neutral' | 'stressful' | 'dreading'>(task?.emotionalWeight || 'neutral');
   const [energyRequired, setEnergyRequired] = useState<'low' | 'medium' | 'high'>(task?.energyRequired || 'medium');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>(task?.priority || 'medium');
-  const [importance, setImportance] = useState(task?.importance || 5);
+  const [importance, setImportance] = useState(task?.importance || 3);
   const [estimatedMinutes, setEstimatedMinutes] = useState(task?.estimatedMinutes || 0);
   const [tags, setTags] = useState<string[]>(task?.tags || []);
   const [newTag, setNewTag] = useState('');
@@ -112,13 +112,16 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
       emotionalWeight,
       energyRequired,
       priority,
-      importance,
+      importance: Math.max(1, Math.min(5, importance)), // Ensure importance is between 1-5
       estimatedMinutes,
       tags,
     };
     
     try {
+      console.log('[TaskForm] Starting task creation/update with data:', taskData);
+      
       if (isEdit && task) {
+        console.log('[TaskForm] Updating existing task');
         await updateTask({
           ...task,
           ...taskData,
@@ -134,20 +137,25 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
           ...toAdd.map(depId => addTaskDependency(task.id, depId))
         ]);
       } else {
+        console.log('[TaskForm] Creating new task');
         const newTask = await addTask(taskData);
+        console.log('[TaskForm] New task created:', newTask);
         
         // Add dependencies to the new task
         if (selectedDependencies.length > 0) {
+          console.log('[TaskForm] Adding dependencies:', selectedDependencies);
           await Promise.all(
             selectedDependencies.map(depId => addTaskDependency(newTask.id, depId))
           );
         }
       }
       
+      console.log('[TaskForm] Task creation/update completed successfully');
       onClose();
     } catch (error) {
-      console.error('Error saving task:', error);
-      // You might want to show an error message to the user here
+      console.error('[TaskForm] Error saving task:', error);
+      // Show error to user
+      alert(`Error saving task: ${error.message || 'Unknown error'}`);
     }
   };
   
@@ -386,12 +394,12 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                   type="button"
                   onClick={() => {
                     setPriority(option.value as 'low' | 'medium' | 'high' | 'urgent');
-                    // Adjust importance score based on priority
+                    // Adjust importance score based on priority (1-5 scale)
                     const importanceMap = {
                       'low': 2,
-                      'medium': 5,
-                      'high': 8,
-                      'urgent': 10
+                      'medium': 3,
+                      'high': 4,
+                      'urgent': 5
                     };
                     setImportance(importanceMap[option.value as keyof typeof importanceMap]);
                   }}
