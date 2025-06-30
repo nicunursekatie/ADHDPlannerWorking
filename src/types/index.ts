@@ -9,9 +9,9 @@ export interface Task {
   projectId: string | null;
   categoryIds: string[];
   parentTaskId: string | null;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
   energyLevel?: 'low' | 'medium' | 'high';
-  size?: 'small' | 'medium' | 'large';
+  size?: 'tiny' | 'small' | 'medium' | 'large' | 'huge';
   estimatedMinutes?: number;
   phase?: string; // Project phase this task belongs to
   tags?: string[]; // Tags associated with the task, including phase name

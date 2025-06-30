@@ -248,9 +248,23 @@ const ProjectsPage: React.FC = () => {
   // Calculate project statistics
   const getProjectStats = (projectId: string) => {
     const projectTasks = tasks.filter(task => task.projectId === projectId);
-    const completedTasks = projectTasks.filter(task => task.completed);
+    
+    // Helper function to determine if a task should be considered complete
+    const getTaskCompletionStatus = (task: Task): boolean => {
+      // If task has subtasks, it's complete only if all subtasks are complete
+      if (task.subtasks && task.subtasks.length > 0) {
+        const subtaskObjects = task.subtasks
+          .map(id => tasks.find(t => t.id === id))
+          .filter(Boolean) as Task[];
+        return subtaskObjects.every(subtask => subtask.completed);
+      }
+      // If no subtasks, use the task's own completion status
+      return task.completed;
+    };
+    
+    const completedTasks = projectTasks.filter(getTaskCompletionStatus);
     const overdueTasks = projectTasks.filter(task => 
-      !task.completed && task.dueDate && new Date(task.dueDate) < new Date()
+      !getTaskCompletionStatus(task) && task.dueDate && new Date(task.dueDate) < new Date()
     );
     
     const progress = projectTasks.length > 0 

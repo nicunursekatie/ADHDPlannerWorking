@@ -62,7 +62,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   const [urgency, setUrgency] = useState<'today' | 'tomorrow' | 'week' | 'month' | 'someday'>(task?.urgency || 'week');
   const [emotionalWeight, setEmotionalWeight] = useState<'easy' | 'neutral' | 'stressful' | 'dreading'>(task?.emotionalWeight || 'neutral');
   const [energyRequired, setEnergyRequired] = useState<'low' | 'medium' | 'high'>(task?.energyRequired || 'medium');
-  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>(task?.priority || 'medium');
+  const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>(task?.priority || 'medium');
   const [importance, setImportance] = useState(task?.importance || 5);
   const [estimatedMinutes, setEstimatedMinutes] = useState(task?.estimatedMinutes || 0);
   const [tags, setTags] = useState<string[]>(task?.tags || []);
@@ -115,9 +115,6 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
       importance,
       estimatedMinutes,
       tags,
-      dependsOn: selectedDependencies,
-      // Remove recurring fields
-      subtasks,
     };
     
     try {
@@ -377,24 +374,26 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
               <Star className="w-5 h-5 mr-2 text-purple-500" />
               Priority
             </h4>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {[
                 { label: 'Low', value: 'low', emoji: '📋', desc: 'Can wait' },
                 { label: 'Medium', value: 'medium', emoji: '⭐', desc: 'Important' },
                 { label: 'High', value: 'high', emoji: '🚨', desc: 'Critical' },
+                { label: 'Urgent', value: 'urgent', emoji: '🚨', desc: 'Drop everything' },
               ].map(option => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => {
-                    setPriority(option.value as 'low' | 'medium' | 'high');
+                    setPriority(option.value as 'low' | 'medium' | 'high' | 'urgent');
                     // Adjust importance score based on priority
                     const importanceMap = {
                       'low': 2,
                       'medium': 5,
-                      'high': 8
+                      'high': 8,
+                      'urgent': 10
                     };
-                    setImportance(importanceMap[option.value]);
+                    setImportance(importanceMap[option.value as keyof typeof importanceMap]);
                   }}
                   className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-purple-200/50 ${
                     priority === option.value
