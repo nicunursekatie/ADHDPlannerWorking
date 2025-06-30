@@ -385,6 +385,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Tasks
   const addTask = useCallback(async (taskData: Partial<Task>): Promise<Task> => {
+    console.log('[AppContext] addTask called with:', taskData);
+    console.log('[AppContext] User:', user);
+    
     if (!user) throw new Error('User not authenticated');
     
     const timestamp = new Date().toISOString();
@@ -403,18 +406,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ...taskData,
     };
     
+    console.log('[AppContext] Creating task with data:', newTask);
+    
     const createdTask = await DatabaseService.createTask(newTask, user.id);
+    console.log('[AppContext] Task created in database:', createdTask);
     
     // Add the new task and recompute all subtasks
     setTasks(prev => {
       const updatedTasks = [...prev, createdTask];
-      return computeSubtasks(updatedTasks);
+      const result = computeSubtasks(updatedTasks);
+      console.log('[AppContext] Updated tasks state:', result.length, 'tasks');
+      return result;
     });
     
     // No need to update parent task - subtasks are computed dynamically
     
     return createdTask;
-  }, [user, tasks, computeSubtasks]);
+  }, [user, computeSubtasks]);
 
   const updateTask = useCallback(async (updatedTask: Task) => {
     if (!user) throw new Error('User not authenticated');

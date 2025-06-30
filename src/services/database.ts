@@ -172,6 +172,8 @@ export class DatabaseService {
   }
 
   static async createTask(task: Task, userId: string): Promise<Task> {
+    console.log('[DatabaseService] createTask called with:', { task, userId });
+    
     // Map camelCase to snake_case for database
     const dbTask = {
       id: task.id,
@@ -214,13 +216,20 @@ export class DatabaseService {
       actual_minutes_spent: task.actualMinutesSpent
     };
     
+    console.log('[DatabaseService] Inserting task to database:', dbTask);
+    
     const { data, error } = await supabase
       .from('tasks')
       .insert(dbTask)
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('[DatabaseService] Error creating task:', error);
+      throw error;
+    }
+    
+    console.log('[DatabaseService] Task created successfully:', data);
     
     // Map snake_case back to camelCase
     return this.mapTaskFromDb(data);
