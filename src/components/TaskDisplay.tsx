@@ -131,7 +131,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             : task.emotionalWeight === 'dreading'
             ? 'bg-gradient-to-br from-red-50/90 to-pink-50/90 border-red-300/50 hover:border-red-400/70 hover:shadow-xl hover:shadow-red-100/50'
             : 'bg-gradient-to-br from-white/95 to-gray-50/95 border-gray-300/50 hover:border-primary-400/70 hover:shadow-xl hover:shadow-primary-100/50'}
-        ${canComplete ? 'hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98]' : ''}
+        ${canComplete ? 'hover:shadow-2xl active:scale-[0.98]' : ''}
       `}
       onClick={handleTaskClick}
     >
@@ -165,7 +165,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             onToggle(task.id);
           }
         }}
-        className={`mt-1 flex-shrink-0 p-1 rounded-full hover:bg-white/80 transition-all duration-200 ${!canComplete ? 'cursor-not-allowed' : 'hover:scale-110'}`}
+        className={`mt-1 flex-shrink-0 p-1 rounded-full hover:bg-white/80 transition-all duration-200 ${!canComplete ? 'cursor-not-allowed' : ''}`}
         disabled={!canComplete}
         title={!canComplete ? `This task starts on ${new Date(task.startDate!).toLocaleDateString()}` : undefined}
       >
@@ -174,7 +174,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
         ) : !canComplete ? (
           <Circle className="w-6 h-6 text-gray-400" />
         ) : (
-          <Circle className="w-6 h-6 text-gray-400 hover:text-primary-600 hover:scale-110 transition-all duration-200" />
+          <Circle className="w-6 h-6 text-gray-400 hover:text-primary-600 transition-all duration-200" />
         )}
       </button>
       
@@ -195,7 +195,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                     e.stopPropagation();
                     setShowDetailWizard(true);
                   }}
-                  className="flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-medium rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all hover:scale-105"
+                  className="flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-medium rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all"
                   title={`Missing ${taskCompleteness.missingFields.length} details - Click to complete`}
                 >
                   <Sparkles className="w-3 h-3" />
@@ -404,7 +404,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                   e.stopPropagation();
                   setShowDateEditor(!showDateEditor);
                 }}
-                className={`flex items-center gap-2 text-sm font-bold ${dueDateInfo.className} hover:bg-white/90 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 hover:border-gray-300 active:scale-95`}
+                className={`flex items-center gap-2 text-sm font-bold ${dueDateInfo.className} hover:bg-white/90 px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg border-2 hover:border-gray-300 active:scale-95`}
                 title="Click to change due date"
               >
                 <div className="w-4 h-4">{dueDateInfo.icon}</div>
@@ -416,7 +416,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                   e.stopPropagation();
                   setShowDateEditor(!showDateEditor);
                 }}
-                className="flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-purple-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 border-gray-300 hover:border-purple-400 active:scale-95"
+                className="flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-purple-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg border-2 border-gray-300 hover:border-purple-400 active:scale-95"
                 title="Add due date"
               >
                 <Calendar className="w-4 h-4" />
@@ -435,7 +435,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                     setCurrentSession(null);
                     setFocusTime(focusTracker.getTaskFocusTime(task.id));
                   }}
-                  className="flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-md active:scale-95"
+                  className="flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg shadow-md active:scale-95"
                   title="Stop working on this task"
                 >
                   <Timer className="w-4 h-4" />
@@ -445,7 +445,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                 // Show start button if not in focus
                 <button
                   onClick={handleStartFocus}
-                  className="flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-4 py-2 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-md active:scale-95"
+                  className="flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg shadow-md active:scale-95"
                   title="Start working on this task"
                 >
                   <Play className="w-4 h-4" />
@@ -520,7 +520,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                 e.stopPropagation();
                 onBreakdown(task);
               }}
-              className="flex items-center gap-1.5 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-2 py-1 rounded-xl transition-all hover:scale-105"
+              className="flex items-center gap-1.5 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-2 py-1 rounded-xl transition-all"
               title="Use AI to break down this task"
             >
               <Sparkles className="w-4 h-4" />
@@ -552,7 +552,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                     e.stopPropagation();
                     setShowWalkthrough(true);
                   }}
-                  className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-all hover:scale-105"
+                  className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-all"
                   title="Start guided walkthrough"
                 >
                   <PlayCircle className="w-3 h-3" />
@@ -612,7 +612,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
               e.stopPropagation();
               onBreakdown(task);
             }}
-            className="p-1 text-purple-500 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all hover:scale-110"
+            className="p-1 text-purple-500 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
             title="AI Breakdown - Break down into subtasks"
           >
             <Sparkles className="w-3 h-3" />
@@ -623,7 +623,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             e.stopPropagation();
             onEdit(task);
           }}
-          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all hover:scale-110"
+          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
         >
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -634,7 +634,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             e.stopPropagation();
             onDelete(task.id);
           }}
-          className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all hover:scale-110"
+          className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
         >
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

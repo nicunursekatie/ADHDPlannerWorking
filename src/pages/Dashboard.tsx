@@ -449,7 +449,7 @@ const Dashboard: React.FC = () => {
       {/* PRIORITY #1: Due Today */}
       <Card
         id="due-today"
-        padding="md"
+        padding="sm"
         title={
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
@@ -502,9 +502,9 @@ const Dashboard: React.FC = () => {
           </Link>
         }
       >
-        <div className="space-y-3 max-h-80 overflow-y-auto overflow-x-visible pr-2 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
+        <div className="space-y-3">
           {/* Show overdue tasks first with red accent */}
-          {overdueTasks.slice(0, 2).map((task, index) => (
+          {overdueTasks.slice(0, 4).map((task, index) => (
             <div key={task.id} className="animate-fadeIn border-l-4 border-red-500 pl-2 bg-red-50/50 rounded-r-xl" style={{ animationDelay: `${index * 0.1}s` }}>
               <TaskDisplay
                 task={task}
@@ -516,7 +516,7 @@ const Dashboard: React.FC = () => {
           ))}
           
           {/* Then show tasks due today */}
-          {tasksDueToday.slice(0, 3).map((task, index) => (
+          {tasksDueToday.slice(0, 6).map((task, index) => (
             <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${(overdueTasks.length + index) * 0.1}s` }}>
               <TaskDisplay
                 task={task}
