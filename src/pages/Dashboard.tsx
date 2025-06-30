@@ -502,7 +502,7 @@ const Dashboard: React.FC = () => {
           </Link>
         }
       >
-        <div className="space-y-3 max-h-60 overflow-y-auto overflow-x-visible pr-2 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
+        <div className="space-y-3 max-h-80 overflow-y-auto overflow-x-visible pr-2 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
           {/* Show overdue tasks first with red accent */}
           {overdueTasks.slice(0, 2).map((task, index) => (
             <div key={task.id} className="animate-fadeIn border-l-4 border-red-500 pl-2 bg-red-50/50 rounded-r-xl" style={{ animationDelay: `${index * 0.1}s` }}>
