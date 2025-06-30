@@ -449,7 +449,7 @@ const Dashboard: React.FC = () => {
       {/* PRIORITY #1: Due Today */}
       <Card
         id="due-today"
-        padding={tasksDueToday.length === 0 && overdueTasks.length === 0 ? 'sm' : 'lg'}
+        padding="md"
         title={
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
@@ -491,7 +491,6 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         }
-        padding="md"
         className="shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-orange-200/60 bg-gradient-to-r from-orange-50/80 to-red-50/80 backdrop-blur-xl"
         headerAction={
           <Link 

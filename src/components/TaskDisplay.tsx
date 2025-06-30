@@ -8,7 +8,7 @@ import { QuickDueDateEditor } from './tasks/QuickDueDateEditor';
 import { TaskDetailWizard } from './tasks/TaskDetailWizard';
 import { TimeTrackingDisplay } from './tasks/TimeTrackingDisplay';
 import { analyzeTaskCompleteness } from '../utils/taskCompleteness';
-import { triggerCelebration, showToastCelebration } from '../utils/celebrations';
+import { triggerCelebration } from '../utils/celebrations';
 import { getTimeContext, getTaskTimeEstimate, formatTimeRemaining, formatTimeOfDay, getUrgencyColor } from '../utils/timeAwareness';
 import { focusTracker } from '../utils/focusTracker';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji } from '../utils/taskPrioritization';
