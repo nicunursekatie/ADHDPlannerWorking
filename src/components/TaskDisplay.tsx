@@ -157,8 +157,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
           if (!task.completed) {
             // Time tracking is now handled at the page level
             console.log('[TaskDisplay] Completing task (time tracking handled by parent)');
-            triggerCelebration();
-            showToastCelebration(`"${task.title}" completed! 🎉`);
+            // Don't trigger celebration here - it will be triggered after time tracking
             onToggle(task.id);
           } else {
             // Uncompleting a task
