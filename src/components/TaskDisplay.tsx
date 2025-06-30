@@ -227,27 +227,6 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                   />
                 )}
                 
-                {/* Additional completion details */}
-                <div className="mt-2 flex items-center gap-3 text-xs text-green-700">
-                  {task.actualMinutesSpent && (
-                    <span className="font-medium">
-                      Total time: {task.actualMinutesSpent < 60 
-                        ? `${task.actualMinutesSpent} minutes` 
-                        : `${Math.floor(task.actualMinutesSpent / 60)}h ${task.actualMinutesSpent % 60}m`
-                      }
-                    </span>
-                  )}
-                  {task.estimatedMinutes && task.actualMinutesSpent && (
-                    <span>
-                      {task.actualMinutesSpent < task.estimatedMinutes 
-                        ? `🎉 Finished ${Math.round((1 - task.actualMinutesSpent / task.estimatedMinutes) * 100)}% faster!`
-                        : task.actualMinutesSpent > task.estimatedMinutes * 1.5
-                        ? `⏰ Took ${Math.round((task.actualMinutesSpent / task.estimatedMinutes - 1) * 100)}% longer`
-                        : `✅ Close to estimate`
-                      }
-                    </span>
-                  )}
-                </div>
               </div>
             )}
             

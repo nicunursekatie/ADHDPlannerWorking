@@ -99,8 +99,10 @@ export const TimeTrackingDisplay: React.FC<TimeTrackingDisplayProps> = ({
         <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${performance.color}`}>
           <performance.icon className={iconSizes[size]} />
           <span className="font-medium">
-            {performance.percentage 
-              ? `${performance.percentage}% ${performance.label.toLowerCase()}`
+            {performance.label === 'Took longer' && performance.percentage
+              ? `Took ${performance.percentage}% longer`
+              : performance.label === 'Finished early' && performance.percentage
+              ? `Finished ${performance.percentage}% early`
               : performance.label
             }
           </span>
