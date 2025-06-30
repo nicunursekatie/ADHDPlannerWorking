@@ -74,10 +74,6 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
   
-  // Error handling state
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  
   // Remove recurring fields as they're not in the Task interface
   const [subtasks, setSubtasks] = useState<string[]>(task?.subtasks || []);
   
@@ -105,19 +101,8 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Clear any previous error messages
-    setErrorMessage('');
-    
-    // Basic validation
-    if (!title.trim()) {
-      setErrorMessage('Task title is required');
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
     const taskData = {
-      title: title.trim(),
+      title,
       description,
       dueDate: dueDate || null,
       startDate: startDate || null,
@@ -136,10 +121,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
     };
     
     try {
-      console.log('Submitting task with data:', taskData);
-      
       if (isEdit && task) {
-        console.log('Updating existing task:', task.id);
         await updateTask({
           ...task,
           ...taskData,
@@ -155,31 +137,20 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
           ...toAdd.map(depId => addTaskDependency(task.id, depId))
         ]);
       } else {
-        console.log('Creating new task');
         const newTask = await addTask(taskData);
-        console.log('New task created:', newTask);
         
         // Add dependencies to the new task
         if (selectedDependencies.length > 0) {
-          console.log('Adding dependencies:', selectedDependencies);
           await Promise.all(
             selectedDependencies.map(depId => addTaskDependency(newTask.id, depId))
           );
         }
       }
       
-      console.log('Task saved successfully, closing form');
       onClose();
     } catch (error) {
       console.error('Error saving task:', error);
-      console.error('Error details:', {
-        name: error instanceof Error ? error.name : 'Unknown',
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to save task. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      // You might want to show an error message to the user here
     }
   };
   
@@ -397,6 +368,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
             <option value="add-new">+ Add New Category</option>
           </select>
         </div>
+        
         {/* Priority | Urgency (side by side) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Priority */}
@@ -417,7 +389,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                   onClick={() => {
                     setPriority(option.value as 'low' | 'medium' | 'high');
                     // Adjust importance score based on priority
-                    const importanceMap: Record<string, number> = {
+                    const importanceMap = {
                       'low': 2,
                       'medium': 5,
                       'high': 8
@@ -666,7 +638,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                     type="text"
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
-                    onKeyDown={(e) => {
+                    onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         if (newTag.trim() && !tags.includes(newTag.trim())) {
@@ -737,13 +709,6 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
 
       {/* Form Actions - Outside of form for better styling */}
       <div className="sticky bottom-0 bg-white dark:bg-gray-900 p-6 border-t border-gray-200 dark:border-gray-700 rounded-b-2xl -mx-6 -mb-6">
-        {/* Error Message */}
-        {errorMessage && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-red-700 dark:text-red-300 text-sm">{errorMessage}</p>
-          </div>
-        )}
-        
         <div className="flex justify-between items-center">
           {/* Delete button (only show when editing) */}
           {isEdit && task && (
@@ -773,114 +738,12 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
               type="submit"
               variant="primary"
               form="task-form"
-              disabled={isSubmitting}
             >
-              {isSubmitting ? 'Saving...' : (isEdit ? 'Update Task' : 'Create Task')}
+              {isEdit ? 'Update Task' : 'Create Task'}
             </Button>
           </div>
         </div>
       </div>
-      
-      {/* New Category Modal */}
-      {showNewCategoryModal && (
-        <Modal
-          title="Create New Category"
-          onClose={() => setShowNewCategoryModal(false)}
-        >
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="newCategoryName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Category Name
-              </label>
-              <input
-                type="text"
-                id="newCategoryName"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                className="block w-full px-4 py-2 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-                placeholder="Enter category name..."
-                autoFocus
-              />
-            </div>
-            <div>
-              <label htmlFor="newCategoryColor" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Color
-              </label>
-              <input
-                type="color"
-                id="newCategoryColor"
-                value={newCategoryColor}
-                onChange={(e) => setNewCategoryColor(e.target.value)}
-                className="block w-full h-10 rounded-lg"
-              />
-            </div>
-            <div className="flex justify-end space-x-3">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setShowNewCategoryModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handleCreateCategory}
-              >
-                Create Category
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
-      
-      {/* Dependency Selection Modal */}
-      {showDependencyModal && (
-        <Modal
-          title="Select Dependencies"
-          onClose={() => setShowDependencyModal(false)}
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Select tasks that must be completed before this task can begin.
-            </p>
-            <div className="max-h-96 overflow-y-auto space-y-2">
-              {availableTasksForDependency.map(depTask => (
-                <label
-                  key={depTask.id}
-                  className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedDependencies.includes(depTask.id)}
-                    onChange={() => toggleDependency(depTask.id)}
-                    className="mr-3 rounded text-purple-600 focus:ring-purple-500"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900 dark:text-gray-100">
-                      {depTask.title}
-                    </div>
-                    {depTask.projectId && (
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {projects.find(p => p.id === depTask.projectId)?.name}
-                      </div>
-                    )}
-                  </div>
-                </label>
-              ))}
-            </div>
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="primary"
-                onClick={() => setShowDependencyModal(false)}
-              >
-                Done
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 };
