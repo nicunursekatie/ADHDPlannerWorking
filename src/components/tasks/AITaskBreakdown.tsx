@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Task } from '../../types';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
@@ -55,12 +55,28 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
     // Default to true unless explicitly set to false
     alwaysAskContext !== 'false'
   );
-  const [contextData, setContextData] = useState({
-    currentState: '',
-    blockers: '',
-    specificGoal: '',
-    environment: ''
+  const [contextData, setContextData] = useState(() => {
+    // Load saved context data from localStorage
+    const savedContext = localStorage.getItem('ai_context_form_data');
+    if (savedContext) {
+      try {
+        return JSON.parse(savedContext);
+      } catch {
+        // If parse fails, return default
+      }
+    }
+    return {
+      currentState: '',
+      blockers: '',
+      specificGoal: '',
+      environment: ''
+    };
   });
+
+  // Auto-save context data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('ai_context_form_data', JSON.stringify(contextData));
+  }, [contextData]);
 
   const generateBreakdown = async () => {
     setIsLoading(true);
@@ -286,6 +302,9 @@ Return JSON array only.`
     }));
     
     setBreakdownOptions(breakdown);
+    
+    // Clear saved context data after successful generation
+    localStorage.removeItem('ai_context_form_data');
     } catch (err) {
       let errorMessage = 'Failed to generate breakdown: ';
       
@@ -482,6 +501,9 @@ Return JSON array only.`
         dueDate: task.dueDate
       };
     });
+    
+    // Clear saved context data when accepting the breakdown
+    localStorage.removeItem('ai_context_form_data');
     
     onAccept(subtasks);
   };
