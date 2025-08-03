@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle, Sparkles, Play, Timer } from 'lucide-react';
+import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle, Sparkles, Play, Timer, FolderPlus } from 'lucide-react';
 import { Task } from '../types';
 import { useAppContext } from '../context/AppContextSupabase';
 import { getDueDateStatus, getRelativeTimeDisplay } from '../utils/dateUtils';
@@ -19,6 +19,7 @@ interface TaskDisplayProps {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onBreakdown?: (task: Task) => void;
+  onConvertToProject?: (task: Task) => void;
 }
 
 export const TaskDisplay: React.FC<TaskDisplayProps> = ({ 
@@ -26,7 +27,8 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   onToggle, 
   onEdit, 
   onDelete,
-  onBreakdown 
+  onBreakdown,
+  onConvertToProject 
 }) => {
   const { tasks, projects, updateTask } = useAppContext();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -595,6 +597,18 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             title="AI Breakdown - Break down into subtasks"
           >
             <Sparkles className="w-3 h-3" />
+          </button>
+        )}
+        {onConvertToProject && !task.completed && !task.projectId && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onConvertToProject(task);
+            }}
+            className="p-1 text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+            title="Convert to Project"
+          >
+            <FolderPlus className="w-3 h-3" />
           </button>
         )}
         <button

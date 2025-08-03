@@ -5,6 +5,7 @@ import { Task, TaskSortMode, WhatNowCriteria } from '../types';
 import { TaskDisplay } from '../components/TaskDisplay';
 import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
 import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
+import ConvertToProject from '../components/tasks/ConvertToProject';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -28,6 +29,7 @@ interface BulkTaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onBreakdown?: (task: Task) => void;
+  onConvertToProject?: (task: Task) => void;
 }
 
 const BulkTaskCard: React.FC<BulkTaskCardProps> = ({ 
@@ -36,7 +38,8 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
   onSelectChange,
   onEdit,
   onDelete,
-  onBreakdown
+  onBreakdown,
+  onConvertToProject
 }) => {
   const { updateTask } = useAppContext();
   
@@ -60,6 +63,7 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
           onEdit={onEdit}
           onDelete={onDelete}
           onBreakdown={onBreakdown}
+          onConvertToProject={onConvertToProject}
         />
       </div>
     </div>
@@ -100,6 +104,7 @@ const TasksPageWithBulkOps: React.FC = () => {
   const [showBulkMoveModal, setShowBulkMoveModal] = useState(false);
   const [selectedProjectForMove, setSelectedProjectForMove] = useState<string | null>(null);
   const [breakdownTask, setBreakdownTask] = useState<Task | null>(null);
+  const [convertToProjectTask, setConvertToProjectTask] = useState<Task | null>(null);
   const [showConvertToSubtasksModal, setShowConvertToSubtasksModal] = useState(false);
   const [selectedParentTaskId, setSelectedParentTaskId] = useState<string | null>(null);
   const [, setDeletedTasks] = useState<DeletedTask[]>([]);
@@ -263,6 +268,79 @@ const TasksPageWithBulkOps: React.FC = () => {
   
   const handleBreakdownClose = () => {
     setBreakdownTask(null);
+  };
+  
+  const handleConvertToProject = (task: Task) => {
+    setConvertToProjectTask(task);
+  };
+  
+  const handleConvertToProjectConfirm = async (projectData: any, options: any) => {
+    if (!convertToProjectTask) return;
+    
+    try {
+      // Create the new project
+      const newProject = await addProject(projectData);
+      
+      // Get subtasks if they exist
+      const subtasks = tasks.filter(t => t.parentTaskId === convertToProjectTask.id);
+      
+      // Update the original task to be part of the project if requested
+      if (options.moveToProject) {
+        await updateTask({
+          ...convertToProjectTask,
+          projectId: newProject.id,
+          parentTaskId: null // Remove parent relationship if it exists
+        });
+      }
+      
+      // Include subtasks if requested
+      if (options.includeSubtasks && subtasks.length > 0) {
+        for (const subtask of subtasks) {
+          await updateTask({
+            ...subtask,
+            projectId: newProject.id,
+            parentTaskId: options.moveToProject ? convertToProjectTask.id : null
+          });
+        }
+      }
+      
+      // Create project phases if requested
+      if (options.createPhases) {
+        const phases = ['Planning', 'Execution', 'Review'];
+        for (const [index, phaseName] of phases.entries()) {
+          await addTask({
+            title: `${phaseName} Phase`,
+            description: `${phaseName} phase for ${newProject.name}`,
+            projectId: newProject.id,
+            phase: phaseName,
+            phaseOrder: index,
+            tags: [phaseName.toLowerCase()],
+            completed: false,
+            archived: false,
+            categoryIds: convertToProjectTask.categoryIds || [],
+            dueDate: null,
+            startDate: null,
+            parentTaskId: null,
+            priority: 'medium',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+        }
+      }
+      
+      // Delete original task if requested and not moved to project
+      if (options.deleteOriginalTask && !options.moveToProject) {
+        await deleteTask(convertToProjectTask.id);
+      }
+      
+      setConvertToProjectTask(null);
+    } catch (error) {
+      console.error('Failed to convert task to project:', error);
+    }
+  };
+  
+  const handleConvertToProjectCancel = () => {
+    setConvertToProjectTask(null);
   };
   
   // Bulk operations
@@ -1171,6 +1249,7 @@ const TasksPageWithBulkOps: React.FC = () => {
                       onEdit={handleOpenModal}
                       onDelete={handleDeleteTask}
                       onBreakdown={handleBreakdown}
+                      onConvertToProject={handleConvertToProject}
                     />
                   ))}
                 </div>
@@ -1193,6 +1272,7 @@ const TasksPageWithBulkOps: React.FC = () => {
                       onEdit={handleOpenModal}
                       onDelete={handleDeleteTask}
                       onBreakdown={handleBreakdown}
+                      onConvertToProject={handleConvertToProject}
                     />
                   ))}
                 </div>
@@ -1319,6 +1399,16 @@ const TasksPageWithBulkOps: React.FC = () => {
           task={breakdownTask}
           onAccept={handleBreakdownAccept}
           onClose={handleBreakdownClose}
+        />
+      )}
+      
+      {/* Convert to Project Modal */}
+      {convertToProjectTask && (
+        <ConvertToProject
+          task={convertToProjectTask}
+          onConfirm={handleConvertToProjectConfirm}
+          onCancel={handleConvertToProjectCancel}
+          subtasks={tasks.filter(t => t.parentTaskId === convertToProjectTask.id)}
         />
       )}
       
