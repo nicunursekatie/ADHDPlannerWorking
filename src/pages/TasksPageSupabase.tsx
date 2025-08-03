@@ -210,6 +210,31 @@ export const TasksPageSupabase: React.FC = () => {
     return true;
   });
 
+  // Debug: Log task counts
+  React.useEffect(() => {
+    console.log('[TasksPageSupabase] Task counts:', {
+      totalTasks: tasks.length,
+      filteredTasks: filteredTasks.length,
+      filterBy,
+      tasksWithParentId: tasks.filter(t => t.parentTaskId).length,
+      archivedTasks: tasks.filter(t => t.archived).length,
+      deletedTasks: tasks.filter(t => t.deletedAt).length,
+      completedTasks: tasks.filter(t => t.completed).length,
+      activeTasks: tasks.filter(t => !t.completed && !t.archived && !t.deletedAt).length
+    });
+    
+    // Log the last 3 tasks to see if new ones are there
+    const lastThreeTasks = tasks.slice(-3).map(t => ({
+      id: t.id,
+      title: t.title,
+      completed: t.completed,
+      archived: t.archived,
+      deletedAt: t.deletedAt,
+      parentTaskId: t.parentTaskId
+    }));
+    console.log('[TasksPageSupabase] Last 3 tasks:', lastThreeTasks);
+  }, [tasks.length, filteredTasks.length, filterBy]);
+
   // Sort tasks
   filteredTasks.sort((a, b) => {
     let comparison = 0;
@@ -406,12 +431,30 @@ export const TasksPageSupabase: React.FC = () => {
       for (const task of followUpTasks) {
         console.log('[TasksPageSupabase] Creating individual follow-up task:', task);
         const createdTask = await addTask(task);
-        console.log('[TasksPageSupabase] Created task:', createdTask);
+        console.log('[TasksPageSupabase] Created task result:', {
+          id: createdTask.id,
+          title: createdTask.title,
+          completed: createdTask.completed,
+          archived: createdTask.archived,
+          deletedAt: createdTask.deletedAt,
+          parentTaskId: createdTask.parentTaskId
+        });
       }
       
       // Trigger celebration after successful completion
       if (completedTaskForFollowUp) {
         console.log('[TasksPageSupabase] All follow-up tasks created successfully');
+        
+        // Force a refresh of the task list by changing filter and back
+        // This is a workaround to ensure the UI updates
+        const currentFilter = filterBy;
+        setFilterBy('all');
+        setTimeout(() => {
+          if (currentFilter !== 'all') {
+            setFilterBy(currentFilter);
+          }
+        }, 100);
+        
         triggerCelebration();
         showToastCelebration(`"${completedTaskForFollowUp.title}" completed! 🎉`);
       }

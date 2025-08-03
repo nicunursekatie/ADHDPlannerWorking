@@ -301,6 +301,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.error('Error fetching task dependencies:', error);
       }
       
+      // Check for duplicate tasks before setting
+      const titleCounts = tasksWithDependencies.reduce((acc, task) => {
+        const title = task.title.toLowerCase();
+        acc[title] = (acc[title] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const duplicates = Object.entries(titleCounts).filter(([_, count]) => count > 1);
+      if (duplicates.length > 0) {
+        console.warn('[AppContext] Duplicate tasks found on initial load:', duplicates);
+        
+        // Log all HRV related tasks
+        const hrvTasks = tasksWithDependencies.filter(t => t.title.toLowerCase().includes('hrv'));
+        if (hrvTasks.length > 0) {
+          console.log('[AppContext] All HRV tasks on load:', hrvTasks.map(t => ({
+            id: t.id,
+            title: t.title,
+            createdAt: t.createdAt,
+            dueDate: t.dueDate,
+            completed: t.completed,
+            archived: t.archived,
+            deletedAt: t.deletedAt
+          })));
+        }
+      }
+      
       setTasks(tasksWithDependencies);
       setProjects(projectsData);
       setCategories(categoriesData);
@@ -416,6 +442,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const updatedTasks = [...prev, createdTask];
       const result = computeSubtasks(updatedTasks);
       console.log('[AppContext] Updated tasks state:', result.length, 'tasks');
+      
+      // Check for potential duplicates
+      const titleCounts = result.reduce((acc, task) => {
+        const title = task.title.toLowerCase();
+        acc[title] = (acc[title] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const duplicates = Object.entries(titleCounts).filter(([_, count]) => count > 1);
+      if (duplicates.length > 0) {
+        console.warn('[AppContext] Potential duplicate tasks detected:', duplicates);
+        
+        // Log tasks with "hrv" in the title
+        const hrvTasks = result.filter(t => t.title.toLowerCase().includes('hrv'));
+        if (hrvTasks.length > 0) {
+          console.log('[AppContext] Tasks containing "HRV":', hrvTasks.map(t => ({
+            id: t.id,
+            title: t.title,
+            createdAt: t.createdAt,
+            dueDate: t.dueDate
+          })));
+        }
+      }
+      
       return result;
     });
     
