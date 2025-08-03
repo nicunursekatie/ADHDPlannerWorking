@@ -133,7 +133,8 @@ export const TasksPageSupabase: React.FC = () => {
   const location = useLocation();
   const { 
     tasks, 
-    projects, 
+    projects,
+    addProject, 
     categories, 
     addTask, 
     updateTask, 
