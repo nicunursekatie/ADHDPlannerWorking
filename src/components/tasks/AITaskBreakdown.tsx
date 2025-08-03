@@ -261,7 +261,8 @@ Return JSON array only.`
     } catch (e) {
       console.error('[AITaskBreakdown] Failed to parse AI response:', e);
       console.error('[AITaskBreakdown] Content that failed to parse:', content);
-      throw new Error(`Invalid response format: ${e.message}`);
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      throw new Error(`Invalid response format: ${errorMessage}`);
     }
     
     // Log the steps before conversion
