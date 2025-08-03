@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle, Sparkles, Play, Timer, FolderPlus } from 'lucide-react';
 import { Task } from '../types';
 import { useAppContext } from '../context/AppContextSupabase';
@@ -30,6 +31,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   onBreakdown,
   onConvertToProject 
 }) => {
+  const navigate = useNavigate();
   const { tasks, projects, updateTask } = useAppContext();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
@@ -295,12 +297,22 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
               
               {/* Project info */}
               {task.projectId && (
-                <div className="flex items-center gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const project = projects.find(p => p.id === task.projectId);
+                    if (project) {
+                      navigate(`/projects/${project.id}`);
+                    }
+                  }}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg transition-all hover:scale-105 hover:bg-white/50 dark:hover:bg-gray-800/50"
+                  title={`Go to ${projects.find(p => p.id === task.projectId)?.name || 'Unknown'} project`}
+                >
                   <Folder className="w-3 h-3 text-purple-400 dark:text-purple-500" />
-                  <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-24">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-24 font-medium">
                     {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
                   </span>
-                </div>
+                </button>
               )}
               
               {/* Traditional Priority (smaller, less prominent) */}

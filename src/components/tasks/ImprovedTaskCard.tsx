@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   CheckCircle2, 
   Circle, 
@@ -45,6 +46,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [showDateEditor, setShowDateEditor] = useState(false);
@@ -379,10 +381,17 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
         )}
         
         {project && (
-          <div className="flex items-center text-xs">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/projects/${project.id}`);
+            }}
+            className="flex items-center text-xs px-2 py-1 rounded-lg transition-all hover:scale-105 hover:bg-white/50 dark:hover:bg-gray-800/50"
+            title={`Go to ${project.name} project`}
+          >
             <Folder size={14} className="mr-1" style={{ color: project.color }} />
-            <span style={{ color: project.color }}>{project.name}</span>
-          </div>
+            <span style={{ color: project.color }} className="font-medium">{project.name}</span>
+          </button>
         )}
         
         {taskCategories.length > 0 && (
@@ -391,9 +400,10 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
             {taskCategories.map(category => (
               <Badge 
                 key={category.id}
-                text={category.name}
-                bgColor={category.color}
-              />
+                variant="info"
+              >
+                {category.name}
+              </Badge>
             ))}
           </div>
         )}
