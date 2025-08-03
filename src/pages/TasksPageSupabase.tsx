@@ -5,6 +5,7 @@ import { Task } from '../types';
 import { TaskDisplay } from '../components/TaskDisplay';
 import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
 import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
+import ConvertToProject from '../components/tasks/ConvertToProject';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -82,6 +83,7 @@ interface BulkTaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onBreakdown?: (task: Task) => void;
+  onConvertToProject?: (task: Task) => void;
   onToggle: (taskId: string) => void;
   showCheckbox: boolean;
 }
@@ -93,6 +95,7 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
   onEdit,
   onDelete,
   onBreakdown,
+  onConvertToProject,
   onToggle,
   showCheckbox
 }) => {
@@ -119,6 +122,7 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
           onEdit={onEdit}
           onDelete={onDelete}
           onBreakdown={onBreakdown}
+          onConvertToProject={onConvertToProject}
         />
       </div>
     </div>
@@ -144,6 +148,7 @@ export const TasksPageSupabase: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showAIBreakdown, setShowAIBreakdown] = useState(false);
   const [aiBreakdownTask, setAiBreakdownTask] = useState<Task | null>(null);
+  const [convertToProjectTask, setConvertToProjectTask] = useState<Task | null>(null);
   const [filterBy, setFilterBy] = useState<'all' | 'completed' | 'active' | 'overdue' | 'today' | 'week' | 'actionable' | 'future' | 'project' | 'category' | 'archived'>('all');
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -335,6 +340,79 @@ export const TasksPageSupabase: React.FC = () => {
   const handleAIBreakdown = (task: Task) => {
     setAiBreakdownTask(task);
     setShowAIBreakdown(true);
+  };
+  
+  const handleConvertToProject = (task: Task) => {
+    setConvertToProjectTask(task);
+  };
+  
+  const handleConvertToProjectConfirm = async (projectData: any, options: any) => {
+    if (!convertToProjectTask) return;
+    
+    try {
+      // Create the new project
+      const newProject = await addProject(projectData);
+      
+      // Get subtasks if they exist
+      const subtasks = tasks.filter(t => t.parentTaskId === convertToProjectTask.id);
+      
+      // Update the original task to be part of the project if requested
+      if (options.moveToProject) {
+        await updateTask({
+          ...convertToProjectTask,
+          projectId: newProject.id,
+          parentTaskId: null // Remove parent relationship if it exists
+        });
+      }
+      
+      // Include subtasks if requested
+      if (options.includeSubtasks && subtasks.length > 0) {
+        for (const subtask of subtasks) {
+          await updateTask({
+            ...subtask,
+            projectId: newProject.id,
+            parentTaskId: options.moveToProject ? convertToProjectTask.id : null
+          });
+        }
+      }
+      
+      // Create project phases if requested
+      if (options.createPhases) {
+        const phases = ['Planning', 'Execution', 'Review'];
+        for (const [index, phaseName] of phases.entries()) {
+          await addTask({
+            title: `${phaseName} Phase`,
+            description: `${phaseName} phase for ${newProject.name}`,
+            projectId: newProject.id,
+            phase: phaseName,
+            phaseOrder: index,
+            tags: [phaseName.toLowerCase()],
+            completed: false,
+            archived: false,
+            categoryIds: convertToProjectTask.categoryIds || [],
+            dueDate: null,
+            startDate: null,
+            parentTaskId: null,
+            priority: 'medium',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+        }
+      }
+      
+      // Delete original task if requested and not moved to project
+      if (options.deleteOriginalTask && !options.moveToProject) {
+        await deleteTask(convertToProjectTask.id);
+      }
+      
+      setConvertToProjectTask(null);
+    } catch (error) {
+      console.error('Failed to convert task to project:', error);
+    }
+  };
+  
+  const handleConvertToProjectCancel = () => {
+    setConvertToProjectTask(null);
   };
 
   // Custom task completion handler that shows time tracking modal
@@ -945,6 +1023,7 @@ export const TasksPageSupabase: React.FC = () => {
                       }}
                       onDelete={handleDeleteTask}
                       onBreakdown={handleAIBreakdown}
+                      onConvertToProject={handleConvertToProject}
                       onToggle={handleTaskToggle}
                       showCheckbox={bulkActionsEnabled}
                     />
@@ -997,6 +1076,16 @@ export const TasksPageSupabase: React.FC = () => {
             setShowAIBreakdown(false);
             setAiBreakdownTask(null);
           }}
+        />
+      )}
+      
+      {/* Convert to Project Modal */}
+      {convertToProjectTask && (
+        <ConvertToProject
+          task={convertToProjectTask}
+          onConfirm={handleConvertToProjectConfirm}
+          onCancel={handleConvertToProjectCancel}
+          subtasks={tasks.filter(t => t.parentTaskId === convertToProjectTask.id)}
         />
       )}
 
