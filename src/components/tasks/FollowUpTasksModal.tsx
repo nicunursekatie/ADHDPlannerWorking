@@ -82,21 +82,25 @@ export const FollowUpTasksModal: React.FC<FollowUpTasksModalProps> = ({
       .filter(task => task.title.trim() !== '')
       .map(task => ({
         title: task.title.trim(),
-        description: task.description.trim(),
-        priority: task.priority,
+        description: task.description.trim() || '',
+        priority: task.priority as 'low' | 'medium' | 'high' | 'urgent',
         dueDate: task.dueDate || undefined,
         estimatedMinutes: task.estimatedMinutes ? parseInt(task.estimatedMinutes) : undefined,
-        categoryId: task.categoryId,
-        projectId: task.projectId,
+        categoryId: task.categoryId || undefined,
+        projectId: task.projectId || undefined,
         completed: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         parentTaskId: parentTask.id,
       }));
 
+    console.log('[FollowUpTasksModal] Tasks to create:', tasksToCreate);
+    console.log('[FollowUpTasksModal] Parent task:', parentTask);
+
     if (tasksToCreate.length > 0) {
       onConfirm(tasksToCreate);
     } else {
+      console.log('[FollowUpTasksModal] No valid tasks to create, skipping');
       onSkip();
     }
   };

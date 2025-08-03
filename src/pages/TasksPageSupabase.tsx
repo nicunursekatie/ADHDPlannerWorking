@@ -401,16 +401,24 @@ export const TasksPageSupabase: React.FC = () => {
   const handleFollowUpTasksConfirm = async (followUpTasks: Partial<Task>[]) => {
     console.log('[TasksPageSupabase] Creating follow-up tasks', followUpTasks);
     
-    // Create all follow-up tasks
-    for (const task of followUpTasks) {
-      await addTask(task as Omit<Task, 'id'>);
-    }
-    
-    // Trigger celebration after successful completion
-    if (completedTaskForFollowUp) {
-      console.log('[TasksPageSupabase] Triggering celebration');
-      triggerCelebration();
-      showToastCelebration(`"${completedTaskForFollowUp.title}" completed! 🎉`);
+    try {
+      // Create all follow-up tasks
+      for (const task of followUpTasks) {
+        console.log('[TasksPageSupabase] Creating individual follow-up task:', task);
+        const createdTask = await addTask(task);
+        console.log('[TasksPageSupabase] Created task:', createdTask);
+      }
+      
+      // Trigger celebration after successful completion
+      if (completedTaskForFollowUp) {
+        console.log('[TasksPageSupabase] All follow-up tasks created successfully');
+        triggerCelebration();
+        showToastCelebration(`"${completedTaskForFollowUp.title}" completed! 🎉`);
+      }
+    } catch (error) {
+      console.error('[TasksPageSupabase] Error creating follow-up tasks:', error);
+      alert('Failed to create follow-up tasks. Please try again.');
+      return; // Don't close modal on error
     }
     
     // Close modal and clear state
