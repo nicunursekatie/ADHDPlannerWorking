@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Task } from '../../types';
-import Card from '../common/Card';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 import { getProvider } from '../../utils/aiProviders';
@@ -17,9 +16,7 @@ import {
   Sparkles,
   Trash2,
   X,
-  GripVertical,
-  AlertCircle
-} from 'lucide-react';
+  GripVertical} from 'lucide-react';
 
 interface AITaskBreakdownProps {
   task: Task;
@@ -196,15 +193,42 @@ Return JSON array only.`
     const data = await response.json();
     const content = provider.parseResponse(data);
     
-    // Parse the JSON response
+    // Parse the JSON response with better error handling
     let steps;
     try {
-      // Extract JSON from the response (in case it includes extra text)
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        steps = JSON.parse(jsonMatch[0]);
-      } else {
+      // Log the raw content for debugging
+      console.log('[AITaskBreakdown] Raw AI response:', content);
+      
+      // Try multiple parsing strategies
+      // Strategy 1: Direct JSON parse
+      try {
         steps = JSON.parse(content);
+      } catch {
+        // Strategy 2: Extract JSON array from text
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          steps = JSON.parse(jsonMatch[0]);
+        } else {
+          // Strategy 3: Look for JSON object array
+          const objectMatch = content.match(/\{[\s\S]*\}/g);
+          if (objectMatch && objectMatch.length > 0) {
+            steps = objectMatch.map(obj => {
+              try {
+                return JSON.parse(obj);
+              } catch {
+                return null;
+              }
+            }).filter(Boolean);
+          } else {
+            throw new Error('No valid JSON found in response');
+          }
+        }
+      }
+      
+      // Validate that steps is an array
+      if (!Array.isArray(steps)) {
+        console.error('[AITaskBreakdown] Steps is not an array:', steps);
+        throw new Error('Response is not an array');
       }
       
       // Handle Groq's different response format (check both "Step" and "step")
@@ -218,8 +242,26 @@ Return JSON array only.`
           tips: 'Focus on this specific action'
         }));
       }
+      
+      // Validate required fields
+      steps = steps.map((step, index) => {
+        if (!step.title && !step.Step && !step.step) {
+          console.warn(`[AITaskBreakdown] Step ${index} missing title:`, step);
+        }
+        return {
+          title: step.title || step.Step || step.step || `Step ${index + 1}`,
+          duration: step.duration || '10 mins',
+          description: step.description || step.Step || step.step || '',
+          type: step.type || 'work',
+          energyRequired: step.energyRequired || 'medium',
+          tips: step.tips
+        };
+      });
+      
     } catch (e) {
-      throw new Error('Invalid response format');
+      console.error('[AITaskBreakdown] Failed to parse AI response:', e);
+      console.error('[AITaskBreakdown] Content that failed to parse:', content);
+      throw new Error(`Invalid response format: ${e.message}`);
     }
     
     // Log the steps before conversion
@@ -259,9 +301,107 @@ Return JSON array only.`
       }
       
       setError(errorMessage);
+      
+      // Provide fallback breakdown suggestions
+      console.log('[AITaskBreakdown] Providing fallback breakdown for task:', task.title);
+      const fallbackBreakdown = getFallbackBreakdown(task);
+      if (fallbackBreakdown.length > 0) {
+        setBreakdownOptions(fallbackBreakdown);
+        setError(errorMessage + ' Using fallback suggestions instead.');
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  // Helper function to generate fallback breakdown
+  const getFallbackBreakdown = (task: Task): BreakdownOption[] => {
+    const baseSteps: BreakdownOption[] = [
+      {
+        id: '1',
+        title: 'Prepare workspace and gather materials',
+        duration: '5-10 mins',
+        description: 'Clear your workspace and collect everything you need to start',
+        selected: true,
+        editable: false,
+        type: 'work',
+        energyRequired: 'low',
+        tips: 'Starting with preparation helps transition into work mode'
+      },
+      {
+        id: '2',
+        title: `Break down "${task.title}" into smaller chunks`,
+        duration: '10 mins',
+        description: 'List out the main components or areas to tackle',
+        selected: true,
+        editable: false,
+        type: 'work',
+        energyRequired: 'medium',
+        tips: 'Writing it down reduces mental load'
+      },
+      {
+        id: '3',
+        title: 'Start with the easiest or most obvious part',
+        duration: '15-20 mins',
+        description: 'Pick the simplest piece to build momentum',
+        selected: true,
+        editable: false,
+        type: 'work',
+        energyRequired: 'medium',
+        tips: 'Success breeds success - starting easy helps you keep going'
+      },
+      {
+        id: '4',
+        title: 'Take a short movement break',
+        duration: '5 mins',
+        description: 'Stand, stretch, walk around, or get water',
+        selected: true,
+        editable: false,
+        type: 'break',
+        energyRequired: 'low',
+        tips: 'Movement helps reset focus for ADHD brains'
+      },
+      {
+        id: '5',
+        title: 'Continue with the main work',
+        duration: '20-25 mins',
+        description: 'Now tackle the core part of the task',
+        selected: true,
+        editable: false,
+        type: 'work',
+        energyRequired: 'high',
+        tips: 'Use a timer - knowing there\'s an endpoint helps maintain focus'
+      },
+      {
+        id: '6',
+        title: 'Quick review and wrap-up',
+        duration: '5 mins',
+        description: 'Check what you\'ve done and note any next steps',
+        selected: true,
+        editable: false,
+        type: 'review',
+        energyRequired: 'low',
+        tips: 'Celebrating progress motivates you for next time'
+      }
+    ];
+    
+    // Customize based on task title keywords
+    if (task.title.toLowerCase().includes('unpack') || task.title.toLowerCase().includes('organize')) {
+      baseSteps[1] = {
+        ...baseSteps[1],
+        title: 'Sort items into categories',
+        description: 'Group similar items together (by room, type, or priority)',
+        tips: 'Categories reduce decision fatigue'
+      };
+      baseSteps[2] = {
+        ...baseSteps[2],
+        title: 'Start with one category or area',
+        description: 'Focus on just one group at a time',
+        tips: 'Completing one area gives a sense of progress'
+      };
+    }
+    
+    return baseSteps.slice(0, preferences.maxSteps);
   };
 
   const toggleOption = (id: string) => {
