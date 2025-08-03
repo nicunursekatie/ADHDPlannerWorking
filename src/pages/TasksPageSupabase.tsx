@@ -358,6 +358,10 @@ export const TasksPageSupabase: React.FC = () => {
     await updateTask(updatedTask);
     
     // Close time modal and show follow-up modal
+    console.log('[TasksPageSupabase] Showing follow-up modal after time tracking', {
+      updatedTask,
+      showFollowUpModal: true
+    });
     setShowTimeSpentModal(false);
     setCompletedTaskForFollowUp(updatedTask);
     setShowFollowUpModal(true);
@@ -383,6 +387,10 @@ export const TasksPageSupabase: React.FC = () => {
     await updateTask(updatedTask);
     
     // Close time modal and show follow-up modal
+    console.log('[TasksPageSupabase] Showing follow-up modal after time tracking', {
+      updatedTask,
+      showFollowUpModal: true
+    });
     setShowTimeSpentModal(false);
     setCompletedTaskForFollowUp(updatedTask);
     setShowFollowUpModal(true);
@@ -1003,6 +1011,7 @@ export const TasksPageSupabase: React.FC = () => {
         <FollowUpTasksModal
           isOpen={showFollowUpModal}
           onClose={() => {
+            console.log('[TasksPageSupabase] Closing follow-up modal via X button');
             setShowFollowUpModal(false);
             setCompletedTaskForFollowUp(null);
           }}

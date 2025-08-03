@@ -32,6 +32,14 @@ export const FollowUpTasksModal: React.FC<FollowUpTasksModalProps> = ({
   categories,
   projects,
 }) => {
+  React.useEffect(() => {
+    console.log('[FollowUpTasksModal] Modal state:', {
+      isOpen,
+      parentTask: parentTask?.title,
+      hasCategories: categories?.length > 0,
+      hasProjects: projects?.length > 0
+    });
+  }, [isOpen, parentTask, categories, projects]);
   const [followUpTasks, setFollowUpTasks] = useState<FollowUpTaskInput[]>([
     {
       title: '',

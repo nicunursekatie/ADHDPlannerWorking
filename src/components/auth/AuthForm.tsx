@@ -8,6 +8,7 @@ interface AuthFormProps {
 
 export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +25,17 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
-      if (isSignUp) {
+      if (isForgotPassword) {
+        await DatabaseService.resetPasswordForEmail(email);
+        setSuccess('Password reset email sent! Please check your inbox.');
+        setLoading(false);
+        // Reset form after 3 seconds
+        setTimeout(() => {
+          setIsForgotPassword(false);
+          setSuccess(null);
+        }, 3000);
+        return;
+      } else if (isSignUp) {
         const result = await DatabaseService.signUp(email, password);
         // Check if email confirmation is required
         if (result.user && !result.session) {
@@ -61,7 +72,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
       <div className="max-w-md w-full space-y-8 p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
         <div>
           <h2 className="text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            {isSignUp ? 'Create your account' : 'Sign in to your account'}
+            {isForgotPassword ? 'Reset your password' : isSignUp ? 'Create your account' : 'Sign in to your account'}
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -91,21 +102,23 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+            {!isForgotPassword && (
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            )}
           </div>
 
           <div>
@@ -115,18 +128,46 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Loading...' : (isSignUp ? 'Sign up' : 'Sign in')}
+              {loading ? 'Loading...' : 
+               isForgotPassword ? 'Send Reset Email' : 
+               isSignUp ? 'Sign up' : 'Sign in'}
             </Button>
           </div>
 
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500"
-            >
-              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-            </button>
+          <div className="text-center space-y-2">
+            {!isForgotPassword && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="block w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500"
+                >
+                  {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+                </button>
+                {!isSignUp && (
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPassword(true)}
+                    className="block w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500"
+                  >
+                    Forgot your password?
+                  </button>
+                )}
+              </>
+            )}
+            {isForgotPassword && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgotPassword(false);
+                  setError(null);
+                  setSuccess(null);
+                }}
+                className="block w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500"
+              >
+                Back to sign in
+              </button>
+            )}
           </div>
           
           {isSignUp && (

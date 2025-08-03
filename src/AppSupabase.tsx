@@ -19,6 +19,7 @@ import WeeklyReviewPage from './pages/WeeklyReviewPage';
 import AccountabilityPage from './pages/AccountabilityPage';
 import BrainDumpPage from './pages/BrainDumpPage';
 import WhatNowPage from './pages/WhatNowPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 // Create wrapper components for pages that use localStorage context
 // These will be replaced with proper Supabase-compatible versions later
@@ -39,11 +40,26 @@ const PlaceholderPage: React.FC<{ name: string }> = ({ name }) => (
 const AppContent: React.FC = () => {
   const { user, isLoading, settings } = useAppContext();
   
+  // Check if we're on the reset password page
+  const isResetPasswordRoute = window.location.hash === '#/reset-password';
+  
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Loading...</div>
       </div>
+    );
+  }
+  
+  // Show reset password page if that's the route
+  if (isResetPasswordRoute) {
+    return (
+      <Router>
+        <Routes>
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="*" element={<AuthForm onSuccess={() => {}} />} />
+        </Routes>
+      </Router>
     );
   }
   

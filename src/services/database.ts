@@ -832,4 +832,30 @@ export class DatabaseService {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   }
+
+  static async resetPasswordForEmail(email: string) {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    
+    if (error) {
+      if (error.status === 429) {
+        const customError = new Error('Too many reset attempts. Please wait a moment and try again.');
+        (customError as any).status = 429;
+        throw customError;
+      }
+      throw error;
+    }
+    
+    return data;
+  }
+
+  static async updatePassword(newPassword: string) {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    
+    if (error) throw error;
+    return data;
+  }
 }
