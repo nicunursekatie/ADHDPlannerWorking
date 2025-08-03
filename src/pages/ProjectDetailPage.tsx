@@ -6,14 +6,14 @@ import { TaskDisplay } from "../components/TaskDisplay";
 import TaskForm from '../components/tasks/TaskForm';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
-import { ArrowLeft, Edit, Trash, Plus } from 'lucide-react';
+import { ArrowLeft, Edit, Trash, Plus, CheckCircle, Archive, RotateCcw } from 'lucide-react';
 import Empty from '../components/common/Empty';
 import ProjectForm from '../components/projects/ProjectForm';
 
 const ProjectDetailPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const { projects, tasks, categories, deleteProject, deleteTask, updateTask } = useAppContext();
+  const { projects, tasks, categories, deleteProject, deleteTask, updateTask, completeProject, archiveProject } = useAppContext();
   
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -89,13 +89,77 @@ const ProjectDetailPage: React.FC = () => {
             >
               <ArrowLeft size={18} />
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {project.name}
+              {project.completed && (
+                <span className="ml-2 text-sm font-normal text-green-600">
+                  (Completed)
+                </span>
+              )}
+              {project.archived && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  (Archived)
+                </span>
+              )}
+            </h1>
           </div>
           {project.description && (
             <p className="text-gray-600">{project.description}</p>
           )}
         </div>
         <div className="mt-4 md:mt-0 flex space-x-2">
+          {!project.completed && (
+            <Button
+              variant="success"
+              size="sm"
+              icon={<CheckCircle size={16} />}
+              onClick={async () => {
+                await completeProject(project.id);
+              }}
+              title="Mark project as completed"
+            >
+              Complete
+            </Button>
+          )}
+          {project.completed && !project.archived && (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<RotateCcw size={16} />}
+                onClick={async () => {
+                  await completeProject(project.id);
+                }}
+                title="Mark project as incomplete"
+              >
+                Reopen
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Archive size={16} />}
+                onClick={async () => {
+                  await archiveProject(project.id);
+                }}
+                title="Archive completed project"
+              >
+                Archive
+              </Button>
+            </>
+          )}
+          {project.archived && (
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<RotateCcw size={16} />}
+              onClick={async () => {
+                await archiveProject(project.id);
+              }}
+              title="Unarchive project"
+            >
+              Unarchive
+            </Button>
+          )}
           <Button
             variant="secondary"
             size="sm"

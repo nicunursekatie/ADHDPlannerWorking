@@ -50,6 +50,8 @@ interface AppContextType {
   addProject: (project: Partial<Project>) => Promise<Project>;
   updateProject: (project: Project) => Promise<void>;
   deleteProject: (projectId: string) => Promise<void>;
+  completeProject: (projectId: string) => Promise<Project>;
+  archiveProject: (projectId: string) => Promise<Project>;
   reorderProjects: (projectIds: string[]) => Promise<void>;
   
   // Categories
@@ -616,6 +618,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       name: '',
       description: '',
       color: '#3B82F6',
+      completed: false,
+      archived: false,
+      completedAt: null,
+      archivedAt: null,
       createdAt: timestamp,
       updatedAt: timestamp,
       ...projectData,
@@ -674,6 +680,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     await DatabaseService.deleteProject(projectId, user.id);
     setProjects(prev => prev.filter(project => project.id !== projectId));
   }, [user, tasks, computeSubtasks]);
+
+  const completeProject = useCallback(async (projectId: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    const project = projects.find(p => p.id === projectId);
+    if (!project) throw new Error('Project not found');
+    
+    const timestamp = new Date().toISOString();
+    const updatedProject = {
+      ...project,
+      completed: !project.completed,
+      completedAt: !project.completed ? timestamp : null,
+      updatedAt: timestamp,
+    };
+    
+    await DatabaseService.updateProject(projectId, updatedProject, user.id);
+    setProjects(prev => prev.map(p => 
+      p.id === projectId ? updatedProject : p
+    ));
+    
+    return updatedProject;
+  }, [user, projects]);
+
+  const archiveProject = useCallback(async (projectId: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    const project = projects.find(p => p.id === projectId);
+    if (!project) throw new Error('Project not found');
+    
+    const timestamp = new Date().toISOString();
+    const updatedProject = {
+      ...project,
+      archived: !project.archived,
+      archivedAt: !project.archived ? timestamp : null,
+      updatedAt: timestamp,
+    };
+    
+    await DatabaseService.updateProject(projectId, updatedProject, user.id);
+    setProjects(prev => prev.map(p => 
+      p.id === projectId ? updatedProject : p
+    ));
+    
+    return updatedProject;
+  }, [user, projects]);
 
   const reorderProjects = useCallback(async (projectIds: string[]) => {
     if (!user) throw new Error('User not authenticated');
@@ -1677,6 +1727,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     addProject,
     updateProject,
     deleteProject,
+    completeProject,
+    archiveProject,
     reorderProjects,
     
     categories,

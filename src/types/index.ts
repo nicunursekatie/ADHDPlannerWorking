@@ -56,6 +56,10 @@ export interface Project {
   description: string;
   color: string;
   order?: number;
+  completed: boolean;
+  completedAt?: string | null;
+  archived: boolean;
+  archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

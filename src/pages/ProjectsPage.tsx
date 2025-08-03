@@ -46,7 +46,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 type ViewMode = 'grid' | 'list' | 'kanban';
-type FilterMode = 'all' | 'active' | 'on-hold' | 'completed';
+type FilterMode = 'all' | 'active' | 'on-hold' | 'completed' | 'archived';
 type SortMode = 'updated' | 'due-date' | 'progress' | 'priority';
 
 // Sortable wrapper component for project cards
@@ -308,7 +308,10 @@ const ProjectsPage: React.FC = () => {
   
   // Filter projects based on selected filter
   const filteredProjects = useMemo(() => {
-    let filtered = [...projects];
+    // Filter out archived projects by default (unless viewing archived)
+    let filtered = filterMode === 'archived' 
+      ? projects.filter(p => p.archived)
+      : projects.filter(p => !p.archived);
     
     // Apply filters
     switch (filterMode) {
@@ -327,10 +330,7 @@ const ProjectsPage: React.FC = () => {
         });
         break;
       case 'completed':
-        filtered = filtered.filter(p => {
-          const stats = getProjectStats(p.id);
-          return stats.progress === 100;
-        });
+        filtered = filtered.filter(p => p.completed);
         break;
     }
     
@@ -561,7 +561,7 @@ const ProjectsPage: React.FC = () => {
                 Filter by Status
               </label>
               <div className="flex flex-wrap gap-2">
-                {(['all', 'active', 'on-hold', 'completed'] as FilterMode[]).map(mode => (
+                {(['all', 'active', 'on-hold', 'completed', 'archived'] as FilterMode[]).map(mode => (
                   <button
                     key={mode}
                     onClick={() => setFilterMode(mode)}
