@@ -552,6 +552,28 @@ export const TasksPageSupabase: React.FC = () => {
     }
   };
 
+  const handleBulkUnarchive = async () => {
+    try {
+      await Promise.all(
+        Array.from(selectedTasks).map(taskId => {
+          const task = tasks.find(t => t.id === taskId);
+          if (task) {
+            return updateTask({
+              ...task,
+              archived: false,
+              updatedAt: new Date().toISOString()
+            });
+          }
+          return Promise.resolve();
+        })
+      );
+      setSelectedTasks(new Set());
+      setShowBulkActions(false);
+    } catch (error) {
+      console.error('Error bulk unarchiving tasks:', error);
+    }
+  };
+
   const handleBulkDelete = async () => {
     try {
       await Promise.all(
@@ -740,6 +762,13 @@ export const TasksPageSupabase: React.FC = () => {
               Completed ({tasks.filter(t => t.completed && !t.archived && !t.deletedAt).length})
             </button>
             <button
+              onClick={() => setFilterBy('archived')}
+              className={`px-3 py-1 rounded text-sm ${filterBy === 'archived' ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              title="View archived tasks"
+            >
+              Archived ({tasks.filter(t => t.archived && !t.deletedAt).length})
+            </button>
+            <button
               onClick={() => setFilterBy('overdue')}
               className={`px-3 py-1 rounded text-sm ${filterBy === 'overdue' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
             >
@@ -813,10 +842,17 @@ export const TasksPageSupabase: React.FC = () => {
                 <CheckCircle2 className="w-4 h-4 mr-1" />
                 Complete
               </Button>
-              <Button onClick={handleBulkArchive} variant="outline" size="sm">
-                <FileArchive className="w-4 h-4 mr-1" />
-                Archive
-              </Button>
+              {filterBy === 'archived' ? (
+                <Button onClick={handleBulkUnarchive} variant="outline" size="sm">
+                  <FileArchive className="w-4 h-4 mr-1" />
+                  Unarchive
+                </Button>
+              ) : (
+                <Button onClick={handleBulkArchive} variant="outline" size="sm">
+                  <FileArchive className="w-4 h-4 mr-1" />
+                  Archive
+                </Button>
+              )}
               <select
                 onChange={(e) => {
                   const value = e.target.value;
