@@ -230,11 +230,20 @@ const TaskForm: React.FC<TaskFormProps> = ({
     setIsSubmitting(true);
     setSubmitError(null);
     
+    // Ensure we have valid task data
     const taskData = {
       ...formData,
-      tags,
-      dependsOn: selectedDependencies,
+      title: formData.title?.trim() || '',
+      tags: tags || [],
+      dependsOn: selectedDependencies || [],
+      projectId: formData.projectId || initialProjectId || null,
+      // Ensure importance is within valid range (1-5)
+      importance: formData.importance && formData.importance >= 1 && formData.importance <= 5 
+        ? formData.importance 
+        : 3, // Default to medium importance
     };
+    
+    console.log('[TaskForm] Submitting task data:', taskData);
     
     try {
       if (isEdit && task) {
@@ -255,13 +264,31 @@ const TaskForm: React.FC<TaskFormProps> = ({
         
         clearPendingTask(task.id);
       } else {
-        const newTask = await addTask(taskData);
+        console.log('[TaskForm] Creating new task...');
+        let newTask;
+        try {
+          newTask = await addTask(taskData);
+          console.log('[TaskForm] New task created:', newTask);
+        } catch (addTaskError) {
+          console.error('[TaskForm] Error calling addTask:', addTaskError);
+          throw new Error(`Failed to create task: ${addTaskError instanceof Error ? addTaskError.message : 'Unknown error'}`);
+        }
+        
+        if (!newTask || !newTask.id) {
+          console.error('[TaskForm] Invalid task returned:', newTask);
+          throw new Error('Failed to create task - no valid task returned');
+        }
         
         // Add dependencies to the new task
         if (selectedDependencies.length > 0 && addTaskDependency) {
-          await Promise.all(
-            selectedDependencies.map(depId => addTaskDependency(newTask.id, depId))
-          );
+          try {
+            await Promise.all(
+              selectedDependencies.map(depId => addTaskDependency(newTask.id, depId))
+            );
+          } catch (depError) {
+            console.error('[TaskForm] Error adding dependencies:', depError);
+            // Don't fail the entire operation if dependencies fail
+          }
         }
       }
       
@@ -513,7 +540,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
                           updateFormData(prev => ({ 
                             ...prev, 
                             priority: option.value,
-                            importance: option.value === 'low' ? 2 : option.value === 'medium' ? 5 : 8
+                            importance: option.value === 'low' ? 2 : option.value === 'medium' ? 3 : 5
                           }));
                         }}
                         className={`w-full p-3 rounded-lg border text-left transition-all duration-200 hover:shadow-md ${
@@ -710,7 +737,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
               energyRequired: 'high',
               estimatedMinutes: 120,
               dueDate: format(endOfMonth, 'yyyy-MM-dd'),
-              importance: 8,
+              importance: 5,
               size: 'large'
             }));
           }}
@@ -730,7 +757,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
               energyRequired: 'high',
               estimatedMinutes: 60,
               dueDate: format(today, 'yyyy-MM-dd'),
-              importance: 8,
+              importance: 5,
               size: 'medium'
             }));
           }}
