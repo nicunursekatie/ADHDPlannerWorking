@@ -7,7 +7,6 @@ import { generateId } from '../../utils/helpers';
 import { 
   Brain,
   CheckCircle,
-  ChevronDown,
   ChevronUp,
   Copy,
   Edit3,
