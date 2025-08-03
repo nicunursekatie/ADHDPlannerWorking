@@ -5,11 +5,13 @@ import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import AISettings from '../components/settings/AISettings';
 import { DuplicateCleanup } from '../components/settings/DuplicateCleanup';
-import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Users } from 'lucide-react';
+import { ChangePasswordModal } from '../components/settings/ChangePasswordModal';
+import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Users, Lock } from 'lucide-react';
 import { Category } from '../types';
+import { DatabaseService } from '../services/database';
 
 const SettingsPageWithMigration: React.FC = () => {
-  const { exportData, importData, resetData, initializeSampleData, categories, addCategory, updateCategory, deleteCategory, settings, updateSettings } = useAppContext();
+  const { exportData, importData, resetData, initializeSampleData, categories, addCategory, updateCategory, deleteCategory, settings, updateSettings, user } = useAppContext();
   
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [resetModalOpen, setResetModalOpen] = useState(false);
@@ -26,6 +28,7 @@ const SettingsPageWithMigration: React.FC = () => {
   const [showTimeManagement, setShowTimeManagement] = useState(false);
   const [showVisualPreferences, setShowVisualPreferences] = useState(false);
   const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   
   const handleExportData = () => {
     const data = exportData();
@@ -274,6 +277,53 @@ const SettingsPageWithMigration: React.FC = () => {
               onClick={handleResetClick}
             >
               Reset
+            </Button>
+          </div>
+        </div>
+      </Card>
+      
+      {/* Account Security */}
+      <Card title="Account Security">
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between py-2">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Password</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Update your account password
+              </p>
+            </div>
+            <Button 
+              onClick={() => setShowChangePasswordModal(true)}
+              className="mt-2 md:mt-0 flex items-center"
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              Change Password
+            </Button>
+          </div>
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between py-2 border-t border-gray-200 dark:border-gray-700">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Reset via Email</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Send a password reset link to your email address
+              </p>
+            </div>
+            <Button 
+              onClick={async () => {
+                try {
+                  if (user?.email) {
+                    await DatabaseService.resetPasswordForEmail(user.email);
+                    alert('Password reset email sent! Please check your inbox.');
+                  }
+                } catch (error) {
+                  console.error('Failed to send reset email:', error);
+                  alert('Failed to send reset email. Please try again.');
+                }
+              }}
+              variant="outline"
+              className="mt-2 md:mt-0"
+            >
+              Send Reset Email
             </Button>
           </div>
         </div>
@@ -906,6 +956,12 @@ const SettingsPageWithMigration: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
+      />
     </div>
   );
 };
