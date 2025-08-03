@@ -24,7 +24,7 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
       model,
       messages,
       temperature: 0.7,
-      max_tokens: 1000
+      max_tokens: 2000
     }),
     parseResponse: (response) => response.choices[0].message.content
   },
@@ -43,7 +43,7 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
       model,
       messages,
       temperature: 0.7,
-      max_tokens: 1000
+      max_tokens: 2000
     }),
     parseResponse: (response) => response.choices[0].message.content
   },
@@ -65,7 +65,7 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
         role: msg.role === 'system' ? 'assistant' : msg.role,
         content: msg.content
       })),
-      max_tokens: 1000,
+      max_tokens: 2000,
       temperature: 0.7
     }),
     parseResponse: (response) => response.content[0].text
