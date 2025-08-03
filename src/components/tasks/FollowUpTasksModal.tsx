@@ -91,7 +91,8 @@ export const FollowUpTasksModal: React.FC<FollowUpTasksModalProps> = ({
         completed: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        parentTaskId: parentTask.id,
+        // Don't set parentTaskId - that's for subtasks, not follow-up tasks
+        // We could add a different field like 'originTaskId' or 'followsTaskId' if we want to track this relationship
       }));
 
     console.log('[FollowUpTasksModal] Tasks to create:', tasksToCreate);
