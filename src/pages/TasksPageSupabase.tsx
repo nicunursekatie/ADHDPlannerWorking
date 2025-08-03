@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek, getActionableTasks, getFutureTasks } from '../utils/helpers';
 import { TimeSpentModal } from '../components/tasks/TimeSpentModal';
+import { FollowUpTasksModal } from '../components/tasks/FollowUpTasksModal';
 import { triggerCelebration, showToastCelebration } from '../utils/celebrations';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 
@@ -156,6 +157,8 @@ export const TasksPageSupabase: React.FC = () => {
   // Time tracking modal state
   const [showTimeSpentModal, setShowTimeSpentModal] = useState(false);
   const [taskBeingCompleted, setTaskBeingCompleted] = useState<Task | null>(null);
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [completedTaskForFollowUp, setCompletedTaskForFollowUp] = useState<Task | null>(null);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [bulkActionsEnabled, setBulkActionsEnabled] = useState(false);
   const [showConvertToSubtasksModal, setShowConvertToSubtasksModal] = useState(false);
@@ -344,20 +347,20 @@ export const TasksPageSupabase: React.FC = () => {
     const timestamp = new Date().toISOString();
     
     // Update the task with both completion and time spent in one operation
-    await updateTask({
+    const updatedTask = {
       ...taskBeingCompleted,
       actualMinutesSpent: actualMinutes,
       completed: true,
       completedAt: timestamp,
       updatedAt: timestamp
-    });
+    };
     
-    // Trigger celebration
-    triggerCelebration();
-    showToastCelebration(`"${taskBeingCompleted.title}" completed! 🎉`);
+    await updateTask(updatedTask);
     
-    // Close modal and clear state
+    // Close time modal and show follow-up modal
     setShowTimeSpentModal(false);
+    setCompletedTaskForFollowUp(updatedTask);
+    setShowFollowUpModal(true);
     setTaskBeingCompleted(null);
   };
   
@@ -370,20 +373,57 @@ export const TasksPageSupabase: React.FC = () => {
     const timestamp = new Date().toISOString();
     
     // Complete the task without recording time in one operation
-    await updateTask({
+    const updatedTask = {
       ...taskBeingCompleted,
       completed: true,
       completedAt: timestamp,
       updatedAt: timestamp
-    });
+    };
     
-    // Trigger celebration
-    triggerCelebration();
-    showToastCelebration(`"${taskBeingCompleted.title}" completed! 🎉`);
+    await updateTask(updatedTask);
+    
+    // Close time modal and show follow-up modal
+    setShowTimeSpentModal(false);
+    setCompletedTaskForFollowUp(updatedTask);
+    setShowFollowUpModal(true);
+    setTaskBeingCompleted(null);
+  };
+
+  // Handle follow-up tasks confirmation
+  const handleFollowUpTasksConfirm = async (followUpTasks: Partial<Task>[]) => {
+    console.log('[TasksPageSupabase] Creating follow-up tasks', followUpTasks);
+    
+    // Create all follow-up tasks
+    for (const task of followUpTasks) {
+      await addTask(task as Omit<Task, 'id'>);
+    }
+    
+    // Trigger celebration after successful completion
+    if (completedTaskForFollowUp) {
+      console.log('[TasksPageSupabase] Triggering celebration');
+      triggerCelebration();
+      showToastCelebration(`"${completedTaskForFollowUp.title}" completed! 🎉`);
+    }
     
     // Close modal and clear state
-    setShowTimeSpentModal(false);
-    setTaskBeingCompleted(null);
+    setShowFollowUpModal(false);
+    setCompletedTaskForFollowUp(null);
+  };
+
+  // Handle follow-up tasks skip
+  const handleFollowUpTasksSkip = () => {
+    console.log('[TasksPageSupabase] Skipping follow-up tasks');
+    
+    // Trigger celebration
+    if (completedTaskForFollowUp) {
+      console.log('[TasksPageSupabase] Triggering celebration (no follow-up tasks)');
+      triggerCelebration();
+      showToastCelebration(`"${completedTaskForFollowUp.title}" completed! 🎉`);
+    }
+    
+    // Close modal and clear state
+    setShowFollowUpModal(false);
+    setCompletedTaskForFollowUp(null);
   };
 
   const handleTaskSelect = (taskId: string, selected: boolean) => {
@@ -955,6 +995,22 @@ export const TasksPageSupabase: React.FC = () => {
           estimatedMinutes={taskBeingCompleted.estimatedMinutes}
           onConfirm={handleTimeSpentConfirm}
           onSkip={handleTimeSpentSkip}
+        />
+      )}
+
+      {/* Follow-Up Tasks Modal */}
+      {completedTaskForFollowUp && (
+        <FollowUpTasksModal
+          isOpen={showFollowUpModal}
+          onClose={() => {
+            setShowFollowUpModal(false);
+            setCompletedTaskForFollowUp(null);
+          }}
+          parentTask={completedTaskForFollowUp}
+          onConfirm={handleFollowUpTasksConfirm}
+          onSkip={handleFollowUpTasksSkip}
+          categories={categories}
+          projects={projects}
         />
       )}
     </div>
