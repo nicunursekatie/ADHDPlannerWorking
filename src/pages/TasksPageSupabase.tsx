@@ -153,7 +153,7 @@ export const TasksPageSupabase: React.FC = () => {
   const [filterBy, setFilterBy] = useState<'all' | 'completed' | 'active' | 'overdue' | 'today' | 'week' | 'actionable' | 'future' | 'project' | 'category' | 'archived'>('all');
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'smart' | 'dueDate' | 'priority' | 'created' | 'alphabetical' | 'energy' | 'estimated'>('smart');
+  const [sortBy, setSortBy] = useState<'smart' | 'dueDate' | 'priority' | 'created' | 'alphabetical' | 'energy' | 'estimated' | 'project'>('smart');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showQuickCapture, setShowQuickCapture] = useState(false);
   
@@ -881,6 +881,7 @@ export const TasksPageSupabase: React.FC = () => {
               <option value="smart">Smart (Urgency + Priority)</option>
               <option value="dueDate">Due Date</option>
               <option value="priority">Priority</option>
+              <option value="project">Project</option>
               <option value="created">Created</option>
               <option value="alphabetical">Alphabetical</option>
               <option value="energy">Energy Level</option>
@@ -993,6 +994,7 @@ export const TasksPageSupabase: React.FC = () => {
               {sortBy === 'smart' && 'Smart sort: Most urgent and important tasks first'}
               {sortBy === 'dueDate' && 'Sorted by due date (earliest first)'}
               {sortBy === 'priority' && 'Sorted by priority (highest first)'}
+              {sortBy === 'project' && 'Grouped by project'}
               {sortBy === 'created' && 'Sorted by creation date (newest first)'}
               {sortBy === 'alphabetical' && 'Sorted alphabetically'}
               {sortBy === 'energy' && 'Sorted by energy level required'}
@@ -1001,37 +1003,77 @@ export const TasksPageSupabase: React.FC = () => {
               {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
             </div>
             
-            {/* Tasks displayed in sorted order without project grouping */}
-            {filteredTasks.map(task => {
-              const project = projects.find(p => p.id === task.projectId);
-              return (
-                <ErrorBoundary key={task.id}>
-                  <div className="relative">
-                    {/* Optional project indicator */}
-                    {project && (
-                      <div className="absolute -left-2 top-0 bottom-0 w-1 rounded-full" 
-                        style={{ backgroundColor: project.color }}
-                        title={project.name}
-                      />
-                    )}
-                    <BulkTaskCard
-                      task={task}
-                      isSelected={selectedTasks.has(task.id)}
-                      onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
-                      onEdit={(task) => {
-                        setEditingTask(task);
-                        setShowTaskForm(true);
-                      }}
-                      onDelete={handleDeleteTask}
-                      onBreakdown={handleAIBreakdown}
-                      onConvertToProject={handleConvertToProject}
-                      onToggle={handleTaskToggle}
-                      showCheckbox={bulkActionsEnabled}
-                    />
+            {/* Display tasks - grouped by project if sortBy === 'project', otherwise in sorted order */}
+            {sortBy === 'project' ? (
+              // Group tasks by project
+              groupTasksByProjectAndDueDate(filteredTasks, projects).map(group => (
+                <div key={group.projectId} className="mb-6">
+                  {/* Project Header */}
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                    <Folder className="w-5 h-5" style={{ color: group.projectColor }} />
+                    <h3 className="text-lg font-semibold" style={{ color: group.projectColor }}>
+                      {group.projectName}
+                    </h3>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      ({group.tasks.length} task{group.tasks.length !== 1 ? 's' : ''})
+                    </span>
                   </div>
-                </ErrorBoundary>
-              );
-            })}
+                  {/* Tasks for this project */}
+                  <div className="space-y-2 ml-4">
+                    {group.tasks.map(task => (
+                      <ErrorBoundary key={task.id}>
+                        <BulkTaskCard
+                          task={task}
+                          isSelected={selectedTasks.has(task.id)}
+                          onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
+                          onEdit={(task) => {
+                            setEditingTask(task);
+                            setShowTaskForm(true);
+                          }}
+                          onDelete={handleDeleteTask}
+                          onBreakdown={handleAIBreakdown}
+                          onConvertToProject={handleConvertToProject}
+                          onToggle={handleTaskToggle}
+                          showCheckbox={bulkActionsEnabled}
+                        />
+                      </ErrorBoundary>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              // Regular sorted view
+              filteredTasks.map(task => {
+                const project = projects.find(p => p.id === task.projectId);
+                return (
+                  <ErrorBoundary key={task.id}>
+                    <div className="relative">
+                      {/* Optional project indicator */}
+                      {project && (
+                        <div className="absolute -left-2 top-0 bottom-0 w-1 rounded-full" 
+                          style={{ backgroundColor: project.color }}
+                          title={project.name}
+                        />
+                      )}
+                      <BulkTaskCard
+                        task={task}
+                        isSelected={selectedTasks.has(task.id)}
+                        onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
+                        onEdit={(task) => {
+                          setEditingTask(task);
+                          setShowTaskForm(true);
+                        }}
+                        onDelete={handleDeleteTask}
+                        onBreakdown={handleAIBreakdown}
+                        onConvertToProject={handleConvertToProject}
+                        onToggle={handleTaskToggle}
+                        showCheckbox={bulkActionsEnabled}
+                      />
+                    </div>
+                  </ErrorBoundary>
+                );
+              })
+            )}
           </>
         )}
       </div>

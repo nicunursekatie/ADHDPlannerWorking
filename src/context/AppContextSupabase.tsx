@@ -560,18 +560,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     if (!taskToUpdate) return;
     
+    const isCompleting = !taskToUpdate.completed;
     const updatedTask = {
       ...taskToUpdate,
-      completed: !taskToUpdate.completed,
-      completedAt: !taskToUpdate.completed ? timestamp : null,
+      completed: isCompleting,
+      completedAt: isCompleting ? timestamp : null,
       updatedAt: timestamp,
     };
     
+    // Update the main task
     await DatabaseService.updateTask(taskId, updatedTask, user.id);
+    
+    // If completing a parent task, also complete all its subtasks
+    const tasksToUpdate = [updatedTask];
+    if (isCompleting && taskToUpdate.subtasks && taskToUpdate.subtasks.length > 0) {
+      console.log('[AppContext] Completing parent task, auto-completing subtasks:', taskToUpdate.subtasks);
+      
+      for (const subtaskId of taskToUpdate.subtasks) {
+        const subtask = tasks.find(t => t.id === subtaskId);
+        if (subtask && !subtask.completed) {
+          const updatedSubtask = {
+            ...subtask,
+            completed: true,
+            completedAt: timestamp,
+            updatedAt: timestamp,
+          };
+          await DatabaseService.updateTask(subtaskId, updatedSubtask, user.id);
+          tasksToUpdate.push(updatedSubtask);
+        }
+      }
+    }
+    
     setTasks(prev => {
-      const updatedTasks = prev.map(task => 
-        task.id === taskId ? updatedTask : task
-      );
+      let updatedTasks = [...prev];
+      for (const taskUpdate of tasksToUpdate) {
+        updatedTasks = updatedTasks.map(task => 
+          task.id === taskUpdate.id ? taskUpdate : task
+        );
+      }
       return computeSubtasks(updatedTasks);
     });
   }, [user, tasks, computeSubtasks]);

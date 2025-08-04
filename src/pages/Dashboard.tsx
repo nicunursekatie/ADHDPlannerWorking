@@ -91,15 +91,15 @@ const Dashboard: React.FC = () => {
   }, []);
 
   // Calculate task data (always run these hooks before early returns)
-  const tasksDueToday = React.useMemo(() => getTasksDueToday(tasks), [tasks]);
-  const tasksDueThisWeek = React.useMemo(() => getTasksDueThisWeek(tasks), [tasks]);
-  const overdueTasks = React.useMemo(() => getOverdueTasks(tasks), [tasks]);
+  const tasksDueToday = React.useMemo(() => getTasksDueToday(tasks.filter(t => !t.parentTaskId)), [tasks]);
+  const tasksDueThisWeek = React.useMemo(() => getTasksDueThisWeek(tasks.filter(t => !t.parentTaskId)), [tasks]);
+  const overdueTasks = React.useMemo(() => getOverdueTasks(tasks.filter(t => !t.parentTaskId)), [tasks]);
   const completedTasks = React.useMemo(() => tasks.filter(task => task.completed && !task.parentTaskId), [tasks]);
   const incompleteTasks = React.useMemo(() => tasks.filter(task => !task.completed && !task.parentTaskId), [tasks]);
   
   // Use useMemo to recalculate incomplete tasks when tasks change, excluding recently reviewed ones
   const tasksWithMissingDetails = React.useMemo(() => {
-    return getIncompleteTasks(tasks).filter(task => !recentlyReviewedTaskIds.has(task.id));
+    return getIncompleteTasks(tasks).filter(task => !recentlyReviewedTaskIds.has(task.id) && !task.parentTaskId);
   }, [tasks, recentlyReviewedTaskIds]);
 
   const completionRate = React.useMemo(() => {

@@ -25,7 +25,8 @@ const WhatNowWizard: React.FC<WhatNowWizardProps> = ({ onSelectTask }) => {
   useEffect(() => {
     if (step === 4) {
       // Use our new smart sorting to get recommended tasks
-      let filteredTasks = [...tasks].filter(t => !t.completed && !t.archived);
+      // Exclude subtasks (tasks with parentTaskId) from recommendations
+      let filteredTasks = [...tasks].filter(t => !t.completed && !t.archived && !t.parentTaskId);
       
       // Filter by available time
       if (availableTime === 'short') {

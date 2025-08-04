@@ -93,6 +93,21 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       .map(subtaskId => tasks.find(t => t.id === subtaskId))
       .filter(Boolean) as Task[] : [];
   
+  // Handle subtask toggle
+  const handleSubtaskToggle = async (subtaskId: string) => {
+    const subtask = subtasks.find(st => st.id === subtaskId);
+    if (!subtask) return;
+    
+    try {
+      await updateTask({
+        ...subtask,
+        completed: !subtask.completed,
+        completedAt: !subtask.completed ? new Date().toISOString() : undefined
+      });
+    } catch (error) {
+      console.error('Error toggling subtask:', error);
+    }
+  };
   
   const dueDateStatus = getDueDateStatus(task.dueDate);
   const relativeTimeInfo = getRelativeTimeDisplay(task.dueDate, true); // Use weekend-relative display
@@ -569,7 +584,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onToggle(subtask.id);
+                        handleSubtaskToggle(subtask.id);
                       }}
                       className="mt-0.5 flex-shrink-0"
                     >
