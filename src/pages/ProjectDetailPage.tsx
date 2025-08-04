@@ -9,6 +9,7 @@ import Button from '../components/common/Button';
 import { ArrowLeft, Edit, Trash, Plus, CheckCircle, Archive, RotateCcw } from 'lucide-react';
 import Empty from '../components/common/Empty';
 import ProjectForm from '../components/projects/ProjectForm';
+import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
 
 const ProjectDetailPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -19,6 +20,8 @@ const ProjectDetailPage: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [showAIBreakdown, setShowAIBreakdown] = useState(false);
+  const [aiBreakdownTask, setAiBreakdownTask] = useState<Task | null>(null);
   
   if (!projectId) {
     navigate('/projects');
@@ -72,6 +75,11 @@ const ProjectDetailPage: React.FC = () => {
   const handleDeleteProject = () => {
     deleteProject(projectId);
     navigate('/projects');
+  };
+  
+  const handleAIBreakdown = (task: Task) => {
+    setAiBreakdownTask(task);
+    setShowAIBreakdown(true);
   };
   
   return (
@@ -207,6 +215,7 @@ const ProjectDetailPage: React.FC = () => {
             onToggle={() => updateTask({ ...task, completed: !task.completed })}
             onEdit={() => handleOpenTaskModal(task)}
             onDelete={() => deleteTask(task.id)}
+            onBreakdown={handleAIBreakdown}
           />
           ))
         ) : (
@@ -282,6 +291,17 @@ const ProjectDetailPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+      
+      {/* AI Breakdown Modal */}
+      {showAIBreakdown && aiBreakdownTask && (
+        <AITaskBreakdown
+          task={aiBreakdownTask}
+          onClose={() => {
+            setShowAIBreakdown(false);
+            setAiBreakdownTask(null);
+          }}
+        />
+      )}
     </div>
   );
 };
