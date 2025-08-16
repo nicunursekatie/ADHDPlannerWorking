@@ -47,6 +47,8 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedTasks, setGeneratedTasks] = useState<GeneratedTask[]>([]);
   const [showTasks, setShowTasks] = useState(false);
+  const [feedbackMode, setFeedbackMode] = useState(false);
+  const [feedbackInput, setFeedbackInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -186,27 +188,47 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
     console.log('Using fallback task generation');
     const tasks: GeneratedTask[] = [];
     
-    // Parse the actual user inputs more intelligently
-    // Start with what they said needs to happen first - this is usually the most actionable
+    // Parse the actual user inputs to create EXECUTABLE tasks
+    // Start with what they said needs to happen first
     if (firstStep && firstStep.trim()) {
-      tasks.push({
-        title: firstStep.length > 50 ? firstStep.substring(0, 50) + '...' : firstStep,
-        description: 'You said this needs to happen first. Start here - even a small step counts.',
+      // Make it executable based on keywords
+      let executableStep: GeneratedTask = {
+        title: 'Do this first: ' + (firstStep.length > 40 ? firstStep.substring(0, 40) + '...' : firstStep),
+        description: '',
         type: 'action',
         energyLevel: 'low',
         estimatedMinutes: 15,
         urgency: 'today',
         emotionalWeight: 'neutral'
-      });
+      };
+      
+      if (firstStep.toLowerCase().includes('call') || firstStep.toLowerCase().includes('phone')) {
+        executableStep.title = 'Open phone app and dial now';
+        executableStep.description = 'Script: "Hi, I\'m calling about ' + task.title + '. Can you help me with..."';
+        executableStep.type = 'communication';
+      } else if (firstStep.toLowerCase().includes('email') || firstStep.toLowerCase().includes('message')) {
+        executableStep.title = 'Open email, paste this message';
+        executableStep.description = 'Subject: "Question about ' + task.title + '"\nBody: "Hi, I need help with ' + firstStep + '. Could you..."';
+        executableStep.type = 'communication';
+      } else if (firstStep.toLowerCase().includes('find') || firstStep.toLowerCase().includes('search')) {
+        executableStep.title = 'Open Google right now';
+        executableStep.description = 'Search for: "' + firstStep.replace(/find|search|look for/gi, '').trim() + ' near me 2024"';
+        executableStep.type = 'research';
+      } else {
+        executableStep.description = 'Open your task app/notes and write: "Started ' + firstStep + '" - just starting counts!';
+      }
+      
+      tasks.push(executableStep);
     }
     
-    // Break down the blockers into actionable items
+    // Break down blockers into executable actions
     if (blockers && blockers.trim()) {
-      // If they don't know something, add research task
+      // If they don't know something, give exact search terms
       if (blockers.toLowerCase().includes('don\'t know') || blockers.toLowerCase().includes('not sure')) {
+        const unknownThing = blockers.replace(/i don't know|not sure|unsure about/gi, '').trim();
         tasks.push({
-          title: 'Quick 10-min research',
-          description: 'Find just ONE piece of information that moves you forward. Set a timer.',
+          title: 'Google this exact phrase now',
+          description: 'Search: "how to ' + unknownThing + ' step by step guide"\nThen: "' + unknownThing + ' for beginners"\nWrite down first answer you find.',
           type: 'research',
           energyLevel: 'low',
           estimatedMinutes: 10,
@@ -215,16 +237,17 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
         });
       }
       
-      // If they need to contact someone
+      // If they need to do something, make it executable
       if (blockers.toLowerCase().includes('need to') || blockers.toLowerCase().includes('have to')) {
+        const needToDo = blockers.replace(/i need to|have to|must/gi, '').trim();
         tasks.push({
-          title: 'Draft the message/email',
-          description: 'Just write it, don\'t send yet. Getting it written is half the battle.',
-          type: 'communication',
+          title: 'Open Notes app, write this',
+          description: 'Type exactly: "To do ' + task.title + ', I need to: ' + needToDo + '"\nThen add 3 bullet points for mini-steps.',
+          type: 'action',
           energyLevel: 'low',
-          estimatedMinutes: 10,
+          estimatedMinutes: 5,
           urgency: 'week',
-          emotionalWeight: 'neutral'
+          emotionalWeight: 'easy'
         });
       }
     }
@@ -306,6 +329,60 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
         text: "I've created " + finalTasks.length + " tasks to get you started. Ready to replace the fuzzy task?"
       }]);
     }, 1000);
+  };
+
+  const handleFeedback = async () => {
+    if (!feedbackInput.trim() || !generatedTasks.length) return;
+    
+    setIsGenerating(true);
+    setFeedbackMode(false);
+    
+    const apiKey = localStorage.getItem('ai_api_key');
+    const providerName = localStorage.getItem('ai_provider') || 'openai';
+    const modelName = localStorage.getItem('ai_model');
+    
+    if (apiKey) {
+      try {
+        const provider = getProvider(providerName);
+        const selectedModel = modelName || provider.defaultModel;
+        
+        const refinementPrompt = 
+'Here are the current tasks:\n' +
+JSON.stringify(generatedTasks, null, 2) + '\n\n' +
+'User feedback: "' + feedbackInput + '"\n\n' +
+'Refine these tasks based on the feedback. Keep the same format but make them even MORE executable and specific.\n' +
+'Remember: Each task must tell the user EXACTLY what to do, what to click, what to type, with no thinking required.\n\n' +
+'Return ONLY the updated JSON array with the same structure.';
+
+        const response = await fetch(provider.baseUrl, {
+          method: 'POST',
+          headers: provider.headers(apiKey),
+          body: JSON.stringify(provider.formatRequest([
+            { role: 'system', content: 'You refine task lists to be MORE executable based on user feedback. Always make tasks more specific, never more vague. Include exact words, exact steps, exact actions.' },
+            { role: 'user', content: refinementPrompt }
+          ], selectedModel))
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const content = provider.parseResponse(data);
+          const jsonMatch = content.match(/\[.*\]/s);
+          if (jsonMatch) {
+            const refinedTasks = JSON.parse(jsonMatch[0]) as GeneratedTask[];
+            setGeneratedTasks(refinedTasks.slice(0, 5));
+            setMessages(prev => [...prev, { 
+              type: 'bot', 
+              text: "I've refined the tasks based on your feedback. Take a look!"
+            }]);
+          }
+        }
+      } catch (error) {
+        console.error('Refinement failed:', error);
+      }
+    }
+    
+    setFeedbackInput('');
+    setIsGenerating(false);
   };
 
   const handleComplete = async () => {
@@ -395,17 +472,58 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
                 </div>
               ))}
             </div>
-            <button
-              onClick={handleComplete}
-              className="mt-3 w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all text-sm font-medium"
-            >
-              Replace fuzzy task with these
-            </button>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => setFeedbackMode(true)}
+                className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-all text-sm font-medium"
+              >
+                Refine these tasks
+              </button>
+              <button
+                onClick={handleComplete}
+                className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all text-sm font-medium"
+              >
+                Accept & use these
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Feedback Input */}
+        {feedbackMode && (
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+              How should I adjust these tasks? (e.g., "make them more specific", "add phone numbers", "simpler language")
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={feedbackInput}
+                onChange={(e) => setFeedbackInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && feedbackInput.trim()) {
+                    e.preventDefault();
+                    handleFeedback();
+                  }
+                }}
+                placeholder="Tell me how to improve these tasks..."
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                disabled={isGenerating}
+                autoFocus
+              />
+              <button
+                onClick={handleFeedback}
+                disabled={!feedbackInput.trim() || isGenerating}
+                className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
 
         {/* Input */}
-        {!showTasks && (
+        {!showTasks && !feedbackMode && (
           <div className="border-t border-gray-200 dark:border-gray-700 p-4">
             <div className="flex gap-2">
               <input
