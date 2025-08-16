@@ -38,6 +38,7 @@ import { getTimeContext, formatTimeRemaining, formatTimeOfDay, getUrgencyColor }
 import { focusTracker } from '../utils/focusTracker';
 import { TimeSpentModal } from '../components/tasks/TimeSpentModal';
 import { FollowUpTasksModal } from '../components/tasks/FollowUpTasksModal';
+import { FuzzyTaskBreakdownSimple } from '../components/tasks/FuzzyTaskBreakdownSimple';
 import { triggerCelebration, showToastCelebration } from '../utils/celebrations';
 import TimeTrackingAnalytics from '../components/analytics/TimeTrackingAnalytics';
 
@@ -73,6 +74,10 @@ const Dashboard: React.FC = () => {
   // Follow-up tasks modal state
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [completedTaskForFollowUp, setCompletedTaskForFollowUp] = useState<Task | null>(null);
+  
+  // Fuzzy task breakdown modal state
+  const [showFuzzyBreakdown, setShowFuzzyBreakdown] = useState(false);
+  const [taskForBreakdown, setTaskForBreakdown] = useState<Task | null>(null);
   
   // Check if weekly review is needed
   useEffect(() => {
@@ -263,6 +268,13 @@ const Dashboard: React.FC = () => {
     console.log('[Dashboard] Skipping follow-up tasks');
     setShowFollowUpModal(false);
     setCompletedTaskForFollowUp(null);
+  };
+  
+  // Handle task breakdown request
+  const handleTaskBreakdown = (task: Task) => {
+    console.log('[Dashboard] Opening task breakdown for:', task.title);
+    setTaskForBreakdown(task);
+    setShowFuzzyBreakdown(true);
   };
   
   if (isLoading) {
@@ -561,6 +573,7 @@ const Dashboard: React.FC = () => {
                 onToggle={handleTaskToggle}
                 onEdit={() => handleOpenTaskModal(task)}
                 onDelete={() => deleteTask(task.id)}
+                onBreakdown={handleTaskBreakdown}
               />
             </div>
           ))}
@@ -573,6 +586,7 @@ const Dashboard: React.FC = () => {
                 onToggle={handleTaskToggle}
                 onEdit={() => handleOpenTaskModal(task)}
                 onDelete={() => deleteTask(task.id)}
+                onBreakdown={handleTaskBreakdown}
               />
             </div>
           ))}
@@ -642,6 +656,7 @@ const Dashboard: React.FC = () => {
                 onToggle={handleTaskToggle}
                 onEdit={() => handleOpenTaskModal(task)}
                 onDelete={() => deleteTask(task.id)}
+                onBreakdown={handleTaskBreakdown}
               />
             </div>
           ))}
@@ -900,6 +915,7 @@ const Dashboard: React.FC = () => {
                     onToggle={(taskId) => completeTask(taskId)}
                     onEdit={() => handleOpenTaskModal(task)}
                     onDelete={() => deleteTask(task.id)}
+                    onBreakdown={handleTaskBreakdown}
                   />
                 </div>
               ))
@@ -1045,6 +1061,7 @@ const Dashboard: React.FC = () => {
                     onToggle={(taskId) => completeTask(taskId)}
                     onEdit={() => handleOpenTaskModal(task)}
                     onDelete={() => deleteTask(task.id)}
+                    onBreakdown={handleTaskBreakdown}
                   />
                 </div>
               ))
@@ -1136,6 +1153,43 @@ const Dashboard: React.FC = () => {
           onSkip={handleFollowUpTasksSkip}
           categories={categories}
           projects={projects}
+        />
+      )}
+      
+      {/* Fuzzy Task Breakdown Modal - rendered at top level to avoid clipping */}
+      {taskForBreakdown && showFuzzyBreakdown && (
+        <FuzzyTaskBreakdownSimple
+          task={taskForBreakdown}
+          onClose={() => {
+            setShowFuzzyBreakdown(false);
+            setTaskForBreakdown(null);
+          }}
+          onComplete={async (newTasks) => {
+            // Add all new tasks
+            for (const newTask of newTasks) {
+              await addTask({
+                ...newTask,
+                id: Date.now().toString() + Math.random(),
+                completed: false,
+                archived: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                dueDate: newTask.dueDate || null,
+                startDate: null,
+                tags: [],
+              } as Task);
+            }
+            
+            // Delete the original fuzzy task
+            await deleteTask(taskForBreakdown.id);
+            
+            // Close the modal
+            setShowFuzzyBreakdown(false);
+            setTaskForBreakdown(null);
+            
+            // Show success message
+            showToastCelebration(`"${taskForBreakdown.title}" broken down into ${newTasks.length} actionable tasks! 🎯`);
+          }}
         />
       )}
     </div>

@@ -14,7 +14,8 @@ import { getTimeContext, getTaskTimeEstimate, formatTimeRemaining, formatTimeOfD
 import { focusTracker } from '../utils/focusTracker';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji } from '../utils/taskPrioritization';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
-import { FuzzyTaskBreakdownSimple } from './tasks/FuzzyTaskBreakdownSimple';
+// FuzzyTaskBreakdownSimple is now handled at parent level to avoid modal clipping
+// import { FuzzyTaskBreakdownSimple } from './tasks/FuzzyTaskBreakdownSimple';
 
 interface TaskDisplayProps {
   task: Task;
@@ -39,7 +40,8 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showDateEditor, setShowDateEditor] = useState(false);
   const [showDetailWizard, setShowDetailWizard] = useState(false);
-  const [showFuzzyBreakdown, setShowFuzzyBreakdown] = useState(false);
+  // Fuzzy breakdown is now handled at the parent level to avoid modal clipping
+  // const [showFuzzyBreakdown, setShowFuzzyBreakdown] = useState(false);
   // Note: TimeSpentModal is now handled at the page level to avoid container constraints
   // const [showTimeSpentModal, setShowTimeSpentModal] = useState(false);
   const [, setCurrentTime] = useState(new Date());
@@ -531,7 +533,9 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setShowFuzzyBreakdown(true);
+                if (onBreakdown) {
+                  onBreakdown(task);
+                }
               }}
               className="flex items-center gap-1.5 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-2 py-1 rounded-xl transition-all"
               title="Break down this overwhelming task into clear steps"
@@ -727,31 +731,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     
     {/* Time Spent Modal is now handled at the page level to avoid container constraints */}
     
-    {/* Fuzzy Task Breakdown Modal */}
-    {showFuzzyBreakdown && (
-      <FuzzyTaskBreakdownSimple
-        task={task}
-        onClose={() => setShowFuzzyBreakdown(false)}
-        onComplete={async (newTasks) => {
-          // Add all new tasks
-          for (const newTask of newTasks) {
-            await addTask({
-              ...newTask,
-              completed: false,
-              archived: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            } as Task);
-          }
-          
-          // Delete the original fuzzy task
-          await deleteTask(task.id);
-          
-          // Close the modal
-          setShowFuzzyBreakdown(false);
-        }}
-      />
-    )}
+    {/* Fuzzy Task Breakdown Modal is now handled at parent level to avoid clipping */}
     
     {/* Confirmation Dialog */}
     <ConfirmDialogComponent />
