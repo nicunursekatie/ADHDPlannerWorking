@@ -181,8 +181,8 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
       />
 
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          <div className="lg:col-span-3">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+          <div>
             <div className="mb-4 flex justify-between items-center">
               <h2 className="text-lg font-semibold">Time Blocks</h2>
               <Button 
@@ -339,13 +339,15 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
 
           </div>
           
-          <div className="lg:col-span-1">
+          <div className="xl:sticky xl:top-0 xl:h-screen xl:overflow-y-auto">
             <h2 className="text-lg font-semibold mb-3">Unscheduled Tasks</h2>
-            {unscheduledTasks.length > 0 ? (
-              unscheduledTasks.map(task => <DraggableTask key={task.id} task={task} />)
-            ) : (
-              <p className="text-gray-500">No unscheduled tasks</p>
-            )}
+            <div className="space-y-2">
+              {unscheduledTasks.length > 0 ? (
+                unscheduledTasks.map(task => <DraggableTask key={task.id} task={task} />)
+              ) : (
+                <p className="text-gray-500">No unscheduled tasks</p>
+              )}
+            </div>
           </div>
         </div>
         <DragOverlay>
