@@ -159,12 +159,12 @@ const Header: React.FC = () => {
           isMobileMenuOpen ? 'block animate-slideIn' : 'hidden'
         } lg:hidden bg-white dark:bg-surface-900 border-t border-surface-200 dark:border-surface-700`}
       >
-        <div className="pt-4 pb-3 space-y-2 px-4">
+        <div className="py-6 space-y-3 px-4">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`block px-4 py-3 border-l-4 text-base font-medium transition-all duration-200 rounded-r-lg ${
+              className={`block px-5 py-4 border-l-4 text-lg font-medium transition-all duration-200 rounded-r-lg ${
                 isActive(item.path)
                   ? 'bg-focus-50 dark:bg-focus-900/20 border-focus-500 text-focus-700 dark:text-focus-300'
                   : 'border-transparent text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-800 hover:border-surface-300 dark:hover:border-surface-600 hover:text-surface-900 dark:hover:text-surface-200'
