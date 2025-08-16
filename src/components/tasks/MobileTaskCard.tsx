@@ -3,7 +3,7 @@ import { Check, Clock, Calendar, AlertCircle, ChevronRight, Trash2, Sparkles } f
 import { Task } from '../../types';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { formatDistanceToNow } from 'date-fns';
-import { FuzzyTaskBreakdown } from './FuzzyTaskBreakdown';
+import { FuzzyTaskBreakdownSimple } from './FuzzyTaskBreakdownSimple';
 import { useAppContext } from '../../context/AppContextSupabase';
 
 interface MobileTaskCardProps {
