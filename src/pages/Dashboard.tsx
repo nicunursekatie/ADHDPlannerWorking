@@ -37,6 +37,7 @@ import { TaskDetailWizard } from '../components/tasks/TaskDetailWizard';
 import { getTimeContext, formatTimeRemaining, formatTimeOfDay, getUrgencyColor } from '../utils/timeAwareness';
 import { focusTracker } from '../utils/focusTracker';
 import { TimeSpentModal } from '../components/tasks/TimeSpentModal';
+import { FollowUpTasksModal } from '../components/tasks/FollowUpTasksModal';
 import { triggerCelebration, showToastCelebration } from '../utils/celebrations';
 import TimeTrackingAnalytics from '../components/analytics/TimeTrackingAnalytics';
 
@@ -68,6 +69,10 @@ const Dashboard: React.FC = () => {
   // Time tracking modal state
   const [showTimeSpentModal, setShowTimeSpentModal] = useState(false);
   const [taskBeingCompleted, setTaskBeingCompleted] = useState<Task | null>(null);
+  
+  // Follow-up tasks modal state
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [completedTaskForFollowUp, setCompletedTaskForFollowUp] = useState<Task | null>(null);
   
   // Check if weekly review is needed
   useEffect(() => {
@@ -185,8 +190,10 @@ const Dashboard: React.FC = () => {
     triggerCelebration();
     showToastCelebration(`"${taskBeingCompleted.title}" completed! 🎉`);
     
-    // Close modal and clear state
+    // Close time modal and show follow-up modal
     setShowTimeSpentModal(false);
+    setCompletedTaskForFollowUp(updatedTask);
+    setShowFollowUpModal(true);
     setTaskBeingCompleted(null);
   };
   
@@ -199,20 +206,63 @@ const Dashboard: React.FC = () => {
     const timestamp = new Date().toISOString();
     
     // Complete the task without recording time in one operation
-    await updateTask({
+    const updatedTask = {
       ...taskBeingCompleted,
       completed: true,
       completedAt: timestamp,
       updatedAt: timestamp
-    });
+    };
+    
+    await updateTask(updatedTask);
     
     // Trigger celebration
     triggerCelebration();
     showToastCelebration(`"${taskBeingCompleted.title}" completed! 🎉`);
     
-    // Close modal and clear state
+    // Close time modal and show follow-up modal
     setShowTimeSpentModal(false);
+    setCompletedTaskForFollowUp(updatedTask);
+    setShowFollowUpModal(true);
     setTaskBeingCompleted(null);
+  };
+  
+  // Handle follow-up tasks confirmation
+  const handleFollowUpTasksConfirm = async (followUpTasks: Partial<Task>[]) => {
+    console.log('[Dashboard] Creating follow-up tasks', followUpTasks);
+    
+    for (const task of followUpTasks) {
+      const newTask: Task = {
+        id: Date.now().toString() + Math.random(),
+        title: task.title || '',
+        description: task.description || '',
+        completed: false,
+        archived: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        dueDate: task.dueDate || null,
+        startDate: null,
+        projectId: task.projectId || completedTaskForFollowUp?.projectId || null,
+        categoryIds: task.categoryIds || completedTaskForFollowUp?.categoryIds || [],
+        tags: [],
+        priority: task.priority || 'medium',
+        energyLevel: task.energyLevel || null,
+        estimatedMinutes: task.estimatedMinutes || null,
+        parentTaskId: null,
+        notes: `Follow-up from: ${completedTaskForFollowUp?.title}`
+      };
+      
+      await addTask(newTask);
+    }
+    
+    setShowFollowUpModal(false);
+    setCompletedTaskForFollowUp(null);
+  };
+  
+  // Handle follow-up tasks skip
+  const handleFollowUpTasksSkip = () => {
+    console.log('[Dashboard] Skipping follow-up tasks');
+    setShowFollowUpModal(false);
+    setCompletedTaskForFollowUp(null);
   };
   
   if (isLoading) {
@@ -1070,6 +1120,22 @@ const Dashboard: React.FC = () => {
           estimatedMinutes={taskBeingCompleted.estimatedMinutes}
           onConfirm={handleTimeSpentConfirm}
           onSkip={handleTimeSpentSkip}
+        />
+      )}
+      
+      {/* Follow-Up Tasks Modal */}
+      {completedTaskForFollowUp && (
+        <FollowUpTasksModal
+          isOpen={showFollowUpModal}
+          onClose={() => {
+            setShowFollowUpModal(false);
+            setCompletedTaskForFollowUp(null);
+          }}
+          parentTask={completedTaskForFollowUp}
+          onConfirm={handleFollowUpTasksConfirm}
+          onSkip={handleFollowUpTasksSkip}
+          categories={categories}
+          projects={projects}
         />
       )}
     </div>
