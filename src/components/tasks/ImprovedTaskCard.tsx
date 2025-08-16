@@ -29,7 +29,7 @@ import { useAppContext } from '../../context/AppContextSupabase';
 import { QuickDueDateEditor } from './QuickDueDateEditor';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji, calculateSmartPriorityScore } from '../../utils/taskPrioritization';
 import { TimeSpentModal } from './TimeSpentModal';
-import { FuzzyTaskBreakdown } from './FuzzyTaskBreakdown';
+import { FuzzyTaskBreakdownSimple } from './FuzzyTaskBreakdownSimple';
 
 interface ImprovedTaskCardProps {
   task: Task;
@@ -444,7 +444,7 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
       
       {/* Fuzzy Task Breakdown Modal */}
       {showBreakdown && (
-        <FuzzyTaskBreakdown
+        <FuzzyTaskBreakdownSimple
           task={task}
           onClose={() => setShowBreakdown(false)}
           onComplete={async (newTasks) => {

@@ -14,7 +14,7 @@ import { getTimeContext, getTaskTimeEstimate, formatTimeRemaining, formatTimeOfD
 import { focusTracker } from '../utils/focusTracker';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji } from '../utils/taskPrioritization';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
-import { FuzzyTaskBreakdown } from './tasks/FuzzyTaskBreakdown';
+import { FuzzyTaskBreakdownSimple } from './tasks/FuzzyTaskBreakdownSimple';
 
 interface TaskDisplayProps {
   task: Task;
@@ -729,7 +729,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     
     {/* Fuzzy Task Breakdown Modal */}
     {showFuzzyBreakdown && (
-      <FuzzyTaskBreakdown
+      <FuzzyTaskBreakdownSimple
         task={task}
         onClose={() => setShowFuzzyBreakdown(false)}
         onComplete={async (newTasks) => {
