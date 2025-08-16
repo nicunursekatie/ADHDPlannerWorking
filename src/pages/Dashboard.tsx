@@ -5,10 +5,8 @@ import {
   Calendar, 
   CheckCircle2, 
   Folder, 
-  Tag, 
   Plus,
   ArrowRight,
-  HelpCircle,
   BrainCircuit,
   RefreshCw,
   ListChecks,
@@ -16,8 +14,7 @@ import {
   Sparkles,
   Star,
   TrendingUp,
-  Compass,
-  Lightbulb
+  Compass
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContextSupabase';
 import Card from '../components/common/Card';
@@ -54,8 +51,7 @@ const Dashboard: React.FC = () => {
     updateTask,
     completeTask,
     addTask,
-    needsWeeklyReview,
-    getLastWeeklyReviewDate
+    needsWeeklyReview
   } = useAppContext();
   
   const [showWeeklyReviewReminder, setShowWeeklyReviewReminder] = useState(false);
@@ -240,7 +236,7 @@ const Dashboard: React.FC = () => {
       const newTask: Task = {
         id: Date.now().toString() + Math.random(),
         title: task.title || '',
-        description: task.description || '',
+        description: task.description || `Follow-up from: ${completedTaskForFollowUp?.title}`,
         completed: false,
         archived: false,
         createdAt: new Date().toISOString(),
@@ -251,10 +247,9 @@ const Dashboard: React.FC = () => {
         categoryIds: task.categoryIds || completedTaskForFollowUp?.categoryIds || [],
         tags: [],
         priority: task.priority || 'medium',
-        energyLevel: task.energyLevel || null,
-        estimatedMinutes: task.estimatedMinutes || null,
-        parentTaskId: null,
-        notes: `Follow-up from: ${completedTaskForFollowUp?.title}`
+        energyLevel: task.energyLevel ?? undefined,
+        estimatedMinutes: task.estimatedMinutes ?? undefined,
+        parentTaskId: null
       };
       
       await addTask(newTask);
@@ -310,7 +305,7 @@ const Dashboard: React.FC = () => {
                 Load Sample Data
               </Button>
               <Link to="/tasks">
-                <Button variant="outline" className="hover:bg-primary-50 dark:hover:bg-primary-900/20">
+                <Button variant="ghost" className="hover:bg-primary-50 dark:hover:bg-primary-900/20">
                   Start from Scratch
                 </Button>
               </Link>
@@ -510,11 +505,11 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* PRIORITY #1: Due Today */}
-      <Card
-        id="due-today"
-        padding="sm"
-        title={
-          <div className="flex items-center justify-between w-full">
+      <div id="due-today">
+        <Card
+          padding="sm"
+          title={
+            <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-r from-danger-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
                 <Clock className="w-5 h-5 text-white" />
@@ -610,67 +605,70 @@ const Dashboard: React.FC = () => {
             </div>
           )}
         </div>
-      </Card>
-
+        </Card>
+      </div>
       {/* PRIORITY #2: Quick Capture - Compact */}
-      <Card id="quick-capture" variant="glass" padding="sm" className="border border-white/20 shadow-md backdrop-blur-xl">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-accent-500 to-primary-500 rounded-xl flex items-center justify-center shadow-md">
-            <BrainCircuit className="w-4 h-4 text-white" />
-          </div>
-          <div className="flex-1">
-            <QuickCapture
-              placeholder="Quick capture: '!today Buy groceries' or just 'Call mom'"
-            />
-          </div>
-        </div>
-      </Card>
-
-      {/* PRIORITY #3: Coming Up This Week */}
-      <Card
-        id="weekly-tasks"
-        title={
+      <div id="quick-capture">
+        <Card variant="glass" padding="sm" className="border border-white/20 shadow-md backdrop-blur-xl">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-accent-500 to-accent-600 rounded-xl flex items-center justify-center shadow-md">
-              <Calendar className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 bg-gradient-to-r from-accent-500 to-primary-500 rounded-xl flex items-center justify-center shadow-md">
+              <BrainCircuit className="w-4 h-4 text-white" />
             </div>
-            <span className="font-display font-bold text-lg">Coming Up This Week</span>
-          </div>
-        }
-        padding="md"
-        className="shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-xl"
-        headerAction={
-          <Link 
-            to="/tasks"
-            className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group"
-          >
-            View All
-            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
-        }
-      >
-        <div className="space-y-3 max-h-60 overflow-y-auto overflow-x-visible pr-2 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
-          {tasksDueThisWeek.filter(task => !tasksDueToday.some(t => t.id === task.id)).slice(0, 3).map((task, index) => (
-            <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
-              <TaskDisplay
-                task={task}
-                onToggle={handleTaskToggle}
-                onEdit={() => handleOpenTaskModal(task)}
-                onDelete={() => deleteTask(task.id)}
-                onBreakdown={handleTaskBreakdown}
+            <div className="flex-1">
+              <QuickCapture
+                placeholder="Quick capture: '!today Buy groceries' or just 'Call mom'"
               />
             </div>
-          ))}
-          
-          {tasksDueThisWeek.filter(task => !tasksDueToday.some(t => t.id === task.id)).length === 0 && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>No upcoming tasks this week</p>
-              <p className="text-sm mt-1">Time to plan ahead! 📅</p>
+          </div>
+        </Card>
+      </div>
+
+      {/* PRIORITY #3: Coming Up This Week */}
+      <div id="weekly-tasks">
+        <Card
+          title={
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-accent-500 to-accent-600 rounded-xl flex items-center justify-center shadow-md">
+                <Calendar className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-display font-bold text-lg">Coming Up This Week</span>
             </div>
-          )}
-        </div>
-      </Card>
+          }
+          padding="md"
+          className="shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-xl"
+          headerAction={
+            <Link 
+              to="/tasks"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group"
+            >
+              View All
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          }
+        >
+          <div className="space-y-3 max-h-60 overflow-y-auto overflow-x-visible pr-2 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scrollbar-track-transparent">
+            {tasksDueThisWeek.filter(task => !tasksDueToday.some(t => t.id === task.id)).slice(0, 3).map((task, index) => (
+              <div key={task.id} className="animate-fadeIn" style={{ animationDelay: `${index * 0.1}s` }}>
+                <TaskDisplay
+                  task={task}
+                  onToggle={handleTaskToggle}
+                  onEdit={() => handleOpenTaskModal(task)}
+                  onDelete={() => deleteTask(task.id)}
+                  onBreakdown={handleTaskBreakdown}
+                />
+              </div>
+            ))}
+            
+            {tasksDueThisWeek.filter(task => !tasksDueToday.some(t => t.id === task.id)).length === 0 && (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>No upcoming tasks this week</p>
+                <p className="text-sm mt-1">Time to plan ahead! 📅</p>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
 
       {/* Hyperfocus Alert */}
       {showHyperfocusAlert && (
