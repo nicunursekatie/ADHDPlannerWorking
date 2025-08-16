@@ -246,7 +246,11 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 '- People involved: ' + (people || 'none mentioned') + '\n' +
 '- Consequences if delayed: ' + (timing || 'no specific consequences mentioned') + '\n\n' +
 'Use the CONSEQUENCES to set urgency - if "kid asking daily" = today, if "miss the season" = this week, if "just bothering me" = someday\n\n' +
-'IMPORTANT: Build tasks using the info they already have! If they know "there\'s a gym nearby", first task should be "Call [specific gym name if mentioned, otherwise \'the gym nearby you mentioned\']"\n\n' +
+'CRITICAL: Only use information EXPLICITLY provided in the conversation above!\n' +
+'- If they said "Jackie knows about teams" → create task about texting Jackie\n' +
+'- If they did NOT mention gyms → do NOT create tasks about gyms\n' +
+'- If they did NOT mention specific places → start with Google searches\n' +
+'- Build tasks from THEIR actual answers, not your assumptions\n\n' +
 'CRITICAL: Generate EXECUTABLE INSTRUCTIONS, not conceptual tasks!\n\n' +
 'FORBIDDEN TASKS - NEVER GENERATE THESE:\n' +
 '❌ "Research..." (too vague)\n' +
@@ -262,11 +266,22 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 '✓ Include EXACT words to type, say, or write (in quotes)\n' +
 '✓ Give specific names, numbers, or addresses\n' +
 '✓ Be doable in one sitting without getting up (unless it\'s specifically about going somewhere)\n\n' +
-'GOOD Examples:\n' +
-'• "Open Google Chrome, type: \'Anytown California youth cheerleading 2024\', click first 3 results, write down phone numbers"\n' +
-'• "Open phone, dial 555-0123, say: \'Hi, do you have cheerleading for 7 year olds? What\'s the cost?\'"\n' +
-'• "Text Sarah (555-0111): \'Hey! Charlotte wants to do cheer. Know any good teams?\' Wait for reply."\n' +
-'• "Open Facebook, search \'Anytown moms group\', post: \'Looking for cheer teams for my 7yo - any recommendations?\'"\n\n' +
+'REQUIRED FORMAT for each task type:\n\n' +
+'FOR SEARCHING:\n' +
+'Title: "Google: [exact search phrase]"\n' +
+'Description: "Open browser, type exactly: \'[city from context] youth cheerleading age [age]\'. Click top 3 results. For each, write down: name, phone, website. Close tabs after."\n\n' +
+'FOR TEXTING SOMEONE:\n' +
+'Title: "Text [exact name]: copy this message"\n' +
+'Description: "Copy and send exactly: \'Hey! Quick question - my daughter wants to start cheerleading. Know any good teams or where to look? Thanks!\' Don\'t overthink, just send."\n\n' +
+'FOR CALLING:\n' +
+'Title: "Call [specific place or number]"\n' +
+'Description: "If you mentioned a specific place, call them. Otherwise, call the first result from your Google search. Say: \'Hi, my daughter is [age] and interested in cheer. What programs do you have?\'"\n\n' +
+'READ THE CONTEXT! If user said:\n' +
+'- "Jackie might know" → Task: "Text Jackie: [message]"\n' +
+'- "I live in Seattle" → Task: "Google: Seattle youth cheerleading"\n' +
+'- Nothing about gyms → DO NOT create gym tasks!\n' +
+'- "She\'s 7" → Use age 7 in searches\n' +
+'Only create tasks based on information they ACTUALLY provided.\n\n' +
 'NEVER create meta-tasks about planning, reflecting, considering, or organizing. Only concrete actions!\n\n' +
 'Return ONLY a JSON array:\n' +
 '[\n' +
@@ -285,7 +300,7 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
           method: 'POST',
           headers: provider.headers(apiKey),
           body: JSON.stringify(provider.formatRequest([
-            { role: 'system', content: 'You create ONLY executable instructions. NEVER use words like: research, organize, create, schedule, reflect, plan, consider, reach out. ALWAYS start with: "Open [app]", "Call [number]", "Text [person]", "Go to [website]". Include EXACT words in quotes. Never create thinking tasks, only doing tasks. If you create a "reflect" or "organize" task, you have failed.' },
+            { role: 'system', content: 'RULE 1: Only use information ACTUALLY PROVIDED by the user. Do NOT invent gyms, places, or people they didn\'t mention. RULE 2: Every task must include EXACTLY what to open and EXACTLY what to type/say (in quotes). RULE 3: If they mentioned Jackie, use Jackie. If they didn\'t mention gyms, don\'t create gym tasks. Only work with what they actually said.' },
             { role: 'user', content: prompt }
           ], selectedModel))
         });
@@ -546,12 +561,16 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
         const selectedModel = modelName || provider.defaultModel;
         
         const refinementPrompt = 
-'Here are the current tasks:\n' +
+'Current tasks:\n' +
 JSON.stringify(generatedTasks, null, 2) + '\n\n' +
-'User feedback: "' + feedbackInput + '"\n\n' +
-'Refine these tasks based on the feedback. Keep the same format but make them even MORE executable and specific.\n' +
-'Remember: Each task must tell the user EXACTLY what to do, what to click, what to type, with no thinking required.\n\n' +
-'Return ONLY the updated JSON array with the same structure.';
+'User complaint: "' + feedbackInput + '"\n\n' +
+'FIX THESE TASKS! Common problems:\n' +
+'- "Call the gym you mentioned" → User: "I don\'t know what gym!" → Fix: "Google: gyms near me with kids programs"\n' +
+'- "Open Google Chrome for options" → User: "Then what??" → Fix: "Google: \'[your city] youth cheer teams\', click first 3 links"\n' +
+'- Vague references → Make them SPECIFIC actions\n\n' +
+'If user says they don\'t know something, NEVER reference it. Create a task to FIND it first.\n' +
+'Every task must be doable even if user has memory of a goldfish.\n\n' +
+'Return the FIXED JSON array:';
 
         const response = await fetch(provider.baseUrl, {
           method: 'POST',
