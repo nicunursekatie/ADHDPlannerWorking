@@ -55,18 +55,18 @@ const Header: React.FC = () => {
           Skip to main content
         </a>
         
-        <div className="flex justify-between h-16 items-center">
+        <div className="flex justify-between h-20 items-center gap-8">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center group focus:outline-none focus:ring-2 focus:ring-focus-500 rounded-xl p-1">
-              <div className="p-2.5 bg-gradient-to-br from-focus-500 to-primary-600 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-200 group-hover:scale-105">
-                <ClipboardList className="h-6 w-6 text-white" />
+            <Link to="/" className="flex items-center group focus:outline-none focus:ring-2 focus:ring-focus-500 rounded-xl p-2">
+              <div className="p-3 bg-gradient-to-br from-focus-500 to-primary-600 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-200 group-hover:scale-105">
+                <ClipboardList className="h-7 w-7 text-white" />
               </div>
-              <div className="ml-3">
-                <span className="text-xl font-bold text-surface-900 dark:text-surface-100 tracking-tight group-hover:text-focus-600 dark:group-hover:text-focus-400 transition-colors">
+              <div className="ml-4">
+                <span className="text-2xl font-bold text-surface-900 dark:text-surface-100 tracking-tight group-hover:text-focus-600 dark:group-hover:text-focus-400 transition-colors leading-tight">
                   ADHD Planner
                 </span>
-                <div className="text-xs text-surface-500 dark:text-surface-400 font-medium">
+                <div className="text-sm text-surface-500 dark:text-surface-400 font-medium mt-0.5">
                   Focus • Organize • Succeed
                 </div>
               </div>
@@ -74,61 +74,64 @@ const Header: React.FC = () => {
           </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-2" role="navigation" aria-label="Main navigation">
+          <nav className="hidden lg:flex items-center gap-6" role="navigation" aria-label="Main navigation">
             {/* Primary Navigation */}
-            <div className="flex items-center space-x-1 px-3 py-1 bg-surface-100 dark:bg-surface-800 rounded-xl">
+            <div className="flex items-center gap-2 px-4 py-3 bg-surface-100 dark:bg-surface-800 rounded-2xl">
               {primaryNavItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`inline-flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  className={`inline-flex items-center px-5 py-3 text-[15px] font-medium rounded-xl transition-all duration-200 ${
                     isActive(item.path)
                       ? 'bg-focus-600 text-white shadow-md scale-105'
                       : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-surface-200 hover:bg-surface-200 dark:hover:bg-surface-700'
                   }`}
                 >
                   {item.icon}
-                  <span className="ml-2">{item.label}</span>
+                  <span className="ml-2.5">{item.label}</span>
                 </Link>
               ))}
             </div>
             
+            {/* Visual Separator */}
+            <div className="hidden xl:block w-px h-8 bg-surface-300 dark:bg-surface-600"></div>
+            
             {/* Secondary Navigation */}
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center gap-2">
               {secondaryNavItems.map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  className={`inline-flex items-center px-4 py-2.5 text-[15px] font-medium rounded-xl transition-all duration-200 ${
                     isActive(item.path)
                       ? 'bg-surface-200 dark:bg-surface-700 text-surface-900 dark:text-surface-100'
                       : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800'
                   }`}
                 >
                   {item.icon}
-                  <span className="ml-2">{item.label}</span>
+                  <span className="ml-2.5">{item.label}</span>
                 </Link>
               ))}
             </div>
           </nav>
           
           {/* Right side buttons */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-xl text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-focus-500 bg-surface-50 dark:bg-surface-800/50 border border-surface-200 dark:border-surface-700"
+              className="p-3 rounded-xl text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-focus-500 bg-surface-50 dark:bg-surface-800/50 border border-surface-200 dark:border-surface-700"
               aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             >
-              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+              {theme === 'light' ? <Moon size={22} /> : <Sun size={22} />}
             </button>
             
             {/* What Now Button */}
             <Link
               to="/what-now"
-              className="hidden md:inline-flex items-center px-4 py-2.5 text-sm font-medium rounded-xl text-white bg-gradient-to-r from-warning-500 to-warning-600 hover:from-warning-600 hover:to-warning-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warning-500 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+              className="hidden md:inline-flex items-center px-5 py-3 text-[15px] font-medium rounded-xl text-white bg-gradient-to-r from-warning-500 to-warning-600 hover:from-warning-600 hover:to-warning-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warning-500 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
             >
-              <HelpCircle size={16} className="mr-2" />
+              <HelpCircle size={18} className="mr-2.5" />
               What Now?
             </Link>
           </div>
