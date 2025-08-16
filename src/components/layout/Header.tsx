@@ -140,7 +140,7 @@ const Header: React.FC = () => {
           <div className="lg:hidden">
             <button
               onClick={toggleMobileMenu}
-              className="inline-flex items-center justify-center p-2.5 rounded-xl text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 focus:outline-none focus:ring-2 focus:ring-focus-500 transition-all duration-200"
+              className="inline-flex items-center justify-center p-3 rounded-xl text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 focus:outline-none focus:ring-2 focus:ring-focus-500 transition-all duration-200"
               aria-label="Toggle mobile menu"
             >
               {isMobileMenuOpen ? (
