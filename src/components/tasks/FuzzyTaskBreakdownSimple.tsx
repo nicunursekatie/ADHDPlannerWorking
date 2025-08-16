@@ -30,7 +30,7 @@ const BASE_QUESTIONS = [
   "What's blocking that from happening?",
   "What info do you already have? (even tiny bits help)",
   "Anyone else involved?",
-  "What happens if this doesn't get done soon?"
+  "What happens if you don't do this soon? (or when's the deadline if there is one)"
 ];
 
 // Generate contextual questions based on the task and previous answers
@@ -66,19 +66,19 @@ const getSmartQuestion = (questionIndex: number, task: Task, previousAnswers: st
     
     // Tailor the consequence question to the task type
     if (taskLower.includes('kid') || taskLower.includes('child') || taskLower.includes('daughter') || taskLower.includes('son')) {
-      return "What happens if this waits? (e.g., 'she'll miss the season', 'she's asking daily', 'nothing urgent')";
-    }
-    if (blockers && blockers.toLowerCase().includes('deadline')) {
-      return "Is there a real deadline, or just consequences? (e.g., 'due Friday' vs 'gets worse each day')";
+      return "What happens if this doesn't get done this week? Next week? (e.g., 'miss the season', 'she gets more upset', 'nothing really')";
     }
     if (taskLower.includes('pay') || taskLower.includes('bill') || taskLower.includes('payment')) {
-      return "What's the consequence? (late fee, service cut off, credit hit, or just guilt?)";
+      return "What happens if you don't do this by end of week? End of month? (late fee, service cut, or just guilt?)";
     }
     if (taskLower.includes('clean') || taskLower.includes('organize')) {
-      return "What's the real problem if it waits? (guests coming, can't find things, or just bothering you?)";
+      return "What happens if this waits another week? Month? (guests coming, losing things, or just mental weight?)";
     }
-    // Default - focus on consequences not deadlines
-    return "What happens if this doesn't get done soon? (real consequences or just stress?)";
+    if (taskLower.includes('work') || taskLower.includes('job') || taskLower.includes('boss')) {
+      return "What happens if this isn't done by Monday? Next week? (boss asks, team blocked, or just stress?)";
+    }
+    // Default - timeframe-based consequences
+    return "What happens if you don't do this by next week? Next month? (or type 'deadline: [date]' if there's a real one)";
   }
   
   // Smart follow-ups for blockers
