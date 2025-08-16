@@ -436,6 +436,12 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
     setIsGenerating(true);
     setFeedbackMode(false);
     
+    // Show loading message
+    setMessages(prev => [...prev, { 
+      type: 'bot', 
+      text: "Refining tasks based on your feedback..."
+    }]);
+    
     const apiKey = localStorage.getItem('ai_api_key');
     const providerName = localStorage.getItem('ai_provider') || 'openai';
     const modelName = localStorage.getItem('ai_model');
@@ -495,7 +501,7 @@ JSON.stringify(generatedTasks, null, 2) + '\n\n' +
       emotionalWeight: genTask.emotionalWeight,
       projectId: task.projectId,
       priority: genTask.urgency === 'today' ? 'high' : 'medium',
-      braindumpSource: "Broken down from: " + task.title
+      notes: "Broken down from: " + task.title  // Use notes field instead
     }));
     
     onComplete(newTasks);

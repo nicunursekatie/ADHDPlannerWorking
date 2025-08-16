@@ -345,7 +345,7 @@ Be specific and actionable. Avoid generic tasks.`;
         categoryIds: taskCategories,
         projectId: task.projectId,
         priority: isHighPriority ? 'high' : 'medium',
-        braindumpSource: `Broken down from: ${task.title}`
+        notes: `Broken down from: ${task.title}`  // Use notes field instead of braindumpSource
       };
     });
     
