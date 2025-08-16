@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
 import { Task } from '../../types';
-import { useAppContext } from '../../context/AppContextSupabase';
 import { AI_PROVIDERS, getProvider } from '../../utils/aiProviders';
 
 interface FuzzyTaskBreakdownSimpleProps {
@@ -38,7 +37,6 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
   onClose, 
   onComplete 
 }) => {
-  const { categories, addTask, deleteTask } = useAppContext();
   const [messages, setMessages] = useState<Message[]>([
     { type: 'bot', text: `Let's break down "${task.title}" into manageable steps.` },
     { type: 'bot', text: QUESTIONS[0] }
@@ -146,7 +144,7 @@ Return ONLY a JSON array:
                 ...prev,
                 {
                   type: 'bot',
-                  text: `I've created ${tasks.length} tasks to get you started. Ready to replace the fuzzy task?`
+                  text: "I've created " + tasks.length + " tasks to get you started. Ready to replace the fuzzy task?"
                 }
               ]);
             }, 1000);
@@ -178,11 +176,11 @@ Return ONLY a JSON array:
                              blockers.toLowerCase().includes('letting') ||
                              blockers.toLowerCase().includes('down');
     
-    const needsToContact = firstStep.toLowerCase().includes('call') ||
-                          firstStep.toLowerCase().includes('email') ||
-                          firstStep.toLowerCase().includes('contact') ||
-                          firstStep.toLowerCase().includes('ask') ||
-                          firstStep.toLowerCase().includes('talk');
+    // const needsToContact = firstStep.toLowerCase().includes('call') ||
+    //                       firstStep.toLowerCase().includes('email') ||
+    //                       firstStep.toLowerCase().includes('contact') ||
+    //                       firstStep.toLowerCase().includes('ask') ||
+    //                       firstStep.toLowerCase().includes('talk');
     
     // Generate ACTUAL helpful tasks based on the context
     
@@ -331,7 +329,8 @@ Return ONLY a JSON array:
       );
     }
     
-    setGeneratedTasks(uniqueTasks.length > 0 ? uniqueTasks.slice(0, 5) : tasks.slice(0, 5));
+    const finalTasks = uniqueTasks.length > 0 ? uniqueTasks.slice(0, 5) : tasks.slice(0, 5);
+    setGeneratedTasks(finalTasks);
     setShowTasks(true);
     setIsGenerating(false);
     
@@ -339,7 +338,7 @@ Return ONLY a JSON array:
     setTimeout(() => {
       setMessages(prev => [...prev, { 
         type: 'bot', 
-        text: `I've created ${tasks.length} tasks to get you started. Ready to replace the fuzzy task?` 
+        text: `I've created ${finalTasks.length} tasks to get you started. Ready to replace the fuzzy task?` 
       }]);
     }, 1000);
   };
@@ -361,7 +360,7 @@ Return ONLY a JSON array:
     onComplete(newTasks);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -449,7 +448,7 @@ Return ONLY a JSON array:
                 type="text"
                 value={currentInput}
                 onChange={(e) => setCurrentInput(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 placeholder="Type your answer..."
                 className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 disabled={isGenerating}
