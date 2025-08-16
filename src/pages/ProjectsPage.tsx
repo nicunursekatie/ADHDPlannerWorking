@@ -44,6 +44,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useConfirmDialog } from '../hooks/useConfirmDialog';
 
 type ViewMode = 'grid' | 'list' | 'kanban';
 type FilterMode = 'all' | 'active' | 'on-hold' | 'completed' | 'archived';
@@ -194,10 +195,10 @@ const SortableProjectCard: React.FC<SortableProjectCardProps> = ({
 
 const ProjectsPage: React.FC = () => {
   const { projects, tasks, deleteProject, reorderProjects } = useAppContext();
+  const { confirm, ConfirmDialogComponent } = useConfirmDialog();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [sortMode, setSortMode] = useState<SortMode>('updated');
@@ -230,18 +231,31 @@ const ProjectsPage: React.FC = () => {
     setEditingProject(null);
   };
   
-  const handleOpenDeleteConfirm = (projectId: string) => {
-    setConfirmDelete(projectId);
-  };
-  
-  const handleCloseDeleteConfirm = () => {
-    setConfirmDelete(null);
-  };
-  
-  const handleDeleteProject = () => {
-    if (confirmDelete) {
-      deleteProject(confirmDelete);
-      setConfirmDelete(null);
+  const handleDeleteProject = async (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    
+    const projectTasks = tasks.filter(task => 
+      task.projectId === projectId && 
+      !task.deletedAt && 
+      !task.parentTaskId
+    );
+    
+    const message = projectTasks.length > 0
+      ? `Are you sure you want to delete "${project.name}"?\n\nThis project has ${projectTasks.length} task${projectTasks.length > 1 ? 's' : ''} that will remain but will no longer be assigned to any project.`
+      : `Are you sure you want to delete "${project.name}"?`;
+    
+    const confirmed = await confirm({
+      title: 'Delete Project',
+      message,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+      confirmButtonVariant: 'danger'
+    });
+    
+    if (confirmed) {
+      deleteProject(projectId);
     }
   };
   
@@ -646,7 +660,7 @@ const ProjectsPage: React.FC = () => {
                         project={project}
                         stats={stats}
                         onEdit={handleOpenModal}
-                        onDelete={handleOpenDeleteConfirm}
+                        onDelete={handleDeleteProject}
                         viewMode={viewMode}
                       />
                     </div>
@@ -676,7 +690,7 @@ const ProjectsPage: React.FC = () => {
                         project={project}
                         stats={stats}
                         onEdit={handleOpenModal}
-                        onDelete={handleOpenDeleteConfirm}
+                        onDelete={handleDeleteProject}
                         viewMode={viewMode}
                       />
                     </div>
@@ -818,33 +832,8 @@ const ProjectsPage: React.FC = () => {
         />
       </Modal>
       
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={!!confirmDelete}
-        onClose={handleCloseDeleteConfirm}
-        title="Delete Project"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-400">
-            Are you sure you want to delete this project? Any tasks associated with this project will remain, but will no longer be assigned to any project.
-          </p>
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              variant="secondary"
-              onClick={handleCloseDeleteConfirm}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleDeleteProject}
-            >
-              Delete
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      {/* Confirmation Dialog */}
+      <ConfirmDialogComponent />
     </div>
   );
 };

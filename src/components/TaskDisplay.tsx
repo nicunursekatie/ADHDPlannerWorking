@@ -13,6 +13,7 @@ import { triggerCelebration } from '../utils/celebrations';
 import { getTimeContext, getTaskTimeEstimate, formatTimeRemaining, formatTimeOfDay, getUrgencyColor } from '../utils/timeAwareness';
 import { focusTracker } from '../utils/focusTracker';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji } from '../utils/taskPrioritization';
+import { useConfirmDialog } from '../hooks/useConfirmDialog';
 
 interface TaskDisplayProps {
   task: Task;
@@ -42,6 +43,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const [, setCurrentTime] = useState(new Date());
   const [focusTime, setFocusTime] = useState(0);
   const [currentSession, setCurrentSession] = useState(focusTracker.getCurrentSession());
+  const { confirm, ConfirmDialogComponent } = useConfirmDialog();
 
   // Update time for live calculations and focus tracking
   React.useEffect(() => {
@@ -650,9 +652,25 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
           </svg>
         </button>
         <button
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
-            onDelete(task.id);
+            const hasSubtasks = subtasks.length > 0;
+            const message = hasSubtasks 
+              ? `Are you sure you want to delete "${task.title}"?\n\nThis task has ${subtasks.length} subtask${subtasks.length > 1 ? 's' : ''} that will also be deleted.`
+              : `Are you sure you want to delete "${task.title}"?`;
+            
+            const confirmed = await confirm({
+              title: 'Delete Task',
+              message,
+              confirmText: 'Delete',
+              cancelText: 'Cancel',
+              variant: 'danger',
+              confirmButtonVariant: 'danger'
+            });
+            
+            if (confirmed) {
+              onDelete(task.id);
+            }
           }}
           className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
         >
@@ -690,6 +708,9 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     />
     
     {/* Time Spent Modal is now handled at the page level to avoid container constraints */}
+    
+    {/* Confirmation Dialog */}
+    <ConfirmDialogComponent />
     </>
   );
 };

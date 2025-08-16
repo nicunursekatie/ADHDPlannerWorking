@@ -21,6 +21,7 @@ import {
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek } from '../utils/helpers';
 import { DeletedTask, getDeletedTasks, restoreDeletedTask, permanentlyDeleteTask } from '../utils/localStorage';
 import { sortTasks as smartSortTasks, SortMode, EnergyLevel, getFilteredCounts, getSortModeInfo } from '../utils/taskPrioritization';
+import { useConfirmDialog } from '../hooks/useConfirmDialog';
 
 interface BulkTaskCardProps {
   task: Task;
@@ -72,6 +73,7 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
 
 const TasksPageWithBulkOps: React.FC = () => {
   const location = useLocation();
+  const { confirm, ConfirmDialogComponent } = useConfirmDialog();
   const { 
     tasks, 
     projects, 
@@ -235,8 +237,21 @@ const TasksPageWithBulkOps: React.FC = () => {
     setShowArchiveConfirm(false);
   };
 
-  const handleArchiveCompleted = () => {
-    archiveCompletedTasks();
+  const handleArchiveCompleted = async () => {
+    const completedTasks = tasks.filter(task => task.completed && !task.archived);
+    
+    const confirmed = await confirm({
+      title: 'Archive Completed Tasks',
+      message: `Archive ${completedTasks.length} completed task${completedTasks.length > 1 ? 's' : ''}?\n\nArchived tasks will be hidden from your main views but can be accessed later.`,
+      confirmText: 'Archive',
+      cancelText: 'Cancel',
+      variant: 'info',
+      confirmButtonVariant: 'primary'
+    });
+    
+    if (confirmed) {
+      archiveCompletedTasks();
+    }
     setShowArchiveConfirm(false);
   };
   
@@ -363,15 +378,37 @@ const TasksPageWithBulkOps: React.FC = () => {
     setSelectedTasks(new Set());
   };
   
-  const handleBulkDelete = () => {
-    if (selectedTasks.size > 0) {
+  const handleBulkDelete = async () => {
+    if (selectedTasks.size === 0) return;
+    
+    const confirmed = await confirm({
+      title: 'Delete Tasks',
+      message: `Are you sure you want to delete ${selectedTasks.size} task${selectedTasks.size > 1 ? 's' : ''}?\n\nThis action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+      confirmButtonVariant: 'danger'
+    });
+    
+    if (confirmed) {
       bulkDeleteTasks(Array.from(selectedTasks));
       setSelectedTasks(new Set());
     }
   };
   
-  const handleBulkComplete = () => {
-    if (selectedTasks.size > 0) {
+  const handleBulkComplete = async () => {
+    if (selectedTasks.size === 0) return;
+    
+    const confirmed = await confirm({
+      title: 'Complete Tasks',
+      message: `Mark ${selectedTasks.size} task${selectedTasks.size > 1 ? 's' : ''} as completed?`,
+      confirmText: 'Complete',
+      cancelText: 'Cancel',
+      variant: 'info',
+      confirmButtonVariant: 'primary'
+    });
+    
+    if (confirmed) {
       bulkCompleteTasks(Array.from(selectedTasks));
       setSelectedTasks(new Set());
     }
@@ -390,8 +427,19 @@ const TasksPageWithBulkOps: React.FC = () => {
     }
   };
   
-  const handleBulkArchive = () => {
-    if (selectedTasks.size > 0) {
+  const handleBulkArchive = async () => {
+    if (selectedTasks.size === 0) return;
+    
+    const confirmed = await confirm({
+      title: 'Archive Tasks',
+      message: `Archive ${selectedTasks.size} task${selectedTasks.size > 1 ? 's' : ''}?\n\nArchived tasks will be hidden from your main views but can be accessed later.`,
+      confirmText: 'Archive',
+      cancelText: 'Cancel',
+      variant: 'info',
+      confirmButtonVariant: 'primary'
+    });
+    
+    if (confirmed) {
       bulkArchiveTasks(Array.from(selectedTasks));
       setSelectedTasks(new Set());
     }
@@ -1323,34 +1371,6 @@ const TasksPageWithBulkOps: React.FC = () => {
         />
       </Modal>
       
-      {/* Archive Confirmation Modal */}
-      <Modal
-        isOpen={showArchiveConfirm}
-        onClose={handleArchiveConfirmClose}
-        title="Archive Completed Tasks"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600">
-            This will archive all completed tasks. Archived tasks will be hidden by default but can still be viewed using the filter.
-          </p>
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              variant="secondary"
-              onClick={handleArchiveConfirmClose}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              icon={<Archive size={16} />}
-              onClick={handleArchiveCompleted}
-            >
-              Archive Tasks
-            </Button>
-          </div>
-        </div>
-      </Modal>
       
       {/* Bulk Move Modal */}
       <Modal
@@ -1598,6 +1618,9 @@ const TasksPageWithBulkOps: React.FC = () => {
           </div>
         </div>
       </Modal>
+      
+      {/* Confirmation Dialog */}
+      <ConfirmDialogComponent />
     </div>
   );
 };
