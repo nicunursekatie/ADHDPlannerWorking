@@ -171,7 +171,7 @@ export const MobileTaskCard: React.FC<MobileTaskCardProps> = ({
     
     {/* Fuzzy Task Breakdown Modal */}
     {showBreakdown && (
-      <FuzzyTaskBreakdown
+      <FuzzyTaskBreakdownSimple
         task={task}
         onClose={() => setShowBreakdown(false)}
         onComplete={async (newTasks) => {
