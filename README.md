@@ -22,6 +22,8 @@ A comprehensive web application designed specifically for people with ADHD to ma
 - **Executive Function Support**: Structured workflows and guided task breakdown
 - **Hyperfocus Management**: Visual cues and break reminders
 - **Overwhelm Prevention**: Simplified interfaces and progressive disclosure
+- **Fuzzy Task Breakdown**: Interactive AI-powered conversation that turns vague tasks into executable steps
+- **Task Context Memory**: Saves information from breakdowns for future reference
 
 ### 🗂️ Organization
 - **Project Management**: Group related tasks and track progress
@@ -165,6 +167,30 @@ See [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) for detailed instructions.
 3. Choose available time (15min/30min/1hr/2hr+)
 4. Get personalized task recommendations
 
+### Fuzzy Task Breakdown
+For vague or overwhelming tasks like "Find cheerleading team":
+
+1. Click the **sparkle icon** on any fuzzy task
+2. Have a conversation with the AI assistant:
+   - "What's the ideal outcome?" → Get clarity on your goal
+   - "What's blocking you?" → Identify specific obstacles
+   - "What info do you already have?" → Surface hidden resources
+   - "Who could help?" → Find support (or get suggestions)
+   - "What happens if delayed?" → Understand real urgency
+3. Get executable tasks with:
+   - **Exact actions**: "Open Google, type 'Seattle youth cheerleading age 7'"
+   - **Copy-paste messages**: "Text Jackie: 'Hey! Charlotte wants to do cheer...'"
+   - **No thinking required**: Every step spelled out completely
+4. Refine tasks if needed: "Make them more specific" or "Add phone numbers"
+5. Accept tasks and they're added to your list with full context saved
+
+**Key Features:**
+- **Smart questions**: Adapts based on task type and your answers
+- **Handles uncertainty**: Type "should I?" to get suggestions
+- **Context memory**: Saves info for similar future tasks
+- **Reflection log**: Builds a journal of patterns and resources
+- **No hallucination**: Only uses information you actually provide
+
 ## 🔧 Configuration
 
 ### Settings Overview
@@ -172,8 +198,12 @@ The app includes comprehensive settings for ADHD-specific needs:
 
 - **Time Management**: Buffer times, time blindness alerts, auto-adjust estimates
 - **Visual Preferences**: Font size, layout density, reduced animations, high contrast
-- **AI Integration**: Task breakdown assistance (configure your preferred AI provider)
+- **AI Integration**: Configure AI provider (OpenAI, Groq, Anthropic) for task breakdown
+  - Set your API key in Settings → AI Configuration
+  - Choose model (GPT-4, Llama, Claude)
+  - Test connection before use
 - **Data Management**: Import/export, backup, and duplicate cleanup
+- **Task Breakdown History**: Automatically saved conversations and patterns
 
 ### Customization
 The app can be customized through:
