@@ -53,6 +53,7 @@ const Dashboard: React.FC = () => {
     deleteTask,
     updateTask,
     completeTask,
+    addTask,
     needsWeeklyReview,
     getLastWeeklyReviewDate
   } = useAppContext();
