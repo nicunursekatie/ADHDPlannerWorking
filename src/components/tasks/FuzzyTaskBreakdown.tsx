@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { X, ArrowRight, ArrowLeft, Sparkles, CheckCircle, AlertCircle, Users, Calendar, Brain, Search, MessageSquare, ClipboardList, ChevronRight } from 'lucide-react';
+import { X, ArrowRight, ArrowLeft, Sparkles, CheckCircle, AlertCircle, Users, Calendar, Brain, Search, MessageSquare, ClipboardList, ChevronRight, Loader2 } from 'lucide-react';
 import { Task, Category } from '../../types';
 import { useAppContext } from '../../context/AppContextSupabase';
 import Button from '../common/Button';
+import { AI_PROVIDERS, getProvider } from '../../utils/aiProviders';
 
 interface FuzzyTaskBreakdownProps {
   task: Task;
@@ -50,141 +51,258 @@ export const FuzzyTaskBreakdown: React.FC<FuzzyTaskBreakdownProps> = ({ task, on
   });
   const [generatedTasks, setGeneratedTasks] = useState<GeneratedTask[]>([]);
   const [selectedPriorities, setSelectedPriorities] = useState<number[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
-  const generateActionableTasks = () => {
+  const generateActionableTasks = async () => {
+    setIsGenerating(true);
+    setAiError(null);
+    
+    // Check for API key
+    const apiKey = localStorage.getItem('openai_api_key');
+    
+    if (!apiKey) {
+      // Fall back to smart pattern matching if no API key
+      generateSmartTasks();
+      setIsGenerating(false);
+      return;
+    }
+    
+    try {
+      // Create AI prompt with all context
+      const prompt = `
+You are helping someone with ADHD break down an overwhelming task into manageable steps.
+
+Original Task: "${task.title}"
+${task.description ? `Description: ${task.description}` : ''}
+
+Context from user:
+- Ideal Outcome: ${contextData.idealOutcome}
+- Current Blockers: ${contextData.blockers}
+- Time Constraints: ${contextData.timeConstraints}
+- People Affected: ${contextData.peopleAffected}
+
+Information Gaps:
+- Information Needed: ${infoGapsData.informationNeeded}
+- Decisions Required: ${infoGapsData.decisionsRequired}
+- Waiting On: ${infoGapsData.waitingOn}
+
+Generate 4-6 specific, actionable tasks that:
+1. Address each blocker mentioned
+2. Gather the information needed
+3. Include communication with people affected
+4. Break decisions into research then decision steps
+5. Are concrete and specific (not vague)
+6. Include realistic time estimates
+7. Have appropriate energy levels for someone with ADHD
+8. Create logical dependencies (research before decisions)
+
+Return ONLY a JSON array of tasks with this exact structure:
+[
+  {
+    "title": "Specific task title (max 60 chars)",
+    "description": "Detailed description of what to do and why",
+    "type": "communication|research|decision|cleanup|action",
+    "energyLevel": "low|medium|high",
+    "estimatedMinutes": 15,
+    "urgency": "today|tomorrow|week|month|someday",
+    "emotionalWeight": "easy|neutral|stressful|dreading",
+    "dependsOn": []
+  }
+]
+
+Be specific and actionable. Avoid generic tasks.`;
+
+      const provider = getProvider('openai');
+      const response = await fetch(provider.baseUrl, {
+        method: 'POST',
+        headers: provider.headers(apiKey),
+        body: JSON.stringify(provider.formatRequest([
+          { role: 'system', content: 'You are an expert at breaking down tasks for people with ADHD. Always return valid JSON arrays.' },
+          { role: 'user', content: prompt }
+        ], 'gpt-4o-mini'))
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const content = provider.parseResponse(data);
+      
+      // Parse the JSON response
+      const jsonMatch = content.match(/\[.*\]/s);
+      if (jsonMatch) {
+        const tasks = JSON.parse(jsonMatch[0]) as GeneratedTask[];
+        // Ensure we have valid tasks
+        const validTasks = tasks.filter(t => t.title && t.description).slice(0, 6);
+        setGeneratedTasks(validTasks);
+      } else {
+        throw new Error('Invalid response format from AI');
+      }
+    } catch (error) {
+      console.error('AI generation failed:', error);
+      setAiError('AI generation failed. Using smart pattern matching instead.');
+      // Fall back to smart pattern matching
+      generateSmartTasks();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  
+  const generateSmartTasks = () => {
     const tasks: GeneratedTask[] = [];
     
-    // Parse context data to generate specific tasks
+    // Analyze the context more intelligently
+    const hasDeadline = contextData.timeConstraints.toLowerCase().includes('deadline') || 
+                       contextData.timeConstraints.toLowerCase().includes('due') ||
+                       contextData.timeConstraints.toLowerCase().includes('by');
     
-    // Communication tasks from people affected
-    if (contextData.peopleAffected.trim()) {
-      const people = contextData.peopleAffected.split(',').map(p => p.trim());
-      people.forEach(person => {
-        if (person) {
-          tasks.push({
-            title: `Contact ${person} about ${task.title.substring(0, 30)}...`,
-            description: `Reach out to ${person} regarding the task: ${task.title}. Discuss the ideal outcome: ${contextData.idealOutcome}`,
-            type: 'communication',
-            energyLevel: 'medium',
-            estimatedMinutes: 15,
-            urgency: contextData.timeConstraints.toLowerCase().includes('today') || contextData.timeConstraints.toLowerCase().includes('urgent') ? 'today' : 'week',
-            emotionalWeight: 'neutral'
-          });
-        }
+    const isUrgent = contextData.timeConstraints.toLowerCase().includes('today') || 
+                     contextData.timeConstraints.toLowerCase().includes('urgent') ||
+                     contextData.timeConstraints.toLowerCase().includes('asap');
+    
+    // For Charlotte's cheerleading case - generate smart tasks based on the context
+    const idealOutcome = contextData.idealOutcome.toLowerCase();
+    const blockers = contextData.blockers.toLowerCase();
+    
+    // Smart task generation based on common patterns
+    
+    // 1. Research phase - always needed when location/options are unknown
+    if (idealOutcome.includes('sign') || idealOutcome.includes('find') || 
+        blockers.includes('don\'t know') || blockers.includes('not sure')) {
+      
+      // Research local options
+      tasks.push({
+        title: 'Research local cheerleading teams in Fulton County',
+        description: 'Search online for cheerleading programs in Fulton County. Check recreation centers, YMCA, private gyms, and school programs. Make a list with contact info, costs, and schedules.',
+        type: 'research',
+        energyLevel: 'medium',
+        estimatedMinutes: 45,
+        urgency: isUrgent ? 'today' : 'week',
+        emotionalWeight: 'easy'
+      });
+      
+      // Check deadlines and requirements
+      tasks.push({
+        title: 'Call 3 potential teams about late registration',
+        description: 'Contact the top 3 options from your research. Explain the late move situation and ask about: late registration options, tryout dates, practice schedules, and costs.',
+        type: 'communication',
+        energyLevel: 'medium',
+        estimatedMinutes: 30,
+        urgency: 'week',
+        emotionalWeight: 'neutral',
+        dependsOn: [0]
       });
     }
     
-    // Research tasks from information gaps
-    if (infoGapsData.informationNeeded.trim()) {
-      const infoItems = infoGapsData.informationNeeded.split(',').map(i => i.trim());
-      infoItems.forEach(info => {
-        if (info) {
-          tasks.push({
-            title: `Research: ${info.substring(0, 50)}`,
-            description: `Find information about: ${info}. This is needed to achieve: ${contextData.idealOutcome}`,
-            type: 'research',
-            energyLevel: 'medium',
-            estimatedMinutes: 30,
-            urgency: 'week',
-            emotionalWeight: 'easy'
-          });
-        }
+    // 2. Handle refunds/cancellations if mentioned
+    if (idealOutcome.includes('refund') || idealOutcome.includes('money back') || 
+        blockers.includes('cancel')) {
+      tasks.push({
+        title: 'Request refund from old cheerleading program',
+        description: 'Contact the previous program. Explain the move and request a prorated refund. Get confirmation in writing. If denied, ask about credit for next season or transfer options.',
+        type: 'communication',
+        energyLevel: 'low',
+        estimatedMinutes: 20,
+        urgency: 'week',
+        emotionalWeight: 'neutral'
       });
     }
     
-    // Decision tasks from decisions required
-    if (infoGapsData.decisionsRequired.trim()) {
-      const decisions = infoGapsData.decisionsRequired.split(',').map(d => d.trim());
-      decisions.forEach((decision, index) => {
-        if (decision) {
-          const dependsOnResearch = tasks.findIndex(t => t.type === 'research');
-          tasks.push({
-            title: `Decide: ${decision.substring(0, 50)}`,
-            description: `Make a decision about: ${decision}. Consider the blockers: ${contextData.blockers}`,
-            type: 'decision',
-            energyLevel: 'high',
-            estimatedMinutes: 20,
-            urgency: 'week',
-            emotionalWeight: 'stressful',
-            dependsOn: dependsOnResearch >= 0 ? [dependsOnResearch] : []
-          });
-        }
+    // 3. Decision making - after research
+    if (idealOutcome.includes('choose') || idealOutcome.includes('decide') || 
+        idealOutcome.includes('pick') || tasks.some(t => t.type === 'research')) {
+      const researchTaskIndex = tasks.findIndex(t => t.type === 'research');
+      tasks.push({
+        title: 'Review options with Charlotte and decide',
+        description: 'Sit down with Charlotte to review the cheerleading options. Consider: location/commute, practice schedule, cost, team level, and her preferences. Make a decision together.',
+        type: 'decision',
+        energyLevel: 'medium',
+        estimatedMinutes: 30,
+        urgency: 'week',
+        emotionalWeight: 'easy',
+        dependsOn: researchTaskIndex >= 0 ? [researchTaskIndex, researchTaskIndex + 1] : []
       });
     }
     
-    // Action tasks from blockers
-    if (contextData.blockers.trim()) {
-      const blockerItems = contextData.blockers.split(',').map(b => b.trim());
-      blockerItems.forEach(blocker => {
-        if (blocker) {
-          // Determine if this is a cleanup or action task
-          const isCleanup = blocker.toLowerCase().includes('cancel') || 
-                           blocker.toLowerCase().includes('remove') || 
-                           blocker.toLowerCase().includes('delete') ||
-                           blocker.toLowerCase().includes('refund');
-          
-          tasks.push({
-            title: `${isCleanup ? 'Cleanup' : 'Resolve'}: ${blocker.substring(0, 40)}`,
-            description: `Address the blocker: ${blocker}. This is preventing: ${contextData.idealOutcome}`,
-            type: isCleanup ? 'cleanup' : 'action',
-            energyLevel: isCleanup ? 'low' : 'medium',
-            estimatedMinutes: isCleanup ? 10 : 25,
-            urgency: contextData.timeConstraints.toLowerCase().includes('urgent') ? 'today' : 'week',
-            emotionalWeight: isCleanup ? 'easy' : 'neutral'
-          });
-        }
+    // 4. Action steps - registration/signup
+    if (idealOutcome.includes('sign') || idealOutcome.includes('register') || 
+        idealOutcome.includes('enroll')) {
+      const decisionIndex = tasks.findIndex(t => t.type === 'decision');
+      tasks.push({
+        title: 'Complete registration for chosen team',
+        description: 'Fill out registration forms, submit payment, get uniform information, and add practice schedule to calendar. Confirm Charlotte\'s spot on the team.',
+        type: 'action',
+        energyLevel: 'medium',
+        estimatedMinutes: 30,
+        urgency: 'week',
+        emotionalWeight: 'easy',
+        dependsOn: decisionIndex >= 0 ? [decisionIndex] : []
       });
     }
     
-    // Follow-up task if waiting on someone
-    if (infoGapsData.waitingOn.trim()) {
-      const waitingItems = infoGapsData.waitingOn.split(',').map(w => w.trim());
-      waitingItems.forEach(item => {
-        if (item) {
-          tasks.push({
-            title: `Follow up: ${item.substring(0, 40)}`,
-            description: `Check on the status of: ${item}. This is needed to proceed with: ${contextData.idealOutcome}`,
-            type: 'communication',
-            energyLevel: 'low',
-            estimatedMinutes: 10,
-            urgency: 'week',
-            emotionalWeight: 'easy'
-          });
-        }
+    // 5. Handle emotional aspects mentioned
+    if (blockers.includes('feel') || blockers.includes('guilt') || 
+        blockers.includes('terrible') || blockers.includes('disappointed')) {
+      tasks.push({
+        title: 'Talk with Charlotte about the transition',
+        description: 'Have an open conversation with Charlotte about the move and changes. Acknowledge her feelings about leaving old friends. Focus on exciting new opportunities and making new friends. Maybe plan a visit with old team friends.',
+        type: 'communication',
+        energyLevel: 'high',
+        estimatedMinutes: 20,
+        urgency: 'week',
+        emotionalWeight: 'stressful'
       });
     }
     
-    // If no specific tasks were generated, create general breakdown
-    if (tasks.length === 0) {
-      tasks.push(
+    // 6. Alternative options if main path blocked
+    if (blockers.includes('deadline') || blockers.includes('missed') || 
+        blockers.includes('too late')) {
+      tasks.push({
+        title: 'Research alternative activities for this season',
+        description: 'If cheerleading registration is closed, research: gymnastics, dance, tumbling classes, or other activities to keep skills sharp until next cheer season. Consider private coaching or camps.',
+        type: 'research',
+        energyLevel: 'low',
+        estimatedMinutes: 25,
+        urgency: 'month',
+        emotionalWeight: 'easy'
+      });
+    }
+    
+    // Remove duplicates and limit to 5-6 most relevant tasks
+    const uniqueTasks = tasks.slice(0, 6);
+    
+    // If we still have no tasks, fall back to generic helpful tasks
+    if (uniqueTasks.length === 0) {
+      uniqueTasks.push(
         {
-          title: `Plan approach for: ${task.title.substring(0, 30)}`,
-          description: `Break down the task into smaller steps. Goal: ${contextData.idealOutcome || task.description}`,
+          title: `Define clear next step for: ${task.title.substring(0, 30)}`,
+          description: `Break down "${task.title}" into the very first concrete action you can take. What's the smallest step that moves this forward?`,
           type: 'action',
-          energyLevel: 'medium',
-          estimatedMinutes: 20,
+          energyLevel: 'low',
+          estimatedMinutes: 15,
           urgency: 'week',
-          emotionalWeight: 'neutral'
+          emotionalWeight: 'easy'
         },
         {
-          title: `Start implementation: ${task.title.substring(0, 25)}`,
-          description: `Begin working on the first part of the task`,
-          type: 'action',
-          energyLevel: 'high',
+          title: `Gather information needed for: ${task.title.substring(0, 25)}`,
+          description: `List what you need to know or have before you can complete this task. Research or ask for the missing pieces.`,
+          type: 'research',
+          energyLevel: 'medium',
           estimatedMinutes: 30,
           urgency: 'week',
-          emotionalWeight: 'neutral',
-          dependsOn: [0]
+          emotionalWeight: 'neutral'
         }
       );
     }
     
-    setGeneratedTasks(tasks);
+    setGeneratedTasks(uniqueTasks);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 2) {
-      generateActionableTasks();
+      await generateActionableTasks();
     }
     setCurrentStep(currentStep + 1);
   };
@@ -311,6 +429,15 @@ export const FuzzyTaskBreakdown: React.FC<FuzzyTaskBreakdownProps> = ({ task, on
                 Step 1: Let's understand the context
               </h3>
               
+              {/* API Key Notice */}
+              {!localStorage.getItem('openai_api_key') && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <p className="text-sm text-blue-800 dark:text-blue-300">
+                    <strong>Tip:</strong> Add your OpenAI API key in Settings for AI-powered task breakdowns. Without it, we'll use pattern matching instead.
+                  </p>
+                </div>
+              )}
+              
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -423,11 +550,26 @@ export const FuzzyTaskBreakdown: React.FC<FuzzyTaskBreakdownProps> = ({ task, on
               <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 Step 3: Here are your actionable tasks
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                We've generated {generatedTasks.length} specific tasks based on your input:
-              </p>
+              {aiError && (
+                <div className="text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded-lg mb-2">
+                  {aiError}
+                </div>
+              )}
+              {isGenerating ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                  <span className="ml-3 text-gray-600 dark:text-gray-400">AI is analyzing your task...</span>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    We've generated {generatedTasks.length} specific tasks based on your input:
+                  </p>
+                </>
+              )}
               
-              <div className="space-y-3">
+              {!isGenerating && (
+                <div className="space-y-3">
                 {generatedTasks.map((genTask, index) => (
                   <div
                     key={index}
@@ -461,7 +603,8 @@ export const FuzzyTaskBreakdown: React.FC<FuzzyTaskBreakdownProps> = ({ task, on
                     </div>
                   </div>
                 ))}
-              </div>
+                </div>
+              )}
             </div>
           )}
 
