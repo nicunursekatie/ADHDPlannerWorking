@@ -233,20 +233,26 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 '- Timeline: ' + (timing || 'no specific deadline') + '\n\n' +
 'IMPORTANT: Build tasks using the info they already have! If they know "there\'s a gym nearby", first task should be "Call [specific gym name if mentioned, otherwise \'the gym nearby you mentioned\']"\n\n' +
 'CRITICAL: Generate EXECUTABLE INSTRUCTIONS, not conceptual tasks!\n\n' +
-'For someone with ADHD who gets stuck between intention and action, create tasks that require ZERO additional decisions.\n\n' +
-'Examples of what I need:\n' +
-'BAD: "Research local options"\n' +
-'GOOD: "Open Google, type \'[city name] youth cheerleading teams 2024\', write down first 3 results"\n\n' +
-'BAD: "Reach out to contacts"\n' +
-'GOOD: "Text Sarah: \'Hey! Do you know any good cheer teams for kids?\' Copy/paste to Mom and Jessica too"\n\n' +
-'BAD: "Organize information"\n' +
-'GOOD: "Open Notes app, create \'Cheer Teams\' note, paste these 3 headers: Contact Info, Costs, Schedule"\n\n' +
-'Each task must:\n' +
-'- Start with a specific app/tool to open or action to take\n' +
-'- Include exact search terms, URLs, or message templates\n' +
-'- Name specific people if mentioned in context\n' +
-'- Give exact words to say/type/write\n' +
-'- Be completable without any additional thinking\n\n' +
+'FORBIDDEN TASKS - NEVER GENERATE THESE:\n' +
+'❌ "Research..." (too vague)\n' +
+'❌ "Create a list..." (what list? how?)\n' +
+'❌ "Reach out..." (to who? saying what?)\n' +
+'❌ "Schedule..." (how? where? with who?)\n' +
+'❌ "Reflect on..." (absolutely useless)\n' +
+'❌ "Plan..." (that\'s what we\'re doing NOW)\n' +
+'❌ "Organize..." (HOW?!)\n' +
+'❌ "Consider..." (no thinking, only doing)\n\n' +
+'REQUIRED - Every task MUST:\n' +
+'✓ Start with "Open [specific app/website]" or "Pick up [specific object]"\n' +
+'✓ Include EXACT words to type, say, or write (in quotes)\n' +
+'✓ Give specific names, numbers, or addresses\n' +
+'✓ Be doable in one sitting without getting up (unless it\'s specifically about going somewhere)\n\n' +
+'GOOD Examples:\n' +
+'• "Open Google Chrome, type: \'Anytown California youth cheerleading 2024\', click first 3 results, write down phone numbers"\n' +
+'• "Open phone, dial 555-0123, say: \'Hi, do you have cheerleading for 7 year olds? What\'s the cost?\'"\n' +
+'• "Text Sarah (555-0111): \'Hey! Charlotte wants to do cheer. Know any good teams?\' Wait for reply."\n' +
+'• "Open Facebook, search \'Anytown moms group\', post: \'Looking for cheer teams for my 7yo - any recommendations?\'"\n\n' +
+'NEVER create meta-tasks about planning, reflecting, considering, or organizing. Only concrete actions!\n\n' +
 'Return ONLY a JSON array:\n' +
 '[\n' +
 '  {\n' +
@@ -264,7 +270,7 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
           method: 'POST',
           headers: provider.headers(apiKey),
           body: JSON.stringify(provider.formatRequest([
-            { role: 'system', content: 'You create EXECUTABLE INSTRUCTIONS for people with ADHD. Never give conceptual tasks. Always provide exact steps, exact words to type/say, specific apps to open, and precise actions that require NO additional thinking or decision-making. If they need to contact someone, give them the exact message to copy/paste. If they need to search, give them the exact search terms. Make every task immediately doable without any planning.' },
+            { role: 'system', content: 'You create ONLY executable instructions. NEVER use words like: research, organize, create, schedule, reflect, plan, consider, reach out. ALWAYS start with: "Open [app]", "Call [number]", "Text [person]", "Go to [website]". Include EXACT words in quotes. Never create thinking tasks, only doing tasks. If you create a "reflect" or "organize" task, you have failed.' },
             { role: 'user', content: prompt }
           ], selectedModel))
         });
@@ -360,37 +366,6 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
       }
     }
     
-    // REMOVED the old firstStep logic since we don't ask that anymore
-    if (false && firstStep && firstStep.trim()) {
-      // Make it executable based on keywords
-      let executableStep: GeneratedTask = {
-        title: 'Do this first: ' + (firstStep.length > 40 ? firstStep.substring(0, 40) + '...' : firstStep),
-        description: '',
-        type: 'action',
-        energyLevel: 'low',
-        estimatedMinutes: 15,
-        urgency: 'today',
-        emotionalWeight: 'neutral'
-      };
-      
-      if (firstStep.toLowerCase().includes('call') || firstStep.toLowerCase().includes('phone')) {
-        executableStep.title = 'Open phone app and dial now';
-        executableStep.description = 'Script: "Hi, I\'m calling about ' + task.title + '. Can you help me with..."';
-        executableStep.type = 'communication';
-      } else if (firstStep.toLowerCase().includes('email') || firstStep.toLowerCase().includes('message')) {
-        executableStep.title = 'Open email, paste this message';
-        executableStep.description = 'Subject: "Question about ' + task.title + '"\nBody: "Hi, I need help with ' + firstStep + '. Could you..."';
-        executableStep.type = 'communication';
-      } else if (firstStep.toLowerCase().includes('find') || firstStep.toLowerCase().includes('search')) {
-        executableStep.title = 'Open Google right now';
-        executableStep.description = 'Search for: "' + firstStep.replace(/find|search|look for/gi, '').trim() + ' near me 2024"';
-        executableStep.type = 'research';
-      } else {
-        executableStep.description = 'Open your task app/notes and write: "Started ' + firstStep + '" - just starting counts!';
-      }
-      
-      tasks.push(executableStep);
-    }
     
     // Break down blockers into executable actions
     if (blockers && blockers.trim()) {
