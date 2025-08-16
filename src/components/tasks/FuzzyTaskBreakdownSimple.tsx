@@ -155,79 +155,177 @@ Return ONLY a JSON array:
       }
     }
     
-    // Fallback: Generate tasks based on patterns
+    // Fallback: Generate smart tasks based on actual context
     const tasks: GeneratedTask[] = [];
     
-    // Based on first step
-    if (firstStep.toLowerCase().includes('call') || firstStep.toLowerCase().includes('email') || 
-        firstStep.toLowerCase().includes('contact') || firstStep.toLowerCase().includes('ask')) {
+    // Analyze what the user actually needs
+    const needsResearch = blockers.toLowerCase().includes('don\'t know') || 
+                         blockers.toLowerCase().includes('find') ||
+                         blockers.toLowerCase().includes('not sure') ||
+                         blockers.toLowerCase().includes('options');
+    
+    const needsRefund = outcome.toLowerCase().includes('refund') || 
+                       outcome.toLowerCase().includes('money back') ||
+                       blockers.toLowerCase().includes('money');
+    
+    const hasEmotionalBlock = blockers.toLowerCase().includes('feel') ||
+                             blockers.toLowerCase().includes('guilt') ||
+                             blockers.toLowerCase().includes('terrible') ||
+                             blockers.toLowerCase().includes('shame') ||
+                             blockers.toLowerCase().includes('letting') ||
+                             blockers.toLowerCase().includes('down');
+    
+    const needsToContact = firstStep.toLowerCase().includes('call') ||
+                          firstStep.toLowerCase().includes('email') ||
+                          firstStep.toLowerCase().includes('contact') ||
+                          firstStep.toLowerCase().includes('ask') ||
+                          firstStep.toLowerCase().includes('talk');
+    
+    // Generate ACTUAL helpful tasks based on the context
+    
+    // 1. If they need to research options (like finding local cheer teams)
+    if (needsResearch) {
       tasks.push({
-        title: `Contact: ${firstStep.substring(0, 50)}`,
-        description: `Reach out as described: ${firstStep}. This addresses: ${blockers}`,
+        title: 'Google search: 3 local options',
+        description: 'Quick 15-minute search. Just find 3 options with phone numbers. Don\'t overthink - any 3 will do.',
+        type: 'research',
+        energyLevel: 'low',
+        estimatedMinutes: 15,
+        urgency: 'week',
+        emotionalWeight: 'easy'
+      });
+      
+      tasks.push({
+        title: 'Call the first place on your list',
+        description: 'Just one call. Ask: "Are you accepting new members? What\'s the process?" That\'s it.',
         type: 'communication',
         energyLevel: 'medium',
-        estimatedMinutes: 15,
-        urgency: timing?.toLowerCase().includes('today') ? 'today' : 'week',
+        estimatedMinutes: 10,
+        urgency: 'week',
         emotionalWeight: 'neutral'
       });
     }
     
-    // Based on blockers
-    if (blockers.toLowerCase().includes('don\'t know') || blockers.toLowerCase().includes('not sure') ||
-        blockers.toLowerCase().includes('find') || blockers.toLowerCase().includes('research')) {
+    // 2. If they need a refund
+    if (needsRefund) {
       tasks.push({
-        title: `Research: ${blockers.substring(0, 45)}`,
-        description: `Find information to address: ${blockers}. Goal: ${outcome}`,
-        type: 'research',
-        energyLevel: 'medium',
-        estimatedMinutes: 30,
+        title: 'Email for refund (use template)',
+        description: 'Template: "Hi, we moved counties and can\'t attend. Please process a refund for [child name]. Thank you." Send and done.',
+        type: 'communication',
+        energyLevel: 'low',
+        estimatedMinutes: 5,
         urgency: 'week',
         emotionalWeight: 'easy'
       });
     }
     
-    // Based on people
+    // 3. If there's emotional blocking
+    if (hasEmotionalBlock) {
+      tasks.push({
+        title: 'Text a friend: "Parenting is hard today"',
+        description: 'You don\'t have to explain. Just reach out to someone who gets it. Or skip this - you\'re doing your best.',
+        type: 'communication',
+        energyLevel: 'low',
+        estimatedMinutes: 2,
+        urgency: 'someday',
+        emotionalWeight: 'easy'
+      });
+    }
+    
+    // 4. If someone else is affected (like Charlotte)
     if (people && people.toLowerCase() !== 'no' && people.toLowerCase() !== 'none') {
-      const peopleList = people.split(/[,&]/).map(p => p.trim());
-      peopleList.forEach(person => {
-        if (person && !tasks.some(t => t.title.includes(person))) {
+      // Extract the actual person's name intelligently
+      const personName = people.includes('(') ? people.split('(')[0].trim() : people.split(',')[0].trim();
+      tasks.push({
+        title: `Quick chat with ${personName}`,
+        description: `"Hey, we\'re working on finding a new team. Want to help me look?" Make it collaborative, not guilty.',
+        type: 'communication',
+        energyLevel: 'low',
+        estimatedMinutes: 5,
+        urgency: 'week',
+        emotionalWeight: 'easy'
+      });
+    }
+    
+    // 5. Based on what they said needs to happen first
+    if (firstStep && firstStep.length > 3) {
+      // Parse their first step more intelligently
+      if (firstStep.toLowerCase().includes('refund')) {
+        if (!tasks.some(t => t.title.includes('refund'))) {
           tasks.push({
-            title: `Coordinate with ${person.substring(0, 40)}`,
-            description: `Discuss the plan with ${person} about: ${outcome}`,
+            title: 'Get the refund process started',
+            description: 'One email or call. Don\'t wait for perfect wording. "We moved, need refund" is enough.',
             type: 'communication',
             energyLevel: 'low',
             estimatedMinutes: 10,
             urgency: 'week',
-            emotionalWeight: 'neutral'
+            emotionalWeight: 'easy'
           });
         }
-      });
+      } else if (firstStep.toLowerCase().includes('find') || firstStep.toLowerCase().includes('look')) {
+        if (!tasks.some(t => t.type === 'research')) {
+          tasks.push({
+            title: 'Quick search - set 10 min timer',
+            description: 'Set a timer for 10 minutes. Find ANY option. Perfection is the enemy here.',
+            type: 'research',
+            energyLevel: 'low',
+            estimatedMinutes: 10,
+            urgency: 'week',
+            emotionalWeight: 'easy'
+          });
+        }
+      }
     }
     
-    // Based on outcome
-    if (outcome.toLowerCase().includes('refund') || outcome.toLowerCase().includes('cancel')) {
-      tasks.push({
-        title: 'Handle refund/cancellation',
-        description: `Process the refund or cancellation to achieve: ${outcome}`,
-        type: 'cleanup',
+    // 6. If timeline is urgent, add a "do it now" task
+    if (timing?.toLowerCase().includes('today') || timing?.toLowerCase().includes('urgent') || 
+        timing?.toLowerCase().includes('asap')) {
+      tasks.unshift({
+        title: 'Do ONE thing right now',
+        description: 'Pick the easiest task below and do it immediately. 5 minutes. Progress beats perfection.',
+        type: 'action',
         energyLevel: 'low',
-        estimatedMinutes: 20,
-        urgency: 'week',
+        estimatedMinutes: 5,
+        urgency: 'today',
         emotionalWeight: 'easy'
       });
     }
     
-    // Always add a concrete first action if we don't have enough
-    if (tasks.length === 0) {
-      tasks.push({
-        title: `First step: ${firstStep.substring(0, 45)}`,
-        description: `Start with: ${firstStep}. This moves you toward: ${outcome}`,
-        type: 'action',
-        energyLevel: 'medium',
-        estimatedMinutes: 20,
-        urgency: timing?.toLowerCase().includes('urgent') ? 'today' : 'week',
-        emotionalWeight: 'neutral'
-      });
+    // Make sure we don't have duplicate types of tasks
+    const uniqueTasks = tasks.reduce((acc, task) => {
+      // Don't add multiple research tasks or multiple similar communication tasks
+      const hasSimilar = acc.some(t => 
+        (t.type === task.type && t.title.toLowerCase().includes(task.title.toLowerCase().substring(0, 10))) ||
+        (t.title === task.title)
+      );
+      if (!hasSimilar) {
+        acc.push(task);
+      }
+      return acc;
+    }, [] as GeneratedTask[]);
+    
+    // If we still have no tasks, create simple concrete ones
+    if (uniqueTasks.length === 0) {
+      uniqueTasks.push(
+        {
+          title: 'Write down what you need',
+          description: 'Take 2 minutes. Write the outcome you want in one sentence. That\'s your north star.',
+          type: 'action',
+          energyLevel: 'low',
+          estimatedMinutes: 2,
+          urgency: 'today',
+          emotionalWeight: 'easy'
+        },
+        {
+          title: 'Find one person who might know',
+          description: 'Think of anyone who might have done this before. Send them a quick "Hey, quick question?" text.',
+          type: 'communication',
+          energyLevel: 'low',
+          estimatedMinutes: 5,
+          urgency: 'week',
+          emotionalWeight: 'easy'
+        }
+      );
     }
     
     setGeneratedTasks(tasks.slice(0, 5));
