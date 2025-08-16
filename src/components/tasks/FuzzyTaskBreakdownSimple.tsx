@@ -142,10 +142,13 @@ Return ONLY a JSON array:
             
             // Show success message
             setTimeout(() => {
-              setMessages(prev => [...prev, { 
-                type: 'bot', 
-                text: `I've created ${tasks.length} tasks to get you started. Ready to replace the fuzzy task?` 
-              }]);
+              setMessages(prev => [
+                ...prev,
+                {
+                  type: 'bot',
+                  text: `I've created ${tasks.length} tasks to get you started. Ready to replace the fuzzy task?`
+                }
+              ]);
             }, 1000);
             return;
           }
