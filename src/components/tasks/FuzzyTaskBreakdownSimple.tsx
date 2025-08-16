@@ -115,10 +115,42 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
   onClose, 
   onComplete 
 }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    { type: 'bot', text: "Let's break down \"" + task.title + "\" into manageable steps." },
-    { type: 'bot', text: BASE_QUESTIONS[0] }
-  ]);
+  // Check for relevant past context
+  const checkForPastContext = () => {
+    const contexts = JSON.parse(localStorage.getItem('task_breakdown_contexts') || '[]');
+    const taskWords = task.title.toLowerCase().split(' ');
+    
+    // Find similar past breakdowns
+    const relevant = contexts.filter((ctx: any) => {
+      const ctxWords = ctx.taskTitle.toLowerCase().split(' ');
+      const commonWords = taskWords.filter(word => 
+        word.length > 4 && ctxWords.includes(word)
+      );
+      return commonWords.length > 0;
+    });
+    
+    if (relevant.length > 0) {
+      const recent = relevant[relevant.length - 1];
+      return `I found context from a similar task ("${recent.taskTitle}"):\n` +
+             `• People involved: ${recent.people || 'None'}\n` +
+             `• Known info: ${recent.knownInfo || 'None'}\n` +
+             `This might be helpful!`;
+    }
+    return null;
+  };
+  
+  const pastContext = checkForPastContext();
+  const initialMessages: Message[] = [
+    { type: 'bot', text: "Let's break down \"" + task.title + "\" into manageable steps." }
+  ];
+  
+  if (pastContext) {
+    initialMessages.push({ type: 'bot', text: pastContext });
+  }
+  
+  initialMessages.push({ type: 'bot', text: BASE_QUESTIONS[0] });
+  
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [currentInput, setCurrentInput] = useState('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
@@ -604,8 +636,112 @@ JSON.stringify(generatedTasks, null, 2) + '\n\n' +
   };
 
   const handleComplete = async () => {
+    // Compile all the context information from the conversation
+    const contextSummary = `
+=== Context from Task Breakdown ===
+Original task: ${task.title}
+
+Desired outcome: ${answers[0] || 'Not specified'}
+What's blocking: ${answers[1] || 'Not specified'}
+What they know: ${answers[2] || 'Not specified'}
+People involved: ${answers[3] || 'None'}
+Consequences: ${answers[4] || 'Not specified'}
+
+Generated on: ${new Date().toLocaleDateString()}
+===================================
+`;
+    
+    // Create a detailed log entry for reflection
+    const logEntry = {
+      date: new Date().toISOString(),
+      readableDate: new Date().toLocaleString(),
+      originalTask: task.title,
+      conversation: {
+        outcome: answers[0] || 'Not specified',
+        blockers: answers[1] || 'Not specified', 
+        knownInfo: answers[2] || 'Not specified',
+        people: answers[3] || 'None',
+        consequences: answers[4] || 'Not specified'
+      },
+      generatedTasks: generatedTasks.map(t => ({
+        title: t.title,
+        description: t.description,
+        minutes: t.estimatedMinutes,
+        energy: t.energyLevel
+      })),
+      reflectionPrompts: [
+        `Pattern: Am I often blocked by "${answers[1]}"?`,
+        `Resource: Could ${answers[3]} help with other tasks too?`,
+        `Learning: What did I discover about ${task.title}?`
+      ]
+    };
+    
+    // Save to the breakdown log
+    const existingLog = JSON.parse(localStorage.getItem('task_breakdown_log') || '[]');
+    existingLog.unshift(logEntry); // Add to beginning so newest is first
+    
+    // Keep last 100 entries for the log
+    if (existingLog.length > 100) {
+      existingLog.pop();
+    }
+    localStorage.setItem('task_breakdown_log', JSON.stringify(existingLog));
+    
+    // Create a markdown version for easy copying
+    const markdownLog = `
+## Task Breakdown Log - ${new Date().toLocaleDateString()}
+
+### Original Task: "${task.title}"
+
+**What I wanted:** ${answers[0] || 'Not specified'}
+
+**What was blocking me:** ${answers[1] || 'Not specified'}
+
+**What I already knew:** ${answers[2] || 'Not specified'}
+
+**People who could help:** ${answers[3] || 'None'}
+
+**Consequences of delay:** ${answers[4] || 'Not specified'}
+
+### Tasks Generated:
+${generatedTasks.map((t, i) => `${i + 1}. **${t.title}** (${t.estimatedMinutes}min, ${t.energyLevel} energy)
+   - ${t.description}`).join('\n')}
+
+### Reflection Questions:
+- Am I seeing patterns in what blocks me?
+- Who else could I reach out to for help?
+- What did I learn that applies to other tasks?
+
+---
+`;
+    
+    // Save markdown version separately for easy export
+    const markdownLogs = localStorage.getItem('task_breakdown_markdown_log') || '';
+    localStorage.setItem('task_breakdown_markdown_log', markdownLog + markdownLogs);
+    
+    // Save context to localStorage for future reference
+    const contextKey = `task_context_${task.id || Date.now()}`;
+    localStorage.setItem(contextKey, contextSummary);
+    
+    // Also save a general context history (keep existing code)
+    const existingContexts = JSON.parse(localStorage.getItem('task_breakdown_contexts') || '[]');
+    existingContexts.push({
+      taskTitle: task.title,
+      date: new Date().toISOString(),
+      outcome: answers[0],
+      blockers: answers[1],
+      knownInfo: answers[2],
+      people: answers[3],
+      consequences: answers[4],
+      contextKey: contextKey
+    });
+    // Keep only last 50 contexts
+    if (existingContexts.length > 50) {
+      existingContexts.shift();
+    }
+    localStorage.setItem('task_breakdown_contexts', JSON.stringify(existingContexts));
+    
     // Create task objects from generated tasks
-    const newTasks: Partial<Task>[] = generatedTasks.map(genTask => ({
+    const newTasks: Partial<Task>[] = generatedTasks.map((genTask, index) => ({
       title: genTask.title,
       description: genTask.description,
       energyLevel: genTask.energyLevel,
@@ -614,7 +750,7 @@ JSON.stringify(generatedTasks, null, 2) + '\n\n' +
       emotionalWeight: genTask.emotionalWeight,
       projectId: task.projectId,
       priority: genTask.urgency === 'today' ? 'high' : 'medium',
-      notes: "Broken down from: " + task.title  // Use notes field instead
+      notes: index === 0 ? contextSummary : "Part of: " + task.title  // Add full context to first task
     }));
     
     onComplete(newTasks);
@@ -704,6 +840,28 @@ JSON.stringify(generatedTasks, null, 2) + '\n\n' +
                 Accept & use these
               </button>
             </div>
+            <button
+              onClick={() => {
+                const log = localStorage.getItem('task_breakdown_markdown_log');
+                if (log) {
+                  // Copy to clipboard
+                  navigator.clipboard.writeText(log);
+                  // Show success message in chat
+                  setMessages(prev => [...prev, { 
+                    type: 'bot', 
+                    text: '📋 Log copied! Paste it into your notes app to review patterns and insights.'
+                  }]);
+                } else {
+                  setMessages(prev => [...prev, { 
+                    type: 'bot', 
+                    text: 'No logs yet. Complete some breakdowns to build your log!'
+                  }]);
+                }
+              }}
+              className="mt-2 text-xs text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline"
+            >
+              View my breakdown history & patterns
+            </button>
           </div>
         )}
 
