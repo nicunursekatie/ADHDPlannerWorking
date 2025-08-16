@@ -65,28 +65,28 @@ const HeaderWithAuth: React.FC = () => {
           </div>
           
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-2">
+          <nav className="hidden lg:flex items-center space-x-1">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`inline-flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all duration-300 hover:scale-105 border shadow-sm ${
+                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                   isActive(item.path)
-                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg border-purple-400 hover:shadow-xl'
-                    : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 dark:hover:from-purple-900/20 dark:hover:to-blue-900/20 bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
+                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-md'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20'
                 }`}
               >
-                <span className="text-lg">{item.icon}</span>
-                <span className="ml-2 tracking-wide">{item.label}</span>
+                <span className="text-base">{item.icon}</span>
+                <span className="ml-1.5">{item.label}</span>
               </Link>
             ))}
           </nav>
           
           {/* Right side buttons */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2">
             {/* User email display */}
             {user && (
-              <span className="hidden md:inline text-sm text-gray-600 dark:text-gray-400">
+              <span className="hidden xl:inline text-sm text-gray-600 dark:text-gray-400 truncate max-w-[200px]">
                 {user.email}
               </span>
             )}
@@ -94,17 +94,17 @@ const HeaderWithAuth: React.FC = () => {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 hover:scale-105 shadow-sm dark:shadow-none border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50"
+              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
               aria-label="Toggle theme"
             >
-              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
             
             
             {/* Sign Out Button */}
             <button
               onClick={handleSignOut}
-              className="hidden md:inline-flex items-center px-3 py-2 text-sm font-medium rounded-xl text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 hover:scale-105"
+              className="hidden lg:inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors whitespace-nowrap"
               aria-label="Sign out"
             >
               <LogOut size={16} className="mr-1.5" />
@@ -113,16 +113,16 @@ const HeaderWithAuth: React.FC = () => {
           </div>
           
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <button
               onClick={toggleMobileMenu}
-              className="inline-flex items-center justify-center p-2 rounded-xl text-gray-400 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-all duration-200 hover:scale-105"
+              className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500 transition-colors"
             >
               <span className="sr-only">Open main menu</span>
               {isMobileMenuOpen ? (
-                <X className="block h-6 w-6" />
+                <X className="block h-5 w-5" />
               ) : (
-                <Menu className="block h-6 w-6" />
+                <Menu className="block h-5 w-5" />
               )}
             </button>
           </div>
@@ -133,7 +133,7 @@ const HeaderWithAuth: React.FC = () => {
       <div 
         className={`${
           isMobileMenuOpen ? 'block' : 'hidden'
-        } md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 transition-all duration-200`}
+        } lg:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 transition-all duration-200`}
       >
         <div className="pt-2 pb-3 space-y-1">
           {/* User email in mobile */}
