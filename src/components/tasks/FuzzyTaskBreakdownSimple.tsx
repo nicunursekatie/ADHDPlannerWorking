@@ -89,9 +89,11 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
     
     // Check for API key
     const apiKey = localStorage.getItem('openai_api_key');
+    console.log('API Key found:', apiKey ? 'Yes' : 'No');
     
     if (apiKey) {
       // Use AI to generate tasks
+      console.log('Attempting AI generation with OpenAI...');
       try {
         const prompt = 
 'Task: "' + task.title + '"\n\n' +
@@ -127,10 +129,13 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 
         if (response.ok) {
           const data = await response.json();
+          console.log('AI Response received:', data);
           const content = provider.parseResponse(data);
+          console.log('Parsed content:', content);
           const jsonMatch = content.match(/\[.*\]/s);
           if (jsonMatch) {
             const tasks = JSON.parse(jsonMatch[0]) as GeneratedTask[];
+            console.log('Generated tasks from AI:', tasks);
             setGeneratedTasks(tasks.slice(0, 5));
             setShowTasks(true);
             setIsGenerating(false);
@@ -146,10 +151,16 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
               ]);
             }, 1000);
             return;
+          } else {
+            console.error('No JSON array found in AI response:', content);
           }
+        } else {
+          console.error('AI API call failed:', response.status, response.statusText);
+          const errorText = await response.text();
+          console.error('Error details:', errorText);
         }
       } catch (error) {
-        console.error('AI generation failed:', error);
+        console.error('AI generation failed with exception:', error);
       }
     }
     
