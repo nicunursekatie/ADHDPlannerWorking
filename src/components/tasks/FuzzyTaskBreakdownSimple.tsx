@@ -28,7 +28,7 @@ interface GeneratedTask {
 const BASE_QUESTIONS = [
   "What's the ideal outcome here? (keep it short)",
   "What's blocking that from happening?",
-  "What needs to happen first?",
+  "What info do you already have? (even tiny bits help)",
   "Anyone else involved?",
   "When does this need to be done?"
 ];
@@ -73,6 +73,24 @@ const getSmartQuestion = (questionIndex: number, task: Task, previousAnswers: st
     if (outcome && outcome.toLowerCase().includes('find')) {
       return "What's making this hard? (e.g., 'don't know where to look', 'too many options', 'no time to research')";
     }
+  }
+  
+  // Smart question for "What info do you already have?"
+  if (questionIndex === 2) {
+    const [outcome, blockers] = previousAnswers;
+    const taskLower = task.title.toLowerCase();
+    
+    if (taskLower.includes('find') || taskLower.includes('search')) {
+      return "What do you already know? (location, budget, age requirements, someone who did this - anything!)";
+    }
+    if (blockers && blockers.toLowerCase().includes('don\'t know')) {
+      return "What tiny piece DO you know? (a name, a website, a vague memory - literally anything)";
+    }
+    if (taskLower.includes('organize') || taskLower.includes('clean')) {
+      return "What have you already tried or thought about? (even failed attempts count!)";
+    }
+    // Default but more encouraging
+    return "What info do you have, even if it seems useless? (contacts, old emails, random facts)";
   }
   
   return baseQuestion;
@@ -122,8 +140,12 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
           suggestion = "Think about: Who's done this before? Who always has good advice? Who might be affected? Even just one name helps - I'll write the message for you.";
         }
       }
-    } else if (questionIndex === 2) { // "What needs to happen first?"
-      suggestion = "Think super small: What's the tiniest step? Could be 'open laptop', 'find phone number', or 'text Sarah'. The smaller, the better!";
+    } else if (questionIndex === 2) { // "What info do you already have?"
+      if (userQuestion.toLowerCase().includes('nothing') || userQuestion.toLowerCase().includes('don\'t know')) {
+        suggestion = "You know more than you think! Maybe: The city you're in? Your kid's age? That another parent mentioned something? A school that has teams? Even 'my kid likes to jump around' counts!";
+      } else {
+        suggestion = "Even tiny things help: A friend's kid does it? You saw a sign somewhere? There's a gym nearby? Your budget limit? Any random detail gives me something to work with!";
+      }
     } else if (questionIndex === 1) { // "What's blocking?"
       suggestion = "Common blocks: Don't know where to start, too many options, waiting on someone, need information, feeling overwhelmed, or just boring. What's yours?";
     }
@@ -186,7 +208,7 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
   const generateTasks = async (allAnswers: string[]) => {
     setIsGenerating(true);
     
-    const [outcome, blockers, firstStep, people, timing] = allAnswers;
+    const [outcome, blockers, existingInfo, people, timing] = allAnswers;
     
     // Check for API key - use the CORRECT localStorage keys!
     const apiKey = localStorage.getItem('ai_api_key');
@@ -206,9 +228,10 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 'Context from conversation:\n' +
 '- Desired outcome: ' + outcome + '\n' +
 '- What\'s blocking: ' + blockers + '\n' +
-'- First step needed: ' + firstStep + '\n' +
+'- What they already know: ' + (existingInfo || 'nothing specific mentioned') + '\n' +
 '- People involved: ' + (people || 'none mentioned') + '\n' +
 '- Timeline: ' + (timing || 'no specific deadline') + '\n\n' +
+'IMPORTANT: Build tasks using the info they already have! If they know "there\'s a gym nearby", first task should be "Call [specific gym name if mentioned, otherwise \'the gym nearby you mentioned\']"\n\n' +
 'CRITICAL: Generate EXECUTABLE INSTRUCTIONS, not conceptual tasks!\n\n' +
 'For someone with ADHD who gets stuck between intention and action, create tasks that require ZERO additional decisions.\n\n' +
 'Examples of what I need:\n' +
@@ -288,8 +311,57 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
     const tasks: GeneratedTask[] = [];
     
     // Parse the actual user inputs to create EXECUTABLE tasks
-    // Start with what they said needs to happen first
-    if (firstStep && firstStep.trim()) {
+    // Use what they already know to create the first task
+    if (existingInfo && existingInfo.trim() && !existingInfo.toLowerCase().includes('nothing')) {
+      // Build on what they know
+      const info = existingInfo.toLowerCase();
+      
+      if (info.includes('gym') || info.includes('center') || info.includes('place')) {
+        tasks.push({
+          title: 'Call that place you mentioned',
+          description: 'Phone script: "Hi, do you have cheerleading programs for [age] year olds? What\'s the schedule and cost?"',
+          type: 'communication',
+          energyLevel: 'medium',
+          estimatedMinutes: 5,
+          urgency: 'today',
+          emotionalWeight: 'neutral'
+        });
+      } else if (info.includes('friend') || info.includes('know someone')) {
+        tasks.push({
+          title: 'Text that person right now',
+          description: 'Copy/paste: "Hey! Quick question - do you know any good cheerleading teams for kids? My daughter wants to start."',
+          type: 'communication',
+          energyLevel: 'low',
+          estimatedMinutes: 2,
+          urgency: 'today',
+          emotionalWeight: 'easy'
+        });
+      } else if (info.includes('age') || info.includes('year')) {
+        tasks.push({
+          title: 'Google: "[your city] cheerleading age [X]"',
+          description: 'Replace [your city] with your actual city and [X] with the age mentioned. Click first 3 results, screenshot each.',
+          type: 'research',
+          energyLevel: 'low',
+          estimatedMinutes: 10,
+          urgency: 'today',
+          emotionalWeight: 'easy'
+        });
+      } else {
+        // Generic but using their info
+        tasks.push({
+          title: 'Write down what you know',
+          description: 'Open Notes app, type: "' + existingInfo + '" - then add 3 questions you want answered about it.',
+          type: 'action',
+          energyLevel: 'low',
+          estimatedMinutes: 5,
+          urgency: 'today',
+          emotionalWeight: 'easy'
+        });
+      }
+    }
+    
+    // REMOVED the old firstStep logic since we don't ask that anymore
+    if (false && firstStep && firstStep.trim()) {
       // Make it executable based on keywords
       let executableStep: GeneratedTask = {
         title: 'Do this first: ' + (firstStep.length > 40 ? firstStep.substring(0, 40) + '...' : firstStep),
