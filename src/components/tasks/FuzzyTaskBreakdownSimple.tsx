@@ -30,7 +30,7 @@ const BASE_QUESTIONS = [
   "What's blocking that from happening?",
   "What info do you already have? (even tiny bits help)",
   "Anyone else involved?",
-  "When does this need to be done?"
+  "What happens if this doesn't get done soon?"
 ];
 
 // Generate contextual questions based on the task and previous answers
@@ -59,12 +59,26 @@ const getSmartQuestion = (questionIndex: number, task: Task, previousAnswers: st
     return "Anyone who could help, needs to know, or might have done this before? (or just 'no')";
   }
   
-  // Smart question for timeline based on urgency indicators
+  // Smart question for consequences/urgency
   if (questionIndex === 4) {
-    const [outcome, blockers] = previousAnswers;
-    if (blockers && (blockers.toLowerCase().includes('deadline') || blockers.toLowerCase().includes('due'))) {
-      return "What's the actual deadline? (be specific: 'Friday 3pm', 'end of month', etc.)";
+    const [outcome, blockers, info, people] = previousAnswers;
+    const taskLower = task.title.toLowerCase();
+    
+    // Tailor the consequence question to the task type
+    if (taskLower.includes('kid') || taskLower.includes('child') || taskLower.includes('daughter') || taskLower.includes('son')) {
+      return "What happens if this waits? (e.g., 'she'll miss the season', 'she's asking daily', 'nothing urgent')";
     }
+    if (blockers && blockers.toLowerCase().includes('deadline')) {
+      return "Is there a real deadline, or just consequences? (e.g., 'due Friday' vs 'gets worse each day')";
+    }
+    if (taskLower.includes('pay') || taskLower.includes('bill') || taskLower.includes('payment')) {
+      return "What's the consequence? (late fee, service cut off, credit hit, or just guilt?)";
+    }
+    if (taskLower.includes('clean') || taskLower.includes('organize')) {
+      return "What's the real problem if it waits? (guests coming, can't find things, or just bothering you?)";
+    }
+    // Default - focus on consequences not deadlines
+    return "What happens if this doesn't get done soon? (real consequences or just stress?)";
   }
   
   // Smart follow-ups for blockers
@@ -230,7 +244,8 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 '- What\'s blocking: ' + blockers + '\n' +
 '- What they already know: ' + (existingInfo || 'nothing specific mentioned') + '\n' +
 '- People involved: ' + (people || 'none mentioned') + '\n' +
-'- Timeline: ' + (timing || 'no specific deadline') + '\n\n' +
+'- Consequences if delayed: ' + (timing || 'no specific consequences mentioned') + '\n\n' +
+'Use the CONSEQUENCES to set urgency - if "kid asking daily" = today, if "miss the season" = this week, if "just bothering me" = someday\n\n' +
 'IMPORTANT: Build tasks using the info they already have! If they know "there\'s a gym nearby", first task should be "Call [specific gym name if mentioned, otherwise \'the gym nearby you mentioned\']"\n\n' +
 'CRITICAL: Generate EXECUTABLE INSTRUCTIONS, not conceptual tasks!\n\n' +
 'FORBIDDEN TASKS - NEVER GENERATE THESE:\n' +
@@ -314,7 +329,7 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
     
     // Fallback: Generate smart tasks based on actual context
     console.log('Using fallback task generation');
-    const tasks: GeneratedTask[] = [];
+    let tasks: GeneratedTask[] = [];
     
     // Parse the actual user inputs to create EXECUTABLE tasks
     // Use what they already know to create the first task
@@ -426,17 +441,49 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
       });
     }
     
-    // Add urgency-based task if needed
-    if (timing && (timing.toLowerCase().includes('today') || timing.toLowerCase().includes('now') || timing.toLowerCase().includes('asap'))) {
-      tasks.unshift({
-        title: 'Start with 5 minutes NOW',
-        description: 'Pick the easiest thing and do it right now. Momentum matters more than perfection.',
-        type: 'action',
-        energyLevel: 'low',
-        estimatedMinutes: 5,
-        urgency: 'today',
-        emotionalWeight: 'easy'
-      });
+    // Add urgency based on consequences
+    if (timing && timing.trim()) {
+      const consequence = timing.toLowerCase();
+      let urgencyLevel: 'today' | 'tomorrow' | 'week' | 'month' | 'someday' = 'week';
+      
+      // Parse consequences to determine urgency
+      if (consequence.includes('daily') || consequence.includes('asking') || consequence.includes('crying') || consequence.includes('upset')) {
+        urgencyLevel = 'today';
+        tasks.unshift({
+          title: 'Start NOW - kid is waiting',
+          description: 'Open Google right now and search. Your kid needs this. 5 minutes to show you care.',
+          type: 'action',
+          energyLevel: 'low',
+          estimatedMinutes: 5,
+          urgency: 'today',
+          emotionalWeight: 'easy'
+        });
+      } else if (consequence.includes('miss') || consequence.includes('deadline') || consequence.includes('late fee')) {
+        urgencyLevel = 'tomorrow';
+        tasks.unshift({
+          title: 'Do this TODAY to avoid consequences',
+          description: 'Set a timer for 15 minutes. Do the first task below. Avoiding the consequence is worth 15 minutes.',
+          type: 'action',
+          energyLevel: 'medium',
+          estimatedMinutes: 15,
+          urgency: 'today',
+          emotionalWeight: 'neutral'
+        });
+      } else if (consequence.includes('stress') || consequence.includes('bothering') || consequence.includes('guilt')) {
+        // Mental load consequences - still important!
+        tasks.push({
+          title: 'Clear this from your mental load',
+          description: 'This is taking up brain space. Do one small step to get it moving.',
+          type: 'action',
+          energyLevel: 'low',
+          estimatedMinutes: 10,
+          urgency: 'week',
+          emotionalWeight: 'easy'
+        });
+      }
+      
+      // Adjust all task urgencies based on consequences
+      tasks = tasks.map(t => ({ ...t, urgency: urgencyLevel }));
     }
     
     // If we have no tasks yet, create generic helpful ones based on the original task
