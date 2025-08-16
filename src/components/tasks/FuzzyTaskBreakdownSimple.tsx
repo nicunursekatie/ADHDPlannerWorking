@@ -108,12 +108,26 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 '- First step needed: ' + firstStep + '\n' +
 '- People involved: ' + (people || 'none mentioned') + '\n' +
 '- Timeline: ' + (timing || 'no specific deadline') + '\n\n' +
-'Generate 3-5 specific, actionable tasks that directly address these points. Focus on the immediate next actions.\n\n' +
+'CRITICAL: Generate EXECUTABLE INSTRUCTIONS, not conceptual tasks!\n\n' +
+'For someone with ADHD who gets stuck between intention and action, create tasks that require ZERO additional decisions.\n\n' +
+'Examples of what I need:\n' +
+'BAD: "Research local options"\n' +
+'GOOD: "Open Google, type \'[city name] youth cheerleading teams 2024\', write down first 3 results"\n\n' +
+'BAD: "Reach out to contacts"\n' +
+'GOOD: "Text Sarah: \'Hey! Do you know any good cheer teams for kids?\' Copy/paste to Mom and Jessica too"\n\n' +
+'BAD: "Organize information"\n' +
+'GOOD: "Open Notes app, create \'Cheer Teams\' note, paste these 3 headers: Contact Info, Costs, Schedule"\n\n' +
+'Each task must:\n' +
+'- Start with a specific app/tool to open or action to take\n' +
+'- Include exact search terms, URLs, or message templates\n' +
+'- Name specific people if mentioned in context\n' +
+'- Give exact words to say/type/write\n' +
+'- Be completable without any additional thinking\n\n' +
 'Return ONLY a JSON array:\n' +
 '[\n' +
 '  {\n' +
-'    "title": "Specific action (max 60 chars)",\n' +
-'    "description": "What to do and why (1-2 sentences)",\n' +
+'    "title": "Exact executable action (max 60 chars)",\n' +
+'    "description": "Step-by-step: Open X, click Y, type \'exact words\', etc.",\n' +
 '    "type": "communication|research|decision|cleanup|action",\n' +
 '    "energyLevel": "low|medium|high",\n' +
 '    "estimatedMinutes": 15,\n' +
@@ -126,7 +140,7 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
           method: 'POST',
           headers: provider.headers(apiKey),
           body: JSON.stringify(provider.formatRequest([
-            { role: 'system', content: 'You help break down overwhelming tasks into simple, concrete next steps. Be specific and actionable.' },
+            { role: 'system', content: 'You create EXECUTABLE INSTRUCTIONS for people with ADHD. Never give conceptual tasks. Always provide exact steps, exact words to type/say, specific apps to open, and precise actions that require NO additional thinking or decision-making. If they need to contact someone, give them the exact message to copy/paste. If they need to search, give them the exact search terms. Make every task immediately doable without any planning.' },
             { role: 'user', content: prompt }
           ], selectedModel))
         });
