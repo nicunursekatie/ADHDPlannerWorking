@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Sparkles, Loader2 } from 'lucide-react';
 import { Task } from '../../types';
-import { AI_PROVIDERS, getProvider } from '../../utils/aiProviders';
+import { getProvider } from '../../utils/aiProviders';
 
 interface FuzzyTaskBreakdownSimpleProps {
   task: Task;
