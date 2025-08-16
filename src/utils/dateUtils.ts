@@ -209,17 +209,39 @@ export function getDueDateStatus(dateString: string | null | undefined): {
   if (daysUntil === 0) {
     return {
       text: 'Due today',
-      className: 'text-green-600 font-semibold',
+      className: 'text-orange-600 font-bold',
       isOverdue: false,
       isToday: true,
       daysUntilDue: 0
     };
   }
   
-  // Future date
+  // Due tomorrow
+  if (daysUntil === 1) {
+    return {
+      text: 'Due tomorrow',
+      className: 'text-gray-700 dark:text-gray-300 font-bold',
+      isOverdue: false,
+      isToday: false,
+      daysUntilDue: 1
+    };
+  }
+  
+  // Due within 3 days (soon)
+  if (daysUntil <= 3) {
+    return {
+      text: formatDateForDisplay(dateString),
+      className: 'text-gray-700 dark:text-gray-300 font-semibold',
+      isOverdue: false,
+      isToday: false,
+      daysUntilDue: daysUntil
+    };
+  }
+  
+  // Future date (more than 3 days away)
   return {
     text: formatDateForDisplay(dateString),
-    className: 'text-gray-500',
+    className: 'text-gray-500 dark:text-gray-400',
     isOverdue: false,
     isToday: false,
     daysUntilDue: daysUntil
