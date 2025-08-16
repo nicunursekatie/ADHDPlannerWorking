@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
+import { X, Send, Sparkles, Loader2 } from 'lucide-react';
 import { Task } from '../../types';
 import { AI_PROVIDERS, getProvider } from '../../utils/aiProviders';
 
@@ -38,7 +38,7 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
   onComplete 
 }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { type: 'bot', text: `Let's break down "${task.title}" into manageable steps.` },
+    { type: 'bot', text: "Let's break down \"" + task.title + "\" into manageable steps." },
     { type: 'bot', text: QUESTIONS[0] }
   ]);
   const [currentInput, setCurrentInput] = useState('');
@@ -93,30 +93,27 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
     if (apiKey) {
       // Use AI to generate tasks
       try {
-        const prompt = `
-Task: "${task.title}"
-
-Context from conversation:
-- Desired outcome: ${outcome}
-- What's blocking: ${blockers}
-- First step needed: ${firstStep}
-- People involved: ${people || 'none mentioned'}
-- Timeline: ${timing || 'no specific deadline'}
-
-Generate 3-5 specific, actionable tasks that directly address these points. Focus on the immediate next actions.
-
-Return ONLY a JSON array:
-[
-  {
-    "title": "Specific action (max 60 chars)",
-    "description": "What to do and why (1-2 sentences)",
-    "type": "communication|research|decision|cleanup|action",
-    "energyLevel": "low|medium|high",
-    "estimatedMinutes": 15,
-    "urgency": "today|tomorrow|week|month|someday",
-    "emotionalWeight": "easy|neutral|stressful|dreading"
-  }
-]`;
+        const prompt = 
+'Task: "' + task.title + '"\n\n' +
+'Context from conversation:\n' +
+'- Desired outcome: ' + outcome + '\n' +
+'- What\'s blocking: ' + blockers + '\n' +
+'- First step needed: ' + firstStep + '\n' +
+'- People involved: ' + (people || 'none mentioned') + '\n' +
+'- Timeline: ' + (timing || 'no specific deadline') + '\n\n' +
+'Generate 3-5 specific, actionable tasks that directly address these points. Focus on the immediate next actions.\n\n' +
+'Return ONLY a JSON array:\n' +
+'[\n' +
+'  {\n' +
+'    "title": "Specific action (max 60 chars)",\n' +
+'    "description": "What to do and why (1-2 sentences)",\n' +
+'    "type": "communication|research|decision|cleanup|action",\n' +
+'    "energyLevel": "low|medium|high",\n' +
+'    "estimatedMinutes": 15,\n' +
+'    "urgency": "today|tomorrow|week|month|someday",\n' +
+'    "emotionalWeight": "easy|neutral|stressful|dreading"\n' +
+'  }\n' +
+']';
 
         const provider = getProvider('openai');
         const response = await fetch(provider.baseUrl, {
@@ -238,8 +235,8 @@ Return ONLY a JSON array:
       // Extract the actual person's name intelligently
       const personName = people.includes('(') ? people.split('(')[0].trim() : people.split(',')[0].trim();
       tasks.push({
-        title: `Quick chat with ${personName}`,
-        description: `"Hey, we\'re working on finding a new team. Want to help me look?" Make it collaborative, not guilty.',
+        title: "Quick chat with " + personName,
+        description: "\"Hey, we're working on finding a new team. Want to help me look?\" Make it collaborative, not guilty.",
         type: 'communication',
         energyLevel: 'low',
         estimatedMinutes: 5,
@@ -338,7 +335,7 @@ Return ONLY a JSON array:
     setTimeout(() => {
       setMessages(prev => [...prev, { 
         type: 'bot', 
-        text: `I've created ${finalTasks.length} tasks to get you started. Ready to replace the fuzzy task?` 
+        text: "I've created " + finalTasks.length + " tasks to get you started. Ready to replace the fuzzy task?"
       }]);
     }, 1000);
   };
@@ -354,7 +351,7 @@ Return ONLY a JSON array:
       emotionalWeight: genTask.emotionalWeight,
       projectId: task.projectId,
       priority: genTask.urgency === 'today' ? 'high' : 'medium',
-      braindumpSource: `Broken down from: ${task.title}`
+      braindumpSource: "Broken down from: " + task.title
     }));
     
     onComplete(newTasks);
@@ -389,14 +386,14 @@ Return ONLY a JSON array:
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={"flex " + (message.type === 'user' ? 'justify-end' : 'justify-start')}
             >
               <div
-                className={`max-w-[80%] px-4 py-2 rounded-2xl ${
+                className={"max-w-[80%] px-4 py-2 rounded-2xl " + (
                   message.type === 'user'
                     ? 'bg-purple-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                }`}
+                )}
               >
                 <p className="text-sm">{message.text}</p>
               </div>
