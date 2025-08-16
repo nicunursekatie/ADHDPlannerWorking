@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle, Sparkles, Play, Timer, FolderPlus } from 'lucide-react';
+import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle, Sparkles, Play, Timer, FolderPlus, Brain } from 'lucide-react';
 import { Task } from '../types';
 import { useAppContext } from '../context/AppContextSupabase';
 import { getDueDateStatus, getRelativeTimeDisplay } from '../utils/dateUtils';
@@ -14,6 +14,7 @@ import { getTimeContext, getTaskTimeEstimate, formatTimeRemaining, formatTimeOfD
 import { focusTracker } from '../utils/focusTracker';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji } from '../utils/taskPrioritization';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
+import { FuzzyTaskBreakdown } from './tasks/FuzzyTaskBreakdown';
 
 interface TaskDisplayProps {
   task: Task;
@@ -33,11 +34,12 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   onConvertToProject 
 }) => {
   const navigate = useNavigate();
-  const { tasks, projects, updateTask } = useAppContext();
+  const { tasks, projects, updateTask, addTask, deleteTask } = useAppContext();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showDateEditor, setShowDateEditor] = useState(false);
   const [showDetailWizard, setShowDetailWizard] = useState(false);
+  const [showFuzzyBreakdown, setShowFuzzyBreakdown] = useState(false);
   // Note: TimeSpentModal is now handled at the page level to avoid container constraints
   // const [showTimeSpentModal, setShowTimeSpentModal] = useState(false);
   const [, setCurrentTime] = useState(new Date());
@@ -522,20 +524,36 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
           </div>
         </div>
         
-        {/* AI Breakdown button for tasks without subtasks */}
-        {onBreakdown && !task.completed && subtasks.length === 0 && (
-          <div className="mt-2">
+        {/* Task Breakdown Buttons */}
+        {!task.completed && subtasks.length === 0 && (
+          <div className="mt-2 flex gap-2">
+            {/* Fuzzy Task Breakdown - for overwhelming/unclear tasks */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onBreakdown(task);
+                setShowFuzzyBreakdown(true);
               }}
               className="flex items-center gap-1.5 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-2 py-1 rounded-xl transition-all"
-              title="Use AI to break down this task"
+              title="Break down this overwhelming task into clear steps"
             >
-              <Sparkles className="w-4 h-4" />
-              <span>AI Breakdown</span>
+              <Brain className="w-4 h-4" />
+              <span>Break Down Task</span>
             </button>
+            
+            {/* AI Breakdown - existing AI feature */}
+            {onBreakdown && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBreakdown(task);
+                }}
+                className="flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-2 py-1 rounded-xl transition-all"
+                title="Use AI to suggest subtasks"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>AI Suggest</span>
+              </button>
+            )}
           </div>
         )}
         
@@ -708,6 +726,32 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     />
     
     {/* Time Spent Modal is now handled at the page level to avoid container constraints */}
+    
+    {/* Fuzzy Task Breakdown Modal */}
+    {showFuzzyBreakdown && (
+      <FuzzyTaskBreakdown
+        task={task}
+        onClose={() => setShowFuzzyBreakdown(false)}
+        onComplete={async (newTasks) => {
+          // Add all new tasks
+          for (const newTask of newTasks) {
+            await addTask({
+              ...newTask,
+              completed: false,
+              archived: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            } as Task);
+          }
+          
+          // Delete the original fuzzy task
+          await deleteTask(task.id);
+          
+          // Close the modal
+          setShowFuzzyBreakdown(false);
+        }}
+      />
+    )}
     
     {/* Confirmation Dialog */}
     <ConfirmDialogComponent />
