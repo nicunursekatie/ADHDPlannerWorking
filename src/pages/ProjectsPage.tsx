@@ -259,8 +259,8 @@ const ProjectsPage: React.FC = () => {
     }
   };
   
-  // Calculate project statistics
-  const getProjectStats = (projectId: string) => {
+  // Calculate project statistics - memoized to prevent excessive recalculation
+  const getProjectStats = React.useCallback((projectId: string) => {
     const projectTasks = tasks.filter(task => 
       task.projectId === projectId && 
       !task.deletedAt && 
@@ -318,7 +318,16 @@ const ProjectsPage: React.FC = () => {
       totalHours,
       estimatedCompletionDate: remainingTasks > 0 ? estimatedCompletionDate : null
     };
-  };
+  }, [tasks]);
+  
+  // Memoize project stats for all projects to prevent recalculation
+  const allProjectStats = useMemo(() => {
+    const statsMap: { [key: string]: ReturnType<typeof getProjectStats> } = {};
+    projects.forEach(project => {
+      statsMap[project.id] = getProjectStats(project.id);
+    });
+    return statsMap;
+  }, [projects, getProjectStats]);
   
   // Filter projects based on selected filter
   const filteredProjects = useMemo(() => {
@@ -331,8 +340,8 @@ const ProjectsPage: React.FC = () => {
     switch (filterMode) {
       case 'active':
         filtered = filtered.filter(p => {
-          const stats = getProjectStats(p.id);
-          return stats.progress > 0 && stats.progress < 100;
+          const stats = allProjectStats[p.id];
+          return stats && stats.progress > 0 && stats.progress < 100;
         });
         break;
       case 'on-hold':
@@ -375,7 +384,9 @@ const ProjectsPage: React.FC = () => {
             return aOrder - bOrder;
           }
           
-          return getProjectStats(b.id).progress - getProjectStats(a.id).progress;
+          const aStats = allProjectStats[a.id] || { progress: 0 };
+          const bStats = allProjectStats[b.id] || { progress: 0 };
+          return bStats.progress - aStats.progress;
         });
         break;
       case 'priority':
@@ -388,7 +399,9 @@ const ProjectsPage: React.FC = () => {
             return aOrder - bOrder;
           }
           
-          return getProjectStats(b.id).overdueTasks - getProjectStats(a.id).overdueTasks;
+          const aStats = allProjectStats[a.id] || { overdueTasks: 0 };
+          const bStats = allProjectStats[b.id] || { overdueTasks: 0 };
+          return bStats.overdueTasks - aStats.overdueTasks;
         });
         break;
       case 'due-date':
@@ -648,22 +661,17 @@ const ProjectsPage: React.FC = () => {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProjects.map((project, index) => {
-                  const stats = getProjectStats(project.id);
+                  const stats = allProjectStats[project.id] || getProjectStats(project.id);
                   
                   return (
-                    <div
+                    <SortableProjectCard
                       key={project.id}
-                      className="animate-fadeInUp"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <SortableProjectCard
-                        project={project}
-                        stats={stats}
-                        onEdit={handleOpenModal}
-                        onDelete={handleDeleteProject}
-                        viewMode={viewMode}
-                      />
-                    </div>
+                      project={project}
+                      stats={stats}
+                      onEdit={handleOpenModal}
+                      onDelete={handleDeleteProject}
+                      viewMode={viewMode}
+                    />
                   );
                 })}
               </div>
@@ -678,22 +686,17 @@ const ProjectsPage: React.FC = () => {
             >
               <div className="space-y-4">
                 {filteredProjects.map((project, index) => {
-                  const stats = getProjectStats(project.id);
+                  const stats = allProjectStats[project.id] || getProjectStats(project.id);
                   
                   return (
-                    <div
+                    <SortableProjectCard
                       key={project.id}
-                      className="animate-fadeInUp"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <SortableProjectCard
-                        project={project}
-                        stats={stats}
-                        onEdit={handleOpenModal}
-                        onDelete={handleDeleteProject}
-                        viewMode={viewMode}
-                      />
-                    </div>
+                      project={project}
+                      stats={stats}
+                      onEdit={handleOpenModal}
+                      onDelete={handleDeleteProject}
+                      viewMode={viewMode}
+                    />
                   );
                 })}
               </div>
@@ -711,19 +714,18 @@ const ProjectsPage: React.FC = () => {
                   <div className="space-y-3">
                     {filteredProjects
                       .filter(project => {
-                        const stats = getProjectStats(project.id);
+                        const stats = allProjectStats[project.id] || getProjectStats(project.id);
                         if (status === 'Not Started') return stats.progress === 0;
                         if (status === 'In Progress') return stats.progress > 0 && stats.progress < 100;
                         return stats.progress === 100;
                       })
                       .map((project, index) => {
-                        const stats = getProjectStats(project.id);
+                        const stats = allProjectStats[project.id] || getProjectStats(project.id);
                         return (
                           <Card
                             key={project.id}
                             variant="glass"
-                            className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fadeInUp"
-                            style={{ animationDelay: `${index * 0.1}s` }}
+                            className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                             onClick={() => handleOpenModal(project)}
                           >
                             <div className="p-4">
