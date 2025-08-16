@@ -159,6 +159,7 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
   const [showTasks, setShowTasks] = useState(false);
   const [feedbackMode, setFeedbackMode] = useState(false);
   const [feedbackInput, setFeedbackInput] = useState('');
+  const [detailLevel, setDetailLevel] = useState<'micro' | 'normal' | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -221,6 +222,30 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
     // Add user message
     setMessages(prev => [...prev, { type: 'user', text: userAnswer }]);
     
+    // Check if we're waiting for detail level choice
+    if (currentQuestionIndex === -1) {
+      const level = userAnswer.toLowerCase();
+      if (level === 'micro' || level === 'm') {
+        setDetailLevel('micro');
+        setCurrentInput('');
+        setTimeout(() => {
+          setMessages(prev => [...prev, { type: 'bot', text: "Creating super detailed micro-steps with every action spelled out..." }]);
+          generateTasks(answers, 'micro');
+        }, 500);
+      } else if (level === 'normal' || level === 'n') {
+        setDetailLevel('normal');
+        setCurrentInput('');
+        setTimeout(() => {
+          setMessages(prev => [...prev, { type: 'bot', text: "Creating clear tasks without overwhelming detail..." }]);
+          generateTasks(answers, 'normal');
+        }, 500);
+      } else {
+        setMessages(prev => [...prev, { type: 'bot', text: "Please type 'micro' (or 'm') for detailed steps, or 'normal' (or 'n') for regular tasks." }]);
+        setCurrentInput('');
+      }
+      return;
+    }
+    
     // Check if user is asking for clarification or suggestions
     if (userAnswer.endsWith('?') || userAnswer.toLowerCase().includes('should')) {
       // They're asking us a question - provide helpful context
@@ -243,15 +268,20 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
         setMessages(prev => [...prev, { type: 'bot', text: smartQuestion }]);
       }, 500);
     } else {
-      // All questions answered, generate tasks
+      // All questions answered, ask about detail level
       setTimeout(() => {
-        setMessages(prev => [...prev, { type: 'bot', text: "Got it! Let me create some actionable tasks for you..." }]);
-        generateTasks([...answers, userAnswer]);
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          text: "One more thing - how detailed should the tasks be?\n\n🔬 **Micro-steps**: Every click and keystroke spelled out\n📝 **Normal tasks**: Clear actions but not overwhelming detail\n\nType 'micro' or 'normal' (or 'm' or 'n')"
+        }]);
+        // Store the final answer and wait for detail level choice
+        setAnswers(prev => [...prev, userAnswer]);
+        setCurrentQuestionIndex(-1); // Special state for detail level question
       }, 500);
     }
   };
 
-  const generateTasks = async (allAnswers: string[]) => {
+  const generateTasks = async (allAnswers: string[], detail: 'micro' | 'normal' = 'micro') => {
     setIsGenerating(true);
     
     const [outcome, blockers, existingInfo, people, timing] = allAnswers;
@@ -267,9 +297,9 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
       // Use AI to generate tasks
       const provider = getProvider(providerName);
       const selectedModel = modelName || provider.defaultModel;
-      console.log('Attempting AI generation with', providerName, 'using model', selectedModel);
+      console.log('Attempting AI generation with', providerName, 'using model', selectedModel, 'detail level:', detail);
       try {
-        const prompt = 
+        const promptBase = 
 'Task: "' + task.title + '"\n\n' +
 'Context from conversation:\n' +
 '- Desired outcome: ' + outcome + '\n' +
@@ -282,8 +312,11 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 '- If they said "Jackie knows about teams" → create task about texting Jackie\n' +
 '- If they did NOT mention gyms → do NOT create tasks about gyms\n' +
 '- If they did NOT mention specific places → start with Google searches\n' +
-'- Build tasks from THEIR actual answers, not your assumptions\n\n' +
-'CRITICAL: Generate EXECUTABLE INSTRUCTIONS, not conceptual tasks!\n\n' +
+'- Build tasks from THEIR actual answers, not your assumptions\n\n';
+
+        const microPrompt = promptBase +
+'USER WANTS: MICRO-STEPS with every detail spelled out\n\n' +
+'CRITICAL: Generate EXECUTABLE MICRO-INSTRUCTIONS!\n\n' +
 'FORBIDDEN TASKS - NEVER GENERATE THESE:\n' +
 '❌ "Research..." (too vague)\n' +
 '❌ "Create a list..." (what list? how?)\n' +
@@ -303,8 +336,8 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 'Title: "Google: [exact search phrase]"\n' +
 'Description: "Open browser, type exactly: \'[city from context] youth cheerleading age [age]\'. Click top 3 results. For each, write down: name, phone, website. Close tabs after."\n\n' +
 'FOR TEXTING SOMEONE:\n' +
-'Title: "Text [exact name]: copy this message"\n' +
-'Description: "Copy and send exactly: \'Hey! Quick question - my daughter wants to start cheerleading. Know any good teams or where to look? Thanks!\' Don\'t overthink, just send."\n\n' +
+'Title: "Text [exact name]"\n' +
+'Description: MUST include the FULL message to copy. Example: "Open messages, find Jackie, copy and send exactly: \'Hey! Quick question - my daughter wants to start cheerleading. Know any good teams or where to look? Thanks!\' Don\'t edit, just send."\n\n' +
 'FOR CALLING:\n' +
 'Title: "Call [specific place or number]"\n' +
 'Description: "If you mentioned a specific place, call them. Otherwise, call the first result from your Google search. Say: \'Hi, my daughter is [age] and interested in cheer. What programs do you have?\'"\n\n' +
@@ -319,7 +352,7 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 '[\n' +
 '  {\n' +
 '    "title": "Exact executable action (max 60 chars)",\n' +
-'    "description": "Step-by-step: Open X, click Y, type \'exact words\', etc.",\n' +
+'    "description": "Step-by-step: Open X, click Y, type \'exact words\', etc. FOR TEXT MESSAGES: ALWAYS include the complete message to send!",\n' +
 '    "type": "communication|research|decision|cleanup|action",\n' +
 '    "energyLevel": "low|medium|high",\n' +
 '    "estimatedMinutes": 15,\n' +
@@ -327,12 +360,48 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 '    "emotionalWeight": "easy|neutral|stressful|dreading"\n' +
 '  }\n' +
 ']';
+        
+        const normalPrompt = promptBase +
+'USER WANTS: Clear tasks without overwhelming detail\n\n' +
+'Generate ACTIONABLE TASKS (not micro-managed):\n\n' +
+'FORBIDDEN TASKS - NEVER GENERATE THESE:\n' +
+'❌ "Research [topic]" → Instead: "Find 3 [specific thing] options online"\n' +
+'❌ "Organize [thing]" → Instead: "Sort [thing] into [specific categories]"\n' +
+'❌ "Plan [activity]" → Instead: "Pick date and location for [activity]"\n' +
+'❌ "Consider options" → Instead: "Compare top 3 [specific options]"\n' +
+'❌ "Reflect on..." → Never useful\n\n' +
+'REQUIRED - Every task MUST:\n' +
+'✓ Be a clear, single action\n' +
+'✓ Include what to look for or ask\n' +
+'✓ Have a concrete deliverable\n' +
+'✓ Be completable in one session\n\n' +
+'EXAMPLES of good normal tasks:\n' +
+'- "Find 3 local cheerleading programs online"\n' +
+'- "Call top option and ask about registration"\n' +
+'- "Text Jackie about cheer team recommendations"\n' +
+'- "Compare costs and schedules of 3 programs"\n' +
+'- "Fill out registration for chosen program"\n\n' +
+'FOR TEXTING: Always include the message!\n' +
+'Title: "Text Jackie about cheer teams"\n' +
+'Description: "Send: \'Hey! Charlotte wants to do cheerleading. Know any good teams or where I should look? Thanks!\'"\n\n' +
+'FOR RESEARCH:\n' +
+'Title: "Find 3 local cheer programs"\n' +
+'Description: "Search for youth cheerleading in your area. Get names, websites, and contact info for 3 options."\n\n' +
+'FOR CALLING:\n' +
+'Title: "Call programs about late registration"\n' +
+'Description: "Call the programs you found. Ask: Can kids still join? What\'s the schedule? What\'s the cost?"\n\n' +
+'Return ONLY a JSON array with these normal-level tasks.';
 
+        const prompt = detail === 'micro' ? microPrompt : normalPrompt;
+        const systemMessage = detail === 'micro' 
+          ? 'RULE 1: Only use information ACTUALLY PROVIDED by the user. Do NOT invent gyms, places, or people they didn\'t mention. RULE 2: Every task must include EXACTLY what to open and EXACTLY what to type/say (in quotes). RULE 3: If they mentioned Jackie, use Jackie. If they didn\'t mention gyms, don\'t create gym tasks. Only work with what they actually said.'
+          : 'Generate clear, actionable tasks without overwhelming detail. Each task should be a single action with a concrete outcome. For text messages, ALWAYS include the full message to send in the description.';
+        
         const response = await fetch(provider.baseUrl, {
           method: 'POST',
           headers: provider.headers(apiKey),
           body: JSON.stringify(provider.formatRequest([
-            { role: 'system', content: 'RULE 1: Only use information ACTUALLY PROVIDED by the user. Do NOT invent gyms, places, or people they didn\'t mention. RULE 2: Every task must include EXACTLY what to open and EXACTLY what to type/say (in quotes). RULE 3: If they mentioned Jackie, use Jackie. If they didn\'t mention gyms, don\'t create gym tasks. Only work with what they actually said.' },
+            { role: 'system', content: systemMessage },
             { role: 'user', content: prompt }
           ], selectedModel))
         });
@@ -394,10 +463,11 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
           urgency: 'today',
           emotionalWeight: 'neutral'
         });
-      } else if (info.includes('friend') || info.includes('know someone')) {
+      } else if (info.includes('friend') || info.includes('know someone') || (people && people.trim() && people.toLowerCase() !== 'no')) {
+        const personName = info.match(/(\w+) (?:knows|might|could|has)/)?.[1] || people.split(/[,\s]/)[0] || 'them';
         tasks.push({
-          title: 'Text that person right now',
-          description: 'Copy/paste: "Hey! Quick question - do you know any good cheerleading teams for kids? My daughter wants to start."',
+          title: 'Text ' + personName + ' right now',
+          description: 'Open messages, find ' + personName + ', copy and send this exact message: "Hey! Quick question - ' + outcome + '. Do you know any good options or where I should look? Thanks!" Don\'t edit, just send.',
           type: 'communication',
           energyLevel: 'low',
           estimatedMinutes: 2,
@@ -477,9 +547,21 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
     // Add tasks based on people involved
     if (people && people.trim() && people.toLowerCase() !== 'no' && people.toLowerCase() !== 'none') {
       const personName = people.split(/[,(]/)[0].trim();
+      const taskDescription = task.title.toLowerCase();
+      
+      // Create specific message based on task context
+      let messageContent = '';
+      if (taskDescription.includes('cheer') || taskDescription.includes('team') || taskDescription.includes('sport')) {
+        messageContent = 'Hey ' + personName + '! Quick question - my daughter wants to join a cheerleading team. Do you know any good programs or have any recommendations? Would really appreciate any tips!';
+      } else if (taskDescription.includes('find') || taskDescription.includes('looking')) {
+        messageContent = 'Hey ' + personName + '! I\'m trying to ' + task.title.toLowerCase() + '. Have you done this before or know anyone who has? Could use some advice!';
+      } else {
+        messageContent = 'Hey ' + personName + '! Working on something and could use your input: ' + task.title + '. Any thoughts or suggestions?';
+      }
+      
       tasks.push({
-        title: 'Loop in ' + personName,
-        description: 'Share what you\'re working on. They might have ideas or want to help.',
+        title: 'Text ' + personName + ' for help',
+        description: 'Open messages, find ' + personName + ', copy and send this exact message: "' + messageContent + '" Wait for their response before moving forward.',
         type: 'communication',
         energyLevel: 'low',
         estimatedMinutes: 5,
