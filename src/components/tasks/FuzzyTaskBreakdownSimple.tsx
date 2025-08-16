@@ -24,13 +24,59 @@ interface GeneratedTask {
   emotionalWeight: 'easy' | 'neutral' | 'stressful' | 'dreading';
 }
 
-const QUESTIONS = [
+// Base questions - we'll make these dynamic based on context
+const BASE_QUESTIONS = [
   "What's the ideal outcome here? (keep it short)",
   "What's blocking that from happening?",
   "What needs to happen first?",
   "Anyone else involved?",
   "When does this need to be done?"
 ];
+
+// Generate contextual questions based on the task and previous answers
+const getSmartQuestion = (questionIndex: number, task: Task, previousAnswers: string[]): string => {
+  const baseQuestion = BASE_QUESTIONS[questionIndex];
+  
+  // Smart question for "Anyone else involved?"
+  if (questionIndex === 3) {
+    const taskLower = task.title.toLowerCase();
+    const [outcome, blockers, firstStep] = previousAnswers;
+    
+    // Suggest involving others based on task type
+    if (taskLower.includes('find') || taskLower.includes('search') || taskLower.includes('looking for')) {
+      return "Who might know about this already? (friends, family, social media groups - or 'no' if doing solo)";
+    }
+    if (taskLower.includes('team') || taskLower.includes('class') || taskLower.includes('group')) {
+      return "Who else has kids in similar activities? They might have recommendations (or type 'no')";
+    }
+    if (blockers && blockers.toLowerCase().includes('don\'t know')) {
+      return "Who could you ask for advice? Even a quick text to a friend might help (or 'no' to figure it out yourself)";
+    }
+    if (taskLower.includes('move') || taskLower.includes('organize') || taskLower.includes('clean')) {
+      return "Anyone who could help or needs to know about this? (or just 'no' if it's all you)";
+    }
+    // Default but more helpful
+    return "Anyone who could help, needs to know, or might have done this before? (or just 'no')";
+  }
+  
+  // Smart question for timeline based on urgency indicators
+  if (questionIndex === 4) {
+    const [outcome, blockers] = previousAnswers;
+    if (blockers && (blockers.toLowerCase().includes('deadline') || blockers.toLowerCase().includes('due'))) {
+      return "What's the actual deadline? (be specific: 'Friday 3pm', 'end of month', etc.)";
+    }
+  }
+  
+  // Smart follow-ups for blockers
+  if (questionIndex === 1) {
+    const [outcome] = previousAnswers;
+    if (outcome && outcome.toLowerCase().includes('find')) {
+      return "What's making this hard? (e.g., 'don't know where to look', 'too many options', 'no time to research')";
+    }
+  }
+  
+  return baseQuestion;
+};
 
 export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> = ({ 
   task, 
@@ -39,7 +85,7 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
 }) => {
   const [messages, setMessages] = useState<Message[]>([
     { type: 'bot', text: "Let's break down \"" + task.title + "\" into manageable steps." },
-    { type: 'bot', text: QUESTIONS[0] }
+    { type: 'bot', text: BASE_QUESTIONS[0] }
   ]);
   const [currentInput, setCurrentInput] = useState('');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -58,6 +104,47 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const handleClarification = (userQuestion: string, questionIndex: number) => {
+    setCurrentInput('');
+    
+    // Provide helpful suggestions based on what they're asking
+    let suggestion = '';
+    
+    if (questionIndex === 3) { // "Anyone else involved?"
+      if (userQuestion.toLowerCase().includes('should')) {
+        const taskLower = task.title.toLowerCase();
+        
+        if (taskLower.includes('find') || taskLower.includes('search')) {
+          suggestion = "Yes! Try asking: Local parent Facebook groups, neighbors with kids, your kid's current teachers, or that friend who always knows everything. I'll create tasks to message them with exact wording.";
+        } else if (taskLower.includes('team') || taskLower.includes('sport')) {
+          suggestion = "Parents of your kid's friends often know about activities. Also try: school counselors, PE teachers, or local recreation center staff. Type their names and I'll create the messages for you.";
+        } else {
+          suggestion = "Think about: Who's done this before? Who always has good advice? Who might be affected? Even just one name helps - I'll write the message for you.";
+        }
+      }
+    } else if (questionIndex === 2) { // "What needs to happen first?"
+      suggestion = "Think super small: What's the tiniest step? Could be 'open laptop', 'find phone number', or 'text Sarah'. The smaller, the better!";
+    } else if (questionIndex === 1) { // "What's blocking?"
+      suggestion = "Common blocks: Don't know where to start, too many options, waiting on someone, need information, feeling overwhelmed, or just boring. What's yours?";
+    }
+    
+    if (suggestion) {
+      setTimeout(() => {
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          text: suggestion 
+        }]);
+        // Re-ask the same question
+        setTimeout(() => {
+          setMessages(prev => [...prev, { 
+            type: 'bot', 
+            text: "So with that in mind - " + getSmartQuestion(questionIndex, task, answers) 
+          }]);
+        }, 1000);
+      }, 500);
+    }
+  };
+
   const handleSend = async () => {
     if (!currentInput.trim()) return;
 
@@ -65,15 +152,27 @@ export const FuzzyTaskBreakdownSimple: React.FC<FuzzyTaskBreakdownSimpleProps> =
     
     // Add user message
     setMessages(prev => [...prev, { type: 'user', text: userAnswer }]);
+    
+    // Check if user is asking for clarification or suggestions
+    if (userAnswer.endsWith('?') || userAnswer.toLowerCase().includes('should')) {
+      // They're asking us a question - provide helpful context
+      handleClarification(userAnswer, currentQuestionIndex);
+      return;
+    }
+    
     setAnswers(prev => [...prev, userAnswer]);
     setCurrentInput('');
 
     // Check if we have more questions
-    if (currentQuestionIndex < QUESTIONS.length - 1) {
-      // Ask next question
+    if (currentQuestionIndex < BASE_QUESTIONS.length - 1) {
+      // Ask next question - but make it smart based on context
       setTimeout(() => {
-        setCurrentQuestionIndex(prev => prev + 1);
-        setMessages(prev => [...prev, { type: 'bot', text: QUESTIONS[currentQuestionIndex + 1] }]);
+        const nextIndex = currentQuestionIndex + 1;
+        const updatedAnswers = [...answers, userAnswer];
+        const smartQuestion = getSmartQuestion(nextIndex, task, updatedAnswers);
+        
+        setCurrentQuestionIndex(nextIndex);
+        setMessages(prev => [...prev, { type: 'bot', text: smartQuestion }]);
       }, 500);
     } else {
       // All questions answered, generate tasks
