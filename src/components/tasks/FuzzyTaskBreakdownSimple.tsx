@@ -328,7 +328,7 @@ Return ONLY a JSON array:
       );
     }
     
-    setGeneratedTasks(tasks.slice(0, 5));
+    setGeneratedTasks(uniqueTasks.length > 0 ? uniqueTasks.slice(0, 5) : tasks.slice(0, 5));
     setShowTasks(true);
     setIsGenerating(false);
     
