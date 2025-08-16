@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react';
-import { Check, Clock, Calendar, AlertCircle, ChevronRight, Trash2 } from 'lucide-react';
+import { Check, Clock, Calendar, AlertCircle, ChevronRight, Trash2, Sparkles } from 'lucide-react';
 import { Task } from '../../types';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { formatDistanceToNow } from 'date-fns';
+import { FuzzyTaskBreakdown } from './FuzzyTaskBreakdown';
+import { useAppContext } from '../../context/AppContextSupabase';
 
 interface MobileTaskCardProps {
   task: Task;
@@ -20,6 +22,8 @@ export const MobileTaskCard: React.FC<MobileTaskCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const { addTask, deleteTask } = useAppContext();
 
   // Add haptic feedback if available
   const triggerHaptic = () => {
@@ -89,11 +93,26 @@ export const MobileTaskCard: React.FC<MobileTaskCardProps> = ({
 
           {/* Task content */}
           <div className="flex-1 min-w-0">
-            <h3 className={`text-base font-medium ${
-              task.completed ? 'line-through text-gray-500' : 'text-gray-900 dark:text-gray-100'
-            }`}>
-              {task.title}
-            </h3>
+            <div className="flex items-start justify-between">
+              <h3 className={`text-base font-medium flex-1 ${
+                task.completed ? 'line-through text-gray-500' : 'text-gray-900 dark:text-gray-100'
+              }`}>
+                {task.title}
+              </h3>
+              {!task.completed && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    triggerHaptic();
+                    setShowBreakdown(true);
+                  }}
+                  className="ml-2 p-1.5 text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
+                  title="Break down this task"
+                >
+                  <Sparkles size={16} />
+                </button>
+              )}
+            </div>
 
             {/* Task metadata */}
             <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500">
@@ -149,5 +168,31 @@ export const MobileTaskCard: React.FC<MobileTaskCardProps> = ({
         <Trash2 size={20} className="text-white" />
       </div>
     </div>
+    
+    {/* Fuzzy Task Breakdown Modal */}
+    {showBreakdown && (
+      <FuzzyTaskBreakdown
+        task={task}
+        onClose={() => setShowBreakdown(false)}
+        onComplete={async (newTasks) => {
+          // Add all new tasks
+          for (const newTask of newTasks) {
+            await addTask({
+              ...newTask,
+              completed: false,
+              archived: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            } as Task);
+          }
+          
+          // Delete the original fuzzy task
+          await deleteTask(task.id);
+          
+          // Close the modal
+          setShowBreakdown(false);
+        }}
+      />
+    )}
   );
 };

@@ -18,7 +18,8 @@ import {
   Battery,
   Brain,
   Flame,
-  Star
+  Star,
+  Sparkles
 } from 'lucide-react';
 import { Task, Project, Category } from '../../types';
 import Badge from '../common/Badge';
@@ -28,6 +29,7 @@ import { useAppContext } from '../../context/AppContextSupabase';
 import { QuickDueDateEditor } from './QuickDueDateEditor';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji, calculateSmartPriorityScore } from '../../utils/taskPrioritization';
 import { TimeSpentModal } from './TimeSpentModal';
+import { FuzzyTaskBreakdown } from './FuzzyTaskBreakdown';
 
 interface ImprovedTaskCardProps {
   task: Task;
@@ -51,7 +53,8 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
   const [showActions, setShowActions] = useState(false);
   const [showDateEditor, setShowDateEditor] = useState(false);
   const [showTimeSpentModal, setShowTimeSpentModal] = useState(false);
-  const { completeTask, tasks, addTask, updateTask } = useAppContext();
+  const [showBreakdown, setShowBreakdown] = useState(false);
+  const { completeTask, tasks, addTask, updateTask, deleteTask } = useAppContext();
   
   const project = task.projectId 
     ? projects.find(p => p.id === task.projectId) 
@@ -309,6 +312,18 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
           </div>
         </div>
         <div className="flex space-x-2">
+          {!task.completed && !isSubtask && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowBreakdown(true);
+              }}
+              className="p-1 text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all hover:scale-110"
+              title="Break down this task into actionable steps"
+            >
+              <Sparkles size={16} />
+            </button>
+          )}
           {onEdit && (
             <button
               onClick={handleEdit}
@@ -426,6 +441,32 @@ export const ImprovedTaskCard: React.FC<ImprovedTaskCardProps> = ({
         onConfirm={handleTimeSpentConfirm}
         onSkip={handleTimeSpentSkip}
       />
+      
+      {/* Fuzzy Task Breakdown Modal */}
+      {showBreakdown && (
+        <FuzzyTaskBreakdown
+          task={task}
+          onClose={() => setShowBreakdown(false)}
+          onComplete={async (newTasks) => {
+            // Add all new tasks
+            for (const newTask of newTasks) {
+              await addTask({
+                ...newTask,
+                completed: false,
+                archived: false,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              } as Task);
+            }
+            
+            // Delete the original fuzzy task
+            await deleteTask(task.id);
+            
+            // Close the modal
+            setShowBreakdown(false);
+          }}
+        />
+      )}
     </div>
   );
 };
