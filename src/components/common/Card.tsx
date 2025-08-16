@@ -76,10 +76,10 @@ const Card: React.FC<CardProps> = ({
   ` : '';
   
   const paddingClasses = {
-    sm: 'p-6',
-    md: 'p-8',
-    lg: 'p-10',
-    xl: 'p-12',
+    sm: 'p-4 sm:p-6',
+    md: 'p-4 sm:p-8',
+    lg: 'p-6 sm:p-10',
+    xl: 'p-8 sm:p-12',
   };
   
   const glowClass = glow ? 'before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary-500/20 before:to-pink-500/20 before:opacity-0 before:transition-opacity before:duration-500 hover:before:opacity-100' : '';

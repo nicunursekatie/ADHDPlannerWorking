@@ -137,8 +137,8 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     <>
     <div 
       className={`
-        group flex items-start gap-4 p-5 rounded-2xl border cursor-pointer overflow-hidden backdrop-blur-sm
-        shadow-md hover:shadow-xl transition-all duration-300
+        group flex items-start gap-2 sm:gap-4 p-3 sm:p-5 rounded-2xl border cursor-pointer overflow-hidden backdrop-blur-sm
+        shadow-md hover:shadow-xl transition-all duration-300 max-w-full
         ${!canComplete
           ? 'bg-gray-100/60 border-gray-300/40 opacity-60'
           : task.completed 
@@ -200,9 +200,9 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       </button>
       
       {/* Main Content */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 overflow-hidden">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-start gap-2 flex-wrap">
               <h3 className={`
                 text-lg font-bold tracking-tight leading-relaxed whitespace-normal break-words
@@ -252,10 +252,10 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
             )}
             
             {/* ADHD-Friendly Priority Indicators */}
-            <div className="flex items-center gap-3 mt-3 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3 mt-3 flex-wrap">
               {/* Urgency */}
               {task.urgency && (
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border
+                <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold shadow-sm border
                   ${task.urgency === 'today' 
                     ? 'bg-red-100 text-red-800 border-red-200'
                     : task.urgency === 'tomorrow'
@@ -278,7 +278,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
               
               {/* Emotional Weight */}
               {task.emotionalWeight && (
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border
+                <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold shadow-sm border
                   ${task.emotionalWeight === 'easy' 
                     ? 'bg-green-100 text-green-800 border-green-200' 
                     : task.emotionalWeight === 'neutral' 
@@ -299,7 +299,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
               
               {/* Energy Required */}
               {task.energyRequired && (
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border
+                <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold shadow-sm border
                   ${task.energyRequired === 'low' 
                     ? 'bg-green-100 text-green-800 border-green-200'
                     : task.energyRequired === 'medium'
@@ -615,7 +615,7 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       </div>
       
       {/* Actions */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
         {onBreakdown && !task.completed && (
           <button
             onClick={(e) => {
