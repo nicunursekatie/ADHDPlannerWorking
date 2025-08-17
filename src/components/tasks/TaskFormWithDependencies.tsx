@@ -198,13 +198,13 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
   };
   
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-gray-900 rounded-2xl shadow-xl">
-      <form id="task-form" onSubmit={handleSubmit} className="space-y-6">
+    <div className="max-h-[85vh] overflow-y-auto">
+      <form id="task-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Title & Description */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div>
-            <label htmlFor="title" className="block text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-              What needs to be done?
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Task Title *
             </label>
             <input
               type="text"
@@ -212,33 +212,33 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
               name="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Type your task here..."
-              className="block w-full px-6 py-4 text-lg rounded-2xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 focus:ring-2 transition-all duration-200"
+              placeholder="Enter task title..."
+              className="block w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               required
               autoFocus
             />
           </div>
           
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              More details <span className="text-gray-400">(optional)</span>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Description <span className="text-gray-400 text-xs">(optional)</span>
             </label>
             <textarea
               id="description"
               name="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              placeholder="Any extra details or context..."
-              className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
+              rows={2}
+              placeholder="Add any additional details..."
+              className="block w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             />
           </div>
         </div>
 
         {/* Due Date | Project (side by side) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Due Date
             </label>
             <input
@@ -247,12 +247,12 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
               name="dueDate"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
+              className="block w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             />
           </div>
           
           <div>
-            <label htmlFor="project" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            <label htmlFor="project" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Project
             </label>
             <select
@@ -260,7 +260,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
               name="project"
               value={projectId}
               onChange={(e) => setProjectId(e.target.value)}
-              className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-purple-500 focus:ring-purple-500 transition-all duration-200"
+              className="block w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             >
               <option value="">No project</option>
               {projects.map(project => (
@@ -270,21 +270,21 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
           </div>
         </div>
 
-        {/* Time Estimate - Always Visible */}
-        <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-2xl p-6 border border-orange-100 dark:border-orange-800">
-          <div className="flex items-center mb-4">
-            <Clock className="w-5 h-5 text-orange-500 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">How long will this take?</h3>
+        {/* Time Estimate - Simplified */}
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center mb-3">
+            <Clock className="w-4 h-4 text-gray-600 dark:text-gray-400 mr-2" />
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Time Estimate</h3>
             {estimatedMinutes && (
-              <span className="ml-auto text-sm text-orange-600 dark:text-orange-400 font-medium">
-                ~{estimatedMinutes} min
+              <span className="ml-auto text-sm text-gray-600 dark:text-gray-400">
+                {estimatedMinutes} min
               </span>
             )}
           </div>
           
           <div className="space-y-4">
             {/* Quick Time Presets */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-2">
               {[
                 { label: '5 min', value: 5, desc: 'Very quick' },
                 { label: '15 min', value: 15, desc: 'Quick task' },
@@ -307,46 +307,38 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                     }
                     setEstimatedMinutes(option.value);
                   }}
-                  className={`p-3 rounded-xl border-2 text-left transition-all duration-200 hover:shadow-md ${
+                  className={`px-3 py-2 rounded-lg border text-center transition-colors text-sm ${
                     option.value === 0 
-                      ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-orange-300 hover:shadow-lg'
+                      ? 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-blue-400'
                       : (estimatedMinutes || 0) === option.value
-                        ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/30 shadow-lg'
-                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-orange-300'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-400'
                   }`}
                 >
-                  <div className="font-medium text-sm">{option.label}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
+                  <div>{option.label}</div>
                 </button>
               ))}
             </div>
             
             {/* Custom Time Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Or enter exact time (minutes)
-              </label>
               <input
                 type="number"
                 name="estimatedMinutes"
                 value={estimatedMinutes || ''}
                 onChange={(e) => setEstimatedMinutes(e.target.value ? parseFloat(e.target.value) : 0)}
-                className="block w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-orange-500 focus:ring-orange-500 transition-all"
-                placeholder="Enter any number of minutes (e.g., 7, 23, 45)..."
+                className="block w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder="Custom minutes..."
                 min="0"
-                step="0.5"
+                step="1"
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                You can enter any time estimate - whole numbers or decimals (e.g., 2.5 for 2 minutes 30 seconds)
-              </p>
             </div>
           </div>
         </div>
 
         {/* Categories */}
         <div>
-          <label htmlFor="category" className="block text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            <Tag className="w-5 h-5 mr-2 text-blue-500 inline" />
+          <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Category
           </label>
           <select
@@ -360,7 +352,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                 setSelectedCategoryIds(e.target.value ? [e.target.value] : []);
               }
             }}
-            className="block w-full px-4 py-4 text-lg rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
+            className="block w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           >
             <option value="">No category</option>
             {categories && categories.map((category) => {
@@ -375,11 +367,10 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
         </div>
         
         {/* Priority | Urgency (side by side) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {/* Priority */}
           <div>
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-              <Star className="w-5 h-5 mr-2 text-purple-500" />
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Priority
             </h4>
             <div className="grid grid-cols-4 gap-2">
@@ -403,15 +394,14 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                     };
                     setImportance(importanceMap[option.value as keyof typeof importanceMap]);
                   }}
-                  className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-purple-200/50 ${
+                  className={`p-2 rounded-lg border text-center transition-colors text-xs ${
                     priority === option.value
-                      ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/30 shadow-lg ring-2 ring-purple-200 dark:ring-purple-700'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-purple-300'
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-400'
                   }`}
                 >
-                  <div className="text-lg mb-1">{option.emoji}</div>
-                  <div className="font-semibold text-xs mb-1">{option.label}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
+                  <div className="text-base mb-1">{option.emoji}</div>
+                  <div className="font-medium">{option.label}</div>
                 </button>
               ))}
             </div>
@@ -480,18 +470,17 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
         </div>
 
         {/* Energy Needed | Emotional Weight (side by side) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {/* Energy Needed */}
           <div>
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-              <Zap className="w-5 h-5 mr-2 text-yellow-500" />
-              Energy Needed
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Energy Level
             </h4>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label: 'Low', value: 'low', emoji: '🔋', desc: 'Easy, relaxed' },
-                { label: 'Medium', value: 'medium', emoji: '⚡', desc: 'Normal focus' },
-                { label: 'High', value: 'high', emoji: '🚀', desc: 'Full focus' },
+                { label: 'Low', value: 'low', emoji: '🔋' },
+                { label: 'Medium', value: 'medium', emoji: '⚡' },
+                { label: 'High', value: 'high', emoji: '🚀' },
               ].map(option => (
                 <button
                   key={option.value}
@@ -499,15 +488,14 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                   onClick={() => {
                     setEnergyRequired(option.value as 'low' | 'medium' | 'high');
                   }}
-                  className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-yellow-200/50 ${
+                  className={`p-2 rounded-lg border text-center transition-colors text-xs ${
                     energyRequired === option.value
-                      ? 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 shadow-lg ring-2 ring-yellow-200 dark:ring-yellow-700'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-yellow-300'
+                      ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-400'
                   }`}
                 >
-                  <div className="text-lg mb-1">{option.emoji}</div>
-                  <div className="font-semibold text-xs mb-1">{option.label}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
+                  <div className="text-base mb-1">{option.emoji}</div>
+                  <div className="font-medium">{option.label}</div>
                 </button>
               ))}
             </div>
@@ -515,30 +503,28 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
 
           {/* Emotional Weight */}
           <div>
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-              <Brain className="w-5 h-5 mr-2 text-pink-500" />
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Emotional Weight
             </h4>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: 'Easy/Fun', value: 'easy', emoji: '😊', desc: 'Love it' },
-                { label: 'Neutral', value: 'neutral', emoji: '😐', desc: 'It\'s fine' },
-                { label: 'Stressful', value: 'stressful', emoji: '😰', desc: 'Hard work' },
-                { label: 'Dreading', value: 'dreading', emoji: '😱', desc: 'Really hard' },
+                { label: 'Easy', value: 'easy', emoji: '😊' },
+                { label: 'Neutral', value: 'neutral', emoji: '😐' },
+                { label: 'Stressful', value: 'stressful', emoji: '😰' },
+                { label: 'Dreading', value: 'dreading', emoji: '😱' },
               ].map(option => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => setEmotionalWeight(option.value as 'easy' | 'neutral' | 'stressful' | 'dreading')}
-                  className={`p-2 rounded-lg border-2 text-center transition-all duration-200 hover:shadow-lg hover:shadow-pink-200/50 ${
+                  className={`p-2 rounded-lg border text-center transition-colors text-xs ${
                     emotionalWeight === option.value
-                      ? 'border-pink-400 bg-pink-50 dark:bg-pink-900/30 shadow-lg ring-2 ring-pink-200 dark:ring-pink-700'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-pink-300'
+                      ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-400'
                   }`}
                 >
-                  <div className="text-lg mb-1">{option.emoji}</div>
-                  <div className="font-semibold text-xs mb-1">{option.label}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</div>
+                  <div className="text-base mb-1">{option.emoji}</div>
+                  <div className="font-medium">{option.label}</div>
                 </button>
               ))}
             </div>
@@ -547,31 +533,28 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
 
         
         {/* Advanced Options (collapsed by default) */}
-        <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/20 dark:to-gray-900/20 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+        <div className="relative">
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center justify-between w-full text-left group"
+            className="flex items-center justify-between w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-700"
           >
-            <div className="flex items-center">
-              <div className="w-6 h-6 text-gray-500 mr-3">⚙️</div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Advanced Options</h3>
-            </div>
-            <div className="flex items-center text-gray-500">
-              <span className="text-sm mr-2">Start date, dependencies, tags & subtasks</span>
-              {showAdvanced ? 
-                <ChevronDown className="w-5 h-5 transform transition-transform group-hover:scale-110" /> : 
-                <ChevronRight className="w-5 h-5 transform transition-transform group-hover:scale-110" />
-              }
-            </div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+              {showAdvanced ? <ChevronDown className="w-4 h-4 mr-2" /> : <ChevronRight className="w-4 h-4 mr-2" />}
+              Advanced Options
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Tags, dependencies, subtasks
+            </span>
           </button>
-          
-          <div className={`transition-all duration-300 ease-in-out overflow-hidden ${showAdvanced ? 'max-h-[800px] mt-6' : 'max-h-0'}`}>
-            <div className="space-y-8">
+        </div>
+        
+        {/* Advanced Options Content */}
+        <div className={`transition-all duration-300 ${showAdvanced ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
+          <div className="space-y-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
               {/* Start Date */}
               <div>
-                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                  <Calendar className="w-5 h-5 mr-2 text-green-500" />
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Start Date
                 </h4>
                 <div>
@@ -655,7 +638,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                       }
                     }}
                     placeholder="Add a tag..."
-                    className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-sm focus:border-green-500 focus:ring-green-500 transition-all"
+                    className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
                   />
                   <button
                     type="button"
@@ -665,7 +648,7 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                         setNewTag('');
                       }
                     }}
-                    className="px-4 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors"
+                    className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
                   >
                     Add
                   </button>
@@ -693,13 +676,12 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
 
               {/* Subtasks Section */}
               <div>
-                <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                  <FolderOpen className="w-5 h-5 mr-2 text-blue-500" />
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Subtasks
                 </h4>
                 {!isEdit ? (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-xl text-blue-700 dark:text-blue-300 text-sm">
-                    💡 Save this task first, then you can break it down into smaller subtasks
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded-lg text-blue-700 dark:text-blue-300 text-xs">
+                    Save this task first to add subtasks
                   </div>
                 ) : (
                   <SubtaskList
@@ -711,11 +693,10 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
               </div>
             </div>
           </div>
-        </div>
       </form>
 
-      {/* Form Actions - Outside of form for better styling */}
-      <div className="sticky bottom-0 bg-white dark:bg-gray-900 p-6 border-t border-gray-200 dark:border-gray-700 rounded-b-2xl -mx-6 -mb-6">
+      {/* Form Actions */}
+      <div className="sticky bottom-0 bg-white dark:bg-gray-900 p-4 border-t border-gray-200 dark:border-gray-700 mt-4">
         <div className="flex justify-between items-center">
           {/* Delete button (only show when editing) */}
           {isEdit && task && (
@@ -728,16 +709,18 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
                   onClose();
                 }
               }}
+              className="px-4 py-2 text-sm"
             >
-              Delete Task
+              Delete
             </Button>
           )}
 
-          <div className={`flex space-x-3 ${!isEdit || !task ? 'ml-auto' : ''}`}>
+          <div className={`flex gap-2 ${!isEdit || !task ? 'ml-auto' : ''}`}>
             <Button
               type="button"
               variant="secondary"
               onClick={onClose}
+              className="px-4 py-2 text-sm"
             >
               Cancel
             </Button>
@@ -745,8 +728,9 @@ const TaskFormWithDependencies: React.FC<TaskFormWithDependenciesProps> = ({
               type="submit"
               variant="primary"
               form="task-form"
+              className="px-4 py-2 text-sm"
             >
-              {isEdit ? 'Update Task' : 'Create Task'}
+              {isEdit ? 'Update' : 'Create'}
             </Button>
           </div>
         </div>
