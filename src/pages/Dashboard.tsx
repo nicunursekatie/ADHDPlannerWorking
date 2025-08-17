@@ -40,6 +40,7 @@ import { FollowUpTasksModal } from '../components/tasks/FollowUpTasksModal';
 import { FuzzyTaskBreakdownSimple } from '../components/tasks/FuzzyTaskBreakdownSimple';
 import { triggerCelebration, showToastCelebration } from '../utils/celebrations';
 import TimeTrackingAnalytics from '../components/analytics/TimeTrackingAnalytics';
+import { WeeklyTrends } from '../components/analytics/WeeklyTrends';
 
 const Dashboard: React.FC = () => {
   const {
@@ -334,53 +335,101 @@ const Dashboard: React.FC = () => {
   
   return (
     <div className="min-h-screen space-y-4 animate-fadeIn">
-      {/* Quick Navigation Bar */}
-      <div className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700 -mx-4 px-4 py-3 mb-4">
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-          <button
-            onClick={() => document.getElementById('due-today')?.scrollIntoView({ behavior: 'smooth' })}
-            className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl font-semibold text-sm hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors whitespace-nowrap"
-          >
-            🔥 Due Today
-          </button>
-          <button
-            onClick={() => document.getElementById('quick-capture')?.scrollIntoView({ behavior: 'smooth' })}
-            className="px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-xl font-semibold text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors whitespace-nowrap"
-          >
-            ⚡ Quick Capture
-          </button>
-          <button
-            onClick={() => document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' })}
-            className="px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-xl font-semibold text-sm hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors whitespace-nowrap"
-          >
-            🧠 Tools
-          </button>
-          <button
-            onClick={() => document.getElementById('weekly-tasks')?.scrollIntoView({ behavior: 'smooth' })}
-            className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl font-semibold text-sm hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors whitespace-nowrap"
-          >
-            📅 This Week
-          </button>
-          <button
-            onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
-            className="px-4 py-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl font-semibold text-sm hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors whitespace-nowrap"
-          >
-            📁 Projects
-          </button>
-          <button
-            onClick={() => document.getElementById('stats')?.scrollIntoView({ behavior: 'smooth' })}
-            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors whitespace-nowrap"
-          >
-            📊 Stats
-          </button>
-          {tasks.some(task => task.completed && task.actualMinutesSpent) && (
+      {/* Enhanced Quick Navigation Bar */}
+      <div className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-b border-gray-200 dark:border-gray-700 -mx-4 px-4 py-4 mb-6 shadow-sm">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Jump to Section</h2>
+            <span className="text-xs text-gray-500 dark:text-gray-500">Scroll or click to navigate</span>
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
             <button
-              onClick={() => document.getElementById('time-tracking')?.scrollIntoView({ behavior: 'smooth' })}
-              className="px-4 py-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-xl font-semibold text-sm hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors whitespace-nowrap"
+              onClick={() => document.getElementById('due-today')?.scrollIntoView({ behavior: 'smooth' })}
+              className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-100 to-orange-100 dark:from-red-900/30 dark:to-orange-900/30 text-red-700 dark:text-red-300 rounded-xl font-semibold text-sm hover:shadow-md transition-all whitespace-nowrap border border-red-200 dark:border-red-800"
             >
-              ⏱️ Time Insights
+              <div className="w-6 h-6 bg-red-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Clock className="w-3.5 h-3.5 text-white" />
+              </div>
+              Due Today
+              {todayTasks.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-red-600 text-white text-xs rounded-full font-bold">
+                  {todayTasks.length}
+                </span>
+              )}
             </button>
-          )}
+            
+            <button
+              onClick={() => document.getElementById('weekly-trends')?.scrollIntoView({ behavior: 'smooth' })}
+              className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-100 to-purple-100 dark:from-primary-900/30 dark:to-purple-900/30 text-primary-700 dark:text-primary-300 rounded-xl font-semibold text-sm hover:shadow-md transition-all whitespace-nowrap border border-primary-200 dark:border-primary-800"
+            >
+              <div className="w-6 h-6 bg-primary-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <TrendingUp className="w-3.5 h-3.5 text-white" />
+              </div>
+              Weekly Trends
+            </button>
+            
+            <button
+              onClick={() => document.getElementById('quick-capture')?.scrollIntoView({ behavior: 'smooth' })}
+              className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 text-blue-700 dark:text-blue-300 rounded-xl font-semibold text-sm hover:shadow-md transition-all whitespace-nowrap border border-blue-200 dark:border-blue-800"
+            >
+              <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Plus className="w-3.5 h-3.5 text-white" />
+              </div>
+              Quick Capture
+            </button>
+            
+            <button
+              onClick={() => document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' })}
+              className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 rounded-xl font-semibold text-sm hover:shadow-md transition-all whitespace-nowrap border border-purple-200 dark:border-purple-800"
+            >
+              <div className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <BrainCircuit className="w-3.5 h-3.5 text-white" />
+              </div>
+              ADHD Tools
+            </button>
+            
+            <button
+              onClick={() => document.getElementById('weekly-tasks')?.scrollIntoView({ behavior: 'smooth' })}
+              className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 rounded-xl font-semibold text-sm hover:shadow-md transition-all whitespace-nowrap border border-green-200 dark:border-green-800"
+            >
+              <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Calendar className="w-3.5 h-3.5 text-white" />
+              </div>
+              This Week
+              {weekTasks.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-green-600 text-white text-xs rounded-full font-bold">
+                  {weekTasks.length}
+                </span>
+              )}
+            </button>
+            
+            <button
+              onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
+              className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 text-indigo-700 dark:text-indigo-300 rounded-xl font-semibold text-sm hover:shadow-md transition-all whitespace-nowrap border border-indigo-200 dark:border-indigo-800"
+            >
+              <div className="w-6 h-6 bg-indigo-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Folder className="w-3.5 h-3.5 text-white" />
+              </div>
+              Projects
+              {projects.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-indigo-600 text-white text-xs rounded-full font-bold">
+                  {projects.length}
+                </span>
+              )}
+            </button>
+            
+            {tasks.some(task => task.completed && task.actualMinutesSpent) && (
+              <button
+                onClick={() => document.getElementById('time-tracking')?.scrollIntoView({ behavior: 'smooth' })}
+                className="group flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/30 text-orange-700 dark:text-orange-300 rounded-xl font-semibold text-sm hover:shadow-md transition-all whitespace-nowrap border border-orange-200 dark:border-orange-800"
+              >
+                <div className="w-6 h-6 bg-orange-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Clock className="w-3.5 h-3.5 text-white" />
+                </div>
+                Time Insights
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -958,36 +1007,9 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Quick Stats */}
-      <div id="stats" className="animate-fadeInUp" style={{ animationDelay: '1s' }}>
-        <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-          <div className="p-6">
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-              Task Overview
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {overdueTasks.length > 0 && (
-                <div className="text-center p-4 bg-gradient-to-br from-danger-50 to-danger-100 dark:from-danger-900/30 dark:to-danger-800/20 rounded-xl border border-danger-200 dark:border-danger-700 hover:shadow-md transition-all duration-200">
-                  <p className="text-3xl font-bold text-danger-600 dark:text-danger-400 animate-pulse">{overdueTasks.length}</p>
-                  <p className="text-sm text-danger-700 dark:text-danger-300 font-medium mt-1">Overdue</p>
-                </div>
-              )}
-              <div className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl hover:shadow-md transition-all duration-200">
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-200">{incompleteTasks.length}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Active Tasks</p>
-              </div>
-              <div className="text-center p-4 bg-gradient-to-br from-success-50 to-success-100 dark:from-success-900/30 dark:to-success-800/20 rounded-xl hover:shadow-md transition-all duration-200">
-                <p className="text-3xl font-bold text-success-600 dark:text-success-400">{completedTasks.length}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Completed</p>
-              </div>
-              <div className="text-center p-4 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/20 rounded-xl hover:shadow-md transition-all duration-200">
-                <p className="text-3xl font-bold text-primary-600 dark:text-primary-400">{projects.length}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Projects</p>
-              </div>
-            </div>
-          </div>
-        </Card>
+      {/* Weekly Trends - New Enhanced Component */}
+      <div id="weekly-trends" className="animate-fadeInUp" style={{ animationDelay: '1s' }}>
+        <WeeklyTrends tasks={tasks} />
       </div>
       
       {/* Recently Completed at bottom */}
