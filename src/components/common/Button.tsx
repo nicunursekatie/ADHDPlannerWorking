@@ -33,9 +33,9 @@ const Button: React.FC<ButtonProps> = ({
   };
   
   const sizeClasses = {
-    sm: 'px-4 py-2 text-sm min-h-[36px]',
-    md: 'px-6 py-3 text-base min-h-[44px]',
-    lg: 'px-8 py-4 text-lg min-h-[52px]',
+    sm: 'btn-padding-sm text-sm min-h-[32px]',  // 8px 12px padding
+    md: 'btn-padding-md text-base min-h-[40px]', // 12px 16px padding
+    lg: 'btn-padding-lg text-lg min-h-[48px]',   // 16px 24px padding
   };
   
   const widthClass = fullWidth ? 'w-full' : '';

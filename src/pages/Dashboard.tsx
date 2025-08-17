@@ -23,6 +23,7 @@ import { TaskDisplay } from '../components/TaskDisplay';
 import Modal from '../components/common/Modal';
 import TaskForm from '../components/tasks/TaskForm';
 import { QuickCapture } from '../components/tasks/QuickCapture';
+import { CollapsibleSection } from '../components/common/CollapsibleSection';
 import { 
   getTasksDueToday, 
   getTasksDueThisWeek, 
@@ -607,6 +608,9 @@ const Dashboard: React.FC = () => {
         </div>
         </Card>
       </div>
+      
+      <div className="section-divider" />
+      
       {/* PRIORITY #2: Quick Capture - Compact */}
       <div id="quick-capture">
         <Card variant="glass" padding="sm" className="border border-white/20 shadow-md backdrop-blur-xl">
@@ -623,17 +627,22 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
 
+      <div className="section-divider" />
+
       {/* PRIORITY #3: Coming Up This Week */}
-      <div id="weekly-tasks">
-        <Card
-          title={
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-accent-500 to-accent-600 rounded-xl flex items-center justify-center shadow-md">
-                <Calendar className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-display font-bold text-lg">Coming Up This Week</span>
+      <CollapsibleSection
+        id="weekly-tasks"
+        title={
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-accent-500 to-accent-600 rounded-xl flex items-center justify-center shadow-md">
+              <Calendar className="w-4 h-4 text-white" />
             </div>
-          }
+            <span className="font-display font-bold text-lg">Coming Up This Week</span>
+          </div>
+        }
+        headerClassName="p-4 bg-white dark:bg-gray-800 rounded-lg mb-2"
+      >
+        <Card
           padding="md"
           className="shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-xl"
           headerAction={
@@ -668,7 +677,9 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         </Card>
-      </div>
+      </CollapsibleSection>
+
+      <div className="section-divider" />
 
       {/* Hyperfocus Alert */}
       {showHyperfocusAlert && (
@@ -830,51 +841,6 @@ const Dashboard: React.FC = () => {
             )}
           </Card>
 
-          {/* Mini Brain Dump Widget */}
-          <Card className="w-full overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200">
-            <div className="p-4 bg-gradient-to-r from-warning-100 to-warning-50 dark:from-warning-900/40 dark:to-warning-800/30 border-b border-warning-200 dark:border-warning-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <BrainCircuit className="w-5 h-5 text-warning-600 dark:text-warning-400 mr-3 animate-pulse-gentle" />
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">Quick Capture</h3>
-                </div>
-                <Link
-                  to="/brain-dump"
-                  className="text-sm text-warning-600 dark:text-warning-400 hover:text-warning-700 dark:hover:text-warning-300 flex items-center group"
-                >
-                  Full Brain Dump
-                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="bg-gradient-to-r from-warning-50 to-white dark:from-warning-900/20 dark:to-gray-800 rounded-xl p-4 mb-4 border border-warning-200 dark:border-warning-700">
-                <p className="text-warning-900 dark:text-warning-100 font-medium">
-                  💭 Got something on your mind? Capture it before it disappears!
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="text"
-                  className="flex-1 w-full rounded-xl bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-400 dark:focus:ring-primary-400 placeholder-gray-400 dark:placeholder-gray-500 px-4 py-2.5"
-                  placeholder="Type your thought and press Enter..."
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                      handleOpenTaskModal();
-                      e.currentTarget.value = '';
-                    }
-                  }}
-                />
-                <Button
-                  onClick={() => handleOpenTaskModal()}
-                  icon={<Plus size={18} />}
-                  className="w-full sm:w-auto shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-                >
-                  Add Task
-                </Button>
-              </div>
-            </div>
-          </Card>
         </div>
       </div>
 
