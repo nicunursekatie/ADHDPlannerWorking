@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import AppWithAuth from './AppWithAuth.tsx';
 import './index.css';
-import { register } from './utils/serviceWorkerRegistration';
+import { unregister } from './utils/serviceWorkerRegistration';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -10,5 +10,5 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
-// Register service worker for PWA functionality
-register();
+// Unregister service worker to prevent update notifications
+unregister();
