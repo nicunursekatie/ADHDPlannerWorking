@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import AppWithAuth from './AppWithAuth.tsx';
 import './index.css';
-import { unregister } from './utils/serviceWorkerRegistration';
+import { register } from './utils/serviceWorkerRegistration';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -10,5 +10,6 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
-// Unregister service worker to prevent update notifications
-unregister();
+// Register service worker for offline functionality
+// Update notifications are now disabled in the registration code
+register();
