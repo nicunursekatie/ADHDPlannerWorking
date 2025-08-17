@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import HeaderWithAuth from './HeaderWithAuth';
+import { BackToTop } from '../common/BackToTop';
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,6 +20,7 @@ const LayoutWithAuth: React.FC<LayoutProps> = ({ children }) => {
           <p>© {new Date().getFullYear()} ADHD Planner. All rights reserved.</p>
         </div>
       </footer>
+      <BackToTop showAfter={200} />
     </div>
   );
 };

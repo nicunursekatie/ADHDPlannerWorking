@@ -6,6 +6,7 @@ import Modal from '../components/common/Modal';
 import AISettings from '../components/settings/AISettings';
 import { DuplicateCleanup } from '../components/settings/DuplicateCleanup';
 import { ChangePasswordModal } from '../components/settings/ChangePasswordModal';
+import { DestructiveActionModal } from '../components/common/DestructiveActionModal';
 import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Users, Lock } from 'lucide-react';
 import { Category } from '../types';
 import { DatabaseService } from '../services/database';
@@ -826,41 +827,17 @@ const SettingsPageWithMigration: React.FC = () => {
         </div>
       </Modal>
       
-      {/* Reset Modal */}
-      <Modal
+      {/* Reset Modal with Double Confirmation */}
+      <DestructiveActionModal
         isOpen={resetModalOpen}
         onClose={() => setResetModalOpen(false)}
-        title="Reset Data"
-      >
-        <div className="space-y-4">
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-md flex items-start">
-            <AlertCircle size={16} className="mr-2 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium">Warning: This action cannot be undone</p>
-              <p className="text-sm">All your tasks, projects, and categories will be permanently deleted.</p>
-            </div>
-          </div>
-          
-          <p className="text-gray-600 dark:text-gray-400">
-            Consider exporting your data before resetting if you might want to restore it later.
-          </p>
-          
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              variant="secondary"
-              onClick={() => setResetModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleResetConfirm}
-            >
-              Reset All Data
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleResetConfirm}
+        title="Reset All Data"
+        description="All your tasks, projects, and categories will be permanently deleted. Consider exporting your data before resetting if you might want to restore it later."
+        confirmText="This will delete ALL your data permanently. This action cannot be undone!"
+        confirmWord="RESET"
+        actionLabel="Reset All Data"
+      />
       
       {/* Category Modal */}
       <Modal

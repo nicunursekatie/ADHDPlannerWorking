@@ -24,6 +24,7 @@ import Modal from '../components/common/Modal';
 import TaskForm from '../components/tasks/TaskForm';
 import { QuickCapture } from '../components/tasks/QuickCapture';
 import { CollapsibleSection } from '../components/common/CollapsibleSection';
+import { EmptyState } from '../components/common/EmptyState';
 import { 
   getTasksDueToday, 
   getTasksDueThisWeek, 
@@ -589,12 +590,10 @@ const Dashboard: React.FC = () => {
           ))}
           
           {tasksDueToday.length === 0 && overdueTasks.length === 0 && (
-            <div className="text-center py-4 text-success-600 dark:text-success-400">
-              <div className="flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-success-600" />
-                <span className="text-sm font-medium">Nothing due today! 🎉</span>
-              </div>
-            </div>
+            <EmptyState 
+              type="no-tasks-today"
+              onAction={handleOpenTaskModal}
+            />
           )}
           
           {tasksDueToday.length === 0 && overdueTasks.length > 0 && (
@@ -669,11 +668,10 @@ const Dashboard: React.FC = () => {
             ))}
             
             {tasksDueThisWeek.filter(task => !tasksDueToday.some(t => t.id === task.id)).length === 0 && (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>No upcoming tasks this week</p>
-                <p className="text-sm mt-1">Time to plan ahead! 📅</p>
-              </div>
+              <EmptyState 
+                type="no-upcoming"
+                onAction={handleOpenTaskModal}
+              />
             )}
           </div>
         </Card>
