@@ -47,11 +47,27 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    // Optimize build performance
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    // Chunk splitting for better caching
     rollupOptions: {
       input: {
         main: 'index.html',
       },
       output: {
+        // Manual chunk splitting for better caching
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['lucide-react'],
+          'vendor-utils': ['date-fns', 'uuid'],
+          'vendor-dnd': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+        },
         // Ensure MIME types are correctly set
         assetFileNames: (assetInfo) => {
           let extType = (assetInfo.name ?? '').split('.').at(1);
@@ -66,6 +82,8 @@ export default defineConfig({
         entryFileNames: 'assets/js/[name]-[hash].js',
       },
     },
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     fs: {

@@ -1,0 +1,99 @@
+/* Performance-optimized styles */
+
+/* Use CSS containment for better performance */
+.task-card,
+.card {
+  contain: layout style;
+}
+
+/* Optimize animations with will-change */
+.animate-fadeIn {
+  will-change: opacity, transform;
+}
+
+.transition-all {
+  will-change: auto;
+}
+
+/* Defer heavy gradients until interaction */
+.gradient-deferred {
+  background: var(--color-gray-50);
+  transition: background 0.3s ease;
+}
+
+.gradient-deferred:hover,
+.gradient-deferred:focus-within {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+}
+
+/* Use transform3d for hardware acceleration */
+.hw-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimize scrollable containers */
+.scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+}
+
+/* Reduce repaints with pointer-events */
+.no-pointer-events {
+  pointer-events: none;
+}
+
+/* Optimize long lists */
+.virtual-list {
+  contain: strict;
+  overflow-y: auto;
+}
+
+.virtual-list-item {
+  contain: layout;
+  content-visibility: auto;
+}
+
+/* Reduce layout thrashing */
+.fixed-dimensions {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+}
+
+/* Optimize images */
+img {
+  content-visibility: auto;
+  contain-intrinsic-size: 200px;
+}
+
+/* Defer non-critical animations */
+@media (prefers-reduced-motion: no-preference) {
+  .animation-delayed-1 {
+    animation-delay: 100ms;
+  }
+  
+  .animation-delayed-2 {
+    animation-delay: 200ms;
+  }
+  
+  .animation-delayed-3 {
+    animation-delay: 300ms;
+  }
+}
+
+/* Optimize for mobile */
+@media (max-width: 768px) {
+  /* Disable complex animations on mobile */
+  .mobile-no-animation {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  /* Simplify gradients on mobile */
+  .mobile-simple-gradient {
+    background: var(--color-primary) !important;
+  }
+}

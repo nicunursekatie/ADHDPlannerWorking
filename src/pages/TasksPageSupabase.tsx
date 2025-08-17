@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContextSupabase';
 import { Task } from '../types';
 import { TaskDisplay } from '../components/TaskDisplay';
+import { VirtualTaskList } from '../components/tasks/VirtualTaskList';
 import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
 import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
 import ConvertToProject from '../components/tasks/ConvertToProject';
