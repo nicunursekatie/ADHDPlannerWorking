@@ -10,17 +10,19 @@ export function register() {
             registration.update();
           }, 60 * 60 * 1000); // Check every hour
           
-          // Handle updates
+          // Handle updates silently - auto-refresh without prompting
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New content available, prompt user to refresh
-                  if (confirm('New version available! Refresh to update?')) {
-                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                  // New content available, auto-refresh in the background
+                  console.log('New version available, updating...');
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                  // Delay reload slightly to ensure smooth transition
+                  setTimeout(() => {
                     window.location.reload();
-                  }
+                  }, 100);
                 }
               });
             }
