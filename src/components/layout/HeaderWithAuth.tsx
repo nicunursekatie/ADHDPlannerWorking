@@ -7,17 +7,18 @@ import {
   Tag, 
   Calendar, 
   Clock,
-  HelpCircle,
   Menu,
   X,
   Settings,
   Repeat,
-  Sun,
-  Moon,
   LogOut,
+  Command,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAppContext } from '../../context/AppContextSupabase';
+import { DarkModeToggleCompact } from '../common/DarkModeToggle';
 
 const HeaderWithAuth: React.FC = () => {
   const location = useLocation();
@@ -34,7 +35,6 @@ const HeaderWithAuth: React.FC = () => {
     { path: '/tasks', label: 'Tasks', icon: <ClipboardList size={18} /> },
     { path: '/projects', label: 'Projects', icon: <Folder size={18} /> },
     { path: '/categories', label: 'Categories', icon: <Tag size={18} /> },
-    { path: '/recurring-tasks', label: 'Recurring', icon: <Repeat size={18} /> },
     { path: '/calendar', label: 'Calendar', icon: <Calendar size={18} /> },
     { path: '/planner', label: 'Planner', icon: <Clock size={18} /> },
     { path: '/settings', label: 'Settings', icon: <Settings size={18} /> },
@@ -91,14 +91,26 @@ const HeaderWithAuth: React.FC = () => {
               </span>
             )}
             
-            {/* Theme Toggle Button */}
+            {/* Command Palette Hint */}
             <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
-              aria-label="Toggle theme"
+              onClick={() => {
+                const event = new KeyboardEvent('keydown', {
+                  key: 'k',
+                  metaKey: true,
+                  ctrlKey: true,
+                  bubbles: true
+                });
+                window.dispatchEvent(event);
+              }}
+              className="hidden md:inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Open command palette"
             >
-              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+              <Command size={12} />
+              <span>⌘K</span>
             </button>
+            
+            {/* Theme Toggle Button */}
+            <DarkModeToggleCompact />
             
             
             {/* Sign Out Button */}

@@ -161,6 +161,20 @@ body {
   100% { transform: translateY(0); opacity: 1; }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Loading skeleton animation */
+.animate-pulse {
+  animation: shimmer 2s infinite linear;
+}
+
 @keyframes checkmarkDraw {
   0% {
     stroke-dashoffset: 100;
