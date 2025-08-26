@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit, Trash, ArrowRight, Plus, Play, Pause, BarChart3, Clock, AlertTriangle, Calendar } from 'lucide-react';
+import { Edit, Trash, ArrowRight, Plus, Play, Pause, BarChart3, Clock, AlertTriangle, Calendar, CheckCircle2, Archive } from 'lucide-react';
 import { Project } from '../../types';
 import Card from '../common/Card';
 import Button from '../common/Button';
@@ -21,6 +21,8 @@ interface ProjectCardProps {
   completedTaskCount?: number;
   onEdit: (project: Project) => void;
   onDelete: (projectId: string) => void;
+  onComplete?: (projectId: string) => void;
+  onArchive?: (projectId: string) => void;
   stats: ProjectStats;
   isDragging?: boolean;
 }
@@ -31,6 +33,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   completedTaskCount = 0,
   onEdit,
   onDelete,
+  onComplete,
+  onArchive,
   stats,
   isDragging = false,
 }) => {
@@ -98,20 +102,26 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all hover:scale-110"
               title="Edit project"
             >
-              ✏️
+              <Edit className="w-4 h-4" />
             </button>
-            <button
-              className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-all hover:scale-110"
-              title="Pause project"
-            >
-              ⏸️
-            </button>
-            <button
-              className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all hover:scale-110"
-              title="View details"
-            >
-              📊
-            </button>
+            {!project.completed && onComplete && (
+              <button
+                onClick={() => onComplete(project.id)}
+                className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all hover:scale-110"
+                title="Mark as complete"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+              </button>
+            )}
+            {onArchive && (
+              <button
+                onClick={() => onArchive(project.id)}
+                className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-all hover:scale-110"
+                title={project.archived ? "Unarchive project" : "Archive project"}
+              >
+                <Archive className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
         
@@ -225,9 +235,17 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         
         {/* Status Badge */}
         <div className="absolute top-4 right-4">
-          {stats.progress === 100 ? (
+          {project.completed ? (
             <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">
-              ✅ Complete
+              ✅ Completed
+            </div>
+          ) : project.archived ? (
+            <div className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-bold">
+              📦 Archived
+            </div>
+          ) : stats.progress === 100 ? (
+            <div className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">
+              ✅ All tasks done
             </div>
           ) : stats.progress > 0 ? (
             <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold">

@@ -56,6 +56,8 @@ interface SortableProjectCardProps {
   stats: any;
   onEdit: (project: Project) => void;
   onDelete: (projectId: string) => void;
+  onComplete: (projectId: string) => void;
+  onArchive: (projectId: string) => void;
   viewMode: ViewMode;
 }
 
@@ -64,6 +66,8 @@ const SortableProjectCard: React.FC<SortableProjectCardProps> = ({
   stats, 
   onEdit, 
   onDelete,
+  onComplete,
+  onArchive,
   viewMode 
 }) => {
   const {
@@ -89,6 +93,8 @@ const SortableProjectCard: React.FC<SortableProjectCardProps> = ({
           taskCount={stats.totalTasks}
           onEdit={onEdit}
           onDelete={onDelete}
+          onComplete={onComplete}
+          onArchive={onArchive}
           stats={stats}
           isDragging={isDragging}
         />
@@ -194,7 +200,7 @@ const SortableProjectCard: React.FC<SortableProjectCardProps> = ({
 };
 
 const ProjectsPage: React.FC = () => {
-  const { projects, tasks, deleteProject, reorderProjects } = useAppContext();
+  const { projects, tasks, deleteProject, completeProject, archiveProject, reorderProjects } = useAppContext();
   const { confirm, ConfirmDialogComponent } = useConfirmDialog();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -256,6 +262,54 @@ const ProjectsPage: React.FC = () => {
     
     if (confirmed) {
       deleteProject(projectId);
+    }
+  };
+  
+  const handleCompleteProject = async (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    
+    const incompleteTasks = tasks.filter(task => 
+      task.projectId === projectId && 
+      !task.completed &&
+      !task.deletedAt
+    );
+    
+    const message = incompleteTasks.length > 0
+      ? `Are you sure you want to mark "${project.name}" as complete?\n\nThis project still has ${incompleteTasks.length} incomplete task${incompleteTasks.length > 1 ? 's' : ''}.`
+      : `Mark "${project.name}" as complete?`;
+    
+    const confirmed = await confirm({
+      title: 'Complete Project',
+      message,
+      confirmText: 'Mark Complete',
+      cancelText: 'Cancel',
+      variant: 'success'
+    });
+    
+    if (confirmed) {
+      completeProject(projectId);
+    }
+  };
+  
+  const handleArchiveProject = async (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+    
+    const message = project.archived
+      ? `Restore "${project.name}" from archive?`
+      : `Archive "${project.name}"?\n\nArchived projects are hidden from the main view but can be restored anytime.`;
+    
+    const confirmed = await confirm({
+      title: project.archived ? 'Restore Project' : 'Archive Project',
+      message,
+      confirmText: project.archived ? 'Restore' : 'Archive',
+      cancelText: 'Cancel',
+      variant: 'default'
+    });
+    
+    if (confirmed) {
+      archiveProject(projectId);
     }
   };
   
@@ -331,29 +385,34 @@ const ProjectsPage: React.FC = () => {
   
   // Filter projects based on selected filter
   const filteredProjects = useMemo(() => {
-    // Filter out archived projects by default (unless viewing archived)
-    let filtered = filterMode === 'archived' 
-      ? projects.filter(p => p.archived)
-      : projects.filter(p => !p.archived);
+    let filtered = [...projects];
     
     // Apply filters
     switch (filterMode) {
+      case 'all':
+        // Show non-archived, non-completed projects by default
+        filtered = filtered.filter(p => !p.archived && !p.completed);
+        break;
       case 'active':
         filtered = filtered.filter(p => {
           const stats = allProjectStats[p.id];
-          return stats && stats.progress > 0 && stats.progress < 100;
+          return !p.archived && !p.completed && stats && stats.progress > 0 && stats.progress < 100;
         });
         break;
       case 'on-hold':
         // Mock on-hold status based on no recent activity
         filtered = filtered.filter(p => {
+          if (p.archived || p.completed) return false;
           const lastUpdate = new Date(p.updatedAt);
           const daysSinceUpdate = (new Date().getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24);
           return daysSinceUpdate > 14;
         });
         break;
       case 'completed':
-        filtered = filtered.filter(p => p.completed);
+        filtered = filtered.filter(p => p.completed && !p.archived);
+        break;
+      case 'archived':
+        filtered = filtered.filter(p => p.archived);
         break;
     }
     
@@ -588,19 +647,57 @@ const ProjectsPage: React.FC = () => {
                 Filter by Status
               </label>
               <div className="flex flex-wrap gap-2">
-                {(['all', 'active', 'on-hold', 'completed', 'archived'] as FilterMode[]).map(mode => (
-                  <button
-                    key={mode}
-                    onClick={() => setFilterMode(mode)}
-                    className={`px-4 py-2 rounded-xl font-medium transition-all ${
-                      filterMode === mode
-                        ? 'bg-primary-500 text-white shadow-md'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {mode.charAt(0).toUpperCase() + mode.slice(1).replace('-', ' ')}
-                  </button>
-                ))}
+                {(['all', 'active', 'on-hold', 'completed', 'archived'] as FilterMode[]).map(mode => {
+                  // Calculate counts for each filter
+                  const getCount = () => {
+                    switch(mode) {
+                      case 'all':
+                        return projects.filter(p => !p.archived && !p.completed).length;
+                      case 'active':
+                        return projects.filter(p => {
+                          const stats = allProjectStats[p.id];
+                          return !p.archived && !p.completed && stats && stats.progress > 0 && stats.progress < 100;
+                        }).length;
+                      case 'on-hold':
+                        return projects.filter(p => {
+                          if (p.archived || p.completed) return false;
+                          const lastUpdate = new Date(p.updatedAt);
+                          const daysSinceUpdate = (new Date().getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24);
+                          return daysSinceUpdate > 14;
+                        }).length;
+                      case 'completed':
+                        return projects.filter(p => p.completed && !p.archived).length;
+                      case 'archived':
+                        return projects.filter(p => p.archived).length;
+                      default:
+                        return 0;
+                    }
+                  };
+                  const count = getCount();
+                  
+                  return (
+                    <button
+                      key={mode}
+                      onClick={() => setFilterMode(mode)}
+                      className={`px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2 ${
+                        filterMode === mode
+                          ? 'bg-primary-500 text-white shadow-md'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {mode.charAt(0).toUpperCase() + mode.slice(1).replace('-', ' ')}
+                      {count > 0 && (
+                        <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
+                          filterMode === mode
+                            ? 'bg-white/20 text-white'
+                            : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
+                        }`}>
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             
@@ -670,6 +767,8 @@ const ProjectsPage: React.FC = () => {
                       stats={stats}
                       onEdit={handleOpenModal}
                       onDelete={handleDeleteProject}
+                      onComplete={handleCompleteProject}
+                      onArchive={handleArchiveProject}
                       viewMode={viewMode}
                     />
                   );
@@ -695,6 +794,8 @@ const ProjectsPage: React.FC = () => {
                       stats={stats}
                       onEdit={handleOpenModal}
                       onDelete={handleDeleteProject}
+                      onComplete={handleCompleteProject}
+                      onArchive={handleArchiveProject}
                       viewMode={viewMode}
                     />
                   );
