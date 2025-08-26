@@ -17,6 +17,34 @@ interface WeeklyTrendsProps {
 }
 
 export const WeeklyTrends: React.FC<WeeklyTrendsProps> = ({ tasks }) => {
+  const calculateStreak = (tasks: Task[]): number => {
+    const now = new Date();
+    let streak = 0;
+    
+    for (let i = 0; i < 30; i++) {
+      const checkDate = new Date(now);
+      checkDate.setDate(checkDate.getDate() - i);
+      checkDate.setHours(0, 0, 0, 0);
+      
+      const nextDate = new Date(checkDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+      
+      const hasCompletedTask = tasks.some(task => {
+        if (!task.completed) return false;
+        const completedDate = new Date(task.updatedAt);
+        return completedDate >= checkDate && completedDate < nextDate;
+      });
+      
+      if (hasCompletedTask) {
+        streak++;
+      } else if (i > 0) {
+        break;
+      }
+    }
+    
+    return streak;
+  };
+
   const trends = useMemo(() => {
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -94,34 +122,6 @@ export const WeeklyTrends: React.FC<WeeklyTrendsProps> = ({ tasks }) => {
       streak: calculateStreak(tasks)
     };
   }, [tasks]);
-  
-  const calculateStreak = (tasks: Task[]): number => {
-    const now = new Date();
-    let streak = 0;
-    
-    for (let i = 0; i < 30; i++) {
-      const checkDate = new Date(now);
-      checkDate.setDate(checkDate.getDate() - i);
-      checkDate.setHours(0, 0, 0, 0);
-      
-      const nextDate = new Date(checkDate);
-      nextDate.setDate(nextDate.getDate() + 1);
-      
-      const hasCompletedTask = tasks.some(task => {
-        if (!task.completed) return false;
-        const completedDate = new Date(task.updatedAt);
-        return completedDate >= checkDate && completedDate < nextDate;
-      });
-      
-      if (hasCompletedTask) {
-        streak++;
-      } else if (i > 0) {
-        break;
-      }
-    }
-    
-    return streak;
-  };
   
   const getTrendIcon = (current: number, previous: number) => {
     if (current > previous) return <TrendingUp className="w-4 h-4 text-success-600 dark:text-success-400" />;
