@@ -351,9 +351,9 @@ const Dashboard: React.FC = () => {
                 <Clock className="w-3.5 h-3.5 text-white" />
               </div>
               Due Today
-              {todayTasks.length > 0 && (
+              {tasksDueToday.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-red-600 text-white text-xs rounded-full font-bold">
-                  {todayTasks.length}
+                  {tasksDueToday.length}
                 </span>
               )}
             </button>
@@ -396,9 +396,9 @@ const Dashboard: React.FC = () => {
                 <Calendar className="w-3.5 h-3.5 text-white" />
               </div>
               This Week
-              {weekTasks.length > 0 && (
+              {tasksDueThisWeek.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-green-600 text-white text-xs rounded-full font-bold">
-                  {weekTasks.length}
+                  {tasksDueThisWeek.length}
                 </span>
               )}
             </button>
