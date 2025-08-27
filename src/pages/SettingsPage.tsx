@@ -7,6 +7,7 @@ import AISettings from '../components/settings/AISettings';
 import { DuplicateCleanupLocal } from '../components/settings/DuplicateCleanupLocal';
 import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Users } from 'lucide-react';
 import { Category } from '../types';
+import { BackToTop } from '../components/common/BackToTop';
 
 const SettingsPage: React.FC = () => {
   const { exportData, importData, resetData, initializeSampleData, categories, addCategory, updateCategory, deleteCategory, settings, updateSettings } = useAppContext();
@@ -890,6 +891,7 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+      <BackToTop />
     </div>
   );
 };

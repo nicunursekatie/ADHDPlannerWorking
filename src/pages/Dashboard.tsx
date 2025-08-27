@@ -41,6 +41,7 @@ import { FuzzyTaskBreakdownSimple } from '../components/tasks/FuzzyTaskBreakdown
 import { triggerCelebration, showToastCelebration } from '../utils/celebrations';
 import TimeTrackingAnalytics from '../components/analytics/TimeTrackingAnalytics';
 import { WeeklyTrends } from '../components/analytics/WeeklyTrends';
+import { BackToTop } from '../components/common/BackToTop';
 
 const Dashboard: React.FC = () => {
   const {
@@ -1177,6 +1178,8 @@ const Dashboard: React.FC = () => {
           }}
         />
       )}
+      
+      <BackToTop />
     </div>
   );
 };

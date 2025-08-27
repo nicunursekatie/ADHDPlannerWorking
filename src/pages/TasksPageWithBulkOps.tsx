@@ -10,6 +10,7 @@ import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Empty from '../components/common/Empty';
+import { BackToTop } from '../components/common/BackToTop';
 import { QuickCapture } from '../components/tasks/QuickCapture';
 import { 
   Plus, Filter, X, Undo2, Archive, 
@@ -1621,6 +1622,7 @@ const TasksPageWithBulkOps: React.FC = () => {
       
       {/* Confirmation Dialog */}
       <ConfirmDialogComponent />
+      <BackToTop />
     </div>
   );
 };

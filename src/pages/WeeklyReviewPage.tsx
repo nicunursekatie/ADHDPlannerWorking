@@ -1,5 +1,6 @@
 import React from 'react';
 import WeeklyReviewSystemFixed from '../components/planning/weekly-review/WeeklyReviewSystemFixed';
+import { BackToTop } from '../components/common/BackToTop';
 
 const WeeklyReviewPage: React.FC = () => {
   return (
@@ -47,6 +48,7 @@ const WeeklyReviewPage: React.FC = () => {
           </p>
         </div>
       </div>
+      <BackToTop />
     </div>
   );
 };

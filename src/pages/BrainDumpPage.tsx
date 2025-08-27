@@ -1,5 +1,6 @@
 import React from 'react';
 import BrainDumpPrompt from '../components/tasks/BrainDumpPrompt';
+import { BackToTop } from '../components/common/BackToTop';
 
 const BrainDumpPage: React.FC = () => {
   return (
@@ -49,6 +50,7 @@ const BrainDumpPage: React.FC = () => {
           </div>
         </div>
       </div>
+      <BackToTop />
     </div>
   );
 };

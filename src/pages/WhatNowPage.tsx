@@ -3,6 +3,7 @@ import { Task } from '../types';
 import WhatNowWizard from '../components/whatnow/WhatNowWizard';
 import Modal from '../components/common/Modal';
 import TaskForm from '../components/tasks/TaskForm';
+import { BackToTop } from '../components/common/BackToTop';
 
 const WhatNowPage: React.FC = () => {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -52,6 +53,7 @@ const WhatNowPage: React.FC = () => {
           isEdit={true}
         />
       </Modal>
+      <BackToTop />
     </div>
   );
 };

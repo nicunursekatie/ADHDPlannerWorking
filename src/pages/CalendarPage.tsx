@@ -4,6 +4,7 @@ import CalendarView from '../components/planning/calendar/CalendarView';
 import WorkScheduleSelector from '../components/planning/calendar/WorkScheduleSelector';
 import Modal from '../components/common/Modal';
 import TaskForm from '../components/tasks/TaskForm';
+import { BackToTop } from '../components/common/BackToTop';
 
 const CalendarPage: React.FC = () => {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -70,6 +71,7 @@ const CalendarPage: React.FC = () => {
           isEdit={true}
         />
       </Modal>
+      <BackToTop />
     </div>
   );
 };

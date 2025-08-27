@@ -45,6 +45,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
+import { BackToTop } from '../components/common/BackToTop';
 
 type ViewMode = 'grid' | 'list' | 'kanban';
 type FilterMode = 'all' | 'active' | 'on-hold' | 'completed' | 'archived';
@@ -937,6 +938,7 @@ const ProjectsPage: React.FC = () => {
       
       {/* Confirmation Dialog */}
       <ConfirmDialogComponent />
+      <BackToTop />
     </div>
   );
 };
