@@ -26,6 +26,7 @@ interface AppContextType {
   deleteTask: (taskId: string) => Promise<void>;
   completeTask: (taskId: string) => Promise<void>;
   archiveCompletedTasks: () => Promise<void>;
+  archiveProjectCompletedTasks: (projectId: string) => Promise<void>;
   undoDelete: () => Promise<void>;
   hasRecentlyDeleted: boolean;
   
@@ -622,6 +623,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setTasks(prev => {
       const updatedTasks = prev.map(task => {
         if (task.completed && !task.archived) {
+          return {
+            ...task,
+            archived: true,
+            updatedAt: timestamp,
+          };
+        }
+        return task;
+      });
+      return computeSubtasks(updatedTasks);
+    });
+  }, [user, tasks, computeSubtasks]);
+
+  const archiveProjectCompletedTasks = useCallback(async (projectId: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    const timestamp = new Date().toISOString();
+    
+    // Find all completed tasks for this project and set them as archived
+    const tasksToArchive = tasks.filter(task => 
+      task.projectId === projectId && 
+      task.completed && 
+      !task.archived
+    );
+    
+    for (const task of tasksToArchive) {
+      const updatedTask = {
+        ...task,
+        archived: true,
+        updatedAt: timestamp,
+      };
+      await DatabaseService.updateTask(task.id, updatedTask, user.id);
+    }
+    
+    setTasks(prev => {
+      const updatedTasks = prev.map(task => {
+        if (task.projectId === projectId && task.completed && !task.archived) {
           return {
             ...task,
             archived: true,
@@ -1732,6 +1769,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     deleteTask,
     completeTask,
     archiveCompletedTasks,
+    archiveProjectCompletedTasks,
     undoDelete,
     hasRecentlyDeleted,
     

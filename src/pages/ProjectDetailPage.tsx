@@ -14,7 +14,7 @@ import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
 const ProjectDetailPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const { projects, tasks, categories, deleteProject, deleteTask, updateTask, completeProject, archiveProject } = useAppContext();
+  const { projects, tasks, categories, deleteProject, deleteTask, updateTask, completeProject, archiveProject, archiveProjectCompletedTasks } = useAppContext();
   
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -41,6 +41,8 @@ const ProjectDetailPage: React.FC = () => {
     !task.deletedAt 
     // Note: Removed !task.archived to show completed/archived tasks
   );
+  
+  const completedTasksInProject = projectTasks.filter(task => task.completed && !task.archived);
   
   const handleOpenTaskModal = (task?: Task) => {
     if (task) {
@@ -195,14 +197,29 @@ const ProjectDetailPage: React.FC = () => {
             ({projectTasks.length})
           </span>
         </h2>
-        <Button
-          variant="primary"
-          size="sm"
-          icon={<Plus size={16} />}
-          onClick={() => handleOpenTaskModal()}
-        >
-          Add Task
-        </Button>
+        <div className="flex space-x-2">
+          {completedTasksInProject.length > 0 && (
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Archive size={16} />}
+              onClick={async () => {
+                await archiveProjectCompletedTasks(projectId);
+              }}
+              title={`Archive ${completedTasksInProject.length} completed task${completedTasksInProject.length === 1 ? '' : 's'}`}
+            >
+              Archive Completed ({completedTasksInProject.length})
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            size="sm"
+            icon={<Plus size={16} />}
+            onClick={() => handleOpenTaskModal()}
+          >
+            Add Task
+          </Button>
+        </div>
       </div>
       
       {/* Task list */}
