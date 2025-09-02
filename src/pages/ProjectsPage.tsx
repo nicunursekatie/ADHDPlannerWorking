@@ -19,7 +19,8 @@ import {
   TrendingUp,
   Calendar,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  Archive
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -313,6 +314,28 @@ const ProjectsPage: React.FC = () => {
       archiveProject(projectId);
     }
   };
+
+  const handleBulkArchiveCompleted = async () => {
+    const completedProjects = projects.filter(p => p.completed && !p.archived);
+    
+    if (completedProjects.length === 0) return;
+    
+    const message = `Archive ${completedProjects.length} completed project${completedProjects.length === 1 ? '' : 's'}?\n\nThey will be hidden from the main view but can be restored anytime.`;
+    
+    const confirmed = await confirm({
+      title: 'Archive Completed Projects',
+      message,
+      confirmText: `Archive ${completedProjects.length} Project${completedProjects.length === 1 ? '' : 's'}`,
+      cancelText: 'Cancel',
+      variant: 'default'
+    });
+    
+    if (confirmed) {
+      for (const project of completedProjects) {
+        await archiveProject(project.id);
+      }
+    }
+  };
   
   // Calculate project statistics - memoized to prevent excessive recalculation
   const getProjectStats = React.useCallback((projectId: string) => {
@@ -491,6 +514,8 @@ const ProjectsPage: React.FC = () => {
     return stats.progress > 0 && stats.progress < 100;
   }).length;
 
+  const completedCount = projects.filter(p => p.completed && !p.archived).length;
+
   // Drag and drop handlers
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -624,6 +649,18 @@ const ProjectsPage: React.FC = () => {
               Filters
               <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
             </button>
+            
+            {/* Bulk Archive Completed Projects Button */}
+            {completedCount > 0 && (
+              <button
+                onClick={handleBulkArchiveCompleted}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 rounded-xl font-semibold transition-all flex items-center gap-2"
+                title={`Archive ${completedCount} completed project${completedCount === 1 ? '' : 's'}`}
+              >
+                <Archive className="w-4 h-4" />
+                Archive Completed ({completedCount})
+              </button>
+            )}
             
             {/* New Project Button */}
             <Button
