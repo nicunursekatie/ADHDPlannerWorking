@@ -644,7 +644,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const tasksToArchive = tasks.filter(task => 
       task.projectId === projectId && 
       task.completed && 
-      !task.archived
+      !task.archived &&
+      !task.deletedAt
     );
     
     for (const task of tasksToArchive) {
@@ -658,7 +659,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     setTasks(prev => {
       const updatedTasks = prev.map(task => {
-        if (task.projectId === projectId && task.completed && !task.archived) {
+        if (task.projectId === projectId && task.completed && !task.archived && !task.deletedAt) {
           return {
             ...task,
             archived: true,

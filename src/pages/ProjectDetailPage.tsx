@@ -42,7 +42,13 @@ const ProjectDetailPage: React.FC = () => {
     // Note: Removed !task.archived to show completed/archived tasks
   );
   
-  const completedTasksInProject = projectTasks.filter(task => task.completed && !task.archived);
+  // Get ALL completed tasks in project (including subtasks) for accurate count
+  const completedTasksInProject = tasks.filter(task => 
+    task.projectId === projectId && 
+    task.completed && 
+    !task.archived &&
+    !task.deletedAt
+  );
   
   const handleOpenTaskModal = (task?: Task) => {
     if (task) {
