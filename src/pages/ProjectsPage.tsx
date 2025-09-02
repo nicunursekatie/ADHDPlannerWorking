@@ -89,7 +89,13 @@ const SortableProjectCard: React.FC<SortableProjectCardProps> = ({
 
   if (viewMode === 'grid') {
     return (
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <div 
+        ref={setNodeRef} 
+        style={style} 
+        {...attributes} 
+        {...listeners}
+        tabIndex={-1} // Prevent focus on drag handle
+      >
         <ProjectCard
           project={project}
           taskCount={stats.totalTasks}
@@ -106,7 +112,13 @@ const SortableProjectCard: React.FC<SortableProjectCardProps> = ({
 
   if (viewMode === 'list') {
     return (
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <div 
+        ref={setNodeRef} 
+        style={style} 
+        {...attributes} 
+        {...listeners}
+        tabIndex={-1} // Prevent focus on drag handle
+      >
         <Card
           variant="glass"
           className={`cursor-move ${
@@ -213,11 +225,18 @@ const ProjectsPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   
-  // Setup drag and drop sensors
+  // Scroll to top when component mounts to prevent focus issues
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+  
+  // Setup drag and drop sensors with proper constraints
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 10, // Increased distance to prevent accidental drags
+        delay: 100,   // Added delay to prevent immediate drag activation
+        tolerance: 5  // Added tolerance for slight movements
       },
     }),
     useSensor(KeyboardSensor, {
@@ -581,7 +600,7 @@ const ProjectsPage: React.FC = () => {
   
   
   return (
-    <div className="min-h-screen space-y-6 animate-fadeIn">
+    <div className="min-h-screen space-y-6 animate-fadeIn" style={{ scrollBehavior: 'auto' }}>
       {/* Enhanced Header */}
       <Card 
         variant="glass-purple" 
