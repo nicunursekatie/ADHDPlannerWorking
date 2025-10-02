@@ -238,7 +238,7 @@ const Dashboard: React.FC = () => {
     
     for (const task of followUpTasks) {
       const newTask: Task = {
-        id: Date.now().toString() + Math.random(),
+        id: crypto.randomUUID(),
         title: task.title || '',
         description: task.description || `Follow-up from: ${completedTaskForFollowUp?.title}`,
         completed: false,
