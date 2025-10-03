@@ -270,35 +270,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       try {
         // Get all task dependencies for user's tasks
         const userTaskIds = tasksWithSubtasks.map(t => t.id);
-        const { data: allDependencies, error } = await supabase
-          .from('task_dependencies')
-          .select('task_id, depends_on_task_id')
-          .or(`task_id.in.(${userTaskIds.join(',')}),depends_on_task_id.in.(${userTaskIds.join(',')})`);
-        
-        // Only process if we have tasks
+
+        // Only query if we have tasks
         if (userTaskIds.length === 0) {
           tasksWithDependencies = tasksWithSubtasks;
-        } else if (!error && allDependencies) {
-          const dependsOnMap = new Map<string, string[]>();
-          const dependedOnByMap = new Map<string, string[]>();
-          
-          allDependencies.forEach(dep => {
-            if (!dependsOnMap.has(dep.task_id)) {
-              dependsOnMap.set(dep.task_id, []);
-            }
-            dependsOnMap.get(dep.task_id)!.push(dep.depends_on_task_id);
-            
-            if (!dependedOnByMap.has(dep.depends_on_task_id)) {
-              dependedOnByMap.set(dep.depends_on_task_id, []);
-            }
-            dependedOnByMap.get(dep.depends_on_task_id)!.push(dep.task_id);
-          });
-          
-          tasksWithDependencies = tasksWithSubtasks.map(task => ({
-            ...task,
-            dependsOn: dependsOnMap.get(task.id) || [],
-            dependedOnBy: dependedOnByMap.get(task.id) || []
-          }));
+        } else {
+          const { data: allDependencies, error } = await supabase
+            .from('task_dependencies')
+            .select('task_id, depends_on_task_id')
+            .or(`task_id.in.(${userTaskIds.join(',')}),depends_on_task_id.in.(${userTaskIds.join(',')})`);
+
+          if (!error && allDependencies) {
+            const dependsOnMap = new Map<string, string[]>();
+            const dependedOnByMap = new Map<string, string[]>();
+
+            allDependencies.forEach(dep => {
+              if (!dependsOnMap.has(dep.task_id)) {
+                dependsOnMap.set(dep.task_id, []);
+              }
+              dependsOnMap.get(dep.task_id)!.push(dep.depends_on_task_id);
+
+              if (!dependedOnByMap.has(dep.depends_on_task_id)) {
+                dependedOnByMap.set(dep.depends_on_task_id, []);
+              }
+              dependedOnByMap.get(dep.depends_on_task_id)!.push(dep.task_id);
+            });
+
+            tasksWithDependencies = tasksWithSubtasks.map(task => ({
+              ...task,
+              dependsOn: dependsOnMap.get(task.id) || [],
+              dependedOnBy: dependedOnByMap.get(task.id) || []
+            }));
+          }
         }
       } catch (error) {
         console.error('Error fetching task dependencies:', error);
@@ -349,52 +352,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setIsLoading(false);
     }
   }, [computeSubtasks, supabase]);
-
-  // Helper function to compute dependencies for all tasks
-  const computeDependencies = useCallback(async (tasksList: Task[], userId: string): Promise<Task[]> => {
-    if (!userId || tasksList.length === 0) return tasksList;
-    
-    try {
-      // Fetch all dependencies for the user
-      const { data: allDependencies, error } = await supabase
-        .from('task_dependencies')
-        .select('task_id, depends_on_task_id')
-        .eq('user_id', userId);
-      
-      if (error) {
-        console.error('Error fetching task dependencies:', error);
-        return tasksList;
-      }
-      
-      // Build dependency maps
-      const dependsOnMap = new Map<string, string[]>();
-      const dependedOnByMap = new Map<string, string[]>();
-      
-      allDependencies?.forEach(dep => {
-        // Build dependsOn map
-        if (!dependsOnMap.has(dep.task_id)) {
-          dependsOnMap.set(dep.task_id, []);
-        }
-        dependsOnMap.get(dep.task_id)!.push(dep.depends_on_task_id);
-        
-        // Build dependedOnBy map
-        if (!dependedOnByMap.has(dep.depends_on_task_id)) {
-          dependedOnByMap.set(dep.depends_on_task_id, []);
-        }
-        dependedOnByMap.get(dep.depends_on_task_id)!.push(dep.task_id);
-      });
-      
-      // Add dependency arrays to tasks
-      return tasksList.map(task => ({
-        ...task,
-        dependsOn: dependsOnMap.get(task.id) || [],
-        dependedOnBy: dependedOnByMap.get(task.id) || []
-      }));
-    } catch (error) {
-      console.error('Error computing task dependencies:', error);
-      return tasksList;
-    }
-  }, [supabase]);
 
   // Clean up old deleted tasks
   useEffect(() => {

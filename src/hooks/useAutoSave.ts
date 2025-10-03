@@ -105,24 +105,22 @@ export const useAutoSave = ({
   useEffect(() => {
     if (!enabled) return;
 
-    const handleBeforeUnload = async (event: BeforeUnloadEvent) => {    
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (hasPendingChangesRef.current) {
-        console.log('Auto-save: Page unloading with pending changes, saving immediately');
-        await saveImmediately();
-        
-        // Show warning to user that changes are being saved
+        // Warning: beforeunload cannot wait for async operations
+        // We can only warn the user about unsaved changes
         event.preventDefault();
-        event.returnValue = 'Changes are being saved...';
-        return 'Changes are being saved...';
+        event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return 'You have unsaved changes. Are you sure you want to leave?';
       }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [enabled, saveImmediately]);
+  }, [enabled]);
 
   // Cleanup on unmount
   useEffect(() => {

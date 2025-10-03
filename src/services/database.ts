@@ -1,15 +1,14 @@
 import { supabase } from '../lib/supabase';
-import { 
-  Task, 
-  Project, 
-  Category, 
-  RecurringTask, 
-  DailyPlan, 
-  JournalEntry, 
+import {
+  Task,
+  Project,
+  Category,
+  RecurringTask,
+  DailyPlan,
+  JournalEntry,
   WorkSchedule,
-  AppSettings 
+  AppSettings
 } from '../types';
-import { DatabaseService } from '@/services/database'; // or adjust path if needed
 
 export class DatabaseService {
   // Helper to map database snake_case to TypeScript camelCase

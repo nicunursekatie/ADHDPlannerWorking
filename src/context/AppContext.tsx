@@ -55,29 +55,41 @@ export const AppProvider = ({ children }) => {
 
         try {
           loadedTasks = localStorage.getTasks();
-        } catch {}
+        } catch (error) {
+          console.warn('Failed to load tasks from localStorage:', error);
+        }
 
         try {
           loadedProjects = localStorage.getProjects();
-        } catch {}
+        } catch (error) {
+          console.warn('Failed to load projects from localStorage:', error);
+        }
 
         try {
           loadedCategories = localStorage.getCategories();
-        } catch {}
+        } catch (error) {
+          console.warn('Failed to load categories from localStorage:', error);
+        }
 
         // dailyPlans intentionally skipped
 
         try {
           loadedWorkSchedule = localStorage.getWorkSchedule();
-        } catch {}
+        } catch (error) {
+          console.warn('Failed to load work schedule from localStorage:', error);
+        }
 
         try {
           loadedJournalEntries = localStorage.getJournalEntries();
-        } catch {}
+        } catch (error) {
+          console.warn('Failed to load journal entries from localStorage:', error);
+        }
 
         try {
           loadedSettings = localStorage.getSettings();
-        } catch {}
+        } catch (error) {
+          console.warn('Failed to load settings from localStorage:', error);
+        }
 
         setTasks(loadedTasks);
         setProjects(loadedProjects);

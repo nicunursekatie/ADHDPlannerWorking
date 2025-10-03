@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Task } from '../../types';
 import { useAppContext } from '../../context/AppContextSupabase';
 import { Plus, X, ChevronDown, ChevronRight, Clock } from 'lucide-react';
@@ -19,31 +19,23 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
   const [expanded, setExpanded] = useState(true);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [newSubtaskTime, setNewSubtaskTime] = useState<number>(15);
-  
-  // Log props for debugging
-  useEffect(() => {
-  }, [parentTaskId, existingSubtasks]);
-  
+
   // Get the actual subtask objects
-  const subtasks = tasks.filter(task => 
+  const subtasks = tasks.filter(task =>
     existingSubtasks.includes(task.id) || task.parentTaskId === parentTaskId
   );
-  
-  // Add this for clarity:
-  useEffect(() => {
-  }, [subtasks, parentTaskId]);
-  
+
   // Toggle expand/collapse
   const toggleExpand = () => {
     setExpanded(!expanded);
   };
   
   // Add a new subtask
-  const handleAddSubtask = () => {
+  const handleAddSubtask = async () => {
     if (!newSubtaskTitle.trim()) return;
-    
+
     const timestamp = new Date().toISOString();
-    const newTask = addTask({
+    const newTask = await addTask({
       title: newSubtaskTitle,
       parentTaskId: parentTaskId,
       completed: false,
@@ -51,10 +43,10 @@ const SubtaskList: React.FC<SubtaskListProps> = ({
       createdAt: timestamp,
       updatedAt: timestamp
     });
-    
+
     // Update the parent's subtask list
     onSubtasksChange([...existingSubtasks, newTask.id]);
-    
+
     // Clear the input
     setNewSubtaskTitle('');
     setNewSubtaskTime(15); // Reset to default time

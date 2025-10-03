@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContextSupabase';
 import { Task } from '../types';
 import { TaskDisplay } from "../components/TaskDisplay";
@@ -15,24 +15,22 @@ const ProjectDetailPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { projects, tasks, categories, deleteProject, deleteTask, updateTask, completeProject, archiveProject, archiveProjectCompletedTasks } = useAppContext();
-  
+
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showAIBreakdown, setShowAIBreakdown] = useState(false);
   const [aiBreakdownTask, setAiBreakdownTask] = useState<Task | null>(null);
-  
+
   if (!projectId) {
-    navigate('/projects');
-    return null;
+    return <Navigate to="/projects" replace />;
   }
-  
+
   const project = projects.find(p => p.id === projectId);
-  
+
   if (!project) {
-    navigate('/projects');
-    return null;
+    return <Navigate to="/projects" replace />;
   }
   
   const projectTasks = tasks.filter(
