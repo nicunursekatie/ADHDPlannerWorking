@@ -1,11 +1,10 @@
 import { Task, Project, Category, WhatNowCriteria } from '../types';
-import { v4 as uuidv4 } from 'uuid';
 import { formatDateString, isToday, isPastDate, getDaysBetween } from './dateUtils';
 import { sortTasks as sortTasksByMode } from './taskPrioritization';
 
-// Generate a unique ID
+// Generate a unique ID using crypto.randomUUID()
 export const generateId = (): string => {
-  return uuidv4();
+  return crypto.randomUUID();
 };
 
 // Format date to YYYY-MM-DD

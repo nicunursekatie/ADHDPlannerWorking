@@ -235,10 +235,9 @@ const Dashboard: React.FC = () => {
   // Handle follow-up tasks confirmation
   const handleFollowUpTasksConfirm = async (followUpTasks: Partial<Task>[]) => {
     console.log('[Dashboard] Creating follow-up tasks', followUpTasks);
-    
+
     for (const task of followUpTasks) {
-      const newTask: Task = {
-        id: crypto.randomUUID(),
+      const newTask: Partial<Task> = {
         title: task.title || '',
         description: task.description || `Follow-up from: ${completedTaskForFollowUp?.title}`,
         completed: false,
@@ -255,7 +254,7 @@ const Dashboard: React.FC = () => {
         estimatedMinutes: task.estimatedMinutes ?? undefined,
         parentTaskId: null
       };
-      
+
       await addTask(newTask);
     }
     
@@ -1155,7 +1154,6 @@ const Dashboard: React.FC = () => {
             for (const newTask of newTasks) {
               await addTask({
                 ...newTask,
-                id: Date.now().toString() + Math.random(),
                 completed: false,
                 archived: false,
                 createdAt: new Date().toISOString(),
