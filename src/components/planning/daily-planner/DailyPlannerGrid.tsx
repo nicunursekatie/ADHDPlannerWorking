@@ -127,7 +127,7 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: task.id });
     const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
     return (
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none w-full">
         <TaskDisplay 
           task={task}
           onToggle={(id) => updateTask({ ...task, completed: !task.completed })}
@@ -342,7 +342,7 @@ const DailyPlannerGrid: React.FC<DailyPlannerGridProps> = ({ date }) => {
           <div className="xl:sticky xl:top-6 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto">
             <div className="bg-white rounded-lg shadow-sm p-4">
               <h2 className="text-lg font-semibold mb-3">Unscheduled Tasks</h2>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {unscheduledTasks.length > 0 ? (
                   unscheduledTasks.map(task => <DraggableTask key={task.id} task={task} />)
                 ) : (

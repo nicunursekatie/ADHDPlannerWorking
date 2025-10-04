@@ -154,7 +154,7 @@ export const TasksPageSupabase: React.FC = () => {
   const [filterBy, setFilterBy] = useState<'all' | 'completed' | 'active' | 'overdue' | 'today' | 'week' | 'actionable' | 'future' | 'project' | 'category' | 'archived'>('all');
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'smart' | 'dueDate' | 'priority' | 'created' | 'alphabetical' | 'energy' | 'estimated' | 'project'>('smart');
+  const [sortBy, setSortBy] = useState<'smart' | 'dueDate' | 'priority' | 'created' | 'alphabetical' | 'energy' | 'estimated' | 'project'>('project');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showQuickCapture, setShowQuickCapture] = useState(false);
   
@@ -1008,39 +1008,68 @@ export const TasksPageSupabase: React.FC = () => {
             {sortBy === 'project' ? (
               // Group tasks by project
               groupTasksByProjectAndDueDate(filteredTasks, projects).map(group => (
-                <div key={group.projectId} className="mb-6">
+                <Card
+                  key={group.projectId}
+                  className="mb-6 overflow-hidden border-l-4 shadow-md"
+                  style={{ borderLeftColor: group.projectColor }}
+                >
                   {/* Project Header */}
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
-                    <Folder className="w-5 h-5" style={{ color: group.projectColor }} />
-                    <h3 className="text-lg font-semibold" style={{ color: group.projectColor }}>
-                      {group.projectName}
-                    </h3>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      ({group.tasks.length} task{group.tasks.length !== 1 ? 's' : ''})
-                    </span>
+                  <div
+                    className="px-6 py-4 border-b-2"
+                    style={{
+                      borderBottomColor: group.projectColor,
+                      backgroundColor: `${group.projectColor}08`
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="p-2 rounded-lg"
+                        style={{ backgroundColor: `${group.projectColor}15` }}
+                      >
+                        <FolderOpen className="w-6 h-6" style={{ color: group.projectColor }} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold" style={{ color: group.projectColor }}>
+                          {group.projectName}
+                        </h3>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {group.tasks.length} task{group.tasks.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                   {/* Tasks for this project */}
-                  <div className="space-y-2 ml-4">
-                    {group.tasks.map(task => (
+                  <div className="px-4 py-3 space-y-3 bg-gray-50/50 dark:bg-gray-800/50">
+                    {group.tasks.map((task, index) => (
                       <ErrorBoundary key={task.id}>
-                        <BulkTaskCard
-                          task={task}
-                          isSelected={selectedTasks.has(task.id)}
-                          onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
-                          onEdit={(task) => {
-                            setEditingTask(task);
-                            setShowTaskForm(true);
-                          }}
-                          onDelete={handleDeleteTask}
-                          onBreakdown={handleAIBreakdown}
-                          onConvertToProject={handleConvertToProject}
-                          onToggle={handleTaskToggle}
-                          showCheckbox={bulkActionsEnabled}
-                        />
+                        <div
+                          className="relative pl-4 border-l-2"
+                          style={{ borderLeftColor: `${group.projectColor}40` }}
+                        >
+                          {/* Task level indicator */}
+                          <div
+                            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-2 bg-white dark:bg-gray-900"
+                            style={{ borderColor: group.projectColor }}
+                          />
+                          <BulkTaskCard
+                            task={task}
+                            isSelected={selectedTasks.has(task.id)}
+                            onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
+                            onEdit={(task) => {
+                              setEditingTask(task);
+                              setShowTaskForm(true);
+                            }}
+                            onDelete={handleDeleteTask}
+                            onBreakdown={handleAIBreakdown}
+                            onConvertToProject={handleConvertToProject}
+                            onToggle={handleTaskToggle}
+                            showCheckbox={bulkActionsEnabled}
+                          />
+                        </div>
                       </ErrorBoundary>
                     ))}
                   </div>
-                </div>
+                </Card>
               ))
             ) : (
               // Regular sorted view

@@ -373,10 +373,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addTask = useCallback(async (taskData: Partial<Task>): Promise<Task> => {
     console.log('[AppContext] addTask called with:', taskData);
     console.log('[AppContext] User:', user);
-    
+
     if (!user) throw new Error('User not authenticated');
-    
+
     const timestamp = new Date().toISOString();
+    // Remove id from taskData if present - we always generate a new UUID
+    const { id: _ignoredId, ...taskDataWithoutId } = taskData as Task;
     const newTask: Task = {
       id: generateId(),
       title: '',
@@ -389,7 +391,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       parentTaskId: null,
       createdAt: timestamp,
       updatedAt: timestamp,
-      ...taskData,
+      ...taskDataWithoutId,
     };
     
     console.log('[AppContext] Creating task with data:', newTask);

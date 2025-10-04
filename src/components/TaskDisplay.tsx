@@ -141,8 +141,8 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
     <>
     <div 
       className={`
-        group flex items-start gap-2 sm:gap-4 p-3 sm:p-5 rounded-2xl border cursor-pointer overflow-hidden backdrop-blur-sm
-        shadow-md hover:shadow-xl transition-all duration-300 max-w-full
+        group flex flex-col gap-3 p-4 rounded-2xl border cursor-pointer overflow-hidden backdrop-blur-sm
+        shadow-md hover:shadow-xl transition-all duration-300 w-full
         ${!canComplete
           ? 'bg-gray-100/60 border-gray-300/40 opacity-60'
           : task.completed 
@@ -160,74 +160,76 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
       `}
       onClick={handleTaskClick}
     >
-      {/* Checkbox */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          console.log('[TaskDisplay] Checkbox clicked', {
-            taskId: task.id,
-            taskTitle: task.title,
-            completed: task.completed,
-            estimatedMinutes: task.estimatedMinutes,
-            canComplete
-          });
-          
-          // Don't allow completion if task hasn't started yet
-          if (!canComplete) {
-            console.log('[TaskDisplay] Task cannot be completed yet (start date in future)');
-            return;
-          }
-          
-          // If completing the task
-          if (!task.completed) {
-            // Time tracking is now handled at the page level
-            console.log('[TaskDisplay] Completing task (time tracking handled by parent)');
-            // Don't trigger celebration here - it will be triggered after time tracking
-            onToggle(task.id);
-          } else {
-            // Uncompleting a task
-            console.log('[TaskDisplay] Uncompleting task');
-            onToggle(task.id);
-          }
-        }}
-        className={`mt-1 flex-shrink-0 p-1 rounded-full hover:bg-white/80 transition-all duration-200 ${!canComplete ? 'cursor-not-allowed' : ''}`}
-        disabled={!canComplete}
-        title={!canComplete ? `This task starts on ${new Date(task.startDate!).toLocaleDateString()}` : undefined}
-      >
-        {task.completed ? (
-          <CheckCircle2 className="w-6 h-6 text-green-600 drop-shadow-sm" />
-        ) : !canComplete ? (
-          <Circle className="w-6 h-6 text-gray-400" />
-        ) : (
-          <Circle className="w-6 h-6 text-gray-400 hover:text-primary-600 transition-all duration-200" />
-        )}
-      </button>
-      
-      {/* Main Content */}
-      <div className="flex-1 min-w-0 overflow-hidden">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start gap-2 flex-wrap">
-              <h3 className={`
-                text-lg font-bold tracking-tight leading-relaxed whitespace-normal break-words
-                ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}
-              `}>
-                {task.title}
-              </h3>
-              {showIncompleteIndicator && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowDetailWizard(true);
-                  }}
-                  className="flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-medium rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all"
-                  title={`Missing ${taskCompleteness.missingFields.length} details - Click to complete`}
-                >
-                  <Sparkles className="w-3 h-3" />
-                  <span>Add details</span>
-                </button>
-              )}
-            </div>
+      {/* Header Row with Checkbox and Title */}
+      <div className="flex items-start gap-3">
+        {/* Checkbox */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('[TaskDisplay] Checkbox clicked', {
+              taskId: task.id,
+              taskTitle: task.title,
+              completed: task.completed,
+              estimatedMinutes: task.estimatedMinutes,
+              canComplete
+            });
+            
+            // Don't allow completion if task hasn't started yet
+            if (!canComplete) {
+              console.log('[TaskDisplay] Task cannot be completed yet (start date in future)');
+              return;
+            }
+            
+            // If completing the task
+            if (!task.completed) {
+              // Time tracking is now handled at the page level
+              console.log('[TaskDisplay] Completing task (time tracking handled by parent)');
+              // Don't trigger celebration here - it will be triggered after time tracking
+              onToggle(task.id);
+            } else {
+              // Uncompleting a task
+              console.log('[TaskDisplay] Uncompleting task');
+              onToggle(task.id);
+            }
+          }}
+          className={`flex-shrink-0 p-1 rounded-full hover:bg-white/80 transition-all duration-200 ${!canComplete ? 'cursor-not-allowed' : ''}`}
+          disabled={!canComplete}
+          title={!canComplete ? `This task starts on ${new Date(task.startDate!).toLocaleDateString()}` : undefined}
+        >
+          {task.completed ? (
+            <CheckCircle2 className="w-6 h-6 text-green-600 drop-shadow-sm" />
+          ) : !canComplete ? (
+            <Circle className="w-6 h-6 text-gray-400" />
+          ) : (
+            <Circle className="w-6 h-6 text-gray-400 hover:text-primary-600 transition-all duration-200" />
+          )}
+        </button>
+        
+        {/* Title and Add Details Button */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start gap-2 flex-wrap">
+            <h3 className={`
+              text-lg font-bold tracking-tight leading-relaxed whitespace-normal break-words
+              ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}
+            `}>
+              {task.title}
+            </h3>
+            {showIncompleteIndicator && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDetailWizard(true);
+                }}
+                className="flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-medium rounded-full hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all"
+                title={`Missing ${taskCompleteness.missingFields.length} details - Click to complete`}
+              >
+                <Sparkles className="w-3 h-3" />
+                <span>Add details</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
             
             {/* Time Tracking Information for Completed Tasks */}
             {task.completed && (task.actualMinutesSpent || task.estimatedMinutes || task.completedAt) && (
@@ -255,386 +257,314 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
               </div>
             )}
             
-            {/* ADHD-Friendly Priority Indicators */}
-            <div className="flex items-center gap-2 sm:gap-3 mt-3 flex-wrap">
-              {/* Urgency */}
-              {task.urgency && (
-                <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold shadow-sm border
-                  ${task.urgency === 'today' 
-                    ? 'bg-red-100 text-red-800 border-red-200'
-                    : task.urgency === 'tomorrow'
-                    ? 'bg-orange-100 text-orange-800 border-orange-200'
-                    : task.urgency === 'week'
-                    ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                    : task.urgency === 'month'
-                    ? 'bg-blue-100 text-blue-800 border-blue-200'
-                    : 'bg-gray-100 text-gray-800 border-gray-200'}`}>
-                  <span className="text-base" title={`Urgency: ${task.urgency}`}>
-                    {getUrgencyEmoji(task.urgency)}
-                  </span>
-                  <span className="uppercase tracking-wide">
-                    {task.urgency === 'today' ? 'TODAY' : 
-                     task.urgency === 'week' ? 'THIS WEEK' : 
-                     task.urgency === 'month' ? 'THIS MONTH' : 'SOMEDAY'}
-                  </span>
-                </div>
-              )}
-              
-              {/* Emotional Weight */}
-              {task.emotionalWeight && (
-                <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold shadow-sm border
-                  ${task.emotionalWeight === 'easy' 
-                    ? 'bg-green-100 text-green-800 border-green-200' 
-                    : task.emotionalWeight === 'neutral' 
-                    ? 'bg-blue-100 text-blue-800 border-blue-200' 
-                    : task.emotionalWeight === 'stressful' 
-                    ? 'bg-orange-100 text-orange-800 border-orange-200' 
-                    : 'bg-red-100 text-red-800 border-red-200'}`}>
-                  <span className="text-base" title={`Emotional Weight: ${task.emotionalWeight}`}>
-                    {getEmotionalWeightEmoji(task.emotionalWeight)}
-                  </span>
-                  <span className="uppercase tracking-wide">
-                    {task.emotionalWeight === 'easy' ? 'EASY' : 
-                     task.emotionalWeight === 'neutral' ? 'NEUTRAL' : 
-                     task.emotionalWeight === 'stressful' ? 'STRESSFUL' : 'DREADING'}
-                  </span>
-                </div>
-              )}
-              
-              {/* Energy Required */}
-              {task.energyRequired && (
-                <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold shadow-sm border
-                  ${task.energyRequired === 'low' 
-                    ? 'bg-green-100 text-green-800 border-green-200'
-                    : task.energyRequired === 'medium'
-                    ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                    : 'bg-red-100 text-red-800 border-red-200'}`}>
-                  <span className="text-base" title={`Energy Required: ${task.energyRequired}`}>
-                    {getEnergyRequiredEmoji(task.energyRequired)}
-                  </span>
-                  <span className="uppercase tracking-wide">{task.energyRequired} ENERGY</span>
-                </div>
-              )}
-              
-              {/* Project info */}
-              {task.projectId && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const project = projects.find(p => p.id === task.projectId);
-                    if (project) {
-                      navigate(`/projects/${project.id}`);
-                    }
-                  }}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg transition-all hover:scale-105 hover:bg-white/50 dark:hover:bg-gray-800/50"
-                  title={`Go to ${projects.find(p => p.id === task.projectId)?.name || 'Unknown'} project`}
-                >
-                  <Folder className="w-3 h-3 text-purple-400 dark:text-purple-500" />
-                  <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-24 font-medium">
-                    {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
-                  </span>
-                </button>
-              )}
-              
-              {/* Traditional Priority (smaller, less prominent) */}
-              {task.priority && (
-                <div className="flex items-center gap-1">
-                  <div className={`w-2 h-2 rounded-full ${
-                    task.priority === 'high' ? 'bg-red-500' :
-                    task.priority === 'medium' ? 'bg-yellow-500' :
-                    'bg-green-500'
-                  }`} />
-                  <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                    {task.priority}
-                  </span>
-                </div>
-              )}
-              
-              {/* Time Reality Check */}
-              {!task.completed && (
-                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${getUrgencyColor(timeEstimate.urgency)}`}>
-                  <span>~{formatTimeRemaining(timeEstimate.estimatedMinutes)}</span>
-                  {timeEstimate.percentOfDayRemaining > 0.5 && (
-                    <span className="font-bold">
-                      ({Math.round(timeEstimate.percentOfDayRemaining * 100)}% of day)
-                    </span>
-                  )}
-                </div>
-              )}
-              
-              {/* Finish Time Prediction */}
-              {!task.completed && 
-               timeEstimate.percentOfDayRemaining < 1 && 
-               (!task.startDate || new Date(task.startDate) <= new Date()) && (
-                <div className="text-xs text-gray-500">
-                  Done by {formatTimeOfDay(timeEstimate.finishTime)}
-                </div>
-              )}
-              
-              {/* Start Date Indicator */}
-              {!canComplete && task.startDate && (
-                <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                  <Calendar className="w-3 h-3" />
-                  <span>Starts {new Date(task.startDate).toLocaleDateString()}</span>
-                </div>
-              )}
-              
-              {/* Focus Session Indicator */}
-              {currentSession && currentSession.taskId === task.id && (
-                <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  <span>In focus • {Math.round(focusTracker.getCurrentSessionDuration())}min</span>
-                  {focusTracker.getCurrentSessionDuration() > 240 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        focusTracker.resetCurrentSession();
-                        setCurrentSession(null);
-                        setFocusTime(0);
-                      }}
-                      className="ml-1 text-blue-500 hover:text-blue-700"
-                      title="Clear stuck session"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              )}
-              
-              {/* Daily Focus Time */}
-              {focusTime > 0 && (
-                <div className="text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full">
-                  {Math.round(focusTime)}min today
-                </div>
-              )}
-            </div>
+      {/* Priority Indicators */}
+      <div className="flex flex-wrap gap-2">
+        {/* Urgency */}
+        {task.urgency && (
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold shadow-sm border
+            ${task.urgency === 'today' 
+              ? 'bg-red-100 text-red-800 border-red-200'
+              : task.urgency === 'tomorrow'
+              ? 'bg-orange-100 text-orange-800 border-orange-200'
+              : task.urgency === 'week'
+              ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+              : task.urgency === 'month'
+              ? 'bg-blue-100 text-blue-800 border-blue-200'
+              : 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+            <span className="text-sm" title={`Urgency: ${task.urgency}`}>
+              {getUrgencyEmoji(task.urgency)}
+            </span>
+            <span className="uppercase tracking-wide">
+              {task.urgency === 'today' ? 'TODAY' : 
+               task.urgency === 'week' ? 'THIS WEEK' : 
+               task.urgency === 'month' ? 'THIS MONTH' : 'SOMEDAY'}
+            </span>
           </div>
-          
-          {/* Due Date */}
-          <div className="relative">
-            {dueDateInfo ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDateEditor(!showDateEditor);
-                }}
-                className={`flex items-center gap-2 text-sm font-bold ${dueDateInfo.className} hover:bg-white/90 px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg border-2 hover:border-gray-300 active:scale-95`}
-                title="Click to change due date"
-              >
-                <div className="w-4 h-4">{dueDateInfo.icon}</div>
-                <span>{dueDateInfo.text}</span>
-              </button>
-            ) : (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDateEditor(!showDateEditor);
-                }}
-                className="flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-purple-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg border-2 border-gray-300 hover:border-purple-400 active:scale-95"
-                title="Add due date"
-              >
-                <Calendar className="w-4 h-4" />
-                <span>Add date</span>
-              </button>
-            )}
-            
-            {/* Start Working Button */}
-            {!task.completed && canComplete && (
-              currentSession && currentSession.taskId === task.id ? (
-                // Show stop button if this task is in focus
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    focusTracker.endFocus();
-                    setCurrentSession(null);
-                    setFocusTime(focusTracker.getTaskFocusTime(task.id));
-                  }}
-                  className="flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg shadow-md active:scale-95"
-                  title="Stop working on this task"
-                >
-                  <Timer className="w-4 h-4" />
-                  <span>Stop Working</span>
-                </button>
-              ) : (
-                // Show start button if not in focus
-                <button
-                  onClick={handleStartFocus}
-                  className="flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg shadow-md active:scale-95"
-                  title="Start working on this task"
-                >
-                  <Play className="w-4 h-4" />
-                  <span>Start Working</span>
-                </button>
-              )
-            )}
-            
-            {showDateEditor && (
-              <QuickDueDateEditor
-                currentDate={task.dueDate}
-                onDateChange={async (newDate) => {
-                  console.log('QuickDueDateEditor onDateChange called with:', newDate);
-                  console.log('Current task dueDate:', task.dueDate);
-                  
-                  try {
-                    // Create update with essential fields only, excluding computed fields
-                    const updateData = {
-                      id: task.id,
-                      title: task.title,
-                      description: task.description,
-                      completed: task.completed,
-                      archived: task.archived,
-                      dueDate: newDate,
-                      projectId: task.projectId,
-                      categoryIds: task.categoryIds,
-                      parentTaskId: task.parentTaskId,
-                      priority: task.priority,
-                      energyLevel: task.energyLevel,
-                      size: task.size,
-                      estimatedMinutes: task.estimatedMinutes,
-                      createdAt: task.createdAt,
-                      updatedAt: task.updatedAt,
-                      // Exclude computed fields: subtasks, dependsOn, dependedOnBy
-                      tags: task.tags,
-                      isRecurring: task.isRecurring,
-                      recurrencePattern: task.recurrencePattern,
-                      recurrenceInterval: task.recurrenceInterval,
-                      recurringTaskId: task.recurringTaskId,
-                      projectPhase: task.projectPhase,
-                      phaseOrder: task.phaseOrder,
-                      deletedAt: task.deletedAt,
-                      showSubtasks: task.showSubtasks,
-                      braindumpSource: task.braindumpSource,
-                      completedAt: task.completedAt,
-                      aiProcessed: task.aiProcessed,
-                      urgency: task.urgency,
-                      importance: task.importance,
-                      emotionalWeight: task.emotionalWeight,
-                      energyRequired: task.energyRequired
-                    } as Task;
-                    
-                    console.log('About to call updateTask with:', updateData);
-                    await updateTask(updateData);
-                    setShowDateEditor(false);
-                  } catch (error) {
-                    console.error('Failed to update task date:', error);
-                    // Don't close the editor if there was an error
-                  }
-                }}
-                onClose={() => setShowDateEditor(false)}
-              />
-            )}
-          </div>
-        </div>
+        )}
         
-        {/* Task Breakdown Buttons */}
-        {!task.completed && subtasks.length === 0 && (
-          <div className="mt-2 flex gap-2">
-            {/* Fuzzy Task Breakdown - for overwhelming/unclear tasks */}
+        {/* Emotional Weight */}
+        {task.emotionalWeight && (
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold shadow-sm border
+            ${task.emotionalWeight === 'easy' 
+              ? 'bg-green-100 text-green-800 border-green-200' 
+              : task.emotionalWeight === 'neutral' 
+              ? 'bg-blue-100 text-blue-800 border-blue-200' 
+              : task.emotionalWeight === 'stressful' 
+              ? 'bg-orange-100 text-orange-800 border-orange-200' 
+              : 'bg-red-100 text-red-800 border-red-200'}`}>
+            <span className="text-sm" title={`Emotional Weight: ${task.emotionalWeight}`}>
+              {getEmotionalWeightEmoji(task.emotionalWeight)}
+            </span>
+            <span className="uppercase tracking-wide">
+              {task.emotionalWeight === 'easy' ? 'EASY' : 
+               task.emotionalWeight === 'neutral' ? 'NEUTRAL' : 
+               task.emotionalWeight === 'stressful' ? 'STRESSFUL' : 'DREADING'}
+            </span>
+          </div>
+        )}
+        
+        {/* Energy Required */}
+        {task.energyRequired && (
+          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold shadow-sm border
+            ${task.energyRequired === 'low' 
+              ? 'bg-green-100 text-green-800 border-green-200'
+              : task.energyRequired === 'medium'
+              ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+              : 'bg-red-100 text-red-800 border-red-200'}`}>
+            <span className="text-sm" title={`Energy Required: ${task.energyRequired}`}>
+              {getEnergyRequiredEmoji(task.energyRequired)}
+            </span>
+            <span className="uppercase tracking-wide">{task.energyRequired} ENERGY</span>
+          </div>
+        )}
+        
+        {/* Project info */}
+        {task.projectId && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const project = projects.find(p => p.id === task.projectId);
+              if (project) {
+                navigate(`/projects/${project.id}`);
+              }
+            }}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg transition-all hover:scale-105 hover:bg-white/50 dark:hover:bg-gray-800/50"
+            title={`Go to ${projects.find(p => p.id === task.projectId)?.name || 'Unknown'} project`}
+          >
+            <Folder className="w-3 h-3 text-purple-400 dark:text-purple-500" />
+            <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-24 font-medium">
+              {projects.find(p => p.id === task.projectId)?.name || 'Unknown Project'}
+            </span>
+          </button>
+        )}
+      </div>
+      
+      {/* Action Buttons Row */}
+      <div className="flex items-center justify-between gap-2">
+        {/* Due Date */}
+        <div className="relative">
+          {dueDateInfo ? (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (onBreakdown) {
-                  onBreakdown(task);
+                setShowDateEditor(!showDateEditor);
+              }}
+              className={`flex items-center gap-2 text-sm font-bold ${dueDateInfo.className} hover:bg-white/90 px-3 py-2 rounded-xl transition-all duration-300 hover:shadow-lg border-2 hover:border-gray-300 active:scale-95`}
+              title="Click to change due date"
+            >
+              <div className="w-4 h-4">{dueDateInfo.icon}</div>
+              <span>{dueDateInfo.text}</span>
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDateEditor(!showDateEditor);
+              }}
+              className="flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-purple-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 px-3 py-2 rounded-xl transition-all duration-300 hover:shadow-lg border-2 border-gray-300 hover:border-purple-400 active:scale-95"
+              title="Add due date"
+            >
+              <Calendar className="w-4 h-4" />
+              <span>Add date</span>
+            </button>
+          )}
+          
+          {showDateEditor && (
+            <QuickDueDateEditor
+              currentDate={task.dueDate}
+              onDateChange={async (newDate) => {
+                console.log('QuickDueDateEditor onDateChange called with:', newDate);
+                console.log('Current task dueDate:', task.dueDate);
+                
+                try {
+                  // Create update with essential fields only, excluding computed fields
+                  const updateData = {
+                    id: task.id,
+                    title: task.title,
+                    description: task.description,
+                    completed: task.completed,
+                    archived: task.archived,
+                    dueDate: newDate,
+                    projectId: task.projectId,
+                    categoryIds: task.categoryIds,
+                    parentTaskId: task.parentTaskId,
+                    priority: task.priority,
+                    energyLevel: task.energyLevel,
+                    size: task.size,
+                    estimatedMinutes: task.estimatedMinutes,
+                    createdAt: task.createdAt,
+                    updatedAt: task.updatedAt,
+                    // Exclude computed fields: subtasks, dependsOn, dependedOnBy
+                    tags: task.tags,
+                    isRecurring: task.isRecurring,
+                    recurrencePattern: task.recurrencePattern,
+                    recurrenceInterval: task.recurrenceInterval,
+                    recurringTaskId: task.recurringTaskId,
+                    projectPhase: task.projectPhase,
+                    phaseOrder: task.phaseOrder,
+                    deletedAt: task.deletedAt,
+                    showSubtasks: task.showSubtasks,
+                    braindumpSource: task.braindumpSource,
+                    completedAt: task.completedAt,
+                    aiProcessed: task.aiProcessed,
+                    urgency: task.urgency,
+                    importance: task.importance,
+                    emotionalWeight: task.emotionalWeight,
+                    energyRequired: task.energyRequired
+                  } as Task;
+                  
+                  console.log('About to call updateTask with:', updateData);
+                  await updateTask(updateData);
+                  setShowDateEditor(false);
+                } catch (error) {
+                  console.error('Failed to update task date:', error);
+                  // Don't close the editor if there was an error
                 }
               }}
-              className="flex items-center gap-1.5 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-2 py-1 rounded-xl transition-all"
-              title="Break down this overwhelming task into clear steps"
-            >
-              <Brain className="w-4 h-4" />
-              <span>Break Down Task</span>
-            </button>
-            
-            {/* AI Breakdown - existing AI feature */}
-            {onBreakdown && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBreakdown(task);
-                }}
-                className="flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-2 py-1 rounded-xl transition-all"
-                title="Use AI to suggest subtasks"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>AI Suggest</span>
-              </button>
-            )}
-          </div>
-        )}
+              onClose={() => setShowDateEditor(false)}
+            />
+          )}
+        </div>
         
-        {/* Subtasks */}
-        {subtasks.length > 0 && (
-          <div className="mt-2">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsExpanded(!isExpanded);
-                }}
-                className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-              >
-                {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                <span>
-                  {subtasks.filter(st => st.completed).length} of {subtasks.length} subtasks completed
-                </span>
-              </button>
-              
-              {!task.completed && subtasks.some(st => !st.completed) && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowWalkthrough(true);
-                  }}
-                  className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-all"
-                  title="Start guided walkthrough"
-                >
-                  <PlayCircle className="w-3 h-3" />
-                  <span>Start Walkthrough</span>
-                </button>
-              )}
-            </div>
-            
-            {/* Expanded subtasks */}
-            {isExpanded && (
-              <div className="mt-4 ml-8 space-y-3 pl-4 border-l-2 border-purple-200">
-                {subtasks.map(subtask => (
-                  <div 
-                    key={subtask.id}
-                    className={`flex items-start gap-3 p-3 rounded-xl border shadow-sm transition-all hover:shadow-md ${
-                      subtask.completed 
-                        ? 'bg-gray-50/80 border-gray-200 opacity-75' 
-                        : 'bg-white border-purple-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSubtaskToggle(subtask.id);
-                      }}
-                      className="mt-0.5 flex-shrink-0"
-                    >
-                      {subtask.completed ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500" />
-                      ) : (
-                        <Circle className="w-4 h-4 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors" />
-                      )}
-                    </button>
-                    <div className="flex-1">
-                      <h4 className={`text-sm whitespace-normal break-words ${
-                        subtask.completed ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'
-                      }`}>
-                        {subtask.title}
-                      </h4>
-                      {subtask.description && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtask.description}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {/* Start Working Button */}
+        {!task.completed && canComplete && (
+          currentSession && currentSession.taskId === task.id ? (
+            // Show stop button if this task is in focus
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                focusTracker.endFocus();
+                setCurrentSession(null);
+                setFocusTime(focusTracker.getTaskFocusTime(task.id));
+              }}
+              className="flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 px-3 py-2 rounded-xl transition-all duration-300 hover:shadow-lg shadow-md active:scale-95"
+              title="Stop working on this task"
+            >
+              <Timer className="w-4 h-4" />
+              <span>Stop Working</span>
+            </button>
+          ) : (
+            // Show start button if not in focus
+            <button
+              onClick={handleStartFocus}
+              className="flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-3 py-2 rounded-xl transition-all duration-300 hover:shadow-lg shadow-md active:scale-95"
+              title="Start working on this task"
+            >
+              <Play className="w-4 h-4" />
+              <span>Start Working</span>
+            </button>
+          )
         )}
       </div>
+        
+      {/* Task Breakdown Buttons */}
+      {!task.completed && subtasks.length === 0 && (
+        <div className="flex gap-2">
+          {/* Fuzzy Task Breakdown - for overwhelming/unclear tasks */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onBreakdown) {
+                onBreakdown(task);
+              }
+            }}
+            className="flex items-center gap-1.5 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-2 py-1 rounded-xl transition-all"
+            title="Break down this overwhelming task into clear steps"
+          >
+            <Brain className="w-4 h-4" />
+            <span>Break Down Task</span>
+          </button>
+          
+          {/* AI Breakdown - existing AI feature */}
+          {onBreakdown && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onBreakdown(task);
+              }}
+              className="flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-2 py-1 rounded-xl transition-all"
+              title="Use AI to suggest subtasks"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>AI Suggest</span>
+            </button>
+          )}
+        </div>
+      )}
+      
+      {/* Subtasks */}
+      {subtasks.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+            >
+              {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+              <span>
+                {subtasks.filter(st => st.completed).length} of {subtasks.length} subtasks completed
+              </span>
+            </button>
+            
+            {!task.completed && subtasks.some(st => !st.completed) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowWalkthrough(true);
+                }}
+                className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-all"
+                title="Start guided walkthrough"
+              >
+                <PlayCircle className="w-3 h-3" />
+                <span>Start Walkthrough</span>
+              </button>
+            )}
+          </div>
+          
+          {/* Expanded subtasks */}
+          {isExpanded && (
+            <div className="mt-4 ml-8 space-y-3 pl-4 border-l-2 border-purple-200">
+              {subtasks.map(subtask => (
+                <div 
+                  key={subtask.id}
+                  className={`flex items-start gap-3 p-3 rounded-xl border shadow-sm transition-all hover:shadow-md ${
+                    subtask.completed 
+                      ? 'bg-gray-50/80 border-gray-200 opacity-75' 
+                      : 'bg-white border-purple-200 hover:border-purple-300'
+                  }`}
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSubtaskToggle(subtask.id);
+                    }}
+                    className="mt-0.5 flex-shrink-0"
+                  >
+                    {subtask.completed ? (
+                      <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500" />
+                    ) : (
+                      <Circle className="w-4 h-4 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors" />
+                    )}
+                  </button>
+                  <div className="flex-1">
+                    <h4 className={`text-sm whitespace-normal break-words ${
+                      subtask.completed ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'
+                    }`}>
+                      {subtask.title}
+                    </h4>
+                    {subtask.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtask.description}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       
       {/* Actions */}
       <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
