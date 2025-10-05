@@ -12,11 +12,12 @@ import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import Empty from '../components/common/Empty';
 import { QuickCapture } from '../components/tasks/QuickCapture';
-import { 
-  Plus, Filter, X, Undo2, Archive, 
-  AlertTriangle, CalendarDays, Calendar, Layers, 
+import {
+  Plus, Filter, X, Undo2, Archive,
+  AlertTriangle, CalendarDays, Calendar, Layers,
   Trash2, CheckCircle2, Folder, FileArchive,
-  ArrowUpDown, Clock, Star, Hash, FolderOpen, Tag
+  ArrowUpDown, Clock, Star, Hash, FolderOpen, Tag,
+  ChevronDown, ChevronRight
 } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek, getActionableTasks, getFutureTasks } from '../utils/helpers';
 import { TimeSpentModal } from '../components/tasks/TimeSpentModal';
@@ -154,9 +155,10 @@ export const TasksPageSupabase: React.FC = () => {
   const [filterBy, setFilterBy] = useState<'all' | 'completed' | 'active' | 'overdue' | 'today' | 'week' | 'actionable' | 'future' | 'project' | 'category' | 'archived'>('all');
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'smart' | 'dueDate' | 'priority' | 'created' | 'alphabetical' | 'energy' | 'estimated' | 'project'>('project');
+  const [sortBy, setSortBy] = useState<'smart' | 'dueDate' | 'priority' | 'created' | 'alphabetical' | 'energy' | 'estimated' | 'project' | 'category'>('project');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showQuickCapture, setShowQuickCapture] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   
   // Bulk operations state
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
@@ -243,9 +245,13 @@ export const TasksPageSupabase: React.FC = () => {
   }, [tasks.length, filteredTasks.length, filterBy]);
 
   // Sort tasks
+  const categoryMap = React.useMemo(() => {
+    return new Map(categories.map(category => [category.id, category]));
+  }, [categories]);
+
   filteredTasks.sort((a, b) => {
     let comparison = 0;
-    
+
     switch (sortBy) {
       case 'smart':
         // Smart sort: Combines due date urgency with priority
@@ -300,10 +306,332 @@ export const TasksPageSupabase: React.FC = () => {
       case 'estimated':
         comparison = (a.estimatedMinutes || 0) - (b.estimatedMinutes || 0);
         break;
+      case 'category': {
+        const getPrimaryCategoryId = (task: Task) => task.categoryIds?.[0] || 'zzz-no-category';
+        const categoryAId = getPrimaryCategoryId(a);
+        const categoryBId = getPrimaryCategoryId(b);
+        const categoryAName = categoryMap.get(categoryAId)?.name || (categoryAId === 'zzz-no-category' ? 'No Category' : '');
+        const categoryBName = categoryMap.get(categoryBId)?.name || (categoryBId === 'zzz-no-category' ? 'No Category' : '');
+        comparison = categoryAName.localeCompare(categoryBName, undefined, { sensitivity: 'base' });
+        if (comparison === 0) {
+          const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+          const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+          comparison = dateA - dateB;
+        }
+        break;
+      }
     }
-    
+
     return sortOrder === 'asc' ? comparison : -comparison;
   });
+
+  const toggleSection = (sectionKey: string, defaultCollapsed = false) => {
+    setCollapsedSections(prev => {
+      const isCollapsed = prev[sectionKey] ?? defaultCollapsed;
+      return {
+        ...prev,
+        [sectionKey]: !isCollapsed
+      };
+    });
+  };
+
+  const isSameDay = (dateA: Date, dateB: Date) =>
+    dateA.getFullYear() === dateB.getFullYear() &&
+    dateA.getMonth() === dateB.getMonth() &&
+    dateA.getDate() === dateB.getDate();
+
+  const getTaskCompletionDate = (task: Task) => {
+    if (task.completedAt) {
+      const completedDate = new Date(task.completedAt);
+      if (!Number.isNaN(completedDate.getTime())) {
+        return completedDate;
+      }
+    }
+
+    if (task.updatedAt && task.completed) {
+      const updatedDate = new Date(task.updatedAt);
+      if (!Number.isNaN(updatedDate.getTime())) {
+        return updatedDate;
+      }
+    }
+
+    return null;
+  };
+
+  const isCompletedToday = (task: Task) => {
+    const completionDate = getTaskCompletionDate(task);
+    if (!completionDate) return false;
+    return isSameDay(completionDate, new Date());
+  };
+
+  const activeTasks = filteredTasks.filter(task => !task.completed);
+  const completedTasks = filteredTasks.filter(task => task.completed);
+  const completedTodayTasks = completedTasks.filter(task => isCompletedToday(task));
+  const completedEarlierTasks = completedTasks.filter(task => !isCompletedToday(task));
+
+  const priorityOrderForGrouping: Array<'urgent' | 'high' | 'medium' | 'low' | 'none'> = ['urgent', 'high', 'medium', 'low', 'none'];
+  const priorityLabels: Record<'urgent' | 'high' | 'medium' | 'low' | 'none', string> = {
+    urgent: 'Urgent',
+    high: 'High Priority',
+    medium: 'Medium Priority',
+    low: 'Low Priority',
+    none: 'No Priority'
+  };
+
+  const priorityColors: Record<'urgent' | 'high' | 'medium' | 'low' | 'none', string> = {
+    urgent: '#ef4444',
+    high: '#f97316',
+    medium: '#facc15',
+    low: '#10b981',
+    none: '#9ca3af'
+  };
+
+  const getPriorityKey = (task: Task): 'urgent' | 'high' | 'medium' | 'low' | 'none' => {
+    if (task.priority === 'urgent' || task.priority === 'high' || task.priority === 'medium' || task.priority === 'low') {
+      return task.priority;
+    }
+    if (task.priority === 'none') {
+      return 'none';
+    }
+    return 'none';
+  };
+
+  const renderTaskCard = (task: Task) => {
+    const project = projects.find(p => p.id === task.projectId);
+
+    return (
+      <ErrorBoundary key={task.id}>
+        <div className="relative">
+          {project && sortBy !== 'project' && (
+            <div className="absolute -left-2 top-2 h-2 w-2 rounded-full" style={{ backgroundColor: project.color || '#6366f1' }} />
+          )}
+          <BulkTaskCard
+            task={task}
+            isSelected={selectedTasks.has(task.id)}
+            onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
+            onEdit={(task) => {
+              setEditingTask(task);
+              setShowTaskForm(true);
+            }}
+            onDelete={handleDeleteTask}
+            onBreakdown={handleAIBreakdown}
+            onConvertToProject={handleConvertToProject}
+            onToggle={handleTaskToggle}
+            showCheckbox={bulkActionsEnabled}
+          />
+        </div>
+      </ErrorBoundary>
+    );
+  };
+
+  const renderPriorityGroups = (tasksToRender: Task[]) => {
+    return priorityOrderForGrouping.map(priorityKey => {
+      const groupTasks = tasksToRender.filter(task => getPriorityKey(task) === priorityKey);
+      if (groupTasks.length === 0) return null;
+
+      const sectionKey = `priority-${priorityKey}`;
+      const defaultCollapsed = false;
+      const isCollapsed = collapsedSections[sectionKey] ?? defaultCollapsed;
+
+      return (
+        <Card
+          key={sectionKey}
+          className="overflow-hidden border-l-4"
+          style={{ borderLeftColor: priorityColors[priorityKey] }}
+        >
+          <button
+            type="button"
+            onClick={() => toggleSection(sectionKey, defaultCollapsed)}
+            className="flex w-full items-center justify-between px-4 py-3 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold"
+                style={{ backgroundColor: `${priorityColors[priorityKey]}20`, color: priorityColors[priorityKey] }}
+              >
+                {priorityKey === 'none' ? <Hash className="h-4 w-4" /> : <Star className="h-4 w-4" />}
+              </div>
+              <div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">{priorityLabels[priorityKey]}</div>
+                <div className="text-xs text-gray-500">{groupTasks.length} task{groupTasks.length !== 1 ? 's' : ''}</div>
+              </div>
+            </div>
+            {isCollapsed ? <ChevronRight className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
+          </button>
+          {!isCollapsed && (
+            <div className="space-y-3 bg-gray-50/60 px-4 py-4 dark:bg-gray-900/40">
+              {groupTasks.map(renderTaskCard)}
+            </div>
+          )}
+        </Card>
+      );
+    });
+  };
+
+  const renderCategoryGroups = (tasksToRender: Task[]) => {
+    const groups = new Map<string, Task[]>();
+
+    tasksToRender.forEach(task => {
+      const categoryId = task.categoryIds && task.categoryIds.length > 0 ? task.categoryIds[0] : 'uncategorized';
+      const existing = groups.get(categoryId) || [];
+      existing.push(task);
+      groups.set(categoryId, existing);
+    });
+
+    const sortedGroups = Array.from(groups.entries()).sort(([aId], [bId]) => {
+      const aName = aId === 'uncategorized'
+        ? 'No Category'
+        : (categoryMap.get(aId)?.name || '');
+      const bName = bId === 'uncategorized'
+        ? 'No Category'
+        : (categoryMap.get(bId)?.name || '');
+      return aName.localeCompare(bName, undefined, { sensitivity: 'base' });
+    });
+
+    return sortedGroups.map(([categoryId, tasksInGroup]) => {
+      const sectionKey = `category-${categoryId}`;
+      const defaultCollapsed = false;
+      const isCollapsed = collapsedSections[sectionKey] ?? defaultCollapsed;
+      const category = categoryId === 'uncategorized' ? undefined : categoryMap.get(categoryId);
+
+      return (
+        <Card
+          key={sectionKey}
+          className="overflow-hidden border-l-4"
+          style={{ borderLeftColor: category?.color || '#6366f1' }}
+        >
+          <button
+            type="button"
+            onClick={() => toggleSection(sectionKey, defaultCollapsed)}
+            className="flex w-full items-center justify-between px-4 py-3 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-full"
+                style={{ backgroundColor: `${(category?.color || '#6366f1')}20`, color: category?.color || '#6366f1' }}
+              >
+                <Tag className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">
+                  {category ? category.name : 'No Category'}
+                </div>
+                <div className="text-xs text-gray-500">{tasksInGroup.length} task{tasksInGroup.length !== 1 ? 's' : ''}</div>
+              </div>
+            </div>
+            {isCollapsed ? <ChevronRight className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
+          </button>
+          {!isCollapsed && (
+            <div className="space-y-3 bg-gray-50/60 px-4 py-4 dark:bg-gray-900/40">
+              {tasksInGroup.map(renderTaskCard)}
+            </div>
+          )}
+        </Card>
+      );
+    });
+  };
+
+  const renderTaskList = (tasksToRender: Task[]) => {
+    if (tasksToRender.length === 0) return null;
+
+    if (sortBy === 'project') {
+      return groupTasksByProjectAndDueDate(tasksToRender, projects).map(group => (
+        <Card
+          key={group.projectId}
+          className="mb-6 overflow-hidden border-l-4 shadow-md"
+          style={{ borderLeftColor: group.projectColor }}
+        >
+          <div
+            className="border-b-2 px-6 py-4"
+            style={{
+              borderBottomColor: group.projectColor,
+              backgroundColor: `${group.projectColor}08`
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="rounded-lg p-2"
+                style={{ backgroundColor: `${group.projectColor}15` }}
+              >
+                <FolderOpen className="h-6 w-6" style={{ color: group.projectColor }} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold" style={{ color: group.projectColor }}>
+                  {group.projectName}
+                </h3>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {group.tasks.length} task{group.tasks.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3 bg-gray-50/50 px-4 py-3 dark:bg-gray-800/50">
+            {group.tasks.map(renderTaskCard)}
+          </div>
+        </Card>
+      ));
+    }
+
+    if (sortBy === 'priority') {
+      return renderPriorityGroups(tasksToRender);
+    }
+
+    if (sortBy === 'category') {
+      return renderCategoryGroups(tasksToRender);
+    }
+
+    return tasksToRender.map(renderTaskCard);
+  };
+
+  const renderCollapsibleSection = (
+    sectionKey: string,
+    title: string,
+    tasksToRender: Task[],
+    options?: {
+      defaultCollapsed?: boolean;
+      accentColor?: string;
+      icon?: React.ReactNode;
+      subtitle?: string;
+    }
+  ) => {
+    if (tasksToRender.length === 0) return null;
+
+    const defaultCollapsed = options?.defaultCollapsed ?? false;
+    const isCollapsed = collapsedSections[sectionKey] ?? defaultCollapsed;
+    const accentColor = options?.accentColor || '#10b981';
+
+    return (
+      <Card key={sectionKey} className="overflow-hidden border-l-4" style={{ borderLeftColor: accentColor }}>
+        <button
+          type="button"
+          onClick={() => toggleSection(sectionKey, defaultCollapsed)}
+          className="flex w-full items-center justify-between px-4 py-3 text-left"
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-full"
+              style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
+            >
+              {options?.icon || <CheckCircle2 className="h-4 w-4" />}
+            </div>
+            <div>
+              <div className="font-semibold text-gray-900 dark:text-gray-100">{title}</div>
+              <div className="text-xs text-gray-500">
+                {options?.subtitle ? `${options.subtitle} • ` : ''}
+                {tasksToRender.length} task{tasksToRender.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </div>
+          {isCollapsed ? <ChevronRight className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
+        </button>
+        {!isCollapsed && (
+          <div className="space-y-4 bg-gray-50/60 px-4 py-4 dark:bg-gray-900/40">
+            {renderTaskList(tasksToRender)}
+          </div>
+        )}
+      </Card>
+    );
+  };
 
   const handleAddTask = async (task: Partial<Task>) => {
     try {
@@ -887,6 +1215,7 @@ export const TasksPageSupabase: React.FC = () => {
               <option value="alphabetical">Alphabetical</option>
               <option value="energy">Energy Level</option>
               <option value="estimated">Estimated Time</option>
+              <option value="category">Category</option>
             </select>
             <button
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
@@ -991,119 +1320,52 @@ export const TasksPageSupabase: React.FC = () => {
         ) : (
           <>
             {/* Sort info header */}
-            <div className="text-sm text-gray-600 mb-2">
+            <div className="mb-4 text-sm text-gray-600">
               {sortBy === 'smart' && 'Smart sort: Most urgent and important tasks first'}
               {sortBy === 'dueDate' && 'Sorted by due date (earliest first)'}
-              {sortBy === 'priority' && 'Sorted by priority (highest first)'}
+              {sortBy === 'priority' && 'Grouped by priority level'}
               {sortBy === 'project' && 'Grouped by project'}
               {sortBy === 'created' && 'Sorted by creation date (newest first)'}
               {sortBy === 'alphabetical' && 'Sorted alphabetically'}
               {sortBy === 'energy' && 'Sorted by energy level required'}
               {sortBy === 'estimated' && 'Sorted by estimated time'}
+              {sortBy === 'category' && 'Grouped by primary category'}
               {' • '}
               {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
             </div>
-            
-            {/* Display tasks - grouped by project if sortBy === 'project', otherwise in sorted order */}
-            {sortBy === 'project' ? (
-              // Group tasks by project
-              groupTasksByProjectAndDueDate(filteredTasks, projects).map(group => (
-                <Card
-                  key={group.projectId}
-                  className="mb-6 overflow-hidden border-l-4 shadow-md"
-                  style={{ borderLeftColor: group.projectColor }}
-                >
-                  {/* Project Header */}
-                  <div
-                    className="px-6 py-4 border-b-2"
-                    style={{
-                      borderBottomColor: group.projectColor,
-                      backgroundColor: `${group.projectColor}08`
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="p-2 rounded-lg"
-                        style={{ backgroundColor: `${group.projectColor}15` }}
-                      >
-                        <FolderOpen className="w-6 h-6" style={{ color: group.projectColor }} />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold" style={{ color: group.projectColor }}>
-                          {group.projectName}
-                        </h3>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {group.tasks.length} task{group.tasks.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </div>
+
+            <div className="space-y-6">
+              {activeTasks.length > 0 && filterBy !== 'completed' && (
+                <div className="space-y-4">
+                  {completedTasks.length > 0 && (
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Active Tasks
+                    </h2>
+                  )}
+                  <div className="space-y-4">
+                    {renderTaskList(activeTasks)}
                   </div>
-                  {/* Tasks for this project */}
-                  <div className="px-4 py-3 space-y-3 bg-gray-50/50 dark:bg-gray-800/50">
-                    {group.tasks.map((task, index) => (
-                      <ErrorBoundary key={task.id}>
-                        <div
-                          className="relative pl-4 border-l-2"
-                          style={{ borderLeftColor: `${group.projectColor}40` }}
-                        >
-                          {/* Task level indicator */}
-                          <div
-                            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-2 bg-white dark:bg-gray-900"
-                            style={{ borderColor: group.projectColor }}
-                          />
-                          <BulkTaskCard
-                            task={task}
-                            isSelected={selectedTasks.has(task.id)}
-                            onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
-                            onEdit={(task) => {
-                              setEditingTask(task);
-                              setShowTaskForm(true);
-                            }}
-                            onDelete={handleDeleteTask}
-                            onBreakdown={handleAIBreakdown}
-                            onConvertToProject={handleConvertToProject}
-                            onToggle={handleTaskToggle}
-                            showCheckbox={bulkActionsEnabled}
-                          />
-                        </div>
-                      </ErrorBoundary>
-                    ))}
-                  </div>
-                </Card>
-              ))
-            ) : (
-              // Regular sorted view
-              filteredTasks.map(task => {
-                const project = projects.find(p => p.id === task.projectId);
-                return (
-                  <ErrorBoundary key={task.id}>
-                    <div className="relative">
-                      {/* Optional project indicator */}
-                      {project && (
-                        <div className="absolute -left-2 top-0 bottom-0 w-1 rounded-full" 
-                          style={{ backgroundColor: project.color }}
-                          title={project.name}
-                        />
-                      )}
-                      <BulkTaskCard
-                        task={task}
-                        isSelected={selectedTasks.has(task.id)}
-                        onSelectChange={(selected) => handleTaskSelect(task.id, selected)}
-                        onEdit={(task) => {
-                          setEditingTask(task);
-                          setShowTaskForm(true);
-                        }}
-                        onDelete={handleDeleteTask}
-                        onBreakdown={handleAIBreakdown}
-                        onConvertToProject={handleConvertToProject}
-                        onToggle={handleTaskToggle}
-                        showCheckbox={bulkActionsEnabled}
-                      />
-                    </div>
-                  </ErrorBoundary>
-                );
-              })
-            )}
+                </div>
+              )}
+
+              {renderCollapsibleSection('completedToday', 'Completed Today', completedTodayTasks, {
+                defaultCollapsed: filterBy !== 'completed',
+                accentColor: '#22c55e',
+                icon: <CalendarDays className="h-4 w-4" />,
+                subtitle: 'Finished in the last day'
+              })}
+
+              {renderCollapsibleSection('completedEarlier', 'Earlier Completions', completedEarlierTasks, {
+                defaultCollapsed: filterBy !== 'completed',
+                accentColor: '#14b8a6',
+                icon: <Clock className="h-4 w-4" />,
+                subtitle: 'Older done items'
+              })}
+
+              {activeTasks.length === 0 && completedTasks.length === 0 && (
+                <div className="text-sm text-gray-500">No tasks to show in this view.</div>
+              )}
+            </div>
           </>
         )}
       </div>
