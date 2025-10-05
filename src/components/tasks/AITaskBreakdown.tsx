@@ -565,20 +565,11 @@ Return JSON array only.`
     }
   }, [showContextForm, hasGenerated]);
   
-  // Reset state when component unmounts only
-  React.useEffect(() => {
-    return () => {
-      setHasGenerated(false);
-      setBreakdownOptions([]);
-      setError(null);
-      setContextData({
-        currentState: '',
-        blockers: '',
-        specificGoal: '',
-        environment: ''
-      });
-    };
-  }, []);
+  const handleCancel = () => {
+    setError(null);
+    setBreakdownOptions([]);
+    onClose();
+  };
 
   return (
     <Modal isOpen={true} onClose={onClose} title="AI Task Breakdown" size="lg">
@@ -905,7 +896,7 @@ Return JSON array only.`
         )}
 
         <div className="flex justify-end space-x-2 pt-4 border-t">
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={handleCancel}>
             Cancel
           </Button>
           {!showContextForm && breakdownOptions.length > 0 && (
