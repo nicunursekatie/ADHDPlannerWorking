@@ -86,8 +86,21 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       const apiKey = localStorage.getItem('ai_api_key');
       const providerName = localStorage.getItem('ai_provider') || 'openai';
       const modelName = localStorage.getItem('ai_model');
+      const customEndpoint = localStorage.getItem('ai_api_endpoint');
       const provider = getProvider(providerName);
       const selectedModel = modelName || provider.defaultModel;
+
+      let requestUrl = provider.baseUrl;
+      const trimmedEndpoint = customEndpoint?.trim();
+
+      if (trimmedEndpoint) {
+        try {
+          const validatedUrl = new URL(trimmedEndpoint);
+          requestUrl = validatedUrl.toString();
+        } catch (e) {
+          console.warn('[AITaskBreakdown] Invalid custom AI endpoint, falling back to provider base URL:', trimmedEndpoint, e);
+        }
+      }
       
       
       if (!apiKey) {
@@ -194,7 +207,7 @@ Return JSON array only.`
           }
         ];
     
-    const response = await fetch(provider.baseUrl, {
+    const response = await fetch(requestUrl, {
       method: 'POST',
       headers: provider.headers(apiKey),
       body: JSON.stringify(provider.formatRequest(messages, selectedModel))
