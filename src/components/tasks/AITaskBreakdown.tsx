@@ -565,7 +565,7 @@ Return JSON array only.`
     }
   }, [showContextForm, hasGenerated]);
   
-  const handleClose = () => {
+  const handleCancel = () => {
     setError(null);
     setIsLoading(false);
     setBreakdownOptions([]);
@@ -574,7 +574,7 @@ Return JSON array only.`
   };
 
   return (
-    <Modal isOpen={true} onClose={handleClose} title="AI Task Breakdown" size="lg">
+    <Modal isOpen={true} onClose={handleCancel} title="AI Task Breakdown" size="lg">
       <div className="space-y-4">
         <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
           <div className="flex items-center">
@@ -898,7 +898,7 @@ Return JSON array only.`
         )}
 
         <div className="flex justify-end space-x-2 pt-4 border-t">
-          <Button variant="secondary" onClick={handleClose}>
+          <Button variant="secondary" onClick={handleCancel}>
             Cancel
           </Button>
           {!showContextForm && breakdownOptions.length > 0 && (
