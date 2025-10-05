@@ -81,9 +81,10 @@ const Header: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`inline-flex items-center px-5 py-3 text-[15px] font-medium rounded-xl transition-all duration-200 ${
+                  aria-current={isActive(item.path) ? 'page' : undefined}
+                  className={`relative inline-flex items-center px-5 py-3 text-[15px] font-medium rounded-xl transition-all duration-200 ${
                     isActive(item.path)
-                      ? 'bg-focus-600 text-white shadow-md scale-105'
+                      ? 'bg-focus-600 text-white shadow-md scale-105 font-semibold after:absolute after:bottom-1 after:left-3 after:right-3 after:h-0.5 after:bg-white/90 after:rounded-full'
                       : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-surface-200 hover:bg-surface-200 dark:hover:bg-surface-700'
                   }`}
                 >
@@ -102,9 +103,10 @@ const Header: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`inline-flex items-center px-4 py-2.5 text-[15px] font-medium rounded-xl transition-all duration-200 ${
+                  aria-current={isActive(item.path) ? 'page' : undefined}
+                  className={`relative inline-flex items-center px-4 py-2.5 text-[15px] font-medium rounded-xl transition-all duration-200 ${
                     isActive(item.path)
-                      ? 'bg-surface-200 dark:bg-surface-700 text-surface-900 dark:text-surface-100'
+                      ? 'bg-surface-200 dark:bg-surface-700 text-surface-900 dark:text-surface-100 font-semibold after:absolute after:bottom-1 after:left-2 after:right-2 after:h-0.5 after:bg-focus-500 dark:after:bg-focus-400 after:rounded-full'
                       : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800'
                   }`}
                 >
@@ -164,9 +166,10 @@ const Header: React.FC = () => {
             <Link
               key={item.path}
               to={item.path}
+              aria-current={isActive(item.path) ? 'page' : undefined}
               className={`block px-5 py-4 border-l-4 text-lg font-medium transition-all duration-200 rounded-r-lg ${
                 isActive(item.path)
-                  ? 'bg-focus-50 dark:bg-focus-900/20 border-focus-500 text-focus-700 dark:text-focus-300'
+                  ? 'bg-focus-100/70 dark:bg-focus-900/20 border-focus-500 text-focus-700 dark:text-focus-300 font-semibold'
                   : 'border-transparent text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-800 hover:border-surface-300 dark:hover:border-surface-600 hover:text-surface-900 dark:hover:text-surface-200'
               }`}
               onClick={() => setIsMobileMenuOpen(false)}

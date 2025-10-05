@@ -70,9 +70,10 @@ const HeaderWithAuth: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                aria-current={isActive(item.path) ? 'page' : undefined}
+                className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                   isActive(item.path)
-                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-md font-semibold after:absolute after:bottom-1 after:left-2 after:right-2 after:h-0.5 after:bg-white/90 after:rounded-full'
                     : 'text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20'
                 }`}
               >
@@ -159,9 +160,10 @@ const HeaderWithAuth: React.FC = () => {
             <Link
               key={item.path}
               to={item.path}
+              aria-current={isActive(item.path) ? 'page' : undefined}
               className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200 ${
                 isActive(item.path)
-                  ? 'bg-purple-50 dark:bg-purple-900/30 border-purple-500 dark:border-purple-600 text-purple-600 dark:text-purple-400'
+                  ? 'bg-purple-100/70 dark:bg-purple-900/30 border-purple-600 dark:border-purple-500 text-purple-700 dark:text-purple-300 font-semibold'
                   : 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-500 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
               onClick={() => setIsMobileMenuOpen(false)}
