@@ -49,11 +49,11 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
   const [hasGenerated, setHasGenerated] = useState(false);
-  const alwaysAskContext = localStorage.getItem('ai_always_ask_context');
-  const [showContextForm, setShowContextForm] = useState(
-    // Default to true unless explicitly set to false
-    alwaysAskContext !== 'false'
-  );
+  const [askForContext, setAskForContext] = useState(() => {
+    const storedPreference = localStorage.getItem('ai_always_ask_context');
+    return storedPreference !== 'false';
+  });
+  const [showContextForm, setShowContextForm] = useState(askForContext);
   const [contextData, setContextData] = useState(() => {
     // Load saved context data from localStorage
     const savedContext = localStorage.getItem('ai_context_form_data');
@@ -743,9 +743,12 @@ Return JSON array only.`
                 <input
                   type="checkbox"
                   id="alwaysAskContext"
-                  checked={localStorage.getItem('ai_always_ask_context') !== 'false'}
+                  checked={askForContext}
                   onChange={(e) => {
-                    localStorage.setItem('ai_always_ask_context', e.target.checked.toString());
+                    const shouldAskForContext = e.target.checked;
+                    setAskForContext(shouldAskForContext);
+                    setShowContextForm(shouldAskForContext);
+                    localStorage.setItem('ai_always_ask_context', shouldAskForContext.toString());
                   }}
                   className="mr-2"
                 />
