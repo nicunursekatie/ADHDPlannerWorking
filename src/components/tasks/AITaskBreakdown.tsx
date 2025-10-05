@@ -71,11 +71,18 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       environment: ''
     };
   });
+  const isMountedRef = React.useRef(true);
 
   // Auto-save context data to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('ai_context_form_data', JSON.stringify(contextData));
   }, [contextData]);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const generateBreakdown = async () => {
     setIsLoading(true);
@@ -300,13 +307,15 @@ Return JSON array only.`
       tips: step.tips || 'Focus on this specific action'
     }));
     
-    setBreakdownOptions(breakdown);
-    
-    // Clear saved context data after successful generation
-    localStorage.removeItem('ai_context_form_data');
+    if (isMountedRef.current) {
+      setBreakdownOptions(breakdown);
+
+      // Clear saved context data after successful generation
+      localStorage.removeItem('ai_context_form_data');
+    }
     } catch (err) {
       let errorMessage = 'Failed to generate breakdown: ';
-      
+
       if (err instanceof Error) {
         if (err.message.includes('No API key')) {
           errorMessage = err.message;
@@ -318,18 +327,22 @@ Return JSON array only.`
       } else {
         errorMessage += 'An unknown error occurred.';
       }
-      
-      setError(errorMessage);
-      
-      // Provide fallback breakdown suggestions
-      console.log('[AITaskBreakdown] Providing fallback breakdown for task:', task.title);
-      const fallbackBreakdown = getFallbackBreakdown(task);
-      if (fallbackBreakdown.length > 0) {
-        setBreakdownOptions(fallbackBreakdown);
-        setError(errorMessage + ' Using fallback suggestions instead.');
+
+      if (isMountedRef.current) {
+        setError(errorMessage);
+
+        // Provide fallback breakdown suggestions
+        console.log('[AITaskBreakdown] Providing fallback breakdown for task:', task.title);
+        const fallbackBreakdown = getFallbackBreakdown(task);
+        if (fallbackBreakdown.length > 0) {
+          setBreakdownOptions(fallbackBreakdown);
+          setError(errorMessage + ' Using fallback suggestions instead.');
+        }
       }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
   
