@@ -17,7 +17,7 @@ import {
   AlertTriangle, CalendarDays, Calendar, Layers,
   Trash2, CheckCircle2, Folder, FileArchive,
   ArrowUpDown, Clock, Star, Hash, FolderOpen, Tag,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, Search
 } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek, getActionableTasks, getFutureTasks } from '../utils/helpers';
 import { TimeSpentModal } from '../components/tasks/TimeSpentModal';
@@ -157,6 +157,11 @@ export const TasksPageSupabase: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<'smart' | 'dueDate' | 'priority' | 'created' | 'alphabetical' | 'energy' | 'estimated' | 'project' | 'category'>('project');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [advancedCategory, setAdvancedCategory] = useState('');
+  const [advancedTag, setAdvancedTag] = useState('');
+  const [dueDateRange, setDueDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
   const [showQuickCapture, setShowQuickCapture] = useState(false);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   
@@ -200,22 +205,145 @@ export const TasksPageSupabase: React.FC = () => {
     );
   }
 
+  const categoryMap = React.useMemo(() => {
+    return new Map(categories.map(category => [category.id, category]));
+  }, [categories]);
+
+  const projectMap = React.useMemo(() => {
+    return new Map(projects.map(project => [project.id, project]));
+  }, [projects]);
+
+  const availableTags = React.useMemo(() => {
+    const tagSet = new Set<string>();
+    tasks.forEach(task => {
+      task.tags?.forEach(tag => {
+        const trimmed = tag.trim();
+        if (trimmed) {
+          tagSet.add(trimmed);
+        }
+      });
+    });
+    return Array.from(tagSet).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }, [tasks]);
+
+  const startDateBoundary = React.useMemo(() => {
+    if (!dueDateRange.start) return null;
+    const start = new Date(`${dueDateRange.start}T00:00:00`);
+    if (Number.isNaN(start.getTime())) return null;
+    start.setHours(0, 0, 0, 0);
+    return start;
+  }, [dueDateRange.start]);
+
+  const endDateBoundary = React.useMemo(() => {
+    if (!dueDateRange.end) return null;
+    const end = new Date(`${dueDateRange.end}T23:59:59`);
+    if (Number.isNaN(end.getTime())) return null;
+    end.setHours(23, 59, 59, 999);
+    return end;
+  }, [dueDateRange.end]);
+
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const normalizedAdvancedTag = advancedTag.trim().toLowerCase();
+
   // Filter and sort tasks
   const filteredTasks = tasks.filter(task => {
     // Exclude subtasks (tasks with a parentTaskId) from the main list
     if (task.parentTaskId) return false;
-    
-    if (filterBy === 'all') return !task.archived && !task.deletedAt;
-    if (filterBy === 'completed') return task.completed && !task.archived && !task.deletedAt;
-    if (filterBy === 'active') return !task.completed && !task.archived && !task.deletedAt;
-    if (filterBy === 'archived') return task.archived && !task.deletedAt;
-    if (filterBy === 'overdue') return getOverdueTasks([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
-    if (filterBy === 'today') return getTasksDueToday([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
-    if (filterBy === 'week') return getTasksDueThisWeek([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
-    if (filterBy === 'actionable') return getActionableTasks([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
-    if (filterBy === 'future') return getFutureTasks([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
-    if (filterBy === 'project') return task.projectId === selectedProject && !task.archived && !task.deletedAt;
-    if (filterBy === 'category') return task.categoryIds?.includes(selectedCategory) && !task.archived && !task.deletedAt;
+
+    let matchesFilter = true;
+
+    switch (filterBy) {
+      case 'all':
+        matchesFilter = !task.archived && !task.deletedAt;
+        break;
+      case 'completed':
+        matchesFilter = task.completed && !task.archived && !task.deletedAt;
+        break;
+      case 'active':
+        matchesFilter = !task.completed && !task.archived && !task.deletedAt;
+        break;
+      case 'archived':
+        matchesFilter = task.archived && !task.deletedAt;
+        break;
+      case 'overdue':
+        matchesFilter = getOverdueTasks([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
+        break;
+      case 'today':
+        matchesFilter = getTasksDueToday([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
+        break;
+      case 'week':
+        matchesFilter = getTasksDueThisWeek([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
+        break;
+      case 'actionable':
+        matchesFilter = getActionableTasks([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
+        break;
+      case 'future':
+        matchesFilter = getFutureTasks([task]).length > 0 && !task.completed && !task.archived && !task.deletedAt;
+        break;
+      case 'project':
+        matchesFilter = task.projectId === selectedProject && !task.archived && !task.deletedAt;
+        break;
+      case 'category':
+        matchesFilter = task.categoryIds?.includes(selectedCategory) && !task.archived && !task.deletedAt;
+        break;
+      default:
+        matchesFilter = true;
+    }
+
+    if (!matchesFilter) {
+      return false;
+    }
+
+    if (normalizedSearchQuery) {
+      const searchableContent = [
+        task.title,
+        task.description,
+        task.priority || '',
+        task.energyLevel || '',
+        ...(task.tags || []),
+        ...(task.categoryIds || []).map(id => categoryMap.get(id)?.name || ''),
+        task.projectId ? projectMap.get(task.projectId)?.name || '' : ''
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      if (!searchableContent.includes(normalizedSearchQuery)) {
+        return false;
+      }
+    }
+
+    if (advancedCategory) {
+      if (!task.categoryIds?.includes(advancedCategory)) {
+        return false;
+      }
+    }
+
+    if (normalizedAdvancedTag) {
+      const taskTags = (task.tags || []).map(tag => tag.toLowerCase());
+      if (!taskTags.includes(normalizedAdvancedTag)) {
+        return false;
+      }
+    }
+
+    if (startDateBoundary || endDateBoundary) {
+      if (!task.dueDate) {
+        return false;
+      }
+
+      const dueDate = new Date(task.dueDate);
+      if (Number.isNaN(dueDate.getTime())) {
+        return false;
+      }
+
+      if (startDateBoundary && dueDate < startDateBoundary) {
+        return false;
+      }
+
+      if (endDateBoundary && dueDate > endDateBoundary) {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -245,10 +373,6 @@ export const TasksPageSupabase: React.FC = () => {
   }, [tasks.length, filteredTasks.length, filterBy]);
 
   // Sort tasks
-  const categoryMap = React.useMemo(() => {
-    return new Map(categories.map(category => [category.id, category]));
-  }, [categories]);
-
   filteredTasks.sort((a, b) => {
     let comparison = 0;
 
@@ -1078,6 +1202,20 @@ export const TasksPageSupabase: React.FC = () => {
     }
   };
 
+  const handleClearSearchAndFilters = () => {
+    setSearchQuery('');
+    setAdvancedCategory('');
+    setAdvancedTag('');
+    setDueDateRange({ start: '', end: '' });
+  };
+
+  const hasActiveAdvancedFilters = Boolean(
+    advancedCategory ||
+    advancedTag ||
+    dueDateRange.start ||
+    dueDateRange.end
+  );
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
@@ -1142,101 +1280,220 @@ export const TasksPageSupabase: React.FC = () => {
 
       {/* Filters */}
       <Card className="mb-6 p-4">
-        <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setFilterBy('all')}
-              className={`px-3 py-1 rounded text-sm ${filterBy === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-            >
-              All ({tasks.filter(t => !t.archived && !t.deletedAt).length})
-            </button>
-            <button
-              onClick={() => setFilterBy('actionable')}
-              className={`px-3 py-1 rounded text-sm ${filterBy === 'actionable' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-              title="Tasks you can work on right now"
-            >
-              Actionable ({getActionableTasks(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
-            </button>
-            <button
-              onClick={() => setFilterBy('active')}
-              className={`px-3 py-1 rounded text-sm ${filterBy === 'active' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-            >
-              Active ({tasks.filter(t => !t.completed && !t.archived && !t.deletedAt).length})
-            </button>
-            <button
-              onClick={() => setFilterBy('completed')}
-              className={`px-3 py-1 rounded text-sm ${filterBy === 'completed' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-            >
-              Completed ({tasks.filter(t => t.completed && !t.archived && !t.deletedAt).length})
-            </button>
-            <button
-              onClick={() => setFilterBy('archived')}
-              className={`px-3 py-1 rounded text-sm ${filterBy === 'archived' ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-              title="View archived tasks"
-            >
-              Archived ({tasks.filter(t => t.archived && !t.deletedAt).length})
-            </button>
-            <button
-              onClick={() => setFilterBy('overdue')}
-              className={`px-3 py-1 rounded text-sm ${filterBy === 'overdue' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-            >
-              Overdue ({getOverdueTasks(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
-            </button>
-            <button
-              onClick={() => setFilterBy('today')}
-              className={`px-4 py-2 rounded-lg text-sm font-bold shadow-md transition-all duration-200 hover:scale-105 ${
-                filterBy === 'today' 
-                  ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg' 
-                  : 'bg-gradient-to-r from-red-100 to-orange-100 text-red-800 hover:from-red-200 hover:to-orange-200'
-              }`}
-            >
-              🔥 TODAY ({getTasksDueToday(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
-            </button>
-            <button
-              onClick={() => setFilterBy('future')}
-              className={`px-3 py-1 rounded text-sm ${filterBy === 'future' ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-              title="Tasks that can't be started yet"
-            >
-              Future ({getFutureTasks(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
-            </button>
-          </div>
-          
-          <div className="flex gap-2 items-center">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="px-3 py-1 border rounded text-sm"
-            >
-              <option value="smart">Smart (Urgency + Priority)</option>
-              <option value="dueDate">Due Date</option>
-              <option value="priority">Priority</option>
-              <option value="project">Project</option>
-              <option value="created">Created</option>
-              <option value="alphabetical">Alphabetical</option>
-              <option value="energy">Energy Level</option>
-              <option value="estimated">Estimated Time</option>
-              <option value="category">Category</option>
-            </select>
-            <button
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-1 hover:bg-gray-100 rounded"
-            >
-              <ArrowUpDown className="w-4 h-4" />
-            </button>
-          </div>
-
-          {filteredTasks.length > 0 && bulkActionsEnabled && (
-            <div className="flex gap-2">
-              <Button onClick={handleSelectAll} variant="outline" size="sm">
-                Select All
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tasks by title, description, tag..."
+                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-3 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setShowAdvancedFilters(prev => !prev)}
+                variant={showAdvancedFilters || hasActiveAdvancedFilters ? 'secondary' : 'ghost'}
+                size="sm"
+                className={`${hasActiveAdvancedFilters ? 'border border-blue-200 bg-blue-50 text-blue-700' : 'border border-gray-200'}`}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Advanced Filters
+                {hasActiveAdvancedFilters && <span className="ml-2 h-2 w-2 rounded-full bg-blue-500" />}
               </Button>
-              {selectedTasks.size > 0 && (
-                <Button onClick={handleDeselectAll} variant="outline" size="sm">
-                  Deselect All
+              {(searchQuery || hasActiveAdvancedFilters) && (
+                <Button
+                  onClick={handleClearSearchAndFilters}
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Clear
                 </Button>
               )}
             </div>
+          </div>
+
+          {showAdvancedFilters && (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Category</label>
+                <select
+                  value={advancedCategory}
+                  onChange={(e) => setAdvancedCategory(e.target.value)}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                >
+                  <option value="">All categories</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Tag</label>
+                <select
+                  value={advancedTag}
+                  onChange={(e) => setAdvancedTag(e.target.value)}
+                  disabled={availableTags.length === 0}
+                  className={`rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200 ${availableTags.length === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
+                >
+                  <option value="">{availableTags.length === 0 ? 'No tags available' : 'All tags'}</option>
+                  {availableTags.map(tag => (
+                    <option key={tag} value={tag}>
+                      {tag}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Due from</label>
+                <input
+                  type="date"
+                  value={dueDateRange.start}
+                  onChange={(e) => setDueDateRange(prev => ({ ...prev, start: e.target.value }))}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Due to</label>
+                <input
+                  type="date"
+                  value={dueDateRange.end}
+                  onChange={(e) => setDueDateRange(prev => ({ ...prev, end: e.target.value }))}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                />
+              </div>
+            </div>
           )}
+
+          {(searchQuery || hasActiveAdvancedFilters) && (
+            <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+              {searchQuery && (
+                <span className="rounded-full bg-gray-100 px-3 py-1">
+                  Search: <span className="font-semibold text-gray-800">{searchQuery}</span>
+                </span>
+              )}
+              {advancedCategory && (
+                <span className="rounded-full bg-gray-100 px-3 py-1">
+                  Category: <span className="font-semibold text-gray-800">{categoryMap.get(advancedCategory)?.name || 'Unknown'}</span>
+                </span>
+              )}
+              {advancedTag && (
+                <span className="rounded-full bg-gray-100 px-3 py-1">
+                  Tag: <span className="font-semibold text-gray-800">{advancedTag}</span>
+                </span>
+              )}
+              {(dueDateRange.start || dueDateRange.end) && (
+                <span className="rounded-full bg-gray-100 px-3 py-1">
+                  Due
+                  {dueDateRange.start && ` from ${formatDate(new Date(dueDateRange.start))}`}
+                  {dueDateRange.end && ` to ${formatDate(new Date(dueDateRange.end))}`}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFilterBy('all')}
+                className={`px-3 py-1 rounded text-sm ${filterBy === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                All ({tasks.filter(t => !t.archived && !t.deletedAt).length})
+              </button>
+              <button
+                onClick={() => setFilterBy('actionable')}
+                className={`px-3 py-1 rounded text-sm ${filterBy === 'actionable' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                title="Tasks you can work on right now"
+              >
+                Actionable ({getActionableTasks(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
+              </button>
+              <button
+                onClick={() => setFilterBy('active')}
+                className={`px-3 py-1 rounded text-sm ${filterBy === 'active' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                Active ({tasks.filter(t => !t.completed && !t.archived && !t.deletedAt).length})
+              </button>
+              <button
+                onClick={() => setFilterBy('completed')}
+                className={`px-3 py-1 rounded text-sm ${filterBy === 'completed' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                Completed ({tasks.filter(t => t.completed && !t.archived && !t.deletedAt).length})
+              </button>
+              <button
+                onClick={() => setFilterBy('archived')}
+                className={`px-3 py-1 rounded text-sm ${filterBy === 'archived' ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                title="View archived tasks"
+              >
+                Archived ({tasks.filter(t => t.archived && !t.deletedAt).length})
+              </button>
+              <button
+                onClick={() => setFilterBy('overdue')}
+                className={`px-3 py-1 rounded text-sm ${filterBy === 'overdue' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                Overdue ({getOverdueTasks(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
+              </button>
+              <button
+                onClick={() => setFilterBy('today')}
+                className={`px-4 py-2 rounded-lg text-sm font-bold shadow-md transition-all duration-200 hover:scale-105 ${
+                  filterBy === 'today'
+                    ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg'
+                    : 'bg-gradient-to-r from-red-100 to-orange-100 text-red-800 hover:from-red-200 hover:to-orange-200'
+                }`}
+              >
+                🔥 TODAY ({getTasksDueToday(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
+              </button>
+              <button
+                onClick={() => setFilterBy('future')}
+                className={`px-3 py-1 rounded text-sm ${filterBy === 'future' ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                title="Tasks that can't be started yet"
+              >
+                Future ({getFutureTasks(tasks.filter(t => !t.completed && !t.archived && !t.deletedAt)).length})
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2 items-center justify-end">
+              <div className="flex items-center gap-2">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                >
+                  <option value="smart">Smart (Urgency + Priority)</option>
+                  <option value="dueDate">Due Date</option>
+                  <option value="priority">Priority</option>
+                  <option value="project">Project</option>
+                  <option value="created">Created</option>
+                  <option value="alphabetical">Alphabetical</option>
+                  <option value="energy">Energy Level</option>
+                  <option value="estimated">Estimated Time</option>
+                  <option value="category">Category</option>
+                </select>
+                <button
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="rounded-lg border border-gray-200 p-2 hover:bg-gray-100"
+                >
+                  <ArrowUpDown className="w-4 h-4" />
+                </button>
+              </div>
+              {filteredTasks.length > 0 && bulkActionsEnabled && (
+                <div className="flex gap-2">
+                  <Button onClick={handleSelectAll} variant="outline" size="sm">
+                    Select All
+                  </Button>
+                  {selectedTasks.size > 0 && (
+                    <Button onClick={handleDeselectAll} variant="outline" size="sm">
+                      Deselect All
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </Card>
 
