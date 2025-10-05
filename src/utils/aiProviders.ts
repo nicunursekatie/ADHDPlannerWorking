@@ -59,15 +59,85 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
       'x-api-key': apiKey || '',
       'anthropic-version': '2023-06-01'
     }),
-    formatRequest: (messages, model) => ({
-      model,
-      messages: messages.map(msg => ({
-        role: msg.role === 'system' ? 'assistant' : msg.role,
-        content: msg.content
-      })),
-      max_tokens: 2000,
-      temperature: 0.7
-    }),
+    formatRequest: (messages, model) => {
+      const systemMessages = messages.filter((msg) => msg.role === 'system');
+      const conversationMessages = messages.filter((msg) => msg.role !== 'system');
+
+      const formatContent = (content: any) => {
+        if (Array.isArray(content)) {
+          return content.map((item) => {
+            if (typeof item === 'string') {
+              return { type: 'text', text: item };
+            }
+
+            if (item && typeof item === 'object' && 'type' in item) {
+              return item;
+            }
+
+            return { type: 'text', text: String(item) };
+          });
+        }
+
+        if (typeof content === 'string') {
+          return [{ type: 'text', text: content }];
+        }
+
+        return [{ type: 'text', text: String(content) }];
+      };
+
+      const formattedMessages = conversationMessages.reduce((acc: any[], msg) => {
+        const normalizedRole = msg.role === 'assistant' ? 'assistant' : 'user';
+        const formattedContent = formatContent(msg.content);
+
+        if (acc.length === 0 && normalizedRole !== 'user') {
+          acc.push({ role: 'user', content: formattedContent });
+          return acc;
+        }
+
+        if (acc.length === 0) {
+          acc.push({ role: 'user', content: formattedContent });
+          return acc;
+        }
+
+        acc.push({ role: normalizedRole, content: formattedContent });
+        return acc;
+      }, []);
+
+      const systemPrompt = systemMessages
+        .map((msg) => {
+          if (typeof msg.content === 'string') {
+            return msg.content;
+          }
+
+          if (Array.isArray(msg.content)) {
+            return msg.content
+              .map((item) => {
+                if (typeof item === 'string') {
+                  return item;
+                }
+
+                if (item && typeof item === 'object' && 'text' in item) {
+                  return item.text;
+                }
+
+                return String(item);
+              })
+              .join('\n');
+          }
+
+          return String(msg.content);
+        })
+        .filter(Boolean)
+        .join('\n\n');
+
+      return {
+        model,
+        ...(systemPrompt ? { system: systemPrompt } : {}),
+        messages: formattedMessages,
+        max_tokens: 2000,
+        temperature: 0.7
+      };
+    },
     parseResponse: (response) => response.content[0].text
   }
 };
