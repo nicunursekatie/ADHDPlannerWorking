@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Task } from '../../types';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import { Plus, Circle, Calendar, Folder, Tag, Flame, Star, Brain, Battery } from 'lucide-react';
 import { getTodayString, getTomorrowString, formatDateString, extractDateFromText } from '../../utils/dateUtils';
 

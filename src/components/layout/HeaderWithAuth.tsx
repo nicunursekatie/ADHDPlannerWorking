@@ -17,7 +17,7 @@ import {
   Sun,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import { DarkModeToggleCompact } from '../common/DarkModeToggle';
 
 const HeaderWithAuth: React.FC = () => {

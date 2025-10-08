@@ -16,7 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 
 interface CommandItem {
   id: string;

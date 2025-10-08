@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Task, Project, Category } from '../../types';
 import { ImprovedTaskCard } from '../tasks/ImprovedTaskCard';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import { Clock, Target, Menu, Download, LayoutGrid, List, ArrowLeft, ArrowRight, Plus } from 'lucide-react';
 import Button from '../common/Button';
 import QuickTaskInput from '../tasks/QuickTaskInput';

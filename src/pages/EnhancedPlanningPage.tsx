@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContextSupabase';
+import { useAppContext } from '../context/AppContext';
 import { Task, Project } from '../types';
 import { Backpack, Calendar, Target, Cpu, Menu, Clock, Plus } from 'lucide-react';
 import Button from '../components/common/Button';

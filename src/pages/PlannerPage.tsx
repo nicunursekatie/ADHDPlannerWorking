@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContextSupabase';
+import { useAppContext } from '../context/AppContext';
 import DailyPlannerGrid from '../components/planning/daily-planner/DailyPlannerGrid';
 import { formatDateForDisplay } from '../utils/helpers';
 import { ChevronLeft, ChevronRight, Clock, Calendar, ExternalLink } from 'lucide-react';

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContextSupabase';
+import { useAppContext } from '../context/AppContext';
 import { Category, Task } from '../types';
 import CategoryCard from '../components/categories/CategoryCard';
 import CategoryForm from '../components/categories/CategoryForm';

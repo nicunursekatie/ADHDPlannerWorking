@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Task, WhatNowCriteria } from '../../types';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import { sortTasks, EnergyLevel, getTaskRecommendationReason } from '../../utils/taskPrioritization';
 import Card from '../common/Card';
 import Button from '../common/Button';

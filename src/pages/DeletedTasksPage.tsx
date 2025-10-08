@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../context/AppContextSupabase';
+import { useAppContext } from '../context/AppContext';
 import { DeletedTask, getDeletedTasks, restoreDeletedTask, permanentlyDeleteTask, clearAllDeletedTasks } from '../utils/localStorage';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';

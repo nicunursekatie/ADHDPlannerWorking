@@ -4,7 +4,7 @@ import Button from '../common/Button';
 import Card from '../common/Card';
 import * as localStorage from '../../utils/localStorage';
 import { DatabaseService } from '../../services/database';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import { DailyPlan } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../../lib/supabase';
