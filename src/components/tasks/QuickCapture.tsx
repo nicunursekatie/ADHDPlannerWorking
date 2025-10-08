@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import { Plus, Circle } from 'lucide-react';
 import { extractDateFromText, formatDateString } from '../../utils/dateUtils';
 

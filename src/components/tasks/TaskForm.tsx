@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Task, Project, Category } from '../../types';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import { useTaskAutoSave } from '../../hooks/useTaskAutoSave';
 import Button from '../common/Button';
 import Modal from '../common/Modal';

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Task } from '../../types';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import SubtaskList from './SubtaskList';

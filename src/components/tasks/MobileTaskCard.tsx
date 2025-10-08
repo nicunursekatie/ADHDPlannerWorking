@@ -4,7 +4,7 @@ import { Task } from '../../types';
 import { useSwipeGesture } from '../../hooks/useSwipeGesture';
 import { formatDistanceToNow } from 'date-fns';
 import { FuzzyTaskBreakdownSimple } from './FuzzyTaskBreakdownSimple';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 
 interface MobileTaskCardProps {
   task: Task;

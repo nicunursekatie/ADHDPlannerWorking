@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, Circle, Calendar, AlertCircle, ChevronDown, ChevronRight, Folder, PlayCircle, Sparkles, Play, Timer, FolderPlus, Brain } from 'lucide-react';
 import { Task } from '../types';
-import { useAppContext } from '../context/AppContextSupabase';
+import { useAppContext } from '../context/AppContext';
 import { getDueDateStatus, getRelativeTimeDisplay } from '../utils/dateUtils';
 import { GuidedWalkthroughModal } from './tasks/GuidedWalkthroughModal';
 import { QuickDueDateEditor } from './tasks/QuickDueDateEditor';

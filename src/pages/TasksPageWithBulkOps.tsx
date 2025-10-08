@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAppContext } from '../context/AppContextSupabase';
+import { useAppContext } from '../context/AppContext';
 import { Task, TaskSortMode, WhatNowCriteria } from '../types';
 import { TaskDisplay } from '../components/TaskDisplay';
 import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
