@@ -7,7 +7,7 @@ import AISettings from '../components/settings/AISettings';
 import { DuplicateCleanup } from '../components/settings/DuplicateCleanup';
 import { ChangePasswordModal } from '../components/settings/ChangePasswordModal';
 import { DestructiveActionModal } from '../components/common/DestructiveActionModal';
-import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Users, Lock } from 'lucide-react';
+import { Download, Upload, Trash2, AlertCircle, Brain, ChevronDown, ChevronUp, Tag, Plus, Edit2, X, Clock, Eye, Users, Lock, CheckCircle2 } from 'lucide-react';
 import { Category } from '../types';
 import { DatabaseService } from '../services/database';
 
@@ -30,6 +30,9 @@ const SettingsPageWithMigration: React.FC = () => {
   const [showVisualPreferences, setShowVisualPreferences] = useState(false);
   const [showDuplicateCleanup, setShowDuplicateCleanup] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [resetStatus, setResetStatus] = useState<'idle' | 'loading'>('idle');
+  const [sampleStatus, setSampleStatus] = useState<'idle' | 'loading'>('idle');
+  const [dataFeedback, setDataFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   
   const handleExportData = () => {
     const data = exportData();
@@ -116,12 +119,43 @@ const SettingsPageWithMigration: React.FC = () => {
   };
   
   const handleResetConfirm = async () => {
-    await resetData();
-    setResetModalOpen(false);
+    setResetStatus('loading');
+    setDataFeedback(null);
+    try {
+      await resetData();
+      setDataFeedback({
+        type: 'success',
+        message: 'All of your workspace data has been cleared. You can start fresh or load the sample workspace at any time.'
+      });
+    } catch (error) {
+      console.error('Failed to reset data:', error);
+      setDataFeedback({
+        type: 'error',
+        message: 'We were unable to reset your data. Please try again or contact support if the issue persists.'
+      });
+    } finally {
+      setResetStatus('idle');
+    }
   };
-  
+
   const handleLoadSampleData = async () => {
-    await initializeSampleData();
+    setSampleStatus('loading');
+    setDataFeedback(null);
+    try {
+      await initializeSampleData();
+      setDataFeedback({
+        type: 'success',
+        message: 'Sample tasks, projects, and categories have been loaded into your workspace.'
+      });
+    } catch (error) {
+      console.error('Failed to initialize sample data:', error);
+      setDataFeedback({
+        type: 'error',
+        message: 'Loading the sample workspace failed. Please try again.'
+      });
+    } finally {
+      setSampleStatus('idle');
+    }
   };
 
   const handleAddCategory = () => {
@@ -259,11 +293,13 @@ const SettingsPageWithMigration: React.FC = () => {
               variant="secondary"
               className="mt-2 md:mt-0"
               onClick={handleLoadSampleData}
+              loading={sampleStatus === 'loading'}
+              disabled={resetStatus === 'loading'}
             >
               Load Samples
             </Button>
           </div>
-          
+
           <div className="flex flex-col md:flex-row md:items-center justify-between py-2">
             <div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">Reset Data</h3>
@@ -276,10 +312,31 @@ const SettingsPageWithMigration: React.FC = () => {
               icon={<Trash2 size={16} />}
               className="mt-2 md:mt-0"
               onClick={handleResetClick}
+              loading={resetStatus === 'loading'}
+              disabled={sampleStatus === 'loading'}
             >
               Reset
             </Button>
           </div>
+
+          {dataFeedback && (
+            <div
+              className={`mt-2 flex items-start gap-2 rounded-lg border px-3 py-3 text-sm ${
+                dataFeedback.type === 'success'
+                  ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-900/20 dark:text-green-200'
+                  : 'border-red-200 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-200'
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              {dataFeedback.type === 'success' ? (
+                <CheckCircle2 className="mt-0.5 h-4 w-4 text-green-600 dark:text-green-300" />
+              ) : (
+                <AlertCircle className="mt-0.5 h-4 w-4 text-red-600 dark:text-red-300" />
+              )}
+              <span>{dataFeedback.message}</span>
+            </div>
+          )}
         </div>
       </Card>
       

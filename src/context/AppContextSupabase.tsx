@@ -6,6 +6,7 @@ import { generateId, recommendTasks as recommendTasksUtil } from '../utils/helpe
 import { getTodayString, formatDateString, extractDateFromText } from '../utils/dateUtils';
 import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
+import { clearSupabaseUserData, seedSampleDataForUser } from './supabaseDataManagement';
 import { AppContext as LocalAppContext, AppContextType as LocalAppContextType } from './AppContext';
 
 interface DeletedTask {
@@ -1707,16 +1708,47 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const resetData = useCallback(async () => {
     if (!user) throw new Error('User not authenticated');
-    
-    // TODO: Implement data reset in Supabase
-    // This would delete all user data
+
+    setIsLoading(true);
+    try {
+      await clearSupabaseUserData(supabase, user.id);
+
+      setTasks([]);
+      setProjects([]);
+      setCategories([]);
+      setDailyPlans([]);
+      setWorkSchedule(null);
+      setJournalEntries([]);
+      setRecurringTasks([]);
+      setSettings(DEFAULT_SETTINGS);
+      setDeletedTasks([]);
+      setLastWeeklyReviewDate(null);
+      setIsDataInitialized(false);
+    } catch (error) {
+      console.error('Error resetting data:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   }, [user]);
 
   const initializeSampleData = useCallback(async () => {
     if (!user) throw new Error('User not authenticated');
-    
-    // TODO: Implement sample data initialization
-  }, [user]);
+
+    setIsLoading(true);
+    try {
+      await seedSampleDataForUser(supabase, user.id);
+      setSettings(DEFAULT_SETTINGS);
+      setDeletedTasks([]);
+      setLastWeeklyReviewDate(null);
+      await loadUserData(user.id);
+    } catch (error) {
+      console.error('Error initializing sample data:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, loadUserData]);
 
   const contextValue: SupabaseAppContextType = {
     user,
