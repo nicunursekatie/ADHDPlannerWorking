@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Category } from '../../types';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import Button from '../common/Button';
 
 interface CategoryFormProps {

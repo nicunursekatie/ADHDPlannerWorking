@@ -25,7 +25,7 @@ import { Task, Project, Category } from '../../types';
 import Badge from '../common/Badge';
 import { formatDateForDisplay } from '../../utils/helpers';
 import { getRelativeTimeDisplay } from '../../utils/dateUtils';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import { QuickDueDateEditor } from './QuickDueDateEditor';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji, calculateSmartPriorityScore } from '../../utils/taskPrioritization';
 import { TimeSpentModal } from './TimeSpentModal';

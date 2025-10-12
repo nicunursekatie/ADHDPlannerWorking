@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, ArrowRight, ArrowLeft, Sparkles, CheckCircle, AlertCircle, Users, Calendar, Brain, Search, MessageSquare, ClipboardList, ChevronRight, Loader2 } from 'lucide-react';
 import { Task, Category } from '../../types';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import Button from '../common/Button';
 import { AI_PROVIDERS, getProvider } from '../../utils/aiProviders';
 

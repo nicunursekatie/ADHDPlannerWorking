@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContextSupabase';
+import { useAppContext } from '../context/AppContext';
 import { Project, Task } from '../types';
 import ProjectCard from '../components/projects/ProjectCard';
 import ProjectForm from '../components/projects/ProjectForm';

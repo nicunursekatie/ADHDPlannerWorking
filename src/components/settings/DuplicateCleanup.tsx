@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trash2, AlertCircle, CheckCircle, XCircle, Loader2, Users, Tag } from 'lucide-react';
 import Button from '../common/Button';
 import Card from '../common/Card';
-import { useAppContext } from '../../context/AppContextSupabase';
+import { useAppContext } from '../../context/AppContext';
 import { Task, Project, Category } from '../../types';
 
 interface DuplicateTaskGroup {

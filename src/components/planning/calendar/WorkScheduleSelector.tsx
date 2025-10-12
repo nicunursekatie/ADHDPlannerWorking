@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../../../context/AppContextSupabase';
+import { useAppContext } from '../../../context/AppContext';
 import { WorkShift, ShiftType, DEFAULT_SHIFTS } from '../../../types/WorkSchedule';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 

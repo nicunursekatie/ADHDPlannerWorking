@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Task, Project, Category } from '../../../types';
-import { useAppContext } from '../../../context/AppContextSupabase';
+import { useAppContext } from '../../../context/AppContext';
 import Button from '../../common/Button';
 import { ChevronDown, ChevronRight, Save, Plus, Target, Clock, Trash2 } from 'lucide-react';
 import { generateId } from '../../../utils/helpers';

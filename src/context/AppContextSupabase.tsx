@@ -7,13 +7,14 @@ import { getTodayString, formatDateString, extractDateFromText } from '../utils/
 import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { clearSupabaseUserData, seedSampleDataForUser } from './supabaseDataManagement';
+import { AppContext as LocalAppContext, AppContextType as LocalAppContextType } from './AppContext';
 
 interface DeletedTask {
   task: Task;
   timestamp: number;
 }
 
-interface AppContextType {
+interface SupabaseAppContextType {
   // Auth
   user: User | null;
   signOut: () => Promise<void>;
@@ -115,7 +116,7 @@ interface AppContextType {
   isDataInitialized: boolean;
 }
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+const SupabaseAppContext = createContext<SupabaseAppContextType | undefined>(undefined);
 
 const UNDO_WINDOW = 5000; // 5 seconds window for undo
 
@@ -1749,7 +1750,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [user, loadUserData]);
 
-  const contextValue: AppContextType = {
+  const contextValue: SupabaseAppContextType = {
     user,
     signOut,
     
@@ -1837,14 +1838,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   return (
-    <AppContext.Provider value={contextValue}>
-      {children}
-    </AppContext.Provider>
+    <LocalAppContext.Provider value={contextValue as unknown as LocalAppContextType}>
+      <SupabaseAppContext.Provider value={contextValue}>
+        {children}
+      </SupabaseAppContext.Provider>
+    </LocalAppContext.Provider>
   );
 };
 
-export const useAppContext = (): AppContextType => {
-  const context = React.useContext(AppContext);
+export const useAppContext = (): SupabaseAppContextType => {
+  const context = React.useContext(SupabaseAppContext);
   if (context === undefined) {
     throw new Error('useAppContext must be used within an AppProvider');
   }
