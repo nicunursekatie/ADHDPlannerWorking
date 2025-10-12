@@ -85,23 +85,16 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
         return [{ type: 'text', text: String(content) }];
       };
 
-      const formattedMessages = conversationMessages.reduce((acc: any[], msg) => {
-        const normalizedRole = msg.role === 'assistant' ? 'assistant' : 'user';
-        const formattedContent = formatContent(msg.content);
+      const formattedMessages = conversationMessages.map((msg) => ({
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: formatContent(msg.content)
+      }));
 
-        if (acc.length === 0 && normalizedRole !== 'user') {
-          acc.push({ role: 'user', content: formattedContent });
-          return acc;
-        }
-
-        if (acc.length === 0) {
-          acc.push({ role: 'user', content: formattedContent });
-          return acc;
-        }
-
-        acc.push({ role: normalizedRole, content: formattedContent });
-        return acc;
-      }, []);
+      if (formattedMessages.length === 0) {
+        formattedMessages.push({ role: 'user', content: [{ type: 'text', text: '' }] });
+      } else if (formattedMessages[0].role !== 'user') {
+        formattedMessages.unshift({ role: 'user', content: [{ type: 'text', text: '' }] });
+      }
 
       const systemPrompt = systemMessages
         .map((msg) => {
