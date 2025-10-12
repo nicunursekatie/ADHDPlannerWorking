@@ -97,19 +97,30 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       const provider = getProvider(providerName);
       const selectedModel = modelName || provider.defaultModel;
 
-      let requestUrl = provider.baseUrl;
-      const trimmedEndpoint = customEndpoint?.trim();
+      const requestUrl = (() => {
+        if (!customEndpoint) {
+          return provider.baseUrl;
+        }
 
-      if (trimmedEndpoint) {
+        const trimmedEndpoint = customEndpoint.trim();
+        if (!trimmedEndpoint) {
+          return provider.baseUrl;
+        }
+
         try {
           const validatedUrl = new URL(trimmedEndpoint);
-          requestUrl = validatedUrl.toString();
+          return validatedUrl.toString();
         } catch (e) {
-          console.warn('[AITaskBreakdown] Invalid custom AI endpoint, falling back to provider base URL:', trimmedEndpoint, e);
+          console.warn(
+            '[AITaskBreakdown] Invalid custom AI endpoint, falling back to provider base URL:',
+            trimmedEndpoint,
+            e
+          );
+          return provider.baseUrl;
         }
-      }
-      
-      
+      })();
+
+
       if (!apiKey) {
         throw new Error('No API key configured. Please add your API key in Settings to use AI task breakdown.');
       }
