@@ -73,6 +73,13 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
   });
   const isMountedRef = React.useRef(true);
 
+  const resetGenerationState = () => {
+    setError(null);
+    setIsLoading(false);
+    setBreakdownOptions([]);
+    setHasGenerated(false);
+  };
+
   // Auto-save context data to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('ai_context_form_data', JSON.stringify(contextData));
@@ -322,9 +329,6 @@ Return JSON array only.`
     
     if (isMountedRef.current) {
       setBreakdownOptions(breakdown);
-
-      // Clear saved context data after successful generation
-      localStorage.removeItem('ai_context_form_data');
     }
     } catch (err) {
       let errorMessage = 'Failed to generate breakdown: ';
@@ -527,9 +531,6 @@ Return JSON array only.`
       };
     });
     
-    // Clear saved context data when accepting the breakdown
-    localStorage.removeItem('ai_context_form_data');
-    
     onAccept(subtasks);
   };
 
@@ -592,10 +593,7 @@ Return JSON array only.`
   }, [showContextForm, hasGenerated]);
   
   const handleCancel = () => {
-    setError(null);
-    setIsLoading(false);
-    setBreakdownOptions([]);
-    setHasGenerated(false);
+    resetGenerationState();
     onClose();
   };
 
@@ -931,10 +929,8 @@ Return JSON array only.`
             <Button
               variant="secondary"
               onClick={() => {
+                resetGenerationState();
                 setShowContextForm(true);
-                setHasGenerated(false); // Reset so it will regenerate
-                setBreakdownOptions([]); // Clear old results
-                setError(null); // Clear any errors
               }}
               icon={<Edit3 size={16} />}
             >
