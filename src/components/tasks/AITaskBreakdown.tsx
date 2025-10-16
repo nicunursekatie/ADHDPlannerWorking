@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Task } from '../../types';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
-import { getProvider } from '../../utils/aiProviders';
+import { getProvider, resolveProviderEndpoint } from '../../utils/aiProviders';
 import { generateId } from '../../utils/helpers';
 import { 
   Brain,
@@ -103,35 +103,19 @@ const AITaskBreakdown: React.FC<AITaskBreakdownProps> = ({ task, onAccept, onClo
       const customEndpoint = localStorage.getItem('ai_api_endpoint');
       const provider = getProvider(providerName);
       const selectedModel = modelName || provider.defaultModel;
+      const { url: requestUrl, isCustom: usingCustomEndpoint } = resolveProviderEndpoint(
+        customEndpoint,
+        provider.baseUrl
+      );
 
-      const requestUrl = (() => {
-        if (!customEndpoint) {
-          return provider.baseUrl;
-        }
-
-        const trimmedEndpoint = customEndpoint.trim();
-        if (!trimmedEndpoint) {
-          return provider.baseUrl;
-        }
-
-        try {
-          const validatedUrl = new URL(trimmedEndpoint);
-          return validatedUrl.toString();
-        } catch (e) {
-          console.warn(
-            '[AITaskBreakdown] Invalid custom AI endpoint, falling back to provider base URL:',
-            trimmedEndpoint,
-            e
-          );
-          return provider.baseUrl;
-        }
-      })();
-
-
-      if (!apiKey) {
+      if (!apiKey && provider.apiKeyRequired && !usingCustomEndpoint) {
         throw new Error('No API key configured. Please add your API key in Settings to use AI task breakdown.');
       }
-    
+
+      const headers = usingCustomEndpoint && !apiKey
+        ? { 'Content-Type': 'application/json' }
+        : provider.headers(apiKey || undefined);
+
     // Real AI API call
     const messages = [
           {
@@ -234,7 +218,7 @@ Return JSON array only.`
     
     const response = await fetch(requestUrl, {
       method: 'POST',
-      headers: provider.headers(apiKey),
+      headers,
       body: JSON.stringify(provider.formatRequest(messages, selectedModel))
     });
     
