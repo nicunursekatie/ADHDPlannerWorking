@@ -165,7 +165,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const handleAuthStateChange = async (session: any) => {
       const userId = session?.user?.id || null;
       setUser(session?.user ?? null);
-      
+
+      // Load weekly review date from user metadata
+      if (session?.user?.user_metadata?.lastWeeklyReviewDate) {
+        setLastWeeklyReviewDate(session.user.user_metadata.lastWeeklyReviewDate);
+      }
+
       if (userId && userId !== currentUserIdRef.current && !isLoadingDataRef.current) {
         currentUserIdRef.current = userId;
         isLoadingDataRef.current = true;
@@ -1107,10 +1112,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [lastWeeklyReviewDate]);
 
   const updateLastWeeklyReviewDate = useCallback(async () => {
+    if (!user) return;
+
     const today = new Date().toISOString().split('T')[0];
     setLastWeeklyReviewDate(today);
-    // TODO: Store this in Supabase user metadata or settings
-  }, []);
+
+    try {
+      // Store in Supabase user metadata
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          lastWeeklyReviewDate: today
+        }
+      });
+
+      if (error) {
+        console.error('Failed to update weekly review date in Supabase:', error);
+      }
+    } catch (error) {
+      console.error('Error updating weekly review date:', error);
+    }
+  }, [user]);
 
   const needsWeeklyReview = useCallback((): boolean => {
     if (!lastWeeklyReviewDate) return true;

@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { Category, Task } from '../types';
 import CategoryCard from '../components/categories/CategoryCard';
 import CategoryForm from '../components/categories/CategoryForm';
+import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Empty from '../components/common/Empty';
@@ -46,6 +47,7 @@ interface EnhancedCategoryCardProps {
   metrics: CategoryMetrics;
   onEdit: (category: Category) => void;
   onDelete: (categoryId: string) => void;
+  onAddTask: (categoryId: string) => void;
   viewMode: 'grid' | 'list';
   animationDelay: number;
 }
@@ -55,6 +57,7 @@ const EnhancedCategoryCard: React.FC<EnhancedCategoryCardProps> = ({
   metrics,
   onEdit,
   onDelete,
+  onAddTask,
   viewMode,
   animationDelay
 }) => {
@@ -361,7 +364,7 @@ const EnhancedCategoryCard: React.FC<EnhancedCategoryCardProps> = ({
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              // TODO: Add quick task creation
+              onAddTask(category.id);
             }}
             className="text-xs"
           >
@@ -374,13 +377,15 @@ const EnhancedCategoryCard: React.FC<EnhancedCategoryCardProps> = ({
 };
 
 const CategoriesPage: React.FC = () => {
-  const { categories, tasks, deleteCategory } = useAppContext();
-  
+  const { categories, tasks, deleteCategory, addTask } = useAppContext();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'name' | 'activity' | 'tasks' | 'overdue'>('activity');
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [taskFormCategoryId, setTaskFormCategoryId] = useState<string | null>(null);
   
   const handleOpenModal = (category?: Category) => {
     if (category) {
@@ -408,6 +413,25 @@ const CategoriesPage: React.FC = () => {
     if (confirmDelete) {
       deleteCategory(confirmDelete);
       setConfirmDelete(null);
+    }
+  };
+
+  const handleOpenTaskForm = (categoryId: string) => {
+    setTaskFormCategoryId(categoryId);
+    setShowTaskForm(true);
+  };
+
+  const handleCloseTaskForm = () => {
+    setShowTaskForm(false);
+    setTaskFormCategoryId(null);
+  };
+
+  const handleAddTask = async (task: Partial<Task>) => {
+    try {
+      await addTask(task);
+      handleCloseTaskForm();
+    } catch (error) {
+      console.error('Failed to add task:', error);
     }
   };
 
@@ -447,7 +471,7 @@ const CategoriesPage: React.FC = () => {
     else if (daysSinceActivity <= 30) activityLevel = 'low';
     else activityLevel = 'dormant';
 
-    // Calculate weekly change (mock calculation for now)
+    // Calculate weekly change based on task activity
     const thisWeekStart = startOfWeek(new Date());
     const lastWeekStart = subWeeks(thisWeekStart, 1);
     
@@ -715,6 +739,7 @@ const CategoriesPage: React.FC = () => {
                 metrics={metrics}
                 onEdit={handleOpenModal}
                 onDelete={handleOpenDeleteConfirm}
+                onAddTask={handleOpenTaskForm}
                 viewMode={viewMode}
                 animationDelay={index * 0.1}
               />
@@ -779,6 +804,15 @@ const CategoriesPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Task Creation Modal */}
+      {showTaskForm && (
+        <TaskFormWithDependencies
+          onSave={handleAddTask}
+          onClose={handleCloseTaskForm}
+          initialCategoryIds={taskFormCategoryId ? [taskFormCategoryId] : undefined}
+        />
+      )}
     </div>
   );
 };
