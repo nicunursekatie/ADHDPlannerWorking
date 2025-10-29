@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContextSupabase';
 import { Task } from '../types';
+import logger from '../utils/logger';
 import { TaskDisplay } from '../components/TaskDisplay';
 import { VirtualTaskList } from '../components/tasks/VirtualTaskList';
 import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
@@ -349,7 +350,7 @@ export const TasksPageSupabase: React.FC = () => {
 
   // Debug: Log task counts
   React.useEffect(() => {
-    console.log('[TasksPageSupabase] Task counts:', {
+    logger.log('[TasksPageSupabase] Task counts:', {
       totalTasks: tasks.length,
       filteredTasks: filteredTasks.length,
       filterBy,
@@ -369,7 +370,7 @@ export const TasksPageSupabase: React.FC = () => {
       deletedAt: t.deletedAt,
       parentTaskId: t.parentTaskId
     }));
-    console.log('[TasksPageSupabase] Last 3 tasks:', lastThreeTasks);
+    logger.log('[TasksPageSupabase] Last 3 tasks:', lastThreeTasks);
   }, [tasks.length, filteredTasks.length, filterBy]);
 
   // Sort tasks
@@ -874,7 +875,7 @@ export const TasksPageSupabase: React.FC = () => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
     
-    console.log('[TasksPageSupabase] handleTaskToggle called', {
+    logger.log('[TasksPageSupabase] handleTaskToggle called', {
       taskId,
       taskTitle: task.title,
       completed: task.completed
@@ -882,12 +883,12 @@ export const TasksPageSupabase: React.FC = () => {
     
     if (!task.completed) {
       // Show time tracking modal when completing a task
-      console.log('[TasksPageSupabase] Showing time spent modal for task completion');
+      logger.log('[TasksPageSupabase] Showing time spent modal for task completion');
       setTaskBeingCompleted(task);
       setShowTimeSpentModal(true);
     } else {
       // Uncompleting a task - do it directly
-      console.log('[TasksPageSupabase] Uncompleting task');
+      logger.log('[TasksPageSupabase] Uncompleting task');
       completeTask(taskId);
     }
   };
@@ -896,7 +897,7 @@ export const TasksPageSupabase: React.FC = () => {
   const handleTimeSpentConfirm = async (actualMinutes: number) => {
     if (!taskBeingCompleted) return;
     
-    console.log('[TasksPageSupabase] handleTimeSpentConfirm called', {
+    logger.log('[TasksPageSupabase] handleTimeSpentConfirm called', {
       taskId: taskBeingCompleted.id,
       actualMinutes
     });
@@ -915,7 +916,7 @@ export const TasksPageSupabase: React.FC = () => {
     await updateTask(updatedTask);
     
     // Close time modal and show follow-up modal
-    console.log('[TasksPageSupabase] Showing follow-up modal after time tracking', {
+    logger.log('[TasksPageSupabase] Showing follow-up modal after time tracking', {
       updatedTask,
       showFollowUpModal: true
     });
@@ -929,7 +930,7 @@ export const TasksPageSupabase: React.FC = () => {
   const handleTimeSpentSkip = async () => {
     if (!taskBeingCompleted) return;
     
-    console.log('[TasksPageSupabase] handleTimeSpentSkip called, completing without time tracking');
+    logger.log('[TasksPageSupabase] handleTimeSpentSkip called, completing without time tracking');
     
     const timestamp = new Date().toISOString();
     
@@ -944,7 +945,7 @@ export const TasksPageSupabase: React.FC = () => {
     await updateTask(updatedTask);
     
     // Close time modal and show follow-up modal
-    console.log('[TasksPageSupabase] Showing follow-up modal after time tracking', {
+    logger.log('[TasksPageSupabase] Showing follow-up modal after time tracking', {
       updatedTask,
       showFollowUpModal: true
     });
@@ -956,14 +957,14 @@ export const TasksPageSupabase: React.FC = () => {
 
   // Handle follow-up tasks confirmation
   const handleFollowUpTasksConfirm = async (followUpTasks: Partial<Task>[]) => {
-    console.log('[TasksPageSupabase] Creating follow-up tasks', followUpTasks);
+    logger.log('[TasksPageSupabase] Creating follow-up tasks', followUpTasks);
     
     try {
       // Create all follow-up tasks
       for (const task of followUpTasks) {
-        console.log('[TasksPageSupabase] Creating individual follow-up task:', task);
+        logger.log('[TasksPageSupabase] Creating individual follow-up task:', task);
         const createdTask = await addTask(task);
-        console.log('[TasksPageSupabase] Created task result:', {
+        logger.log('[TasksPageSupabase] Created task result:', {
           id: createdTask.id,
           title: createdTask.title,
           completed: createdTask.completed,
@@ -975,7 +976,7 @@ export const TasksPageSupabase: React.FC = () => {
       
       // Trigger celebration after successful completion
       if (completedTaskForFollowUp) {
-        console.log('[TasksPageSupabase] All follow-up tasks created successfully');
+        logger.log('[TasksPageSupabase] All follow-up tasks created successfully');
         
         // Force a refresh of the task list by changing filter and back
         // This is a workaround to ensure the UI updates
@@ -1003,11 +1004,11 @@ export const TasksPageSupabase: React.FC = () => {
 
   // Handle follow-up tasks skip
   const handleFollowUpTasksSkip = () => {
-    console.log('[TasksPageSupabase] Skipping follow-up tasks');
+    logger.log('[TasksPageSupabase] Skipping follow-up tasks');
     
     // Trigger celebration
     if (completedTaskForFollowUp) {
-      console.log('[TasksPageSupabase] Triggering celebration (no follow-up tasks)');
+      logger.log('[TasksPageSupabase] Triggering celebration (no follow-up tasks)');
       triggerCelebration();
       showToastCelebration(`"${completedTaskForFollowUp.title}" completed! 🎉`);
     }
@@ -1779,7 +1780,7 @@ export const TasksPageSupabase: React.FC = () => {
         <FollowUpTasksModal
           isOpen={showFollowUpModal}
           onClose={() => {
-            console.log('[TasksPageSupabase] Closing follow-up modal via X button');
+            logger.log('[TasksPageSupabase] Closing follow-up modal via X button');
             setShowFollowUpModal(false);
             setCompletedTaskForFollowUp(null);
           }}

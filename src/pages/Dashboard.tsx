@@ -38,6 +38,7 @@ import { focusTracker } from '../utils/focusTracker';
 import { TimeSpentModal } from '../components/tasks/TimeSpentModal';
 import { FollowUpTasksModal } from '../components/tasks/FollowUpTasksModal';
 import { FuzzyTaskBreakdownSimple } from '../components/tasks/FuzzyTaskBreakdownSimple';
+import logger from '../utils/logger';
 import { triggerCelebration, showToastCelebration } from '../utils/celebrations';
 import TimeTrackingAnalytics from '../components/analytics/TimeTrackingAnalytics';
 import { WeeklyTrends } from '../components/analytics/WeeklyTrends';
@@ -125,7 +126,7 @@ const Dashboard: React.FC = () => {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
     
-    console.log('[Dashboard] handleTaskToggle called', {
+    logger.log('[Dashboard] handleTaskToggle called', {
       taskId,
       taskTitle: task.title,
       completed: task.completed
@@ -133,12 +134,12 @@ const Dashboard: React.FC = () => {
     
     if (!task.completed) {
       // Show time tracking modal when completing a task
-      console.log('[Dashboard] Showing time spent modal for task completion');
+      logger.log('[Dashboard] Showing time spent modal for task completion');
       setTaskBeingCompleted(task);
       setShowTimeSpentModal(true);
     } else {
       // Uncompleting a task - do it directly
-      console.log('[Dashboard] Uncompleting task');
+      logger.log('[Dashboard] Uncompleting task');
       completeTask(taskId);
     }
   };
@@ -147,7 +148,7 @@ const Dashboard: React.FC = () => {
   const handleTimeSpentConfirm = async (actualMinutes: number) => {
     if (!taskBeingCompleted) return;
     
-    console.log('[Dashboard] handleTimeSpentConfirm called', {
+    logger.log('[Dashboard] handleTimeSpentConfirm called', {
       taskId: taskBeingCompleted.id,
       actualMinutes
     });
@@ -163,7 +164,7 @@ const Dashboard: React.FC = () => {
       updatedAt: timestamp
     };
     
-    console.log('[Dashboard] Updating task with:', {
+    logger.log('[Dashboard] Updating task with:', {
       taskId: updatedTask.id,
       completed: updatedTask.completed,
       actualMinutesSpent: updatedTask.actualMinutesSpent,
@@ -172,12 +173,12 @@ const Dashboard: React.FC = () => {
     
     try {
       await updateTask(updatedTask);
-      console.log('[Dashboard] Task update completed successfully');
+      logger.log('[Dashboard] Task update completed successfully');
       
       // Double-check: log the current task state
       setTimeout(() => {
         const currentTask = tasks.find(t => t.id === taskBeingCompleted.id);
-        console.log('[Dashboard] Task state after update:', {
+        logger.log('[Dashboard] Task state after update:', {
           taskId: currentTask?.id,
           completed: currentTask?.completed,
           actualMinutesSpent: currentTask?.actualMinutesSpent,
@@ -188,7 +189,7 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('[Dashboard] Error updating task:', error);
       // Fallback: try using completeTask if updateTask fails
-      console.log('[Dashboard] Falling back to completeTask');
+      logger.log('[Dashboard] Falling back to completeTask');
       await completeTask(taskBeingCompleted.id);
     }
     
@@ -207,7 +208,7 @@ const Dashboard: React.FC = () => {
   const handleTimeSpentSkip = async () => {
     if (!taskBeingCompleted) return;
     
-    console.log('[Dashboard] handleTimeSpentSkip called, completing without time tracking');
+    logger.log('[Dashboard] handleTimeSpentSkip called, completing without time tracking');
     
     const timestamp = new Date().toISOString();
     
@@ -234,7 +235,7 @@ const Dashboard: React.FC = () => {
   
   // Handle follow-up tasks confirmation
   const handleFollowUpTasksConfirm = async (followUpTasks: Partial<Task>[]) => {
-    console.log('[Dashboard] Creating follow-up tasks', followUpTasks);
+    logger.log('[Dashboard] Creating follow-up tasks', followUpTasks);
 
     for (const task of followUpTasks) {
       const newTask: Partial<Task> = {
@@ -264,14 +265,14 @@ const Dashboard: React.FC = () => {
   
   // Handle follow-up tasks skip
   const handleFollowUpTasksSkip = () => {
-    console.log('[Dashboard] Skipping follow-up tasks');
+    logger.log('[Dashboard] Skipping follow-up tasks');
     setShowFollowUpModal(false);
     setCompletedTaskForFollowUp(null);
   };
   
   // Handle task breakdown request
   const handleTaskBreakdown = (task: Task) => {
-    console.log('[Dashboard] Opening task breakdown for:', task.title);
+    logger.log('[Dashboard] Opening task breakdown for:', task.title);
     setTaskForBreakdown(task);
     setShowFuzzyBreakdown(true);
   };

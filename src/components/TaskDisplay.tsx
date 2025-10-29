@@ -14,8 +14,8 @@ import { getTimeContext, getTaskTimeEstimate, formatTimeRemaining, formatTimeOfD
 import { focusTracker } from '../utils/focusTracker';
 import { getUrgencyEmoji, getEmotionalWeightEmoji, getEnergyRequiredEmoji } from '../utils/taskPrioritization';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
-// FuzzyTaskBreakdownSimple is now handled at parent level to avoid modal clipping
-// import { FuzzyTaskBreakdownSimple } from './tasks/FuzzyTaskBreakdownSimple';
+// Note: FuzzyTaskBreakdownSimple and TimeSpentModal intentionally not imported
+// See "ARCHITECTURAL NOTE: Modal State Management" below for explanation
 
 interface TaskDisplayProps {
   task: Task;
@@ -40,10 +40,19 @@ export const TaskDisplay: React.FC<TaskDisplayProps> = ({
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showDateEditor, setShowDateEditor] = useState(false);
   const [showDetailWizard, setShowDetailWizard] = useState(false);
-  // Fuzzy breakdown is now handled at the parent level to avoid modal clipping
-  // const [showFuzzyBreakdown, setShowFuzzyBreakdown] = useState(false);
-  // Note: TimeSpentModal is now handled at the page level to avoid container constraints
-  // const [showTimeSpentModal, setShowTimeSpentModal] = useState(false);
+
+  /**
+   * ARCHITECTURAL NOTE: Modal State Management
+   *
+   * FuzzyTaskBreakdownSimple and TimeSpentModal are intentionally NOT managed here.
+   * These modals are controlled at the page level (Dashboard, TasksPage, etc.) to prevent:
+   * - Modal clipping when TaskDisplay is inside scrollable containers
+   * - Z-index stacking issues with nested modals
+   * - Layout constraints from parent overflow settings
+   *
+   * Instead, parent pages handle these modals via onBreakdown() callback prop.
+   * See: TasksPageSupabase.tsx, Dashboard.tsx for implementation examples.
+   */
   const [, setCurrentTime] = useState(new Date());
   const [focusTime, setFocusTime] = useState(0);
   const [currentSession, setCurrentSession] = useState(focusTracker.getCurrentSession());

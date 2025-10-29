@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Project, Task } from '../types';
+import logger from '../utils/logger';
 import ProjectCard from '../components/projects/ProjectCard';
 import ProjectForm from '../components/projects/ProjectForm';
 import Modal from '../components/common/Modal';
@@ -367,26 +368,22 @@ const ProjectsPage: React.FC = () => {
     
     // Debug: Log project tasks for troubleshooting
     if (projectId && projectTasks.length > 0) {
-      console.log(`[ProjectStats] Project ${projectId} has ${projectTasks.length} tasks`);
+      logger.log(`[ProjectStats] Project ${projectId} has ${projectTasks.length} tasks`);
       projectTasks.forEach(task => {
-        console.log(`[ProjectStats] Task "${task.title}": completed=${task.completed}, subtasks=${task.subtasks?.length || 0}`);
+        logger.log(`[ProjectStats] Task "${task.title}": completed=${task.completed}, subtasks=${task.subtasks?.length || 0}`);
       });
     }
     
     // Helper function to determine if a task should be considered complete
     const getTaskCompletionStatus = (task: Task): boolean => {
-      // For now, let's simplify this to just use the task's completion status
-      // The subtask logic might be causing issues since subtasks are runtime computed
+      // Tasks with subtasks are considered complete only when all subtasks are complete
+      if (task.subtasks && task.subtasks.length > 0) {
+        const subtaskObjects = task.subtasks
+          .map(id => tasks.find(t => t.id === id))
+          .filter(Boolean) as Task[];
+        return subtaskObjects.every(subtask => subtask.completed);
+      }
       return task.completed;
-      
-      // Original subtask logic (commented out for debugging)
-      // if (task.subtasks && task.subtasks.length > 0) {
-      //   const subtaskObjects = task.subtasks
-      //     .map(id => tasks.find(t => t.id === id))
-      //     .filter(Boolean) as Task[];
-      //   return subtaskObjects.every(subtask => subtask.completed);
-      // }
-      // return task.completed;
     };
     
     const completedTasks = projectTasks.filter(getTaskCompletionStatus);
@@ -394,18 +391,30 @@ const ProjectsPage: React.FC = () => {
       !getTaskCompletionStatus(task) && task.dueDate && new Date(task.dueDate) < new Date()
     );
     
-    const progress = projectTasks.length > 0 
+    const progress = projectTasks.length > 0
       ? Math.round((completedTasks.length / projectTasks.length) * 100)
       : 0;
-    
-    // Calculate total time spent (mock data for now)
-    const totalHours = Math.round(projectTasks.length * 2.5);
-    
-    // Estimate completion date based on velocity (mock)
+
+    // Calculate total time spent from actual tracked time
+    const totalMinutes = projectTasks.reduce((sum, task) => {
+      return sum + (task.actualMinutesSpent || 0);
+    }, 0);
+    const totalHours = Math.round(totalMinutes / 60);
+
+    // Estimate completion date based on real velocity if we have time data
     const remainingTasks = projectTasks.length - completedTasks.length;
-    const estimatedDaysToComplete = remainingTasks * 2;
-    const estimatedCompletionDate = new Date();
-    estimatedCompletionDate.setDate(estimatedCompletionDate.getDate() + estimatedDaysToComplete);
+    let estimatedCompletionDate: Date | null = null;
+
+    if (remainingTasks > 0 && completedTasks.length > 0 && totalMinutes > 0) {
+      // Calculate average time per completed task
+      const avgMinutesPerTask = totalMinutes / completedTasks.length;
+      // Estimate remaining time
+      const estimatedRemainingMinutes = remainingTasks * avgMinutesPerTask;
+      // Assuming 4 hours of productive work per day
+      const estimatedDaysToComplete = Math.ceil(estimatedRemainingMinutes / (4 * 60));
+      estimatedCompletionDate = new Date();
+      estimatedCompletionDate.setDate(estimatedCompletionDate.getDate() + estimatedDaysToComplete);
+    }
     
     return {
       totalTasks: projectTasks.length,
@@ -413,7 +422,7 @@ const ProjectsPage: React.FC = () => {
       overdueTasks: overdueTasks.length,
       progress,
       totalHours,
-      estimatedCompletionDate: remainingTasks > 0 ? estimatedCompletionDate : null
+      estimatedCompletionDate
     };
   }, [tasks]);
   
