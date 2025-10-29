@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { clearSupabaseUserData, seedSampleDataForUser } from './supabaseDataManagement';
 import { AppContext as LocalAppContext, AppContextType as LocalAppContextType } from './AppContext';
+import logger from '../utils/logger';
 
 interface DeletedTask {
   task: Task;
@@ -323,12 +324,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       const duplicates = Object.entries(titleCounts).filter(([_, count]) => count > 1);
       if (duplicates.length > 0) {
-        console.warn('[AppContext] Duplicate tasks found on initial load:', duplicates);
+        logger.warn('[AppContext] Duplicate tasks found on initial load:', duplicates);
         
         // Log all HRV related tasks
         const hrvTasks = tasksWithDependencies.filter(t => t.title.toLowerCase().includes('hrv'));
         if (hrvTasks.length > 0) {
-          console.log('[AppContext] All HRV tasks on load:', hrvTasks.map(t => ({
+          logger.log('[AppContext] All HRV tasks on load:', hrvTasks.map(t => ({
             id: t.id,
             title: t.title,
             createdAt: t.createdAt,
@@ -378,8 +379,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Tasks
   const addTask = useCallback(async (taskData: Partial<Task>): Promise<Task> => {
-    console.log('[AppContext] addTask called with:', taskData);
-    console.log('[AppContext] User:', user);
+    logger.log('[AppContext] addTask called with:', taskData);
+    logger.log('[AppContext] User:', user);
 
     if (!user) throw new Error('User not authenticated');
 
@@ -401,16 +402,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ...taskDataWithoutId,
     };
     
-    console.log('[AppContext] Creating task with data:', newTask);
+    logger.log('[AppContext] Creating task with data:', newTask);
     
     const createdTask = await DatabaseService.createTask(newTask, user.id);
-    console.log('[AppContext] Task created in database:', createdTask);
+    logger.log('[AppContext] Task created in database:', createdTask);
     
     // Add the new task and recompute all subtasks
     setTasks(prev => {
       const updatedTasks = [...prev, createdTask];
       const result = computeSubtasks(updatedTasks);
-      console.log('[AppContext] Updated tasks state:', result.length, 'tasks');
+      logger.log('[AppContext] Updated tasks state:', result.length, 'tasks');
       
       // Check for potential duplicates
       const titleCounts = result.reduce((acc, task) => {
@@ -421,12 +422,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       const duplicates = Object.entries(titleCounts).filter(([_, count]) => count > 1);
       if (duplicates.length > 0) {
-        console.warn('[AppContext] Potential duplicate tasks detected:', duplicates);
+        logger.warn('[AppContext] Potential duplicate tasks detected:', duplicates);
         
         // Log tasks with "hrv" in the title
         const hrvTasks = result.filter(t => t.title.toLowerCase().includes('hrv'));
         if (hrvTasks.length > 0) {
-          console.log('[AppContext] Tasks containing "HRV":', hrvTasks.map(t => ({
+          logger.log('[AppContext] Tasks containing "HRV":', hrvTasks.map(t => ({
             id: t.id,
             title: t.title,
             createdAt: t.createdAt,
@@ -541,7 +542,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // If completing a parent task, also complete all its subtasks
     const tasksToUpdate = [updatedTask];
     if (isCompleting && taskToUpdate.subtasks && taskToUpdate.subtasks.length > 0) {
-      console.log('[AppContext] Completing parent task, auto-completing subtasks:', taskToUpdate.subtasks);
+      logger.log('[AppContext] Completing parent task, auto-completing subtasks:', taskToUpdate.subtasks);
       
       for (const subtaskId of taskToUpdate.subtasks) {
         const subtask = tasks.find(t => t.id === subtaskId);
@@ -794,7 +795,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           try {
             await DatabaseService.updateProject(project.id, project, user.id);
           } catch (updateError: any) {
-            console.warn(`Failed to update project ${project.name}:`, updateError.message);
+            logger.warn(`Failed to update project ${project.name}:`, updateError.message);
             // Continue with other projects instead of failing completely
             continue;
           }
@@ -1314,7 +1315,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const bulkConvertToSubtasks = useCallback(async (taskIds: string[], parentTaskId: string) => {
     if (!user) throw new Error('User not authenticated');
     
-    console.log('bulkConvertToSubtasks called with:', { taskIds, parentTaskId });
+    logger.log('bulkConvertToSubtasks called with:', { taskIds, parentTaskId });
     
     const parentTask = tasks.find(t => t.id === parentTaskId);
     if (!parentTask) {
@@ -1327,7 +1328,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     for (const taskId of taskIds) {
       const task = tasks.find(t => t.id === taskId);
       if (task) {
-        console.log(`Converting task ${task.title} to subtask of ${parentTask.title}`);
+        logger.log(`Converting task ${task.title} to subtask of ${parentTask.title}`);
         await updateTask({
           ...task,
           parentTaskId: parentTaskId,
@@ -1338,7 +1339,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     
     // No need to update parent task - subtasks are computed dynamically
-    console.log('Bulk conversion completed');
+    logger.log('Bulk conversion completed');
   }, [user, tasks, updateTask]);
 
   const bulkAssignCategories = useCallback(async (taskIds: string[], categoryIds: string[], mode: 'add' | 'replace') => {
@@ -1464,11 +1465,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     try {
       let data = JSON.parse(jsonData);
-      console.log('Import data parsed:', data);
+      logger.log('Import data parsed:', data);
       
       // Check if this is legacy format data
       if (data.version && !data.tasks?.[0]?.createdAt) {
-        console.log('Detected legacy format, transforming...');
+        logger.log('Detected legacy format, transforming...');
         // Transform legacy data
         const { transformImportedData } = await import('../utils/importTransform');
         const transformed = transformImportedData(jsonData);
@@ -1476,7 +1477,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           throw new Error('Failed to transform legacy data');
         }
         data = transformed;
-        console.log('Transformed data:', data);
+        logger.log('Transformed data:', data);
       }
       
       // Create ID mappings for all entities
@@ -1486,7 +1487,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       // Import categories first (no dependencies)
       if (data.categories && Array.isArray(data.categories)) {
-        console.log(`Importing ${data.categories.length} categories...`);
+        logger.log(`Importing ${data.categories.length} categories...`);
         
         for (const category of data.categories) {
           // Generate new UUID for the category
@@ -1507,14 +1508,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           if (error) {
             console.error('Error importing category:', error, category);
           } else {
-            console.log('Category imported:', result);
+            logger.log('Category imported:', result);
           }
         }
       }
       
       // Import projects (no dependencies)
       if (data.projects && Array.isArray(data.projects)) {
-        console.log(`Importing ${data.projects.length} projects...`);
+        logger.log(`Importing ${data.projects.length} projects...`);
         for (const project of data.projects) {
           const newId = crypto.randomUUID();
           projectIdMap.set(project.id, newId);
@@ -1534,14 +1535,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           if (error) {
             console.error('Error importing project:', error, project);
           } else {
-            console.log('Project imported:', result);
+            logger.log('Project imported:', result);
           }
         }
       }
       
       // Import tasks (may have project/category dependencies)
       if (data.tasks && Array.isArray(data.tasks)) {
-        console.log(`Importing ${data.tasks.length} tasks...`);
+        logger.log(`Importing ${data.tasks.length} tasks...`);
         // First, create ID mappings for all tasks
         for (const task of data.tasks) {
           taskIdMap.set(task.id, crypto.randomUUID());
@@ -1549,7 +1550,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         
         // First pass: Import parent tasks
         const parentTasks = data.tasks.filter((t: Task) => !t.parentTaskId);
-        console.log(`Importing ${parentTasks.length} parent tasks...`);
+        logger.log(`Importing ${parentTasks.length} parent tasks...`);
         for (const task of parentTasks) {
           const newTaskId = taskIdMap.get(task.id)!;
           
@@ -1581,13 +1582,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           if (error) {
             console.error('Error importing task:', error, taskData);
           } else {
-            console.log('Task imported:', result);
+            logger.log('Task imported:', result);
           }
         }
         
         // Second pass: Import subtasks
         const subtasks = data.tasks.filter((t: Task) => t.parentTaskId);
-        console.log(`Importing ${subtasks.length} subtasks...`);
+        logger.log(`Importing ${subtasks.length} subtasks...`);
         for (const task of subtasks) {
           const newTaskId = taskIdMap.get(task.id)!;
           const newParentId = taskIdMap.get(task.parentTaskId!) || null;
@@ -1620,12 +1621,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           if (error) {
             console.error('Error importing subtask:', error, taskData);
           } else {
-            console.log('Subtask imported:', result);
+            logger.log('Subtask imported:', result);
           }
         }
         
         // Third pass: Import task dependencies if they exist
-        console.log('Checking for task dependencies to import...');
+        logger.log('Checking for task dependencies to import...');
         for (const task of data.tasks) {
           if (task.dependsOn && task.dependsOn.length > 0) {
             const taskId = taskIdMap.get(task.id);
@@ -1702,8 +1703,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
       }
       
-      // Import settings
-      // TODO: Enable when user_settings table is created
+      /**
+       * TODO: Settings Import - Requires Database Migration
+       *
+       * Settings import is currently disabled because the user_settings table doesn't exist yet.
+       *
+       * To enable settings import/export:
+       * 1. Create user_settings table in Supabase with schema:
+       *    - id: uuid primary key
+       *    - user_id: uuid references auth.users
+       *    - settings: jsonb (stores AppSettings object)
+       *    - created_at: timestamp
+       *    - updated_at: timestamp
+       * 2. Add RLS policies for user_settings table
+       * 3. Uncomment the code below
+       * 4. Update exportData() function to include settings
+       * 5. Update loadUserData() to load settings from user_settings table
+       *
+       * Current workaround: Some settings (like lastWeeklyReviewDate) are stored
+       * in user metadata via supabase.auth.updateUser()
+       */
       // if (data.settings) {
       //   const { error } = await supabase
       //     .from('user_settings')
@@ -1712,14 +1731,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       //       settings: data.settings,
       //       updated_at: new Date().toISOString()
       //     });
-      //   if (error) console.error('Error importing settings:', error);
+      //   if (error) logger.error('Error importing settings:', error);
       // }
       
       // Refresh data after import
-      console.log('Import complete, refreshing data...');
+      logger.log('Import complete, refreshing data...');
       await loadUserData(user.id);
       
-      console.log('Import successful!');
+      logger.log('Import successful!');
       return true;
     } catch (error) {
       console.error('Error importing data:', error);

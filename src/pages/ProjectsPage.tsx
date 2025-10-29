@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Project, Task } from '../types';
+import logger from '../utils/logger';
 import ProjectCard from '../components/projects/ProjectCard';
 import ProjectForm from '../components/projects/ProjectForm';
 import Modal from '../components/common/Modal';
@@ -367,9 +368,9 @@ const ProjectsPage: React.FC = () => {
     
     // Debug: Log project tasks for troubleshooting
     if (projectId && projectTasks.length > 0) {
-      console.log(`[ProjectStats] Project ${projectId} has ${projectTasks.length} tasks`);
+      logger.log(`[ProjectStats] Project ${projectId} has ${projectTasks.length} tasks`);
       projectTasks.forEach(task => {
-        console.log(`[ProjectStats] Task "${task.title}": completed=${task.completed}, subtasks=${task.subtasks?.length || 0}`);
+        logger.log(`[ProjectStats] Task "${task.title}": completed=${task.completed}, subtasks=${task.subtasks?.length || 0}`);
       });
     }
     

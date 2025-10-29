@@ -20,7 +20,7 @@ import {
   Zap, Brain, Timer, Battery
 } from 'lucide-react';
 import { formatDate, getOverdueTasks, getTasksDueToday, getTasksDueThisWeek } from '../utils/helpers';
-import { DeletedTask, getDeletedTasks, restoreDeletedTask, permanentlyDeleteTask } from '../utils/localStorage';
+// Note: Deleted task restoration imports removed - not implemented for localStorage version
 import { sortTasks as smartSortTasks, SortMode, EnergyLevel, getFilteredCounts, getSortModeInfo } from '../utils/taskPrioritization';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 
@@ -110,7 +110,6 @@ const TasksPageWithBulkOps: React.FC = () => {
   const [convertToProjectTask, setConvertToProjectTask] = useState<Task | null>(null);
   const [showConvertToSubtasksModal, setShowConvertToSubtasksModal] = useState(false);
   const [selectedParentTaskId, setSelectedParentTaskId] = useState<string | null>(null);
-  const [, setDeletedTasks] = useState<DeletedTask[]>([]);
   const [showBulkCategoryModal, setShowBulkCategoryModal] = useState(false);
   const [selectedCategoryIdsForBulk, setSelectedCategoryIdsForBulk] = useState<string[]>([]);
   const [categoryAssignMode, setCategoryAssignMode] = useState<'add' | 'replace'>('add');
@@ -148,14 +147,7 @@ const TasksPageWithBulkOps: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [hasRecentlyDeleted]);
-  
-  // Load deleted tasks when tab changes
-  useEffect(() => {
-    if (activeTab === 'deleted') {
-      loadDeletedTasks();
-    }
-  }, [activeTab]);
-  
+
   // Close sort menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -173,26 +165,9 @@ const TasksPageWithBulkOps: React.FC = () => {
     };
   }, [showSortMenu]);
   
-  const loadDeletedTasks = () => {
-    const deleted = getDeletedTasks();
-    setDeletedTasks(deleted.sort((a, b) => 
-      new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()
-    ));
-  };
-  
-  // const handleRestoreTask = (taskId: string) => {
-  //   const restoredTask = restoreDeletedTask(taskId);
-  //   if (restoredTask) {
-  //     loadDeletedTasks();
-  //     // The context will automatically update with the restored task
-  //   }
-  // };
-  
-  // const handlePermanentlyDeleteTask = (taskId: string) => {
-  //   permanentlyDeleteTask(taskId);
-  //   loadDeletedTasks();
-  // };
-  
+  // Note: Deleted task restoration not implemented for localStorage version
+  // This functionality is available in the Supabase version via undoDelete()
+
   const handleOpenModal = (task?: Task) => {
     if (task) {
       setEditingTask(task);
