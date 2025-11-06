@@ -13,7 +13,8 @@ const PORT = process.env.PORT || 8080;
 app.use(express.static(path.join(__dirname, "dist")));
 
 // For SPA routes, always return index.html
-app.get("*", (req, res) => {
+// Using a middleware function instead of a route pattern for compatibility with Express v5
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
