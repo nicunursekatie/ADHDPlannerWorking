@@ -93,6 +93,11 @@ export default defineConfig({
     headers: {
       // Add CORS headers for development
       'Access-Control-Allow-Origin': '*'
+    },
+    host: true, // Allow Vite to be accessed from the network
+    port: 9002,
+    hmr: {
+      clientPort: 9000
     }
   },
 });
