@@ -1,5 +1,4 @@
-  import { useState, useCallback } from 'react';
-import React from 'react';
+import { useState, useCallback } from 'react';
 
 interface ConfirmOptions {
   title: string;

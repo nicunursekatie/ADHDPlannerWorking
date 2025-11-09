@@ -40,7 +40,11 @@ export default defineConfig({
     })
   ],
   optimizeDeps: {
-    include: ['lucide-react'],
+    include: ['react', 'react-dom', 'react-router-dom', 'lucide-react'],
+    exclude: []
+  },
+  resolve: {
+    dedupe: ['react', 'react-dom']
   },
   base: '/',
 
@@ -97,7 +101,8 @@ export default defineConfig({
     host: true, // Allow Vite to be accessed from the network
     port: 9002,
     hmr: {
-      clientPort: 9000
+      clientPort: 9000,
+      host: '9000-firebase-adhd-planner-2-1762409067582.cluster-kyqou4molzblquus3qunag6q3w.cloudworkstations.dev'
     }
   },
 });
