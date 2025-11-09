@@ -1,6 +1,5 @@
-import { useState, useCallback } from 'react';
+  import { useState, useCallback } from 'react';
 import React from 'react';
-import ConfirmDialog from '../components/common/ConfirmDialog';
 
 interface ConfirmOptions {
   title: string;
@@ -11,48 +10,54 @@ interface ConfirmOptions {
   confirmButtonVariant?: 'primary' | 'danger' | 'secondary';
 }
 
+// This interface defines the props that the ConfirmDialog component will receive.
+interface DialogProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: 'danger' | 'warning' | 'info';
+    confirmButtonVariant?: 'primary' | 'danger' | 'secondary';
+}
+
 export function useConfirmDialog() {
-  const [isOpen, setIsOpen] = useState(false);
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const [resolvePromise, setResolvePromise] = useState<((value: boolean) => void) | null>(null);
 
-  const confirm = useCallback((options: ConfirmOptions): Promise<boolean> => {
+  const confirm = useCallback((opts: ConfirmOptions): Promise<boolean> => {
     return new Promise((resolve) => {
-      setOptions(options);
+      setOptions(opts);
       setResolvePromise(() => resolve);
-      setIsOpen(true);
     });
   }, []);
 
   const handleConfirm = useCallback(() => {
     resolvePromise?.(true);
-    setIsOpen(false);
     setOptions(null);
     setResolvePromise(null);
   }, [resolvePromise]);
 
   const handleCancel = useCallback(() => {
     resolvePromise?.(false);
-    setIsOpen(false);
     setOptions(null);
     setResolvePromise(null);
   }, [resolvePromise]);
 
-  const ConfirmDialogComponent = useCallback(() => {
-    if (!options) return null;
-
-    return (
-      <ConfirmDialog
-        isOpen={isOpen}
-        onClose={handleCancel}
-        onConfirm={handleConfirm}
-        {...options}
-      />
-    );
-  }, [isOpen, options, handleCancel, handleConfirm]);
+  // The hook now returns the props for the dialog, not a component.
+  const dialogProps: DialogProps | null = options
+    ? {
+        isOpen: true,
+        onClose: handleCancel,
+        onConfirm: handleConfirm,
+        ...options,
+      }
+    : null;
 
   return {
     confirm,
-    ConfirmDialogComponent
+    dialogProps, // Return props for the dialog
   };
 }
