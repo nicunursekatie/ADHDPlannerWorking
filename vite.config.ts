@@ -5,9 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react({
-      jsxRuntime: 'classic'
-    }),
+    react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
@@ -41,9 +39,6 @@ export default defineConfig({
       }
     })
   ],
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'lucide-react']
-  },
   resolve: {
     dedupe: ['react', 'react-dom']
   },

@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // By default, deny all reads and writes to all documents.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // This rule allows a logged-in user to access their own data.
+    // It assumes you will store each user's documents in a path like:
+    // /users/<user_id>/tasks/<task_id>
+    match /users/{userId}/{document=**} {
+      allow read, write, create, delete: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
