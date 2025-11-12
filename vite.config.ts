@@ -96,10 +96,10 @@ export default defineConfig({
     },
     host: true, // Allow Vite to be accessed from the network
     port: 9002,
-    hmr: {
-      protocol: 'wss',
-      clientPort: 9000,
-      host: '9000-firebase-adhd-planner-2-1762409067582.cluster-kyqou4molzblquus3qunag6q3w.cloudworkstations.dev'
-    }
+    // hmr: {
+    //   protocol: 'wss',
+    //   clientPort: 9000,
+    //   host: '9000-firebase-adhd-planner-2-1762409067582.cluster-kyqou4molzblquus3qunag6q3w.cloudworkstations.dev'
+    // }
   },
 });
