@@ -16,6 +16,20 @@
       ]
     }
   ],
+  "hosting": {
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
   "apphosting": {
     "backendId": "adhd-planner-backend",
     "rootDir": "/",
@@ -24,8 +38,10 @@
       ".git",
       "firebase-debug.log",
       "firebase-debug.*.log",
-      "functions"
-    ]
+      "functions",
+      ".venv"
+    ],
+    "alwaysDeployFromSource": true
   },
   "emulators": {
     "apphosting": {
@@ -42,11 +58,9 @@
     "firestore": {
       "port": 8080
     },
-    "hosting": {
-      "port": 5000
-    },
     "ui": {
-      "enabled": true
+      "enabled": true,
+      "port": 5000
     },
     "singleProjectMode": true
   },
