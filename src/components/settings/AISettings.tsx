@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Brain, Save, Eye, EyeOff, Info, AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Card from '../common/Card';
 import Button from '../common/Button';
-import { AI_PROVIDERS } from '../../utils/aiProviders';
+import { AI_PROVIDERS, resolveProviderEndpoint } from '../../utils/aiProviders';
 
 interface AISettingsProps {
   onSave?: () => void;
@@ -45,26 +45,32 @@ const AISettings: React.FC<AISettingsProps> = ({ onSave }) => {
   }, [provider, model]);
 
   const testApiConnection = async () => {
-    if (!apiKey) {
-      setApiStatus('error');
-      setApiStatusMessage('Please enter an API key');
-      return;
-    }
-
     setIsTestingApi(true);
     setApiStatus('testing');
     setApiStatusMessage('Testing API connection...');
 
     try {
       const providerInfo = AI_PROVIDERS[provider];
+      const { url: requestUrl, isCustom } = resolveProviderEndpoint(apiEndpoint, providerInfo.baseUrl);
+
+      if (!apiKey && providerInfo.apiKeyRequired && !isCustom) {
+        setApiStatus('error');
+        setApiStatusMessage('Please enter an API key');
+        return;
+      }
+
+      const headers = isCustom && !apiKey
+        ? { 'Content-Type': 'application/json' }
+        : providerInfo.headers(apiKey || undefined);
+
       const testMessages = [
         { role: 'system', content: 'Test connection' },
         { role: 'user', content: 'Reply with "OK" if you can read this.' }
       ];
 
-      const response = await fetch(providerInfo.baseUrl, {
+      const response = await fetch(requestUrl, {
         method: 'POST',
-        headers: providerInfo.headers(apiKey),
+        headers,
         body: JSON.stringify(providerInfo.formatRequest(testMessages, model || providerInfo.defaultModel))
       });
 

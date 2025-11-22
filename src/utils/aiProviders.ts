@@ -18,7 +18,7 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
     defaultModel: 'gpt-4o-mini',
     headers: (apiKey?: string) => ({
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {})
     }),
     formatRequest: (messages, model) => ({
       model,
@@ -37,7 +37,7 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
     defaultModel: 'llama-3.3-70b-versatile',
     headers: (apiKey?: string) => ({
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {})
     }),
     formatRequest: (messages, model) => ({
       model,
@@ -56,7 +56,7 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
     defaultModel: 'claude-3-5-sonnet-20241022',
     headers: (apiKey?: string) => ({
       'Content-Type': 'application/json',
-      'x-api-key': apiKey || '',
+      ...(apiKey ? { 'x-api-key': apiKey } : {}),
       'anthropic-version': '2023-06-01'
     }),
     formatRequest: (messages, model) => {
@@ -137,4 +137,49 @@ export const AI_PROVIDERS: Record<string, AIProvider> = {
 
 export const getProvider = (providerName: string = 'openai'): AIProvider => {
   return AI_PROVIDERS[providerName] || AI_PROVIDERS.openai;
+};
+
+export const resolveProviderEndpoint = (
+  customEndpoint: string | null | undefined,
+  providerBaseUrl: string
+): { url: string; isCustom: boolean } => {
+  const trimmedEndpoint = customEndpoint?.trim();
+
+  if (!trimmedEndpoint) {
+    return { url: providerBaseUrl, isCustom: false };
+  }
+
+  try {
+    const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(trimmedEndpoint);
+
+    if (hasScheme) {
+      const parsedUrl = new URL(trimmedEndpoint);
+      return { url: parsedUrl.toString(), isCustom: true };
+    }
+
+    const baseForRelative =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : providerBaseUrl;
+
+    if (trimmedEndpoint.startsWith('//')) {
+      const parsedUrl = new URL(trimmedEndpoint, baseForRelative);
+      return { url: parsedUrl.toString(), isCustom: true };
+    }
+
+    if (trimmedEndpoint.startsWith('/')) {
+      const parsedUrl = new URL(trimmedEndpoint, baseForRelative);
+      return { url: parsedUrl.toString(), isCustom: true };
+    }
+
+    const guessedUrl = new URL(`https://${trimmedEndpoint}`);
+    return { url: guessedUrl.toString(), isCustom: true };
+  } catch (error) {
+    console.warn(
+      '[AI] Invalid custom endpoint provided, falling back to provider base URL:',
+      trimmedEndpoint,
+      error
+    );
+    return { url: providerBaseUrl, isCustom: false };
+  }
 };
