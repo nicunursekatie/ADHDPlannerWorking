@@ -12,19 +12,81 @@ export const ResetPasswordPage: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isValidToken, setIsValidToken] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Check if we have a valid recovery token
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setIsValidToken(true);
-      } else {
-        setError('Invalid or expired reset link. Please request a new password reset.');
+    // Handle password reset token from URL hash
+    const handlePasswordReset = async () => {
+      try {
+        // Parse the hash - it might be in format: #access_token=...&type=recovery#/reset-password
+        // or: #/reset-password#access_token=...&type=recovery
+        const fullHash = window.location.hash;
+        
+        // Extract the part with tokens (before any route hash)
+        let tokenHash = fullHash;
+        const routeIndex = fullHash.indexOf('#/');
+        if (routeIndex > 0) {
+          tokenHash = fullHash.substring(0, routeIndex);
+        } else if (routeIndex === 0 && fullHash.includes('access_token')) {
+          // Hash might be: #/reset-password#access_token=...
+          const tokenStart = fullHash.indexOf('#access_token');
+          if (tokenStart > 0) {
+            tokenHash = fullHash.substring(tokenStart);
+          }
+        }
+        
+        // Parse hash parameters
+        const hashParams = new URLSearchParams(tokenHash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
+
+        // If we have recovery tokens in the URL, exchange them for a session
+        if (type === 'recovery' && accessToken && refreshToken) {
+          try {
+            // Set the session using the tokens from the URL
+            const { data: { session }, error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            });
+            
+            if (session && session.user) {
+              setIsValidToken(true);
+              setIsChecking(false);
+              // Clean up the URL hash to remove tokens
+              window.history.replaceState(null, '', '#/reset-password');
+              return;
+            } else {
+              console.error('Session error:', sessionError);
+              setError('Invalid or expired reset link. Please request a new password reset.');
+              setIsChecking(false);
+              return;
+            }
+          } catch (tokenError: any) {
+            console.error('Token exchange error:', tokenError);
+            setError('Invalid or expired reset link. Please request a new password reset.');
+            setIsChecking(false);
+            return;
+          }
+        }
+        
+        // If no tokens in URL, check for existing session (user might have refreshed)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.user) {
+          setIsValidToken(true);
+          setIsChecking(false);
+        } else {
+          setError('Invalid or expired reset link. Please request a new password reset.');
+          setIsChecking(false);
+        }
+      } catch (err: any) {
+        console.error('Password reset error:', err);
+        setError('Failed to process reset link. Please request a new password reset.');
+        setIsChecking(false);
       }
     };
-    
-    checkSession();
+
+    handlePasswordReset();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,7 +122,7 @@ export const ResetPasswordPage: React.FC = () => {
     }
   };
 
-  if (!isValidToken && !error) {
+  if (isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="max-w-md w-full p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">

@@ -40,8 +40,11 @@ const PlaceholderPage: React.FC<{ name: string }> = ({ name }) => (
 const AppContent: React.FC = () => {
   const { user, isLoading, settings } = useAppContext();
   
-  // Check if we're on the reset password page
-  const isResetPasswordRoute = window.location.hash === '#/reset-password';
+  // Check if we're on the reset password page (handle both plain route and route with hash fragments)
+  const hash = window.location.hash;
+  const isResetPasswordRoute = hash === '#/reset-password' || 
+                                hash.includes('#/reset-password') || 
+                                (hash.includes('type=recovery') && hash.includes('access_token'));
   
   if (isLoading) {
     return (
@@ -57,7 +60,7 @@ const AppContent: React.FC = () => {
       <Router>
         <Routes>
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="*" element={<AuthForm onSuccess={() => {}} />} />
+          <Route path="*" element={<ResetPasswordPage />} />
         </Routes>
       </Router>
     );
