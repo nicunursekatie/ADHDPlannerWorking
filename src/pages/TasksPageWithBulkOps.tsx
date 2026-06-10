@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { Task, TaskSortMode, WhatNowCriteria } from '../types';
@@ -6,6 +6,7 @@ import { TaskDisplay } from '../components/TaskDisplay';
 import TaskFormWithDependencies from '../components/tasks/TaskFormWithDependencies';
 import AITaskBreakdown from '../components/tasks/AITaskBreakdown';
 import ConvertToProject from '../components/tasks/ConvertToProject';
+import TaskDetailsUpdater from '../components/planning/TaskDetailsUpdater';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -52,7 +53,7 @@ const BulkTaskCard: React.FC<BulkTaskCardProps> = ({
         <input
           type="checkbox"
           checked={isSelected}
-          onChange={(e) => onSelectChange(e.target.checked)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => onSelectChange(e.target.checked)}
           className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
         />
       </div>
@@ -113,6 +114,7 @@ const TasksPageWithBulkOps: React.FC = () => {
   const [showBulkCategoryModal, setShowBulkCategoryModal] = useState(false);
   const [selectedCategoryIdsForBulk, setSelectedCategoryIdsForBulk] = useState<string[]>([]);
   const [categoryAssignMode, setCategoryAssignMode] = useState<'add' | 'replace'>('add');
+  const [showDetailsUpdater, setShowDetailsUpdater] = useState(false);
   
   // Filter state
   const [showCompleted, setShowCompleted] = useState(false);
@@ -171,15 +173,17 @@ const TasksPageWithBulkOps: React.FC = () => {
   const handleOpenModal = (task?: Task) => {
     if (task) {
       setEditingTask(task);
+      setShowDetailsUpdater(true);
     } else {
       setEditingTask(null);
+      setIsModalOpen(true);
     }
-    setIsModalOpen(true);
   };
   
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingTask(null);
+    setShowDetailsUpdater(false);
   };
   
   const handleDeleteTask = (taskId: string) => {
@@ -1484,7 +1488,7 @@ const TasksPageWithBulkOps: React.FC = () => {
           </div>
         </div>
       </Modal>
-      
+
       {/* Bulk Category Assignment Modal */}
       <Modal
         isOpen={showBulkCategoryModal}
@@ -1595,6 +1599,20 @@ const TasksPageWithBulkOps: React.FC = () => {
         </div>
       </Modal>
       
+      {/* Task Details Updater Modal */}
+      {showDetailsUpdater && editingTask && (
+        <Modal
+          isOpen={showDetailsUpdater}
+          onClose={handleCloseModal}
+          title="Update Task Details"
+        >
+          <TaskDetailsUpdater
+            task={editingTask}
+            onComplete={handleCloseModal}
+          />
+        </Modal>
+      )}
+
       {/* Confirmation Dialog */}
       <ConfirmDialogComponent />
       <BackToTop />
