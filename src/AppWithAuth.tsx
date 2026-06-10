@@ -1,20 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import App from './App';
+import { FullPageStatus } from './components/common/FullPageStatus';
+
+const hasSupabaseCredentials = Boolean(
+  import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 function AppWithAuth() {
-  const [useSupabase, setUseSupabase] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
   const [SupabaseApp, setSupabaseApp] = useState<React.ComponentType | null>(null);
+  const [failedToLoadSupabase, setFailedToLoadSupabase] = useState(false);
 
-  // Check if we have Supabase credentials
   useEffect(() => {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
+    if (!hasSupabaseCredentials) {
       console.warn('Supabase credentials not found, falling back to localStorage');
-      setUseSupabase(false);
-      setIsChecking(false);
       return;
     }
 
@@ -22,19 +20,14 @@ function AppWithAuth() {
 
     import('./AppSupabase')
       .then((module) => {
-        if (!isMounted) return;
-        setSupabaseApp(() => module.default);
-        setUseSupabase(true);
+        if (isMounted) {
+          setSupabaseApp(() => module.default);
+        }
       })
       .catch((error) => {
         console.error('Failed to load Supabase app', error);
         if (isMounted) {
-          setUseSupabase(false);
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsChecking(false);
+          setFailedToLoadSupabase(true);
         }
       });
 
@@ -43,21 +36,15 @@ function AppWithAuth() {
     };
   }, []);
 
-  if (isChecking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Initializing...</div>
-      </div>
-    );
+  if (!hasSupabaseCredentials || failedToLoadSupabase) {
+    return <App />;
   }
 
-  // Use Supabase version if credentials are available
-  if (useSupabase && SupabaseApp) {
+  if (SupabaseApp) {
     return <SupabaseApp />;
   }
 
-  // Fallback to localStorage version
-  return <App />;
+  return <FullPageStatus message="Initializing..." />;
 }
 
 export default AppWithAuth;

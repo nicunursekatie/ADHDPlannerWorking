@@ -1,97 +1,51 @@
-import React from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { Suspense } from 'react';
+import { HashRouter as Router } from 'react-router-dom';
 import { AppProvider, useAppContext } from './context/AppContextSupabase';
 import { ThemeProvider } from './context/ThemeContext';
 import { SettingsProviderDynamic } from './components/common/SettingsProviderDynamic';
 import { AuthForm } from './components/auth/AuthForm';
+import { FullPageStatus } from './components/common/FullPageStatus';
 import LayoutWithAuth from './components/layout/LayoutWithAuth';
+import { AppRoutes, ResetPasswordRoutes } from './routes/AppRoutes';
 
-// Import pages that work with Supabase context
-import SettingsPageWithMigration from './pages/SettingsPageWithMigration';
-import TasksPageSupabase from './pages/TasksPageSupabase';
-import ProjectsPage from './pages/ProjectsPage';
-import ProjectDetailPage from './pages/ProjectDetailPage';
-import CategoriesPage from './pages/CategoriesPage';
-import Dashboard from './pages/Dashboard';
-import CalendarPage from './pages/CalendarPage';
-import PlannerPage from './pages/PlannerPage';
-import WeeklyReviewPage from './pages/WeeklyReviewPage';
-import AccountabilityPage from './pages/AccountabilityPage';
-import BrainDumpPage from './pages/BrainDumpPage';
-import WhatNowPage from './pages/WhatNowPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
+const isResetPasswordRoute = () => {
+  const hash = window.location.hash;
 
-// Create wrapper components for pages that use localStorage context
-// These will be replaced with proper Supabase-compatible versions later
-const PlaceholderPage: React.FC<{ name: string }> = ({ name }) => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="text-center">
-      <h1 className="text-2xl font-bold mb-4">{name}</h1>
-      <p className="text-gray-600 dark:text-gray-400">
-        This page is being updated for cloud storage support.
-      </p>
-      <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-        Please check back soon!
-      </p>
-    </div>
-  </div>
-);
+  return (
+    hash === '#/reset-password' ||
+    hash.includes('#/reset-password') ||
+    (hash.includes('type=recovery') && hash.includes('access_token'))
+  );
+};
 
 const AppContent: React.FC = () => {
   const { user, isLoading, settings } = useAppContext();
-  
-  // Check if we're on the reset password page (handle both plain route and route with hash fragments)
-  const hash = window.location.hash;
-  const isResetPasswordRoute = hash === '#/reset-password' || 
-                                hash.includes('#/reset-password') || 
-                                (hash.includes('type=recovery') && hash.includes('access_token'));
-  
+
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
+    return <FullPageStatus message="Loading..." />;
   }
-  
-  // Show reset password page if that's the route
-  if (isResetPasswordRoute) {
+
+  if (isResetPasswordRoute()) {
     return (
       <Router>
-        <Routes>
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="*" element={<ResetPasswordPage />} />
-        </Routes>
+        <Suspense fallback={<FullPageStatus message="Loading..." />}>
+          <ResetPasswordRoutes />
+        </Suspense>
       </Router>
     );
   }
-  
+
   if (!user) {
     return <AuthForm onSuccess={() => {}} />;
   }
-  
+
   return (
     <SettingsProviderDynamic settings={settings}>
       <Router>
         <LayoutWithAuth>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/tasks" element={<TasksPageSupabase />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
-            <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/what-now" element={<WhatNowPage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/planner" element={<PlannerPage />} />
-            <Route path="/planning" element={<PlaceholderPage name="Planning" />} />
-            <Route path="/settings" element={<SettingsPageWithMigration />} />
-            
-            {/* Memory Tools Routes */}
-            <Route path="/brain-dump" element={<BrainDumpPage />} />
-            <Route path="/weekly-review" element={<WeeklyReviewPage />} />
-            <Route path="/accountability" element={<AccountabilityPage />} />
-            <Route path="/deleted-tasks" element={<PlaceholderPage name="Deleted Tasks" />} />
-          </Routes>
+          <Suspense fallback={<FullPageStatus message="Loading..." />}>
+            <AppRoutes storageMode="supabase" />
+          </Suspense>
         </LayoutWithAuth>
       </Router>
     </SettingsProviderDynamic>
